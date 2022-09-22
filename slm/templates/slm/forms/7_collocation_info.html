@@ -1,0 +1,95 @@
+<!--
+
+Template for 7 - Collocation Information
+
+-->
+
+{% load widget_tweaks %}
+  
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Standard Type -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ collocationInformation_7.Instrum_Type.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field collocationInformation_7.Instrum_Type class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Select all collocated instrument types that apply
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Input Frequency -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ collocationInformation_7.Status.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field collocationInformation_7.Status class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Select appropriate status
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective Start Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ collocationInformation_7.Eff_Start_Date_Collocation.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field collocationInformation_7.Eff_Start_Date_Collocation class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the effective start date of the collocated instrument. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective End Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ collocationInformation_7.Eff_End_Date_Collocation.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field collocationInformation_7.Eff_End_Date_Collocation class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the effective end date of the collocated instrument. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="row align-items-start d-flex justify-content-between mb-2">
+            <div class="col-3 pt-2">
+                <label class="form-label">{{ collocationInformation_7.Notes_Collocation.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field collocationInformation_7.Notes_Collocation class="form-control" %}
+            </div>
+            <div class="col-3 pt-2">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter any additional information relevant to collocation. Format: (multiple lines)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Cancel/Save Buttons -->
+        </br>
+        <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+            <button type='button', name='cancel', class="btn btn-secondary">
+                Cancel
+            </button>
+            <button type='submit', name='save', class="btn btn-success">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+

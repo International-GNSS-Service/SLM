@@ -1,0 +1,153 @@
+<!--
+
+Template for 3 - Geological Characteristics
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+  <form method="post">
+    {% csrf_token %}
+    <!-- Receiver Type -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Receiver_Type.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field gnssReceiver_3.Receiver_Type class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Please find your receiver in https://files.igs.org/pub/station/general/rcvr_ant.tab and use the official name, taking care to get capital letters, hyphens, etc. exactly correct. If you do not find a listing for your receiver, please notify the IGS Central Bureau. Format: (A20, from rcvr_ant.tab; see instructions)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Satellite System -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Satellite_System.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field gnssReceiver_3.Satellite_System class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Check all GNSS systems that apply
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Serial Number Receiver -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Serial_Number_Receiver.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field gnssReceiver_3.Serial_Number_Receiver class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the receiver serial number. Format: (A20, but note the first A5 is used in SINEX)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Firmware Version -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Firmware_Version.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field gnssReceiver_3.Firmware_Version class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the receiver firmware version. Format: (A11)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Elevation Cutoff Setting (deg) -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Elev_Cutoff_Setting.label }}</label>
+      </div>
+      <div class="col-6 input-group">
+        {% render_field gnssReceiver_3.Elev_Cutoff_Setting class="form-control" %}
+        <span class="input-group-text">deg</span>
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Please respond with the tracking cutoff as set in the receiver, regardless of terrain or obstructions in the area. Format: (deg)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Date Installed -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Date_Installed_Receiver.label }}</label>
+      </div>
+      <div class="col-6 input-group">
+        {% render_field gnssReceiver_3.Date_Installed_Receiver class="form-control" %}
+        <span class="input-group-text">UTC</span>
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the date and time the receiver was installed. Format: (CCYY-MM-DDThh:mmZ)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Date Removed -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Date_Removed_Receiver.label }}</label>
+      </div>
+      <div class="col-6 input-group">
+        {% render_field gnssReceiver_3.Date_Removed_Receiver class="form-control" %}
+        <span class="input-group-text">UTC</span>
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the date and time the receiver was removed. It is important that the date removed is entered BEFORE the addition of a new receiver. Format: (CCYY-MM-DDThh:mmZ)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Temperature Stabiliz. (deg. C) -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ gnssReceiver_3.Temperature_Stabiliz.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field gnssReceiver_3.Temperature_Stabiliz class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        If the receiver is in a temperature controlled environment, please enter the approximate temperature of that environment. Format: (none or tolerance in degrees C)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Additional Information -->
+    <div class="row align-items-start d-flex justify-content-between mb-2">
+      <div class="col-3 pt-2">
+        <label class="form-label">{{ gnssReceiver_3.Additional_Info.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field gnssReceiver_3.Additional_Info class="form-control" %}
+      </div>
+      <div class="col-3 pt-2">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter any additional relevant information about the receiver. Format: (multiple lines)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Cancel/Save Buttons -->
+    </br>
+    <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+      <button type='button', name='cancel', class="btn btn-secondary">
+        Cancel
+      </button>
+      <button type='submit', name='save', class="btn btn-success">
+        Save
+      </button>
+    </div>
+  </form>
+</div>

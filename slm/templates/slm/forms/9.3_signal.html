@@ -1,0 +1,80 @@
+<!--
+
+Template for 9.3 - Signal
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Signal Obstructionss -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ signal_9_3.Signal_Obstructions.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field signal_9_3.Signal_Obstructions class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+               Describe any potential signal obstructions near the GNSS station. Format: (TREES/BUILDLINGS/etc)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective Start Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ signal_9_3.Eff_Start_Date_Signal.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field signal_9_3.Eff_Start_Date_Signal class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter the effective start date for the signal obstructions. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective End Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ signal_9_3.Eff_End_Date_Signal.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field signal_9_3.Eff_End_Date_Signal class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter the effective end date for the signal obstructions. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Additional Information -->
+        <div class="row align-items-start d-flex justify-content-between mb-2">
+            <div class="col-3 pt-2">
+                <label class="form-label">{{ signal_9_3.Additional_Info_Signal.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field signal_9_3.Additional_Info_Signal class="form-control" %}
+            </div>
+            <div class="col-3 pt-2">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter any other relevant signal obstruction information including the direction, distance, and date of any described signal obstructions. Format: (multiple lines)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Cancel/Save Buttons -->
+        </br>
+        <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+            <button type='button', name='cancel', class="btn btn-secondary">
+                Cancel
+            </button>
+            <button type='submit', name='save', class="btn btn-success">
+                Save
+            </button>
+        </div>
+    </form>
+</div>

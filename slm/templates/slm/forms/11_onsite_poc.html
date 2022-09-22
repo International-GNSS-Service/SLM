@@ -1,0 +1,257 @@
+<!--
+
+Template for 11 - On-Site, Point of Contact
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0 overflow-auto vh-100">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Agency -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Agency_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Agency_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter Operational Contact agency name
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Preferred Abbreviation -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Preferred_Abbrev.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Preferred_Abbrev class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter Operational Contact Agency preferred abbreviation
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Mailing Address -->
+        <div class="row align-items-start d-flex justify-content-between mb-2">
+            <div class="col-3 pt-2">
+                <label class="form-label">{{ onSitePointofContact_11.Mailing_Address_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Mailing_Address_PoC class="form-control" %}
+            </div>
+            <div class="col-3 pt-2">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter Operational Contact agency mailing address
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+
+
+
+
+        <!-- PRIMARY CONTACT -->
+        <div class="section_header d-flex mt-5 mb-4 pb-3 border-bottom align-items-center">
+            <h6 class="me-3">
+                Primary Contact - ORGANIZATION INFORMATION ONLY
+            </h6>
+            <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                [information about GDPR policy and having organization information only here]
+        	"><i class="bi bi-question-circle"></i></a>
+        </div> 
+        <!-- Contact Organization Name -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Contact_Name_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Contact_Name_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter primary contact organization name
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Organization Email -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Email_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Email_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter primary contact organization email address. MUST be a generic email, no personal email addresses.
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Phone Number (Primary) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Phone_Primary_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Phone_Primary_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter primary contact primary organization phone number
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Phone Number (Secondary) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Phone_Secondary_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Phone_Secondary_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter primary contact secondary organization phone number
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Fax -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Fax_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Fax_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter primary contact organization fax number
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+
+
+
+
+        <!-- SECONDARY CONTACT -->
+        <div class="section_header d-flex mt-5 mb-4 pb-3 border-bottom align-items-center">
+            <h6 class="me-3">
+                Secondary Contact 
+            </h6>
+        </div>  
+        <!-- Contact Name -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Sec_Contact_Name_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Sec_Contact_Name_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter secondary contact name
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Email -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Sec_Email.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Sec_Email class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter secondary contact email address
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Phone Number (Primary) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Sec_Telephone_Prim_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Sec_Telephone_Prim_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter secondary contact primary phone number
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Phone Number (Secondary) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Sec_Telephone_Sec_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Sec_Telephone_Sec_PoC class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter secondary contact secondary phone number
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Fax -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ onSitePointofContact_11.Sec_Fax.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Sec_Fax class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter secondary contact fax number
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+
+
+
+
+        <!-- Additional Information -->
+        <div class="section_header d-flex mt-5 mb-4 pb-3 border-bottom align-items-center">
+            <h6>
+                Additional Information
+            </h6>
+        </div>  
+        <div class="row align-items-start d-flex justify-content-between mb-2">
+            <div class="col-3 pt-2">
+                <label class="form-label">{{ onSitePointofContact_11.Additional_Info_PoC.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field onSitePointofContact_11.Additional_Info_PoC class="form-control" %}
+            </div>
+            <div class="col-3 pt-2">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+                Enter additional relevant information regarding operational contacts. Format: (multiple lines).
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+
+
+
+
+        
+        <!-- Cancel/Save Buttons -->
+        </br>
+        <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+            <button type='button', name='cancel', class="btn btn-secondary">
+                Cancel
+            </button>
+            <button type='submit', name='save', class="btn btn-success">
+                Save
+            </button>
+        </div>
+    </form>
+</div>

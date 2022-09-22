@@ -1,0 +1,116 @@
+<!-- 
+
+Base Template
+
+NOTES:
+Base template extended into all other templates.
+Allows for efficient preservation of key componenets. 
+
+More info:
+https://docs.djangoproject.com/en/3.2/topics/templates/
+
+-->
+
+{% load static compress %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>SLM 2.0 Beta</title>
+
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.ico' %}"/>
+
+    {% block stylesheets %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.3/font/bootstrap-icons.min.css" integrity="sha512-YzwGgFdO1NQw1CZkPoGyRkEnUTxPSbGWXvGiXrWk8IeSqdyci0dEDYdLLjMxq1zCoU0QBa4kHAFiRhUL3z2bow==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+
+        {% compress css %}
+            <link rel='stylesheet' type='text/css' media='screen' href='{% static "slm/css/style.css" %}'>
+        {% endcompress %}
+    {% endblock stylesheets %}
+
+
+    {% block javascript %}
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/1.0.5/index.min.js" integrity="sha512-s/r2YIRA8VD7KT0c9uJqKrZFrNFgKlOPeLyVXp7noa6+F8vw5LMvR+hxteawjCpp6+5A4nTYoWtwLcXEJW1YzA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+        {% compress js %}
+            <script src="{% static 'slm/js/diff.js' %}"></script>
+            <script src="{% static 'slm/js/enums.js' %}"></script>
+            <script src="{% static 'slm/js/slm.js' %}"></script>
+            <script src="{% static 'slm/js/env.js' %}"></script>
+            <script src="{% static 'slm/js/urls.js' %}"></script>
+        {% endcompress %}
+    {% endblock javascript %}
+    {% endblock head %}
+</head>
+
+<body>
+  <!-- Top Navigation Menu -->
+  <div id="top-bar">
+    <nav class="navbar navbar-light bg-igs-blue border-bottom border-dark navbar-expand-md bg-faded justify-content-between">
+      <div class="container-fluid mx-4">
+        <a href="{% url "slm:home" %}" class="navbar-brand d-flex w-50"><img id="logo" src="{% static 'images/beta_logo_white.png' %}" alt="International GNSS Service"></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        {% if user.is_authenticated %}
+          {% block top_menu %}
+            <!--
+            Template for top menu bar
+            -->
+              <div class="navbar-collapse collapse w-100" id="collapsingNavbar">
+                <ul class="navbar-nav w-100 justify-content-evenly">
+                  {% include "slm/top_nav.html" with url_name=request.resolver_match.url_name %}
+                </ul>
+                <ul class="nav navbar-nav ms-auto w-100 justify-content-end">
+                  <li class="nav-item dropdown">
+                    <a class="nav-link" href="{% url 'slm:notifications' %}" aria-label="notifications"><i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %}"></i></a>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
+                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarScrollingDropdown">
+                      <!-- User Drop Down -->
+                      {% if request.user.is_superuser %}
+                      <li><a class="dropdown-item" href="{% url "admin:index" %}">Admin</a></li>
+                      <li>
+                        <hr class="dropdown-divider">
+                      </li>
+                      {% endif %}
+                      <li><a class="dropdown-item" href="{% url "slm:profile" %}">Profile</a></li>
+                      <li><a class="dropdown-item" href="{% url "account_change_password" %}">Change Password</a></li>
+                      <li><a class="dropdown-item" href="/changelog">Change Log</a></li>
+                      <li>
+                        <hr class="dropdown-divider">
+                      </li>
+                      <li><a class="dropdown-item" href="{% url "account_logout" %}">Logout</a></li>
+                      <!-- Admin only (unfinished)-->
+                      {% if user.is_admin > 0 %}
+                        <li>
+                          <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="/#/">Admin Controls</a></li>
+                      {% endif %}
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+          {% endblock %}
+        {% endif %}
+      </div>
+    </nav>
+  </div>
+
+  {% block login_content %}{% endblock %}
+
+  {% block page_content %}{% endblock %}
+
+</body>
+</html>

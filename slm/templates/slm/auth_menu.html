@@ -1,0 +1,41 @@
+{% block top_menu %}
+    <!--
+    Template for top menu bar
+    -->
+      <div class="navbar-collapse collapse w-100" id="collapsingNavbar">
+        <ul class="navbar-nav w-100 justify-content-evenly">
+          {% include 'slm/top_nav.html' with url_name=request.resolver_match.url_name %}
+        </ul>
+        <ul class="nav navbar-nav ms-auto w-100 justify-content-end">
+          <li class="nav-item dropdown">
+            <a class="nav-link" href="{% url 'slm:notifications' %}" aria-label="notifications"><i class="bi bi-bell"></i></a>
+          </li>
+          <li class="nav-item dropdown">
+            <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
+            <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarScrollingDropdown">
+              <!-- User Drop Down -->
+              {% if request.user.is_superuser %}
+              <li><a class="dropdown-item" href="{% url "admin:index" %}">Admin</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              {% endif %}
+              <li><a class="dropdown-item" href="{% url "slm:profile" %}">Profile</a></li>
+              <li><a class="dropdown-item" href="{% url "account_change_password" %}">Change Password</a></li>
+              <li><a class="dropdown-item" href="/changelog">Change Log</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="{% url "account_logout" %}">Logout</a></li>
+              <!-- Admin only (unfinished)-->
+              {% if user.is_admin > 0 %}
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="/#/">Admin Controls</a></li>
+              {% endif %}
+            </ul>
+          </li>
+        </ul>
+      </div>
+  {% endblock %}

@@ -1,0 +1,114 @@
+<!--
+
+Template for stations list.
+
+-->
+<!-- Select Station -->
+<div id="slm-station-container" class="p-2">
+
+    <div class="pt-3 px-3">
+    <h5 class="text-center"><b>{{ num_sites }}</b> Stations</h5>
+
+    <!-- Search bar -->
+    <form class="d-flex my-2">
+        <input
+            class="form-control me-2"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+            id="station-search"
+        >
+    </form>
+    </div>
+
+    <hr/>
+
+    <!-- List of stations -->
+    <div
+        id='slm-station-list'
+        class="list-group overflow-auto vh-100"
+        data-slm-page=0
+        data-slm-page-size={{page_size|default:30}}
+    >
+        {% if station %}
+        <button
+            class="btn mono active {{ site.status.css }}"
+            id="select-{{ station }}"
+            name="station"
+            value="{{ station }}"
+            data-bs-toggle="pill"
+            type="submit"
+            role="tab"
+            aria-selected="true"><span>{{ station }}</span> {% if site.num_flags %}<span class="badge rounded-pill bg-danger">{{site.num_flags}}</span>{% endif %}</button>
+        {% endif %}
+        <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
+            <div class="slm-loader"></div>
+        </div>
+    </div>
+</div>
+{% load compress %}
+
+{% compress js inline %}
+<script>
+    let keyupTimeoutID = 0;
+    function drawStations(position, data) {
+        function getBadge(station) {
+            if (station.hasOwnProperty('num_flags') && station.num_flags) {
+                return `<span class="badge rounded-pill bg-danger">${station.num_flags}</span>`;
+            }
+            return '';
+        }
+
+        for (const station of data) {
+            if (station.name === '{{ station }}') continue;
+            let active = '';
+            let selected = 'false';
+            const editLink = slm.urls.reverse("{{ link_view }}", {kwargs: {station: station.name}});
+            const status = slm.SiteLogStatus.get(station.status);
+            if (station === '{{ station }}') {
+                active = 'active';
+                selected = 'true';
+            }
+            $(
+                `<button onclick="window.location.href='${editLink}'"
+                    class="btn mono ${active} ${status.css}"
+                    id="select-${station.name}" name="station"
+                    value="${station.name}"
+                    data-bs-toggle="pill"
+                    type="submit"
+                    role="tab"
+                    aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)}</button>`
+                ).insertBefore(position);
+        }
+    }
+    $(document).ready(function() {
+        const stationList = $("#slm-station-list");
+        const searchInput = $('#station-search');
+        function init() {
+            slm.initInfiniteScroll(
+                stationList,
+                stationList,
+                $('#slm-station-list .slm-loader'),
+                "slm_edit_api:stations-list",
+                {},
+                {},
+                drawStations
+            );
+        }
+        searchInput.on('input', function() {
+            clearTimeout(keyupTimeoutID);
+            keyupTimeoutID = setTimeout(function() {
+                stationList.data('slmPage', 1);
+                stationList.find('button').remove();
+                if (searchInput.val()) {
+                    stationList.data('slmQuery', {name: searchInput.val()});
+                } else {
+                    stationList.data('slmQuery', {});
+                }
+                init();
+            }, 500);
+        });
+        init();
+    });
+</script>
+{% endcompress %}

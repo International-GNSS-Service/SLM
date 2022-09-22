@@ -1,0 +1,18 @@
+<!--
+
+Template for notifications page.
+
+-->
+{% extends "slm/base.html" %}
+{% load widget_tweaks slm i18n compress %}
+
+{% block page_content %}
+<div class="container">
+
+  <div class="d-flex flex-column justify-content-left align-items-left my-4">
+      <h2>{% trans "Notifications" %}</h2>
+      <hr>
+  </div>
+  {% include 'slm/widgets/notification_scroll.html' %}
+</div>
+{% endblock %}

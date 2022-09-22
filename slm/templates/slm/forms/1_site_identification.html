@@ -1,0 +1,288 @@
+<!--
+
+Template for 1 - Site Identification
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Overview Section -->
+    <!-- Site Name -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ overview_1a.Site_Name.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field overview_1a.Site_Name class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the name of the site
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Site Long Name -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ overview_1a.Site_Long_Name.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field overview_1a.Site_Long_Name class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 filenames
+        Format: (XXXX - existing four character IGS station name, M - Monument or marker number (0-9), R - Receiver number (0-9), CCC - Three digit ISO 3166-1 country code)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Monument Inscription -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ overview_1a.Monument_Inscrip.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field overview_1a.Monument_Inscrip class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter what is stamped on the monument
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- IERS DOMES Number -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ overview_1a.IERS_DOMES_Number.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field overview_1a.IERS_DOMES_Number class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        This is strictly required. See http://itrf.ensg.ign.fr/domes_request.php to obtain one. Format: 9 character alphanumeric (A9)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- CDP Number -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ overview_1a.CDP_Number.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field overview_1a.CDP_Number class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the NASA CDP identifier if available. Format: 4 character alphanumeric (A4)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Date Installed -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ overview_1a.Date_Installed_Overview.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field overview_1a.Date_Installed_Overview class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the original date that this site was included in the IGS. Format: (CCYY-MM-DDThh:mmZ)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+
+
+    <!-- Monument Section-->
+    <!-- Monument Description -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ monument_1b.Monument_Descrip.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field monument_1b.Monument_Descrip class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Provide a general description of the GNSS monument. Format: (PILLAR/BRASS PLATE/STEEL MAST/etc)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Monument Height (m) -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ monument_1b.Height_of_the_Monument.label }}</label>
+      </div>
+      <div class="col-6 input-group">
+        {% render_field monument_1b.Height_of_the_Monument class="form-control" %}
+        <span class="input-group-text">m</span>
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the height of the monument above the ground surface in meters. Format: (m)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Monument Foundation -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ monument_1b.Monument_Found.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field monument_1b.Monument_Found class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Describe how the GNSS monument is attached to the ground. Format: (STEEL RODS, CONCRETE BLOCK, ROOF, etc)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Foundation Depth (m) -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ monument_1b.Found_Depth.label }}</label>
+      </div>
+      <div class="col-6 input-group">
+        {% render_field monument_1b.Found_Depth class="form-control" %}
+        <span class="input-group-text">m</span>
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the depth of the monument foundation below the ground surface in meters. Format: (m)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Marker Description-->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ monument_1b.Marker_Descrip.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field monument_1b.Marker_Descrip class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Describe the actual physical marker reference point. Format: (CHISELLED CROSS/DIVOT/BRASS NAIL/etc)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+
+    <!-- Geologic Characteristics section -->
+    <!-- Geologic Characteristic -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ geologicCharacteristics_1c.Geologic_Char.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Geologic_Char class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Describe the general geologic characteristics of the GNSS site. Format: (BEDROCK/CLAY/CONGLOMERATE/GRAVEL/SAND/etc)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Bedrock Type -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ geologicCharacteristics_1c.Bedrock_Type.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Bedrock_Type class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        If the site is located on bedrock, describe the nature of that bedrock. Format: (IGNEOUS/METAMORPHIC/SEDIMENTARY)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Bedrock Condition -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ geologicCharacteristics_1c.Bedrock_Condition.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Bedrock_Condition class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        If the site is located on bedrock, describe the condition of that bedrock. Format: (FRESH/JOINTED/WEATHERED)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Fracture Spacing -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ geologicCharacteristics_1c.Fracture_Spacing.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Fracture_Spacing class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        If known, describe the fracture spacing of the bedrock. Format: (1-10 cm/11-50 cm/51-200 cm/over 200 cm)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Fault Zones Nearby -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ geologicCharacteristics_1c.Fault_Zones_Nearby.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Fault_Zones_Nearby class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the name of any known faults near the site. Format: (YES/NO/Name of the zone)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Distance/activity -->
+    <div class="row align-items-start d-flex justify-content-between mb-2">
+      <div class="col-3 pt-2">
+        <label class="form-label">{{ geologicCharacteristics_1c.Distance_Activity.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Distance_Activity class="form-control" %}
+      </div>
+      <div class="col-3 pt-2">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Describe proximity of the site to any known faults. Format: (multiple lines)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Additional Information -->
+    <div class="row align-items-start d-flex justify-content-between mb-2">
+      <div class="col-3 pt-2">
+        <label class="form-label">{{ geologicCharacteristics_1c.Additional_Info_Geo.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field geologicCharacteristics_1c.Additional_Info_Geo class="form-control" %}
+      </div>
+      <div class="col-3 pt-2">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter any additional information about the geologic characteristics of the GNSS site. Format: (multiple lines)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+
+
+    <!-- Cancel/Save Buttons -->
+    </br>
+    <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+      <button type='button', name='cancel', class="btn btn-secondary">
+        Cancel
+      </button>
+      <button type='submit', name='save', class="btn btn-success">
+        Save
+      </button>
+    </div>
+  </form>
+</div>

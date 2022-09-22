@@ -1,0 +1,41 @@
+<!--
+
+Template for register page.
+
+-->
+
+{% extends "slm/base.html" %}
+
+
+<div class="login-bg">
+    {% block top_menu_links %} {% endblock %}
+    {% block station_list %} {% endblock %}
+
+    {% block login_content %}
+    <!-- Registration Page Content -->
+        <div class="d-flex flex-column justify-content-center align-items-center min-vh-100 ">
+            <div class="card" style="width: 50rem;">
+                <div class="card-body bg-light p-5">
+                    {% if form.errors %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <strong>There was an error in your form</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}  
+                    <h1 class="card-title">Register</h1>
+                    <p class="card-text">Please register for an SLM account below.</p>
+                    <p class="card-header" style="font-weight: bold;">(Note: This site is ONLY for Authorized Users to Edit and Maintain IGS Site Log Data. If you need to view Site Log Data go to igs.org)</p>
+                    <br>
+                    <!-- Uses form for login authentication -->
+                    <form action="{% url 'slm:register_user' %}" method="POST">
+                        {% csrf_token %}
+                            {{ form.as_p }}
+                            <br/><br/>
+                            <input id="login" class="btn btn-primary" type="submit" value="Submit">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endblock %}
+</div>

@@ -1,0 +1,421 @@
+'''
+Handles web requests and responses.
+
+NOTES:
+Holds important functions for each page.  
+Data processing, validation, etc. lives here.
+
+ADD MORE COMMENTS
+
+MORE INFO:
+https://docs.djangoproject.com/en/3.2/topics/http/views/
+'''
+
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from django.db.models.functions import Cast
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
+from slm.models import (
+    Alert
+)
+from django.shortcuts import redirect
+from datetime import datetime
+from slm.utils import to_bool
+from django.core.exceptions import PermissionDenied
+from slm.api.serializers import SiteLogSerializer
+from django.http import Http404
+from django.views.generic import TemplateView
+from django.urls import reverse_lazy
+from django.views.generic.edit import CreateView
+from django.utils.timezone import now
+from slm.utils import to_snake_case
+from slm.defines import AlertLevel
+from django.db.models.fields import NOT_PROVIDED
+from slm.new_forms import (
+    SiteFormForm,
+    SiteIdentificationForm,
+    SiteLocationForm,
+    SiteReceiverForm,
+    SiteAntennaForm,
+    AntennaTypeForm,
+    SiteSurveyedLocalTiesForm,
+    SiteFrequencyStandardForm,
+    SiteCollocationForm,
+    SiteHumiditySensorForm,
+    SitePressureSensorForm,
+    SiteTemperatureSensorForm,
+    SiteWaterVaporRadiometerForm,
+    SiteOtherInstrumentationForm,
+    SiteRadioInterferencesForm,
+    SiteMultiPathSourcesForm,
+    SiteSignalObstructionsForm,
+    SiteLocalEpisodicEffectsForm,
+    SiteOperationalContactForm,
+    SiteResponsibleAgencyForm,
+    SiteMoreInformationForm,
+    UserProfileForm,
+    UserForm,
+    NewSiteForm
+)
+from django.http import StreamingHttpResponse
+
+User = get_user_model()
+
+# Create your views here.
+
+# Registration Page
+def register_user (request):
+    form_class = UserAdminCreationForm
+    form = form_class(request.POST or None)
+    if request.method == "POST":
+        if form.is_valid():
+            form.save()
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            user = authenticate(request, email=email, password=password)
+            login(request, user)
+            return redirect ('home')
+    return render(request, 'register.html', {'form':form})
+
+
+class SLMView(TemplateView):
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        max_alert = Alert.objects.accessible_by(self.request.user).aggregate(Max('level'))['level__max']
+        if max_alert is NOT_PROVIDED:
+            max_alert = None
+        context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+        return context
+
+
+class StationContextView(SLMView):
+
+    station = None
+    agencies = None
+    sites = None
+    site = None
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.station = kwargs.get('station', None)
+        self.sites = Site.objects.accessible_by(self.request.user)
+        self.site = Site.objects.filter(name=self.station).first()
+        if self.site:
+            self.agencies = [agency.name for agency in self.site.agencies.all()]
+
+        max_alert = Alert.objects.accessible_by(
+            self.request.user
+        ).filter(site=self.site).aggregate(Max('level'))['level__max']
+        if max_alert is NOT_PROVIDED:
+            max_alert = None
+        context.update({
+            'num_sites': self.sites.count(),
+            #'sites': [site[0] for site in self.sites.values_list('name').order_by('name').distinct()],
+            'station': self.station if self.station else None,
+            'site': self.site if self.site else None,
+            'agencies': self.agencies,
+            'SiteLogStatus': SiteLogStatus,
+            'link_view': 'slm:edit' if self.request.resolver_match.view_name not in {
+                'slm:alerts',
+                'slm:download',
+                'slm:review',
+                'slm:log',
+                'slm:edit'
+            } else self.request.resolver_match.view_name,
+            'station_alert_level': AlertLevel(max_alert) if max_alert else None
+        })
+        if self.station:
+            try:
+                self.station = Site.objects.get(name=context['station'])
+                if not self.request.user.is_superuser and self.station not in self.sites:
+                    raise PermissionDenied()
+            except Site.DoesNotExist:
+                raise Http404(f'Site {context["station"]} was not found!')
+        return context
+
+
+class EditView(StationContextView):
+
+    template_name = 'slm/station/edit.html'
+
+    FORMS = {
+        form.section_name().lower().replace(' ', ''): form
+        for form in [
+            SiteFormForm,
+            SiteIdentificationForm,
+            SiteLocationForm,
+            SiteReceiverForm,
+            SiteAntennaForm,
+            #AntennaTypeForm,
+            SiteSurveyedLocalTiesForm,
+            SiteFrequencyStandardForm,
+            SiteCollocationForm,
+            SiteHumiditySensorForm,
+            SitePressureSensorForm,
+            SiteTemperatureSensorForm,
+            SiteWaterVaporRadiometerForm,
+            SiteOtherInstrumentationForm,
+            SiteRadioInterferencesForm,
+            SiteMultiPathSourcesForm,
+            SiteSignalObstructionsForm,
+            SiteLocalEpisodicEffectsForm,
+            SiteOperationalContactForm,
+            SiteResponsibleAgencyForm,
+            SiteMoreInformationForm
+        ]
+    }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'section_id': kwargs.get('section', None),
+            'sections': {},
+            'forms': []
+        })
+
+        section = self.FORMS.get(kwargs.get('section', None), None)
+        if section:
+            context['section_name'] = section.section_name()
+            context['multi'] = issubclass(section._meta.model, SiteSubSection)
+
+        for section_id, form in self.FORMS.items():
+            if hasattr(form, 'NAV_HEADING'):
+                context['sections'].setdefault(
+                    form.NAV_HEADING,
+                    {
+                        'id': form.section_name().lower().replace(' ', ''),
+                        'flags': 0,
+                        'status': SiteLogStatus.PUBLISHED,
+                        'active': False,
+                        'subsections': {}
+                    }
+                )['subsections'][form.section_name()] = {
+                    'id': form.section_name().lower().replace(' ', ''),
+                    'flags': 0,
+                    'active': False,
+                    'status': SiteLogStatus.PUBLISHED
+                }
+            else:
+                context['sections'][form.section_name()] = {
+                    'id': form.section_name().lower().replace(' ', ''),
+                    'flags': 0,
+                    'status': SiteLogStatus.PUBLISHED
+                }
+
+            if issubclass(form._meta.model, SiteSubSection):
+                set_status = True
+                for inst in reversed(form._meta.model.objects.station(self.station).head()):
+                    set_status = False
+                    if inst.published and inst.is_deleted:
+                        continue  # elide deleted instances if published
+
+                    if section is form:
+                        context['forms'].append(
+                            form(
+                                instance=inst,
+                                initial={
+                                    field: getattr(inst, field) for field in form._meta.fields
+                                }
+                            )
+                        )
+                    if hasattr(form, 'NAV_HEADING'):
+                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['flags'] = inst.num_flags if inst else 0
+                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['status'] = inst.mod_status if inst else SiteLogStatus.PENDING
+                        context['sections'][form.NAV_HEADING]['flags'] += inst.num_flags if inst else 0
+                        context['sections'][form.NAV_HEADING]['status'] = context['sections'][form.NAV_HEADING]['status'].merge(inst.mod_status if inst else SiteLogStatus.PENDING)
+                    else:
+                        context['sections'][form.section_name()]['flags'] = inst.num_flags if inst else 0
+                        context['sections'][form.section_name()]['status'] = context['sections'][form.section_name()]['status'].merge(inst.mod_status if inst else SiteLogStatus.PENDING)
+
+                if set_status:
+                    if hasattr(form, 'NAV_HEADING'):
+                        context['sections'][form.NAV_HEADING]['status'] = SiteLogStatus.PENDING if self.site.status == SiteLogStatus.PENDING else SiteLogStatus.PUBLISHED
+                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['status'] = SiteLogStatus.PENDING if self.site.status == SiteLogStatus.PENDING else SiteLogStatus.PUBLISHED
+                    else:
+                        context['sections'][form.section_name()]['status'] = SiteLogStatus.PENDING if self.site.status == SiteLogStatus.PENDING else SiteLogStatus.PUBLISHED
+
+                if section is form:
+                    context['forms'].insert(0, form(initial={'site': self.station}))
+                    if hasattr(form, 'NAV_HEADING'):
+                        context['sections'][form.NAV_HEADING]['active'] |= True
+                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['active'] = True
+                    else:
+                        context['sections'][form.section_name()]['active'] = True
+
+
+
+            else:
+                instance = form._meta.model.objects.station(self.station).head()
+                if section is form:
+                    context['forms'].append(
+                        form(
+                            instance=instance,
+                            initial={
+                                field: getattr(instance, field, None) for field in form._meta.fields
+                            } if instance else {'site': self.station}
+                        )
+                    )
+                    context['sections'][form.section_name()]['active'] = True
+                context['sections'][form.section_name()]['flags'] = instance.num_flags if instance else 0
+                context['sections'][form.section_name()]['status'] = instance.mod_status if instance else SiteLogStatus.PENDING
+        return context
+
+
+class AlertsView(StationContextView):
+    template_name = 'slm/station/alerts.html'
+
+
+class UploadView(SLMView):
+    template_name = 'slm/upload.html'
+
+
+class NewSiteView(StationContextView):
+    template_name = 'slm/new_site.html'
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        data = {
+            field: request.POST[field] for field in NewSiteForm._meta.fields if field in request.POST
+        }
+        if data.get('agencies', None):
+            data['agencies'] = [Agency.objects.get(pk=int(agency)) for agency in [data['agencies']]]
+        data['name'] = data['name'].upper()
+        if not request.user.is_superuser:
+            for agency in data['agencies']:
+                if request.user.agency != agency:
+                    raise PermissionDenied('Only allowed to create new sites for your agency.')
+
+        new_site = NewSiteForm(data)
+        if new_site.is_bound and new_site.is_valid():
+            new_site.save()
+            return redirect(to=reverse('slm:edit', kwargs={'station': new_site.instance.name}))
+
+        context = super().get_context_data(**kwargs)
+        context['form'] = new_site
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = NewSiteForm(
+            initial={'agencies': Agency.objects.filter(id=self.request.user.agency.id)} if not self.request.user.is_superuser else {}
+        )
+        if not self.request.user.is_superuser:
+            context['form'].fields["agencies"].queryset = Agency.objects.filter(id=self.request.user.agency.id)
+        return context
+
+
+class IndexView(StationContextView):
+    template_name = 'slm/station/base.html'
+
+
+class DownloadView(StationContextView):
+    template_name = 'slm/station/download.html'
+
+
+class UserProfileView(SLMView):
+    template_name = 'slm/profile.html'
+    success_url = reverse_lazy('profile')
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response({
+            'user_form': UserForm(instance=request.user),
+            'profile_form': UserProfileForm(instance=request.user.profile)
+        })
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        user_form = UserForm(
+            {field: request.POST[field] for field in UserForm._meta.fields if field in request.POST},
+            instance=request.user
+        )
+        if not request.user.profile:
+            request.user.profile = UserProfile.objects.create()
+
+        profile_form = UserProfileForm(
+            {field: request.POST[field] for field in UserProfileForm._meta.fields if field in request.POST},
+            instance=request.user.profile
+        )
+        if user_form.is_bound and user_form.is_valid():
+            user_form.save()
+        if profile_form.is_bound and profile_form.is_valid():
+            profile_form.save()
+        return self.render_to_response({'user_form': user_form, 'profile_form': profile_form})
+
+
+class LogView(StationContextView):
+
+    template_name = 'slm/station/log.html'
+
+
+class StationReviewView(StationContextView):
+
+    template_name = 'slm/station/review.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        def parse_time(timestamp):
+            if timestamp:
+                return datetime.fromisoformat(timestamp)
+            return timestamp
+
+        epoch = kwargs.get('epoch', None)
+        published = True if to_bool(self.request.GET.get('pub', True)) else None
+        back_t = parse_time(self.request.GET.get('back', None))
+        forward_t = parse_time(self.request.GET.get('forward', None))
+        log_entries = LogEntry.objects.filter(site=self.station).prefetch_related('site_log_object')
+
+        pub_q = Q()
+        if published:
+            pub_q = Q(type=LogEntryType.PUBLISH)
+
+        forward_inst = SiteLogSerializer(instance=self.station, epoch=forward_t or epoch, published=None)
+        forward_text = forward_inst.text
+
+        if not published and not back_t:
+            back_t = log_entries.filter(Q(epoch__lt=forward_inst.epoch)).aggregate(Max('epoch'))['epoch__max']
+
+        back_inst = SiteLogSerializer(instance=self.station, epoch=back_t or epoch, published=published)
+        back_text = back_inst.text
+
+        forward_prev = log_entries.filter(
+            Q(epoch__lt=forward_inst.epoch) & Q(epoch__gt=back_inst.epoch) & pub_q
+        ).order_by('-timestamp').first()
+        forward_next = log_entries.filter(Q(epoch__gt=forward_inst.epoch) & pub_q).order_by('timestamp').first()
+
+        back_prev = log_entries.filter(Q(epoch__lt=back_inst.epoch) & pub_q).order_by('-timestamp').first()
+        back_next = log_entries.filter(
+            Q(epoch__lt=forward_inst.epoch) & Q(epoch__gt=back_inst.epoch) & pub_q
+        ).order_by('timestamp').first()
+
+        context.update({
+            'forward_text': forward_text,
+            'back_text': back_text,
+            'unpublished_changes': not forward_inst.is_published,
+            'can_publish': self.station.can_publish(self.request.user),
+            'forward_prev': forward_prev.epoch.isoformat() if forward_prev else None,
+            'forward_current': forward_inst.epoch.isoformat(),
+            'forward_next': forward_next.epoch.isoformat() if forward_next else None,
+            'back_prev': back_prev.epoch.isoformat() if back_prev else None,
+            'back_current': back_inst.epoch.isoformat(),
+            'back_next': back_next.epoch.isoformat() if back_next else None,
+            'published': published,
+            'epoch': epoch.isoformat() if epoch else ''
+        })
+        return context
+
+
+class NotificationsView(SLMView):
+    template_name = 'slm/notifications.html'

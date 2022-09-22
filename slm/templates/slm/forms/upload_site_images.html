@@ -1,0 +1,39 @@
+<!--
+
+Template for Site Images Upload
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+  <form method="post">
+    {% csrf_token %}
+    <!-- Antenna Graphics -->
+    <div class="row align-items-start d-flex justify-content-between mb-2">
+      <div class="col-3 pt-2">
+        <label class="form-label">{{ test.Antenna_Graphics.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field test.Antenna_Graphics class="form-control" %}
+      </div>
+      <div class="col-3 pt-2">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Insert text graphic from file antenna.gra
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+
+    <!-- Cancel/Save Buttons -->
+    </br>
+    <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+      <button type='button', name='cancel', class="btn btn-secondary">
+        Cancel
+      </button>
+      <button type='submit', name='save', class="btn btn-success">
+        Save
+      </button>
+    </div>
+  </form>
+</div>

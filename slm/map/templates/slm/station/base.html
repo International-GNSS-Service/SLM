@@ -1,0 +1,11 @@
+{% extends "slm/station/base.html" %}
+
+{% block station_agencies %}
+    <header class="d-flex flex-wrap justify-content-center p-3 slm-agency">
+        {% for agency in agencies %}
+            <a href="{% url 'slm_map:map' agency=agency %}" class="text-decoration-none">
+                <h3>{{ agency }}</h3>
+            </a>
+        {% endfor %}
+    </header>
+{% endblock %}

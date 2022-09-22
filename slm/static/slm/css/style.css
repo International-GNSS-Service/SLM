@@ -1,0 +1,448 @@
+/*------- Typography CSS -------*/
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0;
+    font-family: 'Roboto', serif;
+    font-weight: bold;
+}
+
+.h-110 {
+    height: 110%;
+}
+
+body {
+    font-family: 'Roboto', serif;
+}
+
+button {
+    font-weight: 700;
+}
+
+a, a:hover {
+    color: inherit;
+}
+
+.mono {
+  font-family: "Lucida Console", Courier, monospace;
+}
+
+
+/*------- Button/Icon CSS -------*/
+.btn {
+    color: #fff;
+    background-color: #185A7D;
+}
+
+.btn-secondary {
+    background-color: #50595E;
+}
+
+[type=button] .bi-question-circle {
+    font-size: 24px;
+}
+
+/* Removes default button border/bg color for help popover */
+.icon {
+    background-color: #fff;
+    border: none;
+    padding: 0px;
+}
+
+
+/*------- Layout CSS -------*/
+
+@media (max-width: 797px) {
+    body { 
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+}
+
+.container-fluid {
+    padding: 0px;
+}
+
+
+/*------- Top Menu Navigation CSS -------*/
+
+
+.navbar-light .navbar-nav .active>.nav-link {
+    background-color: #185A7D !important;
+    color: #fff;
+    border-radius: 0.25rem;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: #fff;
+}
+
+.nav-link {
+    width: 100%;
+    text-align: left;
+    color: #000;
+}
+
+@media (min-width: 768px) {
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* Fixes active CSS on dropdown sections (DO NOT MOVE) */
+.nav-link.active, .active>.nav-link  { 
+    background-color: #185A7D !important;
+    color: #fff;
+} 
+
+.show>.nav-link {
+    background-color: #fff !important;
+    color: #000 !important;
+}
+
+.nav-link:focus, .nav-link:hover {
+    background-color: #185A7D !important;
+    color: #fff !important;
+    border-radius: 0.25rem;
+}
+
+.list-group-item.active {
+    background-color: #185A7D !important;
+    border-color: #185A7D !important;
+}
+
+#review-diff-container {
+    padding: 50px;
+}
+
+#review-diff {
+    border: 1px solid #212529;
+    background-color: ghostwhite;
+    padding: 30px;
+}
+
+
+
+/*------- Alerts CSS -------*/
+.slm-alert-item {
+    position: relative;
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #212529;
+    text-decoration: none;
+    background-color: #fff;
+    border-left: 1px solid #212529;
+    border-left-width: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.slm-log-item {
+    position: relative;
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #212529;
+    text-decoration: none;
+    background-color: #fff;
+    border-left: 1px solid #212529;
+    border-left-width: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.slm-log-delete {
+    border-left-color: #CD2026;
+}
+
+.slm-log-add,
+.slm-log-update {
+    border-left-color: #BF8C0D;
+}
+
+.slm-log-publish {
+    border-left-color: green;
+}
+
+.slm-log-new {
+    border-left-color: #913D88;
+}
+
+span.badge.slm-log-add,
+span.badge.slm-log-update {
+    background-color: #BF8C0D;
+    color: white;
+}
+span.badge.slm-log-publish {
+    background-color: green;
+    color: white;
+}
+span.badge.slm-log-new {
+    background-color: #913D88;
+    color: white;
+}
+span.badge.slm-log-delete {
+    background-color: #CD2026;
+    color: white;
+}
+
+/*------- Background CSS -------*/
+.login-bg {
+    background: url("/static/images/IGS-Argyle.jpg") no-repeat center center fixed;
+    background-size: cover;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    height: 500px;
+}
+
+.bg-igs-blue {
+    background-color: #051C2C;
+
+}
+
+
+
+
+
+/*------- Form CSS -------*/
+.form-label {
+    margin-bottom: 0rem;
+}
+
+.input-group {
+    width: 50%;
+}
+
+.form-control, .input-group-text {
+    border: 1px solid #545454;
+}
+
+.accordion-button:not(.collapsed) {
+    color: white;
+    background-color: #175A7D
+}
+
+.slm-form-error {
+    padding: 7px;
+}
+
+#slm-station-list {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+#slm-station-list button {
+    height: fit-content;
+    width: 100%;
+    text-align: left;
+    background-color: transparent;
+    color: black;
+    font-size: large;
+    margin-top: 3px;
+}
+#slm-station-list button.active,
+#slm-station-list button:hover {
+    background-color: #175A7D;
+    color: ghostwhite;
+}
+#slm-station-container {
+    background-color: ghostwhite;
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+}
+#slm-form-menu {
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+}
+
+.is-invalid.slm-form-unpublished {
+    /*border-color: #ffecb5;*/
+    border-color: #BF8C0D;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23d89133'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23d89133' stroke='none'/%3e%3c/svg%3e");
+}
+
+.invalid-feedback.slm-form-unpublished {
+    /*color: #ffecb5;*/
+    color: #BF8C0D;
+}
+
+.was-validated .form-control.slm-form-unpublished:invalid:focus, .form-control.is-invalid.slm-form-unpublished:focus {
+  border-color: #BF8C0D;
+  box-shadow: 0 0 0 0.25rem rgba(216, 145, 51, 0.25);
+}
+
+.alert-warning.slm-form-unpublished {
+    border-color: #BF8C0D;
+}
+
+/* remove bootstrap accordion arrows */
+.accordion-button:after {
+    display: none;
+}
+
+button.slm-subsection > .slm-effective {
+  display: inline-block;
+  vertical-align: middle;
+  float:right;
+  content: "";
+  position:absolute;
+  right:20px;
+  top:35%;
+}
+button.slm-subsection {
+    display:block;
+    text-align:left;
+    overflow:hidden;
+    position:relative;
+}
+
+.slm-flag-error {
+    font-size: large;
+}
+.slm-flag-error:hover {
+    color: red;
+}
+.slm-flag-error .bi-x-circle {
+    color: red;
+}
+
+.slm-flag-error > .bi + .bi,
+.slm-flag-error:hover > .bi {
+  display: none;
+}
+.slm-flag-error:hover > .bi + .bi {
+  display: inherit;
+}
+
+
+.form-control.slm-flag-input {
+    margin-top: 5px;
+    background-color:  #CD2026!important;
+    color: #F8F9FA;
+}
+
+.form-control.slm-flag-input:invalid:focus,
+.form-control.slm-flag-input:focus {
+  border-color: darkred;
+  box-shadow: 0 0 0 0.1rem rgba(139, 0, 0, 1);
+}
+
+.slm-form-fieldset {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.slm-modified {
+    color: #BF8C0D;
+}
+
+.slm-published {
+    color: green;
+}
+.slm-published-bg {
+    background-color: #BF8C0D;
+}
+
+span.slm-section-header {
+    font-size: calc(1.4rem + .3vw);
+}
+
+fieldset.slm-form-group {
+    border: 1px groove #ddd !important;
+    padding: 0 1.4em 1.4em 1.4em !important;
+    margin: 0 0 1.5em 0 !important;
+    -webkit-box-shadow:  0px 0px 0px 0px #000;
+            box-shadow:  0px 0px 0px 0px #000;
+}
+
+fieldset.slm-form-group > legend {
+    width:inherit; /* Or auto */
+    padding:0 10px; /* To give a bit of padding on the left and right */
+    border-bottom:none;
+    float: none;
+}
+
+.slm-log-scroll {
+    overflow-y: auto;
+}
+
+.slm-loader {
+  border: 6px solid #f3f3f3; /* Light grey */
+  border-top: 6px solid #175A7D; /* Blue */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+button.slm-status-updated,
+button.nav-link.slm-status-updated {
+    border-left: 10px solid #BF8C0D;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-status-published,
+button.nav-link.slm-status-published {
+    border-left: 10px solid #008000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-status-pending,
+button.nav-link.slm-status-pending {
+    border-left: 10px solid #913D88;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-status-dormant,
+button.nav-link.slm-status-dormant  {
+    border-left: 10px solid #3D4543;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+.accordion,
+.accordion-item,
+.accordion-item:first-of-type,
+.accordion-header {
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+button.nav-link {
+    margin-left: 5px;
+    margin-top: 3px;
+}
+
+header.slm-agency {
+    background-color: #175A7D;
+    color: ghostwhite;
+}
+
+.slm-bg-pending {
+    background-color: #913D88;
+}
+.slm-bg-updated {
+    background-color: #BF8C0D;
+}
+.slm-bg-dormant {
+    background-color: #3D4543;
+}
+.slm-bg-published {
+    background-color: #008000;
+}
+
+.slm-text-pending {
+    color: #913D88;
+}
+.slm-text-updated {
+    color: #BF8C0D;
+}
+.slm-text-dormant {
+    color: #3D4543;
+}
+.slm-text-published {
+    color: #008000;
+}

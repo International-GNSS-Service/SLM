@@ -1,0 +1,37 @@
+{% extends "account/base.html" %}
+
+{% load i18n %}
+{% load account widget_tweaks %}
+
+{% block head_title %}{% trans "Sign Out" %}{% endblock %}
+
+{% block page_content %}
+<div>
+    <div class="d-flex flex-column justify-content-center align-items-center mt-5 ">
+        <div class="card" style="width: 50rem;">
+            <div class="card-body bg-light p-5">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <strong>{{ message }}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor%}
+                {% endif %}
+
+                <h1>{% trans "Sign Out" %}</h1>
+
+                <p>{% trans 'Are you sure you want to sign out?' %}</p>
+
+                <form method="post" action="{% url 'account_logout' %}">
+                  {% csrf_token %}
+                  {% if redirect_field_value %}
+                  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                  {% endif %}
+                  <button type="submit" class="btn btn-success">{% trans 'Sign Out' %}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

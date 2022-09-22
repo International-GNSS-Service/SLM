@@ -1,0 +1,165 @@
+<!--
+
+Template for 13a - Details
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+  <form method="post">
+    {% csrf_token %}
+    <!-- Primary Data Center -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label"> {{ details_13_0.Primary_Data_Center.label }} </label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Primary_Data_Center class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the name of the primary operational data center
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Secondary Data Center -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.Secondary_Data_Center.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Secondary_Data_Center class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the name of the secondary or backup data center
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- URL for More Informatio -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.URL_for_More_Info.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.URL_for_More_Info class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter a url for additional information about the site
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Site Map URL -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.Site_Map_URL.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Site_Map_URL class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter the site map URL
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Site Diagram -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.Site_Diagram.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Site_Diagram class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter URL for site diagram
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Horizon Mask URL -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.Horizon_Mask_URL.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Horizon_Mask_URL class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter Horizon mask URL
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Monument Description URL -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.Monument_Description_URL.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Monument_Description_URL class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter monument description URL
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Site Pictures URL -->
+    <div class="row align-items-center d-flex justify-content-between mb-2">
+      <div class="col-3">
+        <label class="form-label">{{ details_13_0.Site_Pictures_URL.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Site_Pictures_URL class="form-control" %}
+      </div>
+      <div class="col-3">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter site pictures URL
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Additional Information -->
+    <div class="row align-items-start d-flex justify-content-between mb-2">
+      <div class="col-3 pt-2">
+        <label class="form-label">{{ details_13_0.Additional_Info_Details.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field details_13_0.Additional_Info_Details class="form-control" %}
+      </div>
+      <div class="col-3 pt-2">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Enter additional relevant information. Format: (multiple lines)
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+    <!-- Antenna Graphics -->
+    <div class="row align-items-start d-flex justify-content-between mb-2">
+      <div class="col-3 pt-2">
+        <label class="form-label">{{ antennaGraphics_13_1.Antenna_Graphics.label }}</label>
+      </div>
+      <div class="col-6">
+        {% render_field antennaGraphics_13_1.Antenna_Graphics class="form-control" %}
+      </div>
+      <div class="col-3 pt-2">
+        <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        Insert text graphic from file antenna.gra
+        "><i class="bi bi-question-circle"></i></a>
+      </div>
+    </div>
+
+    <!-- Cancel/Save Buttons -->
+    </br>
+    <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+      <button type='button', name='cancel', class="btn btn-secondary">
+        Cancel
+      </button>
+      <button type='submit', name='save', class="btn btn-success">
+        Save
+      </button>
+    </div>
+  </form>
+</div>

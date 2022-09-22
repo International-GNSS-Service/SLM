@@ -1,0 +1,335 @@
+{% extends "slm/base.html" %}
+{% load slm static compress i18n %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    {% compress css %}
+        <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
+        <link href='https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css' rel='stylesheet' />
+        <link rel='stylesheet' type='text/css' media='screen' href='{% static "slm/css/map.css" %}'>
+    {% endcompress %}
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    {% compress js %}
+        <script src="{% static 'slm/js/map.js' %}"></script>
+        <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
+        <script src='https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js'></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    {% if api_key %}
+        <div class="row">
+            <div class="col-12 d-flex justify-content-center mb-3" style="background-color: #175A7D">
+                <div id="slm-station-map-container">
+                    <div id="slm-station-map"></div>
+                    <div id="site-name" class="mono"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row px-lg-5 p-2">
+            <div class="col-12">
+                <table id="slm-map-station-table" class="table table-sm table-striped table-hover" style="width: 100%; padding-top: 30px; margin-top: 50px" cellspacing="0">
+                    <colgroup>
+                        <col span="5">
+                    </colgroup>
+                    <colgroup>
+                        <col class="pos left">
+                        <col class="pos right">
+                    </colgroup>
+                    <colgroup>
+                        <col class="activity left">
+                        <col class="activity center">
+                        <col class="activity right">
+                    </colgroup>
+                    <colgroup>
+                        <col>
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th colspan="5"></th>
+                            <th class="text-center" colspan="2" data-bs-toggle="tooltip" title="{% trans "Position" %}">Position</th>
+                            <th class="text-center" colspan="3" data-bs-toggle="tooltip" title="{% trans "The most recent activity on the site log information." %}">Latest Activity</th>
+                            <th colspan="1"></th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th class="form-group">
+                                <label for="slm-status-select" style="display: none">Status</label>
+                                <select type="text" name="status" id="slm-status-select" class="form-control">
+                                    <option value="" selected></option>
+                                    {% for status in SiteLogStatus %}
+                                        <option value="{{ status.value }}">{{ status.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </th>
+                            <th></th>
+                            <th></th>
+                            <th class="form-group">
+                                <label for="slm-agency-select" style="display: none">Agency</label>
+                                <select name="agency" id="slm-agency-select" class="form-control">
+                                    <option value="" {% if not agency %}selected>{% endif %}</option>
+                                    {% for agcy in agencies %}
+                                        <option value="{{ agcy.name }}" {% if agency and agency.id == agcy.id %}selected{% endif %}>{{ agcy.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'name' }}">Name</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'status' }}">Status</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'num_flags' }}">Flags</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'created' }}">Registered</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'agencies' }}">Agencies</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'latitude' }}">Latitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'longitude' }}">Longitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_user' }}">User</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_update' }}">Updated</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_publish' }}">Published</th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    <tfoot id="#tbl-footer">
+                        <tr>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'name' }}">Name</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'status' }}">Status</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'num_flags' }}">Flags</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'created' }}">Registered</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'agencies' }}">Agencies</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'latitude' }}">Latitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'longitude' }}">Longitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_user' }}">User</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_update' }}">Updated</th>
+                            <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_publish' }}">Published</th>
+                            <th>Download</th>
+                        </tr>
+                        <tr>
+                            <th colspan="5"></th>
+                            <th colspan="2" data-bs-toggle="tooltip" title="{% trans "Position" %}">Position</th>
+                            <th colspan="3" data-bs-toggle="tooltip" title="{% trans "The most recent activity on the site log information." %}">Latest Activity</th>
+                            <th colspan="1"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    {% compress js %}
+    <script>
+        const agencySelect = $('#slm-agency-select');
+        const statusSelect = $('#slm-status-select');
+        function getQuery(data) {
+            data = data || {};
+            if (data.hasOwnProperty('order') && data.order.length > 0) {
+                data.ordering = data.order[0].dir.replace('asc', '').replace('desc', '-');
+                switch (data.order[0].column) {
+                    case 0:
+                        data.ordering += 'name';
+                        break;
+                    case 2:
+                        data.ordering += 'num_flags';
+                        break;
+                    case 3:
+                        data.ordering += 'created';
+                        break;
+                    case 5:
+                        data.ordering += 'latitude';
+                        break;
+                    case 6:
+                        data.ordering += 'longitude';
+                        break;
+                    case 8:
+                        data.ordering += 'last_update';
+                        break;
+                    case 9:
+                        data.ordering += 'last_publish';
+                        break;
+                }
+                delete data.order;
+            }
+            if (data.hasOwnProperty('columns')) {
+                delete data.columns;
+            }
+            if (data.hasOwnProperty('search')) {
+                if (data.search.hasOwnProperty('value') > 0 && data.search.value.length > 0) {
+                    data.name = data.search.value;
+                }
+                delete data.search;
+            }
+            if (agencySelect.val()) {
+                data.agency = agencySelect.val();
+            }
+            if (statusSelect.val()) {
+                data.status = statusSelect.val();
+            }
+            return data;
+        }
+        mapboxgl.accessToken = '{{ api_key }}';
+        const map = new SLMSiteMap({
+                container: 'slm-station-map',
+                style: '{{map_style}}',
+                zoom: '{{ zoom }}',  // 0 doesnt work - bug treats it as not set
+                projection: '{{ projection }}'
+            },
+            slm.urls.reverse('slm_edit_api:map-list', {kwargs: {}, query: getQuery()})
+        );
+        const stationTable = $( '#slm-map-station-table' ).DataTable({
+            pageLength: 20,
+            stateSave: false,
+            serverSide: true,
+            fixedHeader: true,
+            processing: true,
+            //drawCallback: function(settings) {},
+            ajax: {
+                url: '{% url "slm_edit_api:stations-list" %}',
+                data: getQuery
+            },
+            order: [[0, "asc"]],
+            columns: [
+                {
+                    data: 'name',
+                    className: 'mono',
+                    render: function (name, type, full, meta) {
+                        return `<a class="text-decoration-none" href="${slm.urls.reverse('slm:edit', {kwargs: {'station': name}})}">${name}</a>`;
+                    },
+                    orderable: true
+                },
+                {
+                    data: 'status',
+                    render: function (data, type, full, meta) {
+                        const status = slm.SiteLogStatus.get(data);
+                        return `<span class="badge rounded-pill slm-bg-${status.label.toLowerCase()}">${status.label}</span>`
+                    },
+                    orderable: false,
+                },
+                {
+                    data: 'num_flags',
+                    render: function (num_flags, type, full, meta) {
+                        if (num_flags > 0) {
+                            return `<span class="badge rounded-pill bg-danger">${num_flags}</span>`;
+                        }
+                    },
+                    defaultContent: "",
+                    orderable: true,
+                },
+                {
+                    data: 'created',
+                    render: function (created, type, full, meta) {
+                        if (created) {
+                            return created.split('T')[0];
+                        }
+                    },
+                    orderable: true
+                },
+                {
+                    data: 'agencies',
+                    className: 'slm-agency-col',
+                    render: function (data, type, full, meta) {
+                        let agency_list = [];
+                        for (let tidx = 0; tidx < data.length; tidx++) {
+                            agency_list.push(data[tidx].name);
+                        }
+                        return `<span title="${agency_list.join(', ')}">${agency_list.join(', ')}</span>`;
+                    },
+                    orderable: false,
+                },
+                {
+                    data: 'latitude',
+                    render: function (lat, type, full, meta) {
+                        if (lat) {
+                            return lat.toFixed(2);
+                        }
+                        return null;
+                    },
+                    orderable: true,
+                },
+                {
+                    data: 'longitude',
+                    render: function (lon, type, full, meta) {
+                        if (lon) {
+                            return lon.toFixed(2);
+                        }
+                        return null;
+                    },
+                    orderable: true,
+                },
+                {
+                    data: 'last_user',
+                    render: function (user, type, full, meta) {
+                        return slm.mailToUser(user);
+                    },
+                    orderable: false,
+                },
+                {
+                    data: 'last_update',
+                    render: function (data, type, full, meta) {
+                        if (data) {
+                            return data.split('T')[0];
+                        }
+                    },
+                    orderable: true
+                },
+                {
+                    data: 'last_publish',
+                    render: function (data, type, full, meta) {
+                        if (data) {
+                            return data.split('T')[0];
+                        }
+                    },
+                    orderable: true
+                },
+                {
+                    data: null,
+                    render: function (station, type, full, meta) {
+                        return `<a href="${slm.urls.reverse('slm_edit_api:download-detail', {
+                                kwargs: {
+                                    site: station.name,
+                                    format: 'text'
+                                }
+                            })}"><i class="bi bi bi-file-text slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a> ` +
+                            `<a href="${slm.urls.reverse('slm_edit_api:download-detail', {
+                                kwargs: {
+                                    site: station.name,
+                                    format: 'xml'
+                                }
+                            })}"><i class="bi bi-filetype-xml slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a> ` +
+                            `<a href="${slm.urls.reverse('slm_edit_api:download-detail', {
+                                kwargs: {
+                                    site: station.name,
+                                    format: 'json'
+                                }
+                            })}"><i class="bi bi-filetype-json slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a>`;
+                    },
+                    orderable: true
+                }
+            ],
+            columnDefs: [
+                {targets: [2, 10], className: "dt-center"},
+                {targets: [5, 6], className: "dt-right"},
+            ]
+        });
+        $( '#slm-map-station-table select' ).on( 'change', function ( ) {
+            stationTable.ajax.reload( );
+            map.setSource(slm.urls.reverse('slm_edit_api:map-list', {kwargs: {}, query: getQuery()}));
+        });
+        map.setSelectCallback(function(site) {
+            const search = $('#slm-map-station-table_filter input');
+            search.val(site);
+            stationTable.search(site).draw();
+        });
+        //slm.addColumnFiltering( stationTable );
+    </script>
+    {% endcompress %}
+    {% else %}
+    {% trans "To enable maps, create a MapBox account and configure the api key in the admin:" %} <a href="https://mapbox.com">mapbox.com</a>
+    {% endif %}
+</div>
+{% endblock %}

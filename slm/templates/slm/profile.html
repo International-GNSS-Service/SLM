@@ -1,0 +1,56 @@
+{% extends "slm/base.html" %}
+{% load widget_tweaks i18n %}
+
+{% block page_content %}
+    <div class="container mb-5">
+        <!-- Title -->
+        <div class="mt-5 mb-4 pb-3 border-bottom">
+            <h1>{% translate "User Profile" %}</h1>
+        </div>
+
+        <div class="container form-group px-0">
+          <form id='profile-form' class="slm-form" data-slm-method="put" data-slm-url="{% url 'slm_edit_api:profile-detail' pk=request.user.pk %}">
+            {% csrf_token %}
+            {% for field in user_form %}
+                <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
+                  <div class="col-3">
+                      <label class="form-label">{{ field.label }}</label>
+                  </div>
+                  <div class="col-6">
+                      {% render_field field class="form-control" %}
+                  </div>
+                  <div class="col-3 align-items-center">
+                      {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}
+                  </div>
+                </div>
+            {% endfor %}
+
+            <br/>
+            <br/>
+            {% for field in profile_form %}
+                <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
+                  <div class="col-3">
+                      <label class="form-label">{{ field.label }}</label>
+                  </div>
+                  <div class="col-6">
+                      {% render_field field class="form-control" %}
+                  </div>
+                  <div class="col-3 align-items-center">
+                      {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}
+                  </div>
+                </div>
+            {% endfor %}
+
+
+            <!-- Cancel/Save Buttons -->
+            </br>
+            <div id="update" class="d-grid gap-2 d-flex justify-content-between">
+              <button type='submit' name='update' class="btn btn-success">
+                {% translate "Update" %}
+              </button>
+            </div>
+          </form>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,33 @@
+<!--
+
+Template for upload page.
+
+-->
+
+{% extends "slm/base.html" %}
+
+{% block page_content %}
+
+<div class="container">
+  <!-- Description -->
+  <div class="d-flex flex-column justify-content-left align-items-left my-4">
+      <h2>Upload</h2>
+      <hr>
+  </div>
+
+  <!-- Upload Form -->
+  <form action="" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <h5> Upload ASCII Site Log File (.log)</h5>
+    </br>
+    {{ fileUpload.as_table }}
+    </br>
+    </br>
+    <button type='submit', name = 'save', class="btn">
+        Submit
+    </button>
+  </form>
+
+</div>
+
+{% endblock %}

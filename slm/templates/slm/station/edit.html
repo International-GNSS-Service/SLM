@@ -1,0 +1,154 @@
+<!--
+
+Template for station page (once station is selected).
+
+NOTE:
+Add new section capability is not functional.
+
+-->
+
+{% extends "slm/station/base.html" %}
+{% load widget_tweaks slm i18n compress %}
+
+{% block action_content %}
+
+<!-- Station Metadata Forms -->
+<div class="row">
+
+    <!-- Site Log Sections Sidebar Menu -->
+    <div class="col-3">
+      <div id='slm-form-menu' class="nav flex-shrink-0 nav-pills" id="sections" role="tablist" aria-orientation="vertical">
+        <!-- Section 0 -->
+          {% for name, section in sections.items %}
+                <button
+                    class="nav-link {{ section.status.css }} {% if section.active and not section.subsections %}active{% endif %} {{ section.id }}"
+                    id="{{ section.id }}-tab"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#{{ section.id }}-menu"
+                    type="button"
+                    role="tab"
+                    aria-controls="{{ section.id }}-menu"
+                    aria-selected="{% if section.active %}true{% else %}false{% endif %}"
+                    data-slm-status={{ section.status.value }}
+                    data-slm-flags={{ section.flags }}
+                    {% if not section.subsections %}onclick="window.location='{% url "slm:edit" station=station section=section.id %}'"{% endif %}
+                >
+                    {{ name }}{% if section.subsections %}<i class="bi bi-chevron-down"></i>{% endif %}
+                    {% if section.flags %}
+                      <span class="badge rounded-pill bg-danger">
+                        {{ section.flags }}
+                      </span>
+                    {% endif %}
+                </button>
+                {% if section.subsections %}
+                <div class="{% if not section.active %}collapse{% endif %} w-100" id="{{ section.id }}-menu">
+                {% for subname, subsection in section.subsections.items %}
+                  <button
+                      class="nav-link ms-4 {{ subsection.status.css }} {% if subsection.active %}active{% endif %} {{ subsection.id }}"
+                      id="{{ section.id }}-{{ subsection.id }}-tab"
+                      data-bs-toggle="pill"
+                      data-bs-target="#{{ section.id }}-{{ subsection.id }}-tab"
+                      type="button"
+                      role="tab"
+                      aria-controls="{{ section.id }}-{{ subsection.id }}-tab"
+                      aria-selected="{% if subsection.active %}true{% else %}false{% endif %}"
+                      data-slm-status={{ subsection.status.value }}
+                      data-slm-flags={{ subsection.flags }}
+                      onclick="window.location='{% url "slm:edit" station=station section=subsection.id %}'"
+                  >
+                    &ensp; {{ subname }}
+                      {% if subsection.flags %}
+                      <span class="badge rounded-pill bg-danger">
+                        {{ subsection.flags }}
+                      </span>
+                      {% endif %}
+                  </button>
+                {% endfor %}
+                </div>
+                {% endif %}
+            {% endfor %}
+      </div>
+    </div>
+    <!-- End of Site Log Sections Sidebar Menu -->
+
+    <!-- Site Log Section Content -->
+    <div class="tab-content col-9 p-5" id="section-content">
+        <!-- Form Title-->
+        {% if section_name %}
+            <div class="section_header mb-4 pb-3 border-bottom">
+              <span class="slm-section-header">{{ section_name }}</span>
+            </div>
+        {% endif %}
+      <!-- Section 0 Content -->
+      {% if multi %}
+          <div id="add-{{ section_id }}" class="d-grid gap-2 mb-2 d-flex justify-content-between">
+              <button type='submit' name='add' class="btn btn-success">
+                {% translate "Add" %}
+              </button>
+          </div>
+          <div class="accordion" id="accordion-{{ section_id }}">
+            {% for form in forms %}
+                {% if not forloop.first %}
+                    {% with form_inst_id=section_id|to_id:forloop.counter %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
+                                    <span>{{ form.instance.heading }}{% if form.flags|length %} <span class="badge rounded-pill bg-danger">{{ form.flags|length }}</span>{% endif %}</span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
+                                </button>
+                            </h2>
+                            <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordion-{{ section_id }}">
+                              <div class="accordion-body">
+                                {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
+                                {{ form.instance.flags }}
+                                {% compress js inline %}
+                                    {{ form.flags|json_script:flag_id }}
+                                {% endcompress %}
+                                {% include 'slm/station/form.html' with form=form form_id=form_inst_id flag_id=flag_id %}
+                                {% endwith %}
+                              </div>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+          </div>
+          <script>
+            if (typeof newIdx === 'undefined') {
+                var newIdx = {{ forms|length }};
+            }
+            $("#add-{{ section_id }} > button").click(function() {
+                let formId = `{{ section_id }}-new-${newIdx}`;
+                let stack = $("#accordion-{{ section_id }}");
+                stack.prepend(`
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-${formId}" aria-expanded="true" aria-controls="accordion-${formId}">
+                                <span>{% translate "New" %} {% if subname %}{{ subname }}{% else %}{{ name }}{% endif %}</span><span class="slm-effective"></span>
+                            </button>
+                        </h2>
+                        <div id="accordion-${formId}" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordion-{{ section_id }}">
+                            <div class="accordion-body">
+                                {% include 'slm/station/form.html' with form=forms|first form_id='new_form_id' %}
+                            </div>
+                        </div>
+                    </div>
+                `.replace('new_form_id', formId));
+                slm.initForm($(`#site-${formId}`));
+                $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();
+                $(`#site-${formId} a[data-bs-toggle="popover"]`).popover();
+                newIdx += 1;
+            });
+          </script>
+      {% elif forms %}
+          {% with form=forms|first %}
+              {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
+              {% compress js inline %}
+                  {{ form.flags|json_script:flag_id }}
+              {% endcompress %}
+              {% include 'slm/station/form.html' with form=form form_id=section_id flag_id=flag_id %}
+              {% endwith %}
+          </div>
+          {% endwith %}
+      {% endif %}
+</div>
+{% endblock %}

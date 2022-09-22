@@ -1,0 +1,90 @@
+<!--
+
+Template for View/Diff page.
+
+-->
+
+{% extends "slm/station/base.html" %}
+{% load compress slm %}
+
+{% block action_content %}
+<div class="container">
+  <!-- Title -->
+  <div class="d-flex justify-content-between mt-4 pb-3 mx-5 border-bottom">
+      <h2>Review</h2>
+      <div>
+        <!-- <button class="btn btn-primary" {% if not unpublished_changes %}disabled{% endif %}>Submit</button> -->
+        <button class="btn btn-primary" {% if not can_publish or not unpublished_changes %}disabled{% endif %}>Publish</button>
+      </div>
+  </div>
+
+  <!-- View/Diff Comparison -->
+  <div id="review-diff-container">
+    <div class="d-flex justify-content-between mb-2">
+        <div
+            id="slm-review-back"
+            class="d-flex justify-content-between"
+        >
+            <button class="btn btn-sm mx-1" {% if not back_prev %}disabled{% else %}data-slm-epoch="{{ back_prev }}"{% endif %}><i class="bi bi-skip-backward"></i></button>
+            <div class="d-flex justify-content-center">
+                <label for="back"></label>
+                <input type="datetime-local" id="back" name="back" value="{{ back_current|strip_ms }}" max="{{ forward_current|strip_ms }}" {% if not back_current %}disabled{% endif %}>
+            </div>
+            <button class="btn btn-sm mx-1" {% if not back_next %}disabled{% else %}data-slm-epoch="{{ back_next }}"{% endif %}><i class="bi bi-skip-forward"></i></button>
+        </div>
+        <div
+            id="slm-review-forward"
+            class="d-flex justify-content-between"
+        >
+            <button class="btn btn-sm mx-1" {% if not foward_prev %}disabled{% else %}data-slm-epoch="{{ forward_prev }}"{% endif %}><i class="bi bi-skip-backward"></i></button>
+            <div class="d-flex justify-content-center">
+                <label for="forward"></label>
+                <input type="datetime-local" id="forward" name="forward" value="{{ forward_current|strip_ms }}" min="{{ back_current|strip_ms }}" {% if not forward_current %}disabled{% endif %}>
+            </div>
+            <button class="btn btn-sm mx-1" {% if not forward_next %}disabled{% else %}data-slm-epoch="{{ forward_next }}"{% endif %}><i class="bi bi-skip-forward"></i></button>
+        </div>
+    </div>
+    <pre id="review-diff"></pre>
+  </div>
+</div>
+{% compress js inline %}
+<script>
+    {% autoescape off %}
+    const back_text = `{{ back_text }}`;
+    const forward_text = `{{ forward_text }}`;
+    const epoch = '{{ epoch }}';
+    const published = {% if published %}true{% else %}false{% endif %};
+    const options = {
+        kwargs: {
+            station: '{{ station }}'
+        },
+        query: {}
+    };
+    {% if published %}options.query.pub = true;{% endif %}
+    {% if back_current %}options.query.back = '{{ back_current }}';{% endif %}
+    {% if forward_current %}options.query.forward = '{{ forward_current }}';{% endif %}
+    {% if epoch %}options.kwargs.epoch = '{{ epoch }}'{% endif %}
+
+    {% endautoescape %}
+    $(document).ready(function() {
+        slm.showDiff(forward_text, back_text, $("#review-diff"), 'line'); // mode could also be 'word' or 'char'
+        $('#slm-review-back > button').click(function() {
+            options.query.back = $(this).data('slmEpoch');
+            window.location = slm.urls.reverse('slm:review', options);
+        });
+        $('#slm-review-forward > button').click(function() {
+            options.query.forward = $(this).data('slmEpoch');
+            window.location = slm.urls.reverse('slm:review', options);
+        });
+        $('#slm-review-back > div > input').change(function() {
+           options.query.back = $(this).val();
+           window.location = slm.urls.reverse('slm:review', options);
+        });
+        $('#slm-review-forward > div > input').change(function() {
+           options.query.forward = $(this).val();
+           window.location = slm.urls.reverse('slm:review', options);
+        });
+    });
+</script>
+{% endcompress %}
+{% endblock %}

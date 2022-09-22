@@ -1,0 +1,12 @@
+<li class="nav-item {% if url_name == 'new_site' %}active{% endif %}">
+  <a class="nav-link" href="{% url 'slm:new_site' %}">New Site</a>
+</li>
+<li class="nav-item {% if url_name == 'upload' %}active{% endif %}">
+  <a class="nav-link" href="{% url 'slm:upload' %}">Upload Logs</a>
+</li>
+<li class="nav-item {% if url_name == 'about' %}active{% endif %}">
+  <a class="nav-link" href="{% url 'slm:about' %}">About</a>
+</li>
+<li class="nav-item {% if url_name == 'help' %}active{% endif %}">
+  <a class="nav-link" href="{% url 'slm:help' %}">Help</a>
+</li>

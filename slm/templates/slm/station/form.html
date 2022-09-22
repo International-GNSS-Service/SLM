@@ -1,0 +1,112 @@
+{% load widget_tweaks i18n compress slm %}
+
+<!-- Form Fields -->
+<div class="form-group px-0">
+  {% compress js inline %}
+  {% endcompress %}
+  <form id="site-{{ form_id }}" data-slm-id="{% if form.instance.id %}{{ form.instance.id }}{% endif %}" data-slm-flags="{{ flag_id }}" class="slm-form" data-slm-method="post" data-slm-api="{{ form.api }}">
+    <div class="alert alert-warning slm-form-unpublished" {% if not form.diff%}style="display: none"{% endif %}>{% trans "This section has unpublished changes!" %}</div>
+    <div class="alert alert-dark slm-form-deleted" {% if not form.instance.is_deleted %}style="display: none"{% endif %}>{% trans "This section has been deleted!" %}</div>
+
+    <div class="alert alert-danger slm-form-error" {% if not form.instance.flags %}style="display: none"{% endif %}>{% trans "This section has errors!" %}</div>
+    {% csrf_token %}
+    {% for structure in form.structured_fields %}
+        {% if structure.0 %}
+            <fieldset class="form-group slm-form-group">
+            <legend>{{ structure.0 }}</legend>
+        {% endif %}
+        {% for field in structure.1 %}
+              {% with diff=form.diff|key_value:field.name %}
+              {% with flag=form.flags|key_value:field.name %}
+                <fieldset class="form-group slm-form-fieldset" data-slm-field="{{ field.name }}">
+                <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-field"{% endif %}>
+                  <div class="col-3">
+                      <label class="form-label">{{ field.label }}</label>
+                  </div>
+                  {% if request.user|is_moderator:form.instance and not form.instance.is_deleted %}
+                  <div class="col-1 slm-mod-col p-0 text-end slm-flag">
+                      <a tabindex="0"
+                         type="button"
+                      ><span class="slm-flag-error">
+                          {% if not flag %}
+                              <i class="bi bi-flag"></i><i class="bi bi-flag-fill"></i>
+                          {% else %}
+                              <i class="bi bi-x-circle"></i><i class="bi bi-x-circle-fill"></i>
+                          {% endif %}
+                      </span>
+                      </a>
+                  </div>
+                  <div class="col-7">
+                  {% else %}
+                  <div class="col-8">
+                  {% endif %}
+                      {% if form.instance.is_deleted %}
+                          {% if flag and not field.is_hidden %}
+                            {% render_field field class="form-control is-invalid" disabled="" %}
+                          {% elif diff and not field.is_hidden %}
+                            {% render_field field class="form-control is-invalid slm-form-unpublished" disabled="" %}
+                          {% elif field.is_hidden %}
+                            {% render_field field class="form-control" %}
+                          {% else %}
+                            {% render_field field class="form-control" disabled="" %}
+                          {% endif %}
+                      {% else %}
+                          {% if flag and not field.is_hidden %}
+                            {% render_field field class="form-control is-invalid" %}
+                          {% elif diff and not field.is_hidden %}
+                            {% render_field field class="form-control is-invalid slm-form-unpublished" %}
+                          {% else %}
+                            {% render_field field class="form-control" %}
+                          {% endif %}
+                      {% endif %}
+                      {% if not field.is_hidden %}
+                      {% if request.user|is_moderator:form.instance %}
+                      <label for="{{ field.label|to_id:'flag'}}" style="display: none;"></label>
+                      <input id="{{ field.label|to_id:'flag'}}" type="text" name="{{ field.name }}_flag" data-slm-field="{{ field.name }}" {% if flag %}value="{{ flag }}"{% endif %} {% if not flag %}style="display: none;"{% endif %} class="form-control slm-flag-input" {% if form.instance.is_deleted %}disabled{% endif %}/>
+                      {% elif flag %}
+                          <div id="{{ field.label|to_id:'flag'}}" class="invalid-feedback slm-form-error">{{ flag }}</div>
+                      {% endif %}
+                      {% if diff %}
+                          <div id="{{ field.label|to_id:'diff'}}" class="invalid-feedback slm-form-unpublished">{% trans "The published value is " %}{{ diff.pub|value_filter }}</div>
+                      {% endif %}
+                      {% endif %}
+                  </div>
+                  <div class="col-1">
+                      {% if field.help_text %}
+                      <a tabindex="0"
+                         type="button"
+                         data-bs-toggle="popover"
+                         data-bs-trigger="focus"
+                         data-bs-placement="right"
+                         data-bs-content="{{ field.help_text }}"
+                      ><i class="bi bi-question-circle"></i>
+                      </a>
+                      {% endif %}
+                  </div>
+                </div>
+                </fieldset>
+              {% endwith %}
+          {% endwith %}
+        {% endfor %}
+        {% if structure.0 %}
+            </fieldset>
+        {% endif %}
+    {% endfor %}
+
+    <br/>
+    <!-- Save/Delete Buttons -->
+    <div class="d-grid gap-2 d-flex justify-content-between">
+      <div class="d-flex gap-2">
+          <button type='button' name='save' class="btn btn-success" {% if form.instance.is_deleted %}style="display: none"{% endif %}>
+            {% translate "Save" %}
+          </button>
+          <button type='button' name='publish' class="btn btn-success" {% if not request.user|is_moderator:form.instance or not form.instance.id or form.instance.published %}style="display: none"{% endif %}>
+            {% translate "Publish" %}
+          </button>
+      </div>
+        <button type='button' name='delete' class="btn btn-danger" {% if form.instance.subsection == None or form.instance.is_deleted %}style="display: none"{% endif %}>
+            {% translate "Delete" %}
+        </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,167 @@
+<!--
+
+Template for 8.2 - Pressure Sensor
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Pressure Sensor Model -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Pressure_Sensor_Model.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Pressure_Sensor_Model class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter pressure sensor model
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Manufacturer -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Manufacturer_Pressure.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Manufacturer_Pressure class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter manufacturer's name
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Serial Number -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Serial_Number_Pressure.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Serial_Number_Pressure class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the serial number of the sensor
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Data Sampling Interval (sec) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Data_Sampling_Interval_Pressure.label }}</label>
+            </div>
+            <div class="col-6 input-group">
+                {% render_field pressureSensor_8_2.Data_Sampling_Interval_Pressure class="form-control" %}
+                <span class="input-group-text">sec</span>
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the sample interval in seconds. Format: (sec)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Accuracy (hPa) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Accuracy_Pressure.label }}</label>
+            </div>
+            <div class="col-6 input-group">
+                {% render_field pressureSensor_8_2.Accuracy_Pressure class="form-control" %}
+                <span class="input-group-text">hPa</span>
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the accuracy in hectopascal. Format: (hPa)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Height Diff to Ant (m) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Height_Diff_to_Ant_Pressure.label }}</label>
+            </div>
+            <div class="col-6 input-group">
+                {% render_field pressureSensor_8_2.Height_Diff_to_Ant_Pressure class="form-control" %}
+                <span class="input-group-text">m</span>
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		In meters, enter the difference in height between the sensor and the GNSS antenna. Positive number indicates the sensor is above the GNSS antenna. Decimeter accuracy preferred. Format: (m)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Calibration Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Calibration_Date_Pressure.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Calibration_Date_Pressure class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the date the pressure sensor was calibrated. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective Start Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Eff_Start_Date_Pressure.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Eff_Start_Date_Pressure class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the effective start date for the pressure sensor. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective End Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ pressureSensor_8_2.Eff_End_Date_Pressure.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Eff_End_Date_Pressure class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the effective end date for the pressure sensor. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="row align-items-start d-flex justify-content-between mb-2">
+            <div class="col-3 pt-2">
+                <label class="form-label">{{ pressureSensor_8_2.Notes_Pressure.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field pressureSensor_8_2.Notes_Pressure class="form-control" %}
+            </div>
+            <div class="col-3 pt-2">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter any additional information relevant to the pressure sensor. Format: (multiple lines)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Cancel/Save Buttons -->
+        </br>
+        <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+            <button type='button', name='cancel', class="btn btn-secondary">
+                Cancel
+            </button>
+            <button type='submit', name='save', class="btn btn-success">
+                Save
+            </button>
+        </div>
+    </form>
+</div>

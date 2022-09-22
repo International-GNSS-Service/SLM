@@ -1,0 +1,28 @@
+{% load compress %}
+
+<div
+    id='slm-log-scroll'
+    class="list-group station-alerts w-100"
+    data-slm-page=0
+    data-slm-page-size={{page_size|default:10}}
+>
+    <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
+        <div class="slm-loader"></div>
+    </div>
+</div>
+
+{% compress js inline %}
+<script>
+    $(document).ready(function() {
+        slm.initInfiniteScroll(
+            $("#slm-log-scroll"),
+            null,
+            $('#slm-log-scroll .slm-loader'),
+            "slm_edit_api:logentries-list",
+            {},
+            {% if station %}{site: '{{ station }}'}{% else %}{}{% endif %},
+            slm.drawLogs
+        );
+    });
+</script>
+{% endcompress %}

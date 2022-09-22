@@ -1,0 +1,101 @@
+{% extends "slm/base.html" %}
+{% load compress %}
+
+
+{% block page_content %}
+    <div class="row g-0">
+        <div class="col-2">
+        {% block station_list %}
+            {% include 'slm/widgets/stationlist.html' %}
+        {% endblock %}
+        </div>
+
+        <div class="col-10">
+          <div class="container-fluid">
+
+            {% block actions_bar %}
+                <div id="station_nav">
+                    {% if agencies %}
+                    {% block station_agencies %}
+                    <header class="d-flex flex-wrap justify-content-center p-3 slm-agency">
+                        {% for agency in agencies %}
+                        <h3>{{ agency }}</h3>
+                        {% endfor %}
+                    </header>
+                    {% endblock %}
+                    {% endif %}
+                    {% if station %}
+                    <header class="d-flex flex-wrap justify-content-center py-3 px-3 border-bottom">
+
+                        <!-- Station ID -->
+                        <a href="{% url 'slm:edit' station=station %}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+                            <h1>{% if station %}{{ station }}{% endif %}</h1>
+                        </a>
+
+                        <!-- Links -->
+                        <ul class="nav nav-pills align-items-center">
+                            {% with station_name=site.fourid %}
+                                {% with url_name=request.resolver_match.url_name %}
+                                <li class="nav-item {% if url_name == 'alerts' %}active{% endif %}">
+                                    <a href="{% if station %}{% url 'slm:alerts' station=station %}{% else %}{% url 'slm:alerts' %}{% endif %}" class="nav-link"><i class="bi bi-bell{% if station_alert_level %}-fill text-{{ station_alert_level.bootstrap }}{% endif %}"></i> Alerts</a>
+                                </li>
+                                <li class="nav-item {% if url_name == 'edit' %}active{% endif %}">
+                                    <a href="{% if station %}{% url 'slm:edit' station=station %}{% else %}{% url 'slm:edit' %}{% endif %}" class="nav-link"><i class="bi bi-pencil-square"></i> Edit</a>
+                                </li>
+                                <li class="nav-item {% if url_name == 'download' %}active{% endif %}">
+                                    <a href="{% if station %}{% url 'slm:download' station=station %}{% else %}{% url 'slm:download' %}{% endif %}" class="nav-link"><i class="bi bi-download"></i> Download</a>
+                                </li>
+                                <li class="nav-item {% if url_name == 'review' %}active{% endif %}">
+                                    <a href="{% if station %}{% url 'slm:review' station=station %}{% else %}{% url 'slm:review' %}{% endif %}" class="nav-link"><i class="bi bi-file-check"></i> Review</a>
+                                </li>
+                                <li class="nav-item {% if url_name == 'log' %}active{% endif %}">
+                                    <a href="{% if station %}{% url 'slm:log' station=station %}{% else %}{% url 'slm:log' %}{% endif %}" class="nav-link"><i class="bi bi-journal-text"></i> Log</a>
+                                </li>
+                                {% endwith %}
+                            {% endwith %}
+                        </ul>
+                    </header>
+                    {% endif %}
+                </div>
+
+            {% endblock %}
+
+                {% block action_content %}
+                <div class="container">
+                    <div class="d-flex flex-column justify-content-left align-items-left min-vh-100">
+                    <!-- Alert -->
+                    <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+                        <strong>This application is still under development in Phase 1: Core Functionality Implementation.</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="mb-4 pb-3 border-bottom">
+                    <h1 class="mt-4">Welcome to the SLM 2.0 </h1>
+                    </div>
+
+                    <!-- Feeds -->
+                    <div class="row vh-100">
+                    <!-- All Notifications Feed -->
+                    <div class="my-2 mr-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
+                      <h3 class="border-bottom pb-2 mb-4">Notifications</h3>
+                      {% include 'slm/widgets/notification_scroll.html' %}
+                    </div>
+                    <!-- End of All Notifications Feed -->
+
+                    <!-- Announcements Feed -->
+                    <div class="my-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
+                      <h3 class="border-bottom pb-2 mb-4">Recent Station Updates</h3>
+                      {% include 'slm/widgets/log_scroll.html' %}
+                    </div>
+                    <!-- End of Announcements Feed -->
+
+                    </div>
+                </div>
+                <!-- End of Feeds -->
+                {% endblock %}
+            </div>
+          </div>
+        </div>
+
+{% endblock %}

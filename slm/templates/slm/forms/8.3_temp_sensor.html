@@ -1,0 +1,181 @@
+<!--
+
+Template for 8.3 - Temperature Sensor
+
+-->
+
+{% load widget_tweaks %}
+
+<!-- Form Fields -->     
+<div class="container form-group px-0">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Temp Sensor Model -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Temp_Sensor_Model.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Temp_Sensor_Model class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter temperature sensor model
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Manufacturer -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Manufacturer_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Manufacturer_Temp class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter manufacturer's name
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Serial Number -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Serial_Number_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Serial_Number_Temp class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the serial number of the sensor
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Data Sampling Interval (sec) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Data_Sampling_Interval_Temp.label }}</label>
+            </div>
+            <div class="col-6 input-group">
+                {% render_field temperatureSensor_8_3.Data_Sampling_Interval_Temp class="form-control" %}
+                <span class="input-group-text">sec</span>
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the sample interval in seconds. Format: (sec)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Accuracy (deg C) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Accuracy_Temp.label }}</label>
+            </div>
+            <div class="col-6 input-group">
+                {% render_field temperatureSensor_8_3.Accuracy_Temp class="form-control" %}
+                <span class="input-group-text">deg C</span>
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the accuracy in degrees Centigrade. Format: (deg C)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Aspiration -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Aspiration_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Aspiration_Temp class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the aspiration type if known. Format: (UNASPIRATED/NATURAL/FAN/etc)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Height Diff to Ant (m) -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Height_Diff_to_Ant_Temp.label }}</label>
+            </div>
+            <div class="col-6 input-group">
+                {% render_field temperatureSensor_8_3.Height_Diff_to_Ant_Temp class="form-control" %}
+                <span class="input-group-text">m</span>
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		In meters, enter the difference in height between the sensor and the GNSS antenna. Positive number indicates the sensor is above the GNSS antenna. Decimeter accuracy preferred. Format: (m)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Calibration Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Calibration_Date_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Calibration_Date_Temp class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the date the temperature sensor was calibrated. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective Start Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Eff_Start_Date_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Eff_Start_Date_Temp class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the effective start date for the temperature sensor. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Effective End Date -->
+        <div class="row align-items-center d-flex justify-content-between mb-2">
+            <div class="col-3">
+                <label class="form-label">{{ temperatureSensor_8_3.Eff_End_Date_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Eff_End_Date_Temp class="form-control" %}
+            </div>
+            <div class="col-3">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter the effective end date for the temperature sensor. Format: (CCYY-MM-DD)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="row align-items-start d-flex justify-content-between mb-2">
+            <div class="col-3 pt-2">
+                <label class="form-label">{{ temperatureSensor_8_3.Notes_Temp.label }}</label>
+            </div>
+            <div class="col-6">
+                {% render_field temperatureSensor_8_3.Notes_Temp class="form-control" %}
+            </div>
+            <div class="col-3 pt-2">
+                <a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="
+        		Enter any additional information relevant to the temperature sensor. Format: (multiple lines)
+        		"><i class="bi bi-question-circle"></i></a>
+            </div>
+        </div>
+        <!-- Cancel/Save Buttons -->
+        </br>
+        <div id="submitcancel" class="d-grid gap-2 d-flex justify-content-between">
+            <button type='button', name='cancel', class="btn btn-secondary">
+                Cancel
+            </button>
+            <button type='submit', name='save', class="btn btn-success">
+                Save
+            </button>
+        </div>
+    </form>
+</div>

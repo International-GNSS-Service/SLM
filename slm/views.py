@@ -11,18 +11,21 @@ MORE INFO:
 https://docs.djangoproject.com/en/3.2/topics/http/views/
 '''
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.urls import reverse
-from django.http import HttpResponse, HttpResponseRedirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from django.db.models.functions import Cast
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
 from slm.models import (
-    Alert
+    Alert,
+    Site,
+    SiteSubSection,
+    LogEntry
+)
+from slm.defines import (
+    SiteLogStatus,
+    LogEntryType
 )
 from django.shortcuts import redirect
 from datetime import datetime
@@ -32,18 +35,18 @@ from slm.api.serializers import SiteLogSerializer
 from django.http import Http404
 from django.views.generic import TemplateView
 from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView
-from django.utils.timezone import now
-from slm.utils import to_snake_case
 from slm.defines import AlertLevel
 from django.db.models.fields import NOT_PROVIDED
+from django.db.models import (
+    Max,
+    Q
+)
 from slm.new_forms import (
     SiteFormForm,
     SiteIdentificationForm,
     SiteLocationForm,
     SiteReceiverForm,
     SiteAntennaForm,
-    AntennaTypeForm,
     SiteSurveyedLocalTiesForm,
     SiteFrequencyStandardForm,
     SiteCollocationForm,
@@ -63,7 +66,6 @@ from slm.new_forms import (
     UserForm,
     NewSiteForm
 )
-from django.http import StreamingHttpResponse
 
 User = get_user_model()
 

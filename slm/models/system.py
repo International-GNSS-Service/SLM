@@ -20,25 +20,22 @@ class AgencyQuerySet(models.QuerySet):
 
 class Agency(models.Model):
     id = models.AutoField(primary_key=True)  # Field name made lowercase.
-    name = models.CharField(max_length=50, blank=True, null=True, db_index=True)  # Field name made lowercase.
-    shortname = models.CharField(max_length=20, blank=True, null=True)  # Field name made lowercase.
-    address = models.CharField(max_length=50, blank=True, null=True)  # Field name made lowercase.
-    address2 = models.CharField(max_length=50, blank=True, null=True)  # Field name made lowercase.
-    city = models.CharField(max_length=50, blank=True, null=True)  # Field name made lowercase.
-    state = models.CharField(max_length=30, blank=True, null=True)  # Field name made lowercase.
-    postal_code = models.CharField(max_length=20, blank=True, null=True)  # Field name made lowercase.
-    country = models.CharField(max_length=50, blank=True, null=True)  # Field name made lowercase.
-    phone1 = models.CharField(max_length=20, blank=True, null=True)  # Field name made lowercase.
-    phone2 = models.CharField(max_length=20, blank=True, null=True)  # Field name made lowercase.
-    email1 = models.EmailField(max_length=100, blank=True, null=True)  # Field name made lowercase.
-    email2 = models.EmailField(max_length=100, blank=True, null=True)  # Field name made lowercase.
-    contact = models.CharField(max_length=50, blank=True, null=True)  # Field name made lowercase.
-    other = models.TextField(blank=True, null=True)  # Field name made lowercase.
-    active = models.IntegerField(blank=True, null=True)  # Field name made lowercase.
-    create_date = models.DateTimeField(blank=True, null=True)  # Field name made lowercase.
-    create_user = models.CharField(max_length=30, blank=True, null=True)  # Field name made lowercase.
-    modified_date = models.DateTimeField(blank=True, null=True)  # Field name made lowercase.
-    modified_user = models.CharField(max_length=30, blank=True, null=True)  # Field name made lowercase.
+    name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    shortname = models.CharField(max_length=20, blank=True, null=True)
+    address = models.CharField(max_length=50, blank=True, null=True)
+    address2 = models.CharField(max_length=50, blank=True, null=True)
+    city = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=30, blank=True, null=True)
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
+    country = models.CharField(max_length=50, blank=True, null=True)
+    phone1 = models.CharField(max_length=20, blank=True, null=True)
+    phone2 = models.CharField(max_length=20, blank=True, null=True)
+    email1 = models.EmailField(max_length=100, blank=True, null=True)
+    email2 = models.EmailField(max_length=100, blank=True, null=True)
+    contact = models.CharField(max_length=50, blank=True, null=True)
+    other = models.TextField(blank=True, null=True)
+    active = models.BooleanField(blank=True, null=False, default=True)
+    created = models.DateTimeField(blank=True, auto_now_add=True)
 
     objects = AgencyManager.from_queryset(AgencyQuerySet)()
 

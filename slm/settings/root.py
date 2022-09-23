@@ -85,7 +85,6 @@ ROOT_URLCONF = 'slm.settings.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        #'DIRS': ['./slm/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -124,7 +123,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Following two statements added to assist with handling of static files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'slm/static')]
 
 set_default('SITE_NAME', ALLOWED_HOSTS[0] if ALLOWED_HOSTS else 'localhost')
 
@@ -149,3 +147,6 @@ set_default('MEDIA_ROOT', SITE_DIR / 'media')
 COMPRESS_OFFLINE = True
 COMPRESS_ROOT = STATIC_ROOT
 COMPRESS_URL = STATIC_URL
+
+#Path(STATIC_ROOT).mkdir(parents=True, exist_ok=True)
+#Path(MEDIA_ROOT).mkdir(parents=True, exist_ok=True)

@@ -139,3 +139,9 @@ class Alert(models.Model):
     class Meta:
         managed = True
         ordering = ('-timestamp',)
+
+
+class Network(models.Model):
+
+    name = models.CharField(max_length=100, blank=False, null=False)
+    sites = models.ManyToManyField('slm.Site')

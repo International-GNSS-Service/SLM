@@ -1,8 +1,4 @@
 from slm.models import SingletonModel
-from slm.map.fields import (
-    MapBoxStyleField,
-    MapBoxProjectionField
-)
 from slm.map.defines import (
     MapBoxStyle,
     MapBoxProjection
@@ -13,6 +9,7 @@ from django.core.validators import (
     MinValueValidator,
     MaxValueValidator
 )
+from django_enum import EnumField
 
 
 class MapSettings(SingletonModel):
@@ -32,7 +29,8 @@ class MapSettings(SingletonModel):
         max_length=255
     )
 
-    map_style = MapBoxStyleField(
+    map_style = EnumField(
+        MapBoxStyle,
         null=False,
         blank=True,
         default=MapBoxStyle.LIGHT,
@@ -41,7 +39,8 @@ class MapSettings(SingletonModel):
         )
     )
 
-    map_projection = MapBoxProjectionField(
+    map_projection = EnumField(
+        MapBoxProjection,
         null=False,
         blank=True,
         default=MapBoxProjection.GLOBE,

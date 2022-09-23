@@ -9,3 +9,6 @@ from slm.defines.AntennaFeatures import AntennaFeatures
 from slm.defines.LogEntryType import LogEntryType
 from slm.defines.AlertLevel import AlertLevel
 from slm.defines.FlagSeverity import FlagSeverity
+from slm.defines.RinexVersion import RinexVersion
+from slm.defines.DataRate import DataRate
+

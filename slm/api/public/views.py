@@ -25,7 +25,7 @@ from slm.models import (
     SiteFrequencyStandard,
     SiteIdentification,
     SiteMoreInformation,
-    #Dataavailability,
+    DataAvailability,
 )
 from slm.api.pagination import DataTablesPagination
 from django.utils.timezone import now
@@ -187,8 +187,8 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         )
 
         """
-        last_published_data_avail = Dataavailability.objects.filter(
-            id=OuterRef('pk')
+        last_published_data_avail = DataAvailability.objects.filter(
+            site=OuterRef('pk')
         )
 
         last_data_1=ExpressionWrapper(((ExtractYear(now().date()) - (ExtractYear('rinex2')))*12*30) + 
@@ -199,6 +199,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                             ((ExtractMonth(now().date()) - (ExtractMonth('rinex3')))*30) + 
                             ((ExtractDay(now().date()) - (ExtractDay('rinex3')))) , models.IntegerField())
         """
+        from random import randint
 
         return Site.objects.filter(
             ~Q(status__in=[SiteLogStatus.DORMANT, SiteLogStatus.PENDING, SiteLogStatus.UPDATED])
@@ -217,6 +218,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             domes_number=Subquery(last_published_iden.values('iers_domes_number')[:1]),
             satellite_system=Subquery(last_published_receiver.values('satellite_system')[:1]),
             data_center=Subquery(last_published_info.values('primary')[:1]),
+            last_data=Value(randint(0,30))
             #rinex3=Subquery(last_published_data_avail.values('cddis_daily_rinex3')[:1]),
             #rinex2=Subquery(last_published_data_avail.values('cddis_daily_rinex2')[:1]),
             #last_data=Case(When(rinex3=ExpressionWrapper(Q(rinex3=None),output_field=BooleanField()), then=last_data_1), default=last_data_2)

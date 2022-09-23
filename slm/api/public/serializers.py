@@ -33,10 +33,9 @@ class StationListSerializer(serializers.ModelSerializer):
     domes_number = serializers.CharField()
     satellite_system = serializers.CharField()
     data_center = serializers.CharField()
-    rinex3 = serializers.CharField()
-    rinex2 = serializers.CharField()
+    #rinex3 = serializers.CharField()
+    #rinex2 = serializers.CharField()
     last_data = serializers.IntegerField()
-
 
     def get_latitude(self, obj):
         if obj.latitude is not None:
@@ -70,7 +69,7 @@ class StationListSerializer(serializers.ModelSerializer):
             'domes_number',
             'satellite_system',
             'data_center',
-            'rinex3',
-            'rinex2',
+            #'rinex3',
+            #'rinex2',
             'last_data'
         ]

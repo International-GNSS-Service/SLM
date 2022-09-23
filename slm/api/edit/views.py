@@ -320,6 +320,7 @@ class SectionViewSet(type):
         class ViewSetSerializer(ModelSerializer):
 
             _diff = serializers.SerializerMethodField(read_only=True)
+            _flags = serializers.JSONField(read_only=False, required=False)
 
             def get__diff(self, obj):
                 return obj.published_diff()
@@ -403,10 +404,6 @@ class SectionViewSet(type):
                          'is_deleted'
                      ] if issubclass(ModelClass, SiteSubSection) else [])
                 extra_kwargs = {
-                    '_flags': {
-                        'read_only': False,
-                        'required': False
-                    },
                     'id': {
                         'required': False,
                         'read_only': False

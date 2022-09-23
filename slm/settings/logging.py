@@ -8,6 +8,7 @@ if DEBUG:
 
 set_default('LOG_DIR', BASE_DIR / 'logs')
 
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -16,7 +17,7 @@ LOGGING = {
             'level': DEFAULT_LOG_LEVEL,  # set in deployment routine
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'formatter': 'verbose' if DEBUG else 'simple',  # set in deployment routine
-            'filename': LOG_DIR / f'{SITE_NAME.lower()}{"_staging" if STAGING else ""}{"_manage" if MANAGEMENT_MODE else ""}.log',
+            'filename': LOG_DIR / f'{SITE_NAME.lower()}{"_manage" if MANAGEMENT_MODE else ""}.log',
             'when': 'midnight',
             'interval': 1,
             'backupCount': 14
@@ -38,17 +39,32 @@ LOGGING = {
             'format': '%(message)s'
         }
     },
-    'filters': {},
+    'filters': {
+        'squelch_traces': {
+            '()': 'slm.utils.SquelchStackTraces',
+        },
+    },
     'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': DEFAULT_LOG_LEVEL,
+            'propagate': False,
+        },
         'django.db.backends': {
             'handlers': ['file'],
             'level': 'INFO',  # super noisy
             'propagate': False,
         },
+        'django.template': {
+            'handlers': ['file'],
+            'filters': ['squelch_traces'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'django.utils.autoreload': {
-                'handlers': ['file'],
-                'level': 'INFO',  # this logger got really noisy in django 2.2
-                'propagate': False
+            'handlers': ['file'],
+            'level': 'INFO',  # this logger got really noisy in django 2.2
+            'propagate': False
         },
         'django_auth_ldap': {
             'level': DEFAULT_LOG_LEVEL,

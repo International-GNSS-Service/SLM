@@ -3,6 +3,14 @@ import sys
 import inspect
 from rest_framework.serializers import Serializer
 from pprint import pformat
+from logging import Filter
+
+
+class SquelchStackTraces(Filter):
+
+    def filter(self, record):
+        record.exc_info = None
+        return super().filter(record)
 
 
 def to_bool(bool_str):

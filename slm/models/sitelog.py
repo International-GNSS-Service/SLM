@@ -18,6 +18,7 @@ from django.db.models import (
     Value,
     When
 )
+from slm.models import compat
 from django.contrib.auth import get_user_model
 from slm.utils import date_to_str
 import datetime
@@ -569,7 +570,7 @@ class SiteSection(models.Model):
         blank=True
     )
 
-    _flags = models.JSONField(null=False, blank=True, default=dict)
+    _flags = compat.JSONField(null=False, blank=True, default=dict)
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
 

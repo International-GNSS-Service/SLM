@@ -126,12 +126,14 @@ AUTH_PASSWORD_VALIDATORS = [
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'slm/static')]
 
+set_default('SITE_NAME', ALLOWED_HOSTS[0] if ALLOWED_HOSTS else 'localhost')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#include('logging.py')
+include('logging.py')
 include('internationalization.py')
 include('routines.py')
 include('auth.py')

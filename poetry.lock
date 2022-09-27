@@ -341,11 +341,11 @@ yaml = ["PyYAML (>=5.1,<7.0)"]
 
 [[package]]
 name = "django-split-settings"
-version = "1.1.0"
+version = "1.2.0"
 description = "Organize Django settings into multiple files and directories. Easily override and modify settings. Use wildcards and optional settings files."
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.7,<4.0"
 
 [[package]]
 name = "django-test-migrations"
@@ -1297,7 +1297,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.2"
-content-hash = "0e82f3467ce214d7d89ee964a99fc6854a17146eba82abecdf5c7f3eb17bc736"
+content-hash = "a25ff681d21f34661752eab2beb43d7e681dd1aaae3ca86d1d348f47b53de7cf"
 
 [metadata.files]
 alabaster = [
@@ -1546,8 +1546,8 @@ django-render-static = [
     {file = "django_render_static-1.1.4-py3-none-any.whl", hash = "sha256:bfea4d6d19049d61f20ae3fa83cc697e301e509285d79c9b9faab01fff11622f"},
 ]
 django-split-settings = [
-    {file = "django-split-settings-1.1.0.tar.gz", hash = "sha256:6b3aed89667a95525152026eab93a9f038ff22df6883006318b8b4a3d0ca6888"},
-    {file = "django_split_settings-1.1.0-py3-none-any.whl", hash = "sha256:5d97ae64cf9ed14a831722d82ac725944667ac8c08307b7cfd22e91367b411d0"},
+    {file = "django-split-settings-1.2.0.tar.gz", hash = "sha256:31415a618256b54c5cee8662cbaa72a890683b8b7465d64ba88fdd3affdd6c60"},
+    {file = "django_split_settings-1.2.0-py3-none-any.whl", hash = "sha256:4b3be146776d49c61bd9dcf89fad40edb1544f13ab27a87a0b1aecf5a0d636f4"},
 ]
 django-test-migrations = [
     {file = "django-test-migrations-1.2.0.tar.gz", hash = "sha256:874884ff4e980583cd9f1c986bb9fbfe72b436e759be23004e4f52c26a15f363"},

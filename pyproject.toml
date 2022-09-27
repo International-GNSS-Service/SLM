@@ -57,7 +57,7 @@ manage_slm = 'slm.manage:main'
 [tool.poetry.dependencies]
 python = "^3.7.2"
 Django = "<4.0.0"
-django-split-settings = "^1.1.0"
+django-split-settings = "^1.2.0"
 importlib-resources = "^5.4.0"
 mysqlclient = "^2.1.0"
 PyMySQL = "^1.0.2"

@@ -15,6 +15,8 @@ from slm.settings import set_default
 from split_settings.tools import include
 import os
 
+set_default('DEBUG', False)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 set_default('BASE_DIR', Path(__file__).resolve().parent.parent)
 
@@ -23,8 +25,6 @@ MANAGEMENT_MODE = os.environ.get('SLM_MANAGEMENT_FLAG', False) == 'ON'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
-ALLOWED_HOSTS = []
 
 
 # Application definition

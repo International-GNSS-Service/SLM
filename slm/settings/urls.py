@@ -107,6 +107,9 @@ urlpatterns = [
     path('', include('slm.urls'))
 ]
 
+if getattr(settings, 'DJANGO_DEBUG_TOOLBAR', False):
+    urlpatterns.append(path('__debug__/', include('debug_toolbar.urls')))
+
 # allows us to use static files like images
 urlpatterns += staticfiles_urlpatterns()
 

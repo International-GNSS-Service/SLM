@@ -154,3 +154,4 @@ slm/network_map
 sites/test/static
 doc/build
 slm/static/slm/js/urls.js
+.gitignore

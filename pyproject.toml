@@ -91,6 +91,7 @@ sphinx-rtd-theme = "^1.0.0"
 django-test-migrations = "^1.2.0"
 beautifulsoup4 = "^4.11.1"
 doc8 = "^0.11.2"
+django-debug-toolbar = "^3.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

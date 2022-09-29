@@ -165,26 +165,31 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             site=OuterRef('pk'),
             published=True
         ).order_by('-edited')
+
         last_published_antenna = SiteAntenna.objects.filter(
             site=OuterRef('pk'),
             published=True
-        )
+        ).order_by('-edited')
+
         last_published_receiver = SiteReceiver.objects.filter(
             site=OuterRef('pk'),
             published=True
-        )
+        ).order_by('-edited')
+
         last_published_freq_standard = SiteFrequencyStandard.objects.filter(
             site=OuterRef('pk'),
             published=True
-        )
+        ).order_by('-edited')
+
         last_published_iden = SiteIdentification.objects.filter(
             site=OuterRef('pk'),
             published=True
-        )
+        ).order_by('-edited')
+
         last_published_info = SiteMoreInformation.objects.filter(
             site=OuterRef('pk'),
             published=True
-        )
+        ).order_by('-edited')
 
         """
         last_published_data_avail = DataAvailability.objects.filter(

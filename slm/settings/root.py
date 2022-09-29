@@ -19,6 +19,7 @@ set_default('DEBUG', False)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 set_default('BASE_DIR', Path(__file__).resolve().parent.parent)
+set_default('DJANGO_DEBUG_TOOLBAR', False)
 
 # manage.py will set this to true if django has been loaded to run a management command
 MANAGEMENT_MODE = os.environ.get('SLM_MANAGEMENT_FLAG', False) == 'ON'
@@ -137,6 +138,7 @@ include('routines.py')
 include('auth.py')
 include('rest.py')
 include('slm.py')
+include('debug.py')
 
 set_default('SITE_ID', 1)
 

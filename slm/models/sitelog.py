@@ -692,6 +692,7 @@ class SiteSection(models.Model):
         abstract = True
         ordering = ('-edited',)
         index_together = [
+            ('edited', 'published'),
             ('site', 'edited'),
             ('site', 'edited', 'published'),
         ]

@@ -25,9 +25,14 @@ class JSONField(TextField):
 
     descriptor_class = JSONCompatDeferredAttribute
 
+    def __init__(self, *args, **kwargs):
+        self.encoder = kwargs.pop('encoder', json.JSONEncoder)
+        self.decoder = kwargs.pop('decoder', json.JSONDecoder)
+        super().__init__(*args, **kwargs)
+
     def to_python(self, value):
         if isinstance(value, str) and value:
-            return json.loads(value)
+            return json.loads(value, cls=self.decoder)
         return value
 
     def get_prep_value(self, value):
@@ -35,7 +40,7 @@ class JSONField(TextField):
         Convert the database string into a dictionary.
         """
         if isinstance(value, str) and value:
-            return json.loads(value)
+            return json.loads(value, cls=self.decoder)
         return value
 
     def get_db_prep_value(self, value, connection, prepared=False):
@@ -44,7 +49,7 @@ class JSONField(TextField):
         See get_db_prep_value_
         """
         if isinstance(value, dict):
-            return json.dumps(value)
+            return json.dumps(value, cls=self.encoder)
         return value
 
     def from_db_value(self, value, expression, connection):
@@ -54,5 +59,5 @@ class JSONField(TextField):
         if isinstance(value, str) and value:
             # if garbage finds its way into the database it can break access to
             #   a whole site, should expedite transition to native JSONField
-            return json.loads(value)
+            return json.loads(value, cls=self.decoder)
         return value

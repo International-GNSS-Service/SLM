@@ -12,7 +12,8 @@ class AgencyManager(models.Manager):
 
 class AgencyQuerySet(models.QuerySet):
 
-    def accessible_by(self, user):
+    def membership(self, user):
+        """Get the agency(s) this user is a member of."""
         if user.is_superuser:
             return self
         return self.filter(pk__in=[user.agency.pk])
@@ -37,6 +38,15 @@ class Agency(models.Model):
     active = models.BooleanField(blank=True, null=False, default=True)
     created = models.DateTimeField(blank=True, auto_now_add=True)
 
+    public = models.BooleanField(
+        blank=True,
+        default=True,
+        null=False,
+        help_text=_(
+            'Set to false to exclude all sites affiliated with this agency '
+            'from public exposure.')
+    )
+
     objects = AgencyManager.from_queryset(AgencyQuerySet)()
 
     def __str__(self):
@@ -52,11 +62,11 @@ class AlertManager(models.Manager):
 
 class AlertQuerySet(models.QuerySet):
 
-    def accessible_by(self, user):
+    def for_user(self, user):
         from slm.models.sitelog import Site
         return self.filter(
             Q(user=user) | Q(agency=user.agency) |
-            Q(site__in=Site.objects.accessible_by(user))
+            Q(site__in=Site.objects.editable_by(user))
         )
 
 
@@ -131,7 +141,7 @@ class Alert(models.Model):
         related_name='alerts'
     )
 
-    objects = AlertManager.from_queryset(AgencyQuerySet)()
+    objects = AlertManager.from_queryset(AlertQuerySet)()
 
     def __str__(self):
         return self.header

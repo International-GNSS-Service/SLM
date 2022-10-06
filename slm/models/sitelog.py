@@ -18,6 +18,16 @@ from django.db.models import (
     Value,
     When
 )
+from django.db.models.functions import (
+    Cast,
+    Substr,
+    LPad,
+    Lower,
+    Concat,
+    ExtractDay,
+    ExtractYear,
+    ExtractMonth
+)
 from slm.models import compat
 from django.contrib.auth import get_user_model
 from slm.utils import date_to_str
@@ -33,6 +43,16 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from django.utils.deconstruct import deconstructible
+import json
+
+
+class DefaultToStrEncoder(json.JSONEncoder):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def default(self, obj):
+        return str(obj)
 
 
 userName = threading.local()
@@ -52,8 +72,8 @@ class SLMValidator:
     def __init__(self, *args, **kwargs):
         self.severity = kwargs.pop('severity', self.severity)
         self.binding = threading.local()
-        self.binding.section = None
-        self.binding.field_name = kwargs.pop('field_name', None)
+        self.section = None
+        self.field_name = kwargs.pop('field_name', None)
         super().__init__(*args, **kwargs)
 
     def __eq__(self, other):
@@ -66,7 +86,7 @@ class SLMValidator:
             if self.severity == FlagSeverity.BLOCK_SAVE:
                 self.clear()
                 raise ve
-            if self.binding.section:
+            if self.section:
                 self.throw_flag(ve.message, self.section, self.field_name)
 
     def throw_error(self, message, section=None, field_name=None):
@@ -84,9 +104,8 @@ class SLMValidator:
             section.save()
 
     def bind_instance(self, section, field_name=None):
-        self.binding.section = section
-        if getattr(self.binding, 'field_name', None) is None:
-            self.binding.field_name = field_name
+        self.section = section
+        self.field_name = field_name
 
     def clear(self):
         # we must clear this information between invocations
@@ -98,11 +117,19 @@ class SLMValidator:
             self.binding.section = None
         return self.binding.section
 
+    @section.setter
+    def section(self, section):
+        self.binding.section = section
+
     @property
     def field_name(self):
         if not hasattr(self.binding, 'field_name'):
             self.binding.field_name = None
         return self.binding.field_name
+
+    @field_name.setter
+    def field_name(self, field_name):
+        self.binding.field_name = field_name
 
     def verbose_name(self, field):
         if self.section:
@@ -210,7 +237,84 @@ class SiteManager(models.Manager):
 
 class SiteQuerySet(models.QuerySet):
 
-    def accessible_by(self, user):
+    def public(self):
+        """
+        Return all publicly visible sites.
+        :return:
+        """
+        return self.filter(
+            ~Q(status__in=[
+                SiteLogStatus.DORMANT,
+                SiteLogStatus.PENDING
+            ])
+            & Q(agencies__public=True)
+            & Q(agencies__active=True)
+            & Q(last_publish__isnull=False)
+        )
+
+    def annotate_filenames(
+            self,
+            published=True,
+            name_len=None,
+            field_name='filename',
+            lower_case=False
+    ):
+        """
+        Add the log names (w/o) extension as a property called filename to
+        each site.
+
+        :param published: If true (default) annotate with the filename for the
+            most recently published version of the log. If false, will generate
+            a filename for the HEAD version of the log whether published or in
+            moderation.
+        :param name_len: If given a number, the filename will start with only
+            the first name_len characters of the site name.
+        :param field_name: Change the name of the annotated field.
+        :param lower_case: Filenames will be lowercase if true.
+        :return: A queryset with the filename annotation added.
+        """
+        name_str = F('name')
+        if name_len:
+            name_str = Cast(
+                Substr('name', 1, length=name_len), models.CharField()
+            )
+
+        if lower_case:
+            name_str = Lower(name_str)
+
+        timestamp = 'last_update'
+        if published:
+            timestamp = 'last_publish'
+
+        return self.annotate(
+            **{
+                field_name: Concat(
+                    name_str,
+                    Value('_'),
+                    Cast(ExtractYear(timestamp), models.CharField()),
+                    LPad(
+                        Cast(ExtractMonth(timestamp), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    ),
+                    LPad(
+                        Cast(ExtractDay(timestamp), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    )
+                )
+            }
+        )
+
+    def editable_by(self, user):
+        """
+        Return the list of sites that should be visible in the editor to the
+        given user.
+
+        :param user: The user model.
+        :return: A queryset with all sites un-editable by the user filtered
+            out.
+        """
         if user.is_superuser:
             return self
         return self.filter(agencies__in=[user.agency])
@@ -517,6 +621,10 @@ class Site(models.Model):
                 )
             )
 
+    @property
+    def fourid(self):
+        return self.name[:4]
+
     def __str__(self):
         return self.name
 
@@ -527,7 +635,7 @@ class SiteSectionManager(models.Manager):
 
 class SiteSectionQueryset(models.QuerySet):
 
-    def accessible_by(self, user):
+    def editable_by(self, user):
         if user.is_superuser:
             return self
         return self.filter(site__agencies__in=[user.agency])
@@ -570,7 +678,12 @@ class SiteSection(models.Model):
         blank=True
     )
 
-    _flags = compat.JSONField(null=False, blank=True, default=dict)
+    _flags = compat.JSONField(
+        null=False,
+        blank=True,
+        default=dict,
+        encoder=DefaultToStrEncoder
+    )
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
 
@@ -3147,7 +3260,7 @@ class LogEntryManager(models.Manager):
 
 class LogEntryQuerySet(models.QuerySet):
 
-    def accessible_by(self, user):
+    def for_user(self, user):
         if user.is_superuser:
             return self
         return self.filter(site__agencies__in=[user.agency])

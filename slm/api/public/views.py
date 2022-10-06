@@ -10,7 +10,7 @@ from django_filters.rest_framework import (
 import django_filters
 from slm.defines import SiteLogStatus
 from slm.api.public.serializers import StationListSerializer
-from slm.api.serializers import SiteLogSerializer
+from slm.api.views import BaseSiteLogDownloadViewSet
 from django.db.models import ExpressionWrapper, F, Value, Case, When, DurationField, DateField
 from django.db.models import IntegerField, F, Avg, fields, BooleanField
 from django.db import models
@@ -206,9 +206,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         """
         from random import randint
 
-        return Site.objects.filter(
-            ~Q(status__in=[SiteLogStatus.DORMANT, SiteLogStatus.PENDING, SiteLogStatus.UPDATED])
-        ).prefetch_related('agencies').annotate(
+        return Site.objects.public().prefetch_related('agencies').annotate(
             latitude=Subquery(last_published_location.values('latitude')[:1]),
             longitude=Subquery(last_published_location.values('longitude')[:1]),
             city=Subquery(last_published_location.values('city')[:1]),
@@ -230,37 +228,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         )
 
 
-class SiteLogDownloadViewSet(
-    mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet
-):
-    queryset = Site.objects.all()
-
-    lookup_field = 'name'
-    lookup_url_kwarg = 'site'
-    renderer_classes = (LegacyRenderer,)
-
-    serializer_class = SiteLogSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        site = self.get_object()
-        site_form = site.siteform_set.head()
-        if site_form and site_form.date_prepared:
-            timestamp = site_form.date_prepared
-        else:
-            timestamp = now()
-        # todo should name timestamp be based on last edits?
-        filename = f'{site.name}_{timestamp.year}{timestamp.month}{timestamp.day}.log'
-        response = HttpResponse(
-            getattr(
-                self.get_serializer(
-                    instance=site,
-                    epoch=self.request.GET.get('epoch', None),
-                    published=to_bool(self.request.GET.get('published', True)) or None
-                ),
-                kwargs.get('format', 'text')
-            )  # todo can renderer just handle this?
-        )
-        if to_bool(kwargs.get('download', True)) and response.status_code < 400:
-            response['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
-        return response
+class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
+    # limit downloads to public sites only! requests for non-public sites will
+    # return 404s, also use legacy four id naming, revisit this?
+    queryset = Site.objects.public()

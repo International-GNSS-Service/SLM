@@ -24,6 +24,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from slm.forms import UserAdminCreationForm, UserAdminChangeForm
 from slm.models import Agency, Site
+from django.utils.translation import gettext as _
+from slm.authentication import initiate_password_resets
 
 
 User = get_user_model() # accesses custom user model
@@ -53,6 +55,15 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'fields': ('email', 'password', 'password_2', 'is_superuser', 'is_staff', 'agency')}
          ),
+    )
+
+    actions = ['request_password_reset']
+
+    def request_password_reset(self, request, queryset):
+        initiate_password_resets(queryset, request=request)
+
+    request_password_reset.short_description = _(
+        'Request password resets.'
     )
 
 

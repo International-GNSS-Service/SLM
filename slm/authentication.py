@@ -8,6 +8,19 @@ library will emerge at some point - when that happens this should be replaced wi
 from rest_framework import authentication
 from rest_framework import exceptions
 from django.contrib.auth import get_user_model
+from django.urls import reverse
+from django.contrib.sites.shortcuts import get_current_site
+
+from allauth.account.forms import EmailAwarePasswordResetTokenGenerator
+from allauth.utils import build_absolute_uri
+from allauth.account import app_settings
+from allauth.account.app_settings import AuthenticationMethod
+from allauth.account.adapter import get_adapter
+from allauth.account.utils import (
+    user_pk_to_url_str,
+    user_username
+)
+
 
 """
 Reusing failure exceptions serves several purposes:
@@ -124,3 +137,41 @@ class SignatureAuthentication(authentication.BaseAuthentication):
             raise FAILED
 
         return (user, fields["keyid"])
+
+
+def initiate_password_resets(users, request=None):
+    """
+
+    :param users: Either an iterable (including queryset) of user accounts or
+        a single user account.
+    :return:
+    """
+    if isinstance(users, get_user_model()):
+        users = [users]
+
+    token_generator = EmailAwarePasswordResetTokenGenerator()
+
+    for user in users:
+
+        temp_key = token_generator.make_token(user)
+
+        # send the password reset email
+        path = reverse(
+            "account_reset_password_from_key",
+            kwargs=dict(uidb36=user_pk_to_url_str(user), key=temp_key),
+        )
+        url = build_absolute_uri(request, path)
+
+        context = {
+            "current_site": get_current_site(request),
+            "user": user,
+            "password_reset_url": url,
+            "request": request,
+        }
+
+        if app_settings.AUTHENTICATION_METHOD != AuthenticationMethod.EMAIL:
+            context["username"] = user_username(user)
+
+        get_adapter(request).send_mail(
+            "account/email/password_reset_key", user.email, context
+        )

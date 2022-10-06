@@ -1,7 +1,7 @@
 from django import template
 from slm.utils import to_snake_case
 from django.utils.translation import gettext as _
-from datetime import datetime
+from datetime import datetime, timezone
 
 register = template.Library()
 
@@ -60,3 +60,14 @@ def strip_ms(timestamp):
 @register.filter(name='help_text')
 def help_text(model, field):
     return model._meta.get_field(field).help_text
+
+
+@register.filter(name='simple_utc')
+def simple_utc(datetime_field):
+    """
+    Return a datetime string in UTC, in the format YYYY-MM-DD HH:MM
+
+    :param datetime_field: A datetime object
+    :return: formatted datetime string
+    """
+    return datetime_field.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M')

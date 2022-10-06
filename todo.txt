@@ -1,0 +1,23 @@
+- Password reset email  *code done*
+- Blank site log output
+- FTP view emulation    *code done*
+- Hide some agencies    *code done*
+- Fix ashley bug        *code done*
+- network_QC
+- Moderation Table import & validation integration
+
+* SCSS integration
+* Sekizai integration
+* Event/Email Streams
+* Site Log upload
+* GeodesyML support
+* JSON support
+* Publish/Edit configurable permissions refactor
+* Validation refactor
+* Enum fields based on GeodesyML
+* Unit tests
+* Documentation
+* Linting
+* Fix performance issues
+** Data Model Refactor - normalize log entries??
+** Vue.js integration

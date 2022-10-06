@@ -24,7 +24,9 @@ from django.db.models import (
     RowRange
 )
 from django.http.response import Http404
+from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.utils import to_bool
+from django_filters import filters
 from rest_framework import (
     viewsets,
     mixins,
@@ -53,6 +55,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from slm.models import (
     Site,
+    SiteSection,
     SiteSubSection,
     UserProfile,
     SiteForm,
@@ -90,6 +93,8 @@ import json
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from ipware import get_client_ip
+from slm.api.views import LegacyRenderer
+from django.utils.translation import gettext as _
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -101,49 +106,6 @@ class PassThroughRenderer(renderers.BaseRenderer):
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
         return data
-
-
-class LegacyRenderer(renderers.BaseRenderer):
-    """
-    Renderer which serializes to legacy format.
-    """
-    media_type = 'text/plain'
-    format = 'text'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        if data is None:
-            return b''
-        elif isinstance(data, dict):
-            if 'detail' in data:
-                return data['detail'].encode()
-            return json.dumps(data)
-        return data.encode()
-
-
-class GMLRenderer(renderers.BaseRenderer):
-    """
-    Renderer which serializes to legacy format.
-    """
-    media_type = 'application/xml'
-    format = 'xml'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        if data is None:
-            return b''
-        return data.encode()
-
-
-class JSONRenderer(renderers.BaseRenderer):
-    """
-    Renderer which serializes to legacy format.
-    """
-    media_type = 'application/json'
-    format = 'xml'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        if data is None:
-            return b''
-        return data.encode()
 
 
 class DataTablesListMixin(mixins.ListModelMixin):
@@ -185,7 +147,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     ordering = ('name',)
 
     def get_queryset(self):
-        return Site.objects.accessible_by(self.request.user).prefetch_related('agencies').select_related('owner')
+        return Site.objects.editable_by(self.request.user).prefetch_related('agencies').select_related('owner')
 
 
 class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
@@ -208,7 +170,7 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     filterset_class = LogEntryFilter
 
     def get_queryset(self):
-        return LogEntry.objects.accessible_by(self.request.user).prefetch_related('site_log_object')
+        return LogEntry.objects.for_user(self.request.user).prefetch_related('site_log_object')
 
 
 class AlertViewSet(DataTablesListMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
@@ -229,7 +191,7 @@ class AlertViewSet(DataTablesListMixin, mixins.DestroyModelMixin, viewsets.Gener
     filterset_class = AlertFilter
 
     def get_queryset(self):
-        return Alert.objects.accessible_by(self.request.user).select_related('user', 'site', 'agency')
+        return Alert.objects.for_user(self.request.user).select_related('user', 'site', 'agency')
 
 
 class UserProfileViewSet(
@@ -255,40 +217,26 @@ class UserProfileViewSet(
         self.update(request, *args, **kwargs)
 
 
-class SiteLogDownloadViewSet(
-    mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet
-):
-    queryset = Site.objects.all()
+class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
+    # limit downloads to public sites only! requests for non-public sites will
+    # return 404s, also use legacy four id naming, revisit this?
+    queryset = Site.objects
 
-    lookup_field = 'name'
-    lookup_url_kwarg = 'site'
-    renderer_classes = (LegacyRenderer,)
+    class DownloadFilter(BaseSiteLogDownloadViewSet.DownloadFilter):
 
-    serializer_class = SiteLogSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        site = self.get_object()
-        site_form = site.siteform_set.head()
-        if site_form and site_form.date_prepared:
-            timestamp = site_form.date_prepared
-        else:
-            timestamp = now()
-        # todo should name timestamp be based on last edits?
-        filename = f'{site.name}_{timestamp.year}{timestamp.month}{timestamp.day}.log'
-        response = HttpResponse(
-            getattr(
-                self.get_serializer(
-                    instance=site,
-                    epoch=self.request.GET.get('epoch', None),
-                    published=to_bool(self.request.GET.get('published', True)) or None
-                ),
-                kwargs.get('format', 'text')
-            )  # todo can renderer just handle this?
+        published = django_filters.BooleanFilter()
+        published.help = _(
+            'If true, download the published version of the log. If false,'
+            'the HEAD version of the log '
         )
-        if to_bool(kwargs.get('download', True)) and response.status_code < 400:
-            response['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
-        return response
+
+        class Meta(BaseSiteLogDownloadViewSet.DownloadFilter.Meta):
+            fields = (
+                ['published'] +
+                BaseSiteLogDownloadViewSet.DownloadFilter.Meta.fields
+            )
+
+    filterset_class = DownloadFilter
 
 
 class SectionViewSet(type):
@@ -320,7 +268,12 @@ class SectionViewSet(type):
         class ViewSetSerializer(ModelSerializer):
 
             _diff = serializers.SerializerMethodField(read_only=True)
-            _flags = serializers.JSONField(read_only=False, required=False)
+            _flags = serializers.JSONField(
+                read_only=False,
+                required=False,
+                encoder=SiteSection._meta.get_field('_flags').encoder,
+                decoder=SiteSection._meta.get_field('_flags').decoder
+            )
 
             def get__diff(self, obj):
                 return obj.published_diff()
@@ -422,7 +375,7 @@ class SectionViewSet(type):
         obj.filter_backends = (DjangoFilterBackend,)
 
         def get_queryset(self):
-            return ModelClass.objects.accessible_by(self.request.user).select_related('site', 'editor')
+            return ModelClass.objects.editable_by(self.request.user).select_related('site', 'editor')
 
         def create(self, request, *args, **kwargs):
             serializer = self.get_serializer(data=request.data)
@@ -469,7 +422,6 @@ class SectionViewSet(type):
 
 
 # TODO all these can be constructed dynamically from the models
-
 class SiteFormViewSet(metaclass=SectionViewSet, model=SiteForm):
     pass
 

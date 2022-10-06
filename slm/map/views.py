@@ -28,6 +28,8 @@ class MapView(SLMView):
             'Site': Site,
             'SiteLocation': SiteLocation,
             'SiteLogStatus': SiteLogStatus,
-            'agencies': Agency.objects.accessible_by(user=self.request.user)
+            'agencies': Agency.objects.membership(
+                user=self.request.user
+            )
         })
         return context

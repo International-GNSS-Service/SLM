@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
-from slm.settings import set_default
+from slm.settings import set_default, is_defined
 from split_settings.tools import include
 import os
 
@@ -27,6 +27,8 @@ MANAGEMENT_MODE = os.environ.get('SLM_MANAGEMENT_FLAG', False) == 'ON'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
+if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
+    set_default('DEFAULT_FROM_EMAIL', f'noreply@{ALLOWED_HOSTS[0]}')
 
 # Application definition
 

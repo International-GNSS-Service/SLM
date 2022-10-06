@@ -90,7 +90,7 @@ class SLMView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        max_alert = Alert.objects.accessible_by(self.request.user).aggregate(Max('level'))['level__max']
+        max_alert = Alert.objects.for_user(self.request.user).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
         context['alert_level'] = AlertLevel(max_alert) if max_alert else None
@@ -111,12 +111,12 @@ class StationContextView(SLMView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         self.station = kwargs.get('station', None)
-        self.sites = Site.objects.accessible_by(self.request.user)
+        self.sites = Site.objects.editable_by(self.request.user)
         self.site = Site.objects.filter(name=self.station).first()
         if self.site:
             self.agencies = [agency.name for agency in self.site.agencies.all()]
 
-        max_alert = Alert.objects.accessible_by(
+        max_alert = Alert.objects.for_user(
             self.request.user
         ).filter(site=self.site).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:

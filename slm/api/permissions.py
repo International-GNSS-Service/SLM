@@ -34,7 +34,7 @@ class CanDeleteAlert(permissions.BasePermission):
         if view.action in {'destroy'}:
             if request.user.is_superuser:
                 return True
-            return obj in Alert.objects.accessible_by(request.user)
+            return obj in Alert.objects.for_user(request.user)
         return True
 
 
@@ -47,10 +47,9 @@ class CanEditSite(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return (
-                request.user and (
-                    request.user.is_superuser or
-                    obj.owner == request.user or
-                    request.user.agency in obj.agencies
-                )
+            request.user and (
+                request.user.is_superuser or
+                obj.owner == request.user or
+                request.user.agency in obj.agencies
             )
-
+        )

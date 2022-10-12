@@ -7,18 +7,22 @@ Template for stations list.
 <div id="slm-station-container" class="p-2">
 
     <div class="pt-3 px-3">
-    <h5 class="text-center"><b>{{ num_sites }}</b> Stations</h5>
+        <div class="d-flex justify-content-between align-items-center"> 
+            <h5 class="text-center"><b>{{ num_sites }}</b> Stations</h5>
+            <a class="btn" href="{% url 'slm_map:map' %}">Sort/Filter <i class="bi bi-filter"></i></a>
+        </div>
 
-    <!-- Search bar -->
-    <form class="d-flex my-2">
-        <input
-            class="form-control me-2"
-            type="search"
-            placeholder="Search"
-            aria-label="Search"
-            id="station-search"
-        >
-    </form>
+        <!-- Search bar -->
+        <form class="d-flex my-2 w-100">
+            <input
+                class="form-control"
+                type="search"
+                placeholder="Search"
+                aria-label="Search"
+                id="station-search"
+            >
+        </form>
+        
     </div>
 
     <hr/>

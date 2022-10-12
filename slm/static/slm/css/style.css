@@ -33,6 +33,10 @@ a, a:hover {
     background-color: #185A7D;
 }
 
+.btn:hover {
+    color: #fff;
+}
+
 .btn-secondary {
     background-color: #50595E;
 }

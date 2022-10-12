@@ -46,10 +46,10 @@
                                     <a href="{% if station %}{% url 'slm:download' station=station %}{% else %}{% url 'slm:download' %}{% endif %}" class="nav-link"><i class="bi bi-download"></i> Download</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'review' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:review' station=station %}{% else %}{% url 'slm:review' %}{% endif %}" class="nav-link"><i class="bi bi-file-check"></i> Review</a>
+                                    <a href="{% if station %}{% url 'slm:review' station=station %}{% else %}{% url 'slm:review' %}{% endif %}" class="nav-link"><i class="bi bi-file-check"></i> Review & Submit</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'log' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:log' station=station %}{% else %}{% url 'slm:log' %}{% endif %}" class="nav-link"><i class="bi bi-journal-text"></i> Log</a>
+                                    <a href="{% if station %}{% url 'slm:log' station=station %}{% else %}{% url 'slm:log' %}{% endif %}" class="nav-link"><i class="bi bi-journal-text"></i> Activity Log</a>
                                 </li>
                                 {% endwith %}
                             {% endwith %}

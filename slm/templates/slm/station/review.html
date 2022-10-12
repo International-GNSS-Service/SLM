@@ -11,10 +11,10 @@ Template for View/Diff page.
 <div class="container">
   <!-- Title -->
   <div class="d-flex justify-content-between mt-4 pb-3 mx-5 border-bottom">
-      <h2>Review</h2>
+      <h2>Review and Submit</h2>
       <div>
         <!-- <button class="btn btn-primary" {% if not unpublished_changes %}disabled{% endif %}>Submit</button> -->
-        <button class="btn btn-primary" {% if not can_publish or not unpublished_changes %}disabled{% endif %}>Publish</button>
+        <button class="btn btn-primary" {% if not can_publish or not unpublished_changes %}disabled{% endif %}>Submit to IGS</button>
       </div>
   </div>
 

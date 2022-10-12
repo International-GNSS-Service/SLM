@@ -101,7 +101,7 @@
             {% translate "Save" %}
           </button>
           <button type='button' name='publish' class="btn btn-success" {% if not request.user|is_moderator:form.instance or not form.instance.id or form.instance.published %}style="display: none"{% endif %}>
-            {% translate "Publish" %}
+            {% translate "Publish Changes" %}
           </button>
       </div>
         <button type='button' name='delete' class="btn btn-danger" {% if form.instance.subsection == None or form.instance.is_deleted %}style="display: none"{% endif %}>

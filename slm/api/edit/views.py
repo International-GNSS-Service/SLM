@@ -301,7 +301,11 @@ class SectionViewSet(type):
                     if subsection is not None:
                         qry &= Q(subsection=subsection)
 
-                    if section_id is None and subsection is None and issubclass(ModelClass, SiteSubSection):
+                    if (
+                        section_id is None and
+                        subsection is None and
+                        issubclass(ModelClass, SiteSubSection)
+                    ):
                         # this is a new subsection
                         new_section = super().create(validated_data)
                         new_section.full_clean()
@@ -319,7 +323,13 @@ class SectionViewSet(type):
                     existing.edited = now()
                     existing._ip = get_client_ip(self.context['request'])[0]
                     if section_id and existing.id != section_id:
-                        raise serializers.ValidationError('Edits must be made on HEAD. Refresh and try again.')
+                        raise serializers.ValidationError(
+                            _(
+                                'Edits must be made on HEAD. Someone else may '
+                                'be editing the log concurrently. Refresh and '
+                                'try again.'
+                            )
+                        )
 
                     update = False
                     flags = existing._flags
@@ -403,7 +413,14 @@ class SectionViewSet(type):
                             site=section.site,
                             subsection=section.subsection
                     ).order_by('-edited').first() != section:
-                        raise serializers.ValidationError('Edits must be made on HEAD. Refresh and try again.')
+
+                        raise serializers.ValidationError(
+                            _(
+                                'Edits must be made on HEAD. Someone else may '
+                                'be editing the log concurrently. Refresh and '
+                                'try again.'
+                            )
+                        )
 
                 if not section.is_deleted:
                     # this is how you copy a model in Django

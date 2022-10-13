@@ -1,14 +1,21 @@
-- Password reset email  *code done*
+TODO
+- Fix Ashley Bug
+- network_QC layout
+- Data Availability scripts
 - Blank site log output
-- FTP view emulation    *code done*
-- Hide some agencies    *code done*
-- Fix ashley bug        *code done*
-- network_QC
+
+Tomorrow
+- Image/File Attachments
+- EnumFields
+- Validation Refactor
+
+
 - Moderation Table import & validation integration
 
 * SCSS integration
 * Sekizai integration
 * Event/Email Streams
+* Image/File Attachments
 * Site Log upload
 * GeodesyML support
 * JSON support

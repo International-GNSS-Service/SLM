@@ -71,3 +71,9 @@ def simple_utc(datetime_field):
     :return: formatted datetime string
     """
     return datetime_field.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M')
+
+
+@register.filter(name='iso_utc')
+def iso_utc(datetime_field):
+    return datetime_field.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%MZ')
+

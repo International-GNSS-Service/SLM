@@ -250,7 +250,7 @@ class SiteQuerySet(models.QuerySet):
             & Q(agencies__public=True)
             & Q(agencies__active=True)
             & Q(last_publish__isnull=False)
-        )
+        ).distinct()
 
     def annotate_filenames(
             self,

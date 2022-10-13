@@ -26,14 +26,14 @@ $(document).ready(function() {
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
     const data = response.hasOwnProperty('results') ? response.results : response;
+    console.log(data);
     if (data.published && data.is_deleted) {
         form.closest('.accordion-item').remove();
         return;
     }
-    if (!form.data('slmId')) {
-        form.data('slmId', data.id);
-        form.find('input[name="id"]').val(data.id);
-    }
+    form.data('slmId', data.id);
+    form.find('input[name="id"]').val(data.id);
+
     if (data.is_deleted) {
         form.find('.alert.slm-form-deleted').show();
         form.find('.form-control:visible').attr('disabled', '');

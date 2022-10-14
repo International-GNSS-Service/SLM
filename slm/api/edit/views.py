@@ -243,27 +243,35 @@ class SectionViewSet(type):
 
     def __new__(metacls, name, bases, namespace, **kwargs):
         ModelClass = kwargs.pop('model')
-        obj = super().__new__(
-            metacls,
-            name,
-            (
-                *bases,
-                mixins.RetrieveModelMixin,
-                mixins.ListModelMixin,
-                mixins.UpdateModelMixin,
-                mixins.CreateModelMixin,
-                mixins.DestroyModelMixin,
-                viewsets.GenericViewSet
-            ),
-            namespace
-        )
+        can_delete = issubclass(ModelClass, SiteSubSection)
+        parents = [
+            *bases,
+            mixins.RetrieveModelMixin,
+            mixins.ListModelMixin,
+            mixins.UpdateModelMixin,
+            mixins.CreateModelMixin
+        ]
+        if can_delete:
+            parents.append(mixins.DestroyModelMixin)
+
+        parents.append(viewsets.GenericViewSet)
+        obj = super().__new__(metacls, name, tuple(parents), namespace)
 
         class ViewSetFilter(FilterSet):
-            site = django_filters.CharFilter(field_name='site__name', lookup_expr='iexact')
+            site = django_filters.CharFilter(
+                field_name='site__name',
+                lookup_expr='iexact'
+            )
 
             class Meta:
                 model = ModelClass
-                fields = ['site', 'id'] + ['subsection'] if issubclass(ModelClass, SiteSubSection) else []
+                fields = [
+                    'site',
+                    'id'
+                ] + (
+                    ['subsection'] if issubclass(ModelClass, SiteSubSection)
+                    else []
+                )
 
         class ViewSetSerializer(ModelSerializer):
 
@@ -312,7 +320,9 @@ class SectionViewSet(type):
                         new_section.save()
                         return new_section
 
-                    existing = ModelClass.objects.filter(qry).order_by('-edited').select_for_update().first()
+                    existing = ModelClass.objects.filter(
+                        qry
+                    ).order_by('-edited').select_for_update().first()
                     if not existing:
                         # todo how to pass IP to logger signal handler?
                         new_section = super().create(validated_data)
@@ -359,13 +369,20 @@ class SectionViewSet(type):
 
             class Meta:
                 model = ModelClass
-                fields = ['site', 'id', 'published', '_flags', '_diff', *ModelClass.site_log_fields()] + \
-                    ([
-                         'subsection',
-                         'heading',
-                         'effective',
-                         'is_deleted'
-                     ] if issubclass(ModelClass, SiteSubSection) else [])
+                fields = [
+                    'site',
+                    'id',
+                    'published',
+                    '_flags',
+                    '_diff',
+                    *ModelClass.site_log_fields()
+                ] + ([
+                     'subsection',
+                     'heading',
+                     'effective',
+                     'is_deleted'
+                ] if issubclass(ModelClass, SiteSubSection) else [])
+
                 extra_kwargs = {
                     'id': {
                         'required': False,
@@ -385,7 +402,9 @@ class SectionViewSet(type):
         obj.filter_backends = (DjangoFilterBackend,)
 
         def get_queryset(self):
-            return ModelClass.objects.editable_by(self.request.user).select_related('site', 'editor')
+            return ModelClass.objects.editable_by(
+                self.request.user
+            ).select_related('site', 'editor')
 
         def create(self, request, *args, **kwargs):
             serializer = self.get_serializer(data=request.data)
@@ -396,22 +415,32 @@ class SectionViewSet(type):
                 raise DRFValidationError(ve.message_dict)
 
             headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
 
         def destroy(self, request, *args, **kwargs):
             instance = self.get_object()
             instance = self.perform_destroy(instance)
             serializer = self.get_serializer(instance=instance)
             headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+                headers=headers
+            )
 
         def perform_destroy(self, instance):
             with transaction.atomic():
-                section = ModelClass.objects.select_for_update().get(pk=instance.pk)
+                section = ModelClass.objects.select_for_update().get(
+                    pk=instance.pk
+                )
                 if isinstance(section, SiteSubSection):
                     if ModelClass.objects.filter(
-                            site=section.site,
-                            subsection=section.subsection
+                        site=section.site,
+                        subsection=section.subsection
                     ).order_by('-edited').first() != section:
 
                         raise serializers.ValidationError(
@@ -432,8 +461,9 @@ class SectionViewSet(type):
                 return section
 
         obj.get_queryset = get_queryset
-        obj.perform_destroy = perform_destroy
-        obj.destroy = destroy
+        if can_delete:
+            obj.perform_destroy = perform_destroy
+            obj.destroy = destroy
         obj.create = create
         return obj
 

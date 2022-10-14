@@ -67,7 +67,7 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
     if (data.hasOwnProperty('is_deleted') && data.is_deleted) {
         form.find('button[name="delete"]').hide();
         form.find('button[name="save"]').hide();
-    } else {
+    } else if (data.hasOwnProperty('is_deleted')) {
         form.find('button[name="delete"]').show();
     }
 }

@@ -22,7 +22,6 @@ Template for stations list.
                 id="station-search"
             >
         </form>
-        
     </div>
 
     <hr/>
@@ -56,6 +55,7 @@ Template for stations list.
 <script>
     let keyupTimeoutID = 0;
     function drawStations(position, data) {
+        console.log(data);
         function getBadge(station) {
             if (station.hasOwnProperty('num_flags') && station.num_flags) {
                 return `<span class="badge rounded-pill bg-danger">${station.num_flags}</span>`;
@@ -64,14 +64,21 @@ Template for stations list.
         }
 
         for (const station of data) {
-            if (station.name === '{{ station }}') continue;
+            //if (station.name === '{{ station }}') continue;
             let active = '';
             let selected = 'false';
             const editLink = slm.urls.reverse("{{ link_view }}", {kwargs: {station: station.name}});
             const status = slm.SiteLogStatus.get(station.status);
-            if (station === '{{ station }}') {
+            let pos = position;
+            if (station.name === '{{ station }}') {
+                if (
+                    position.parent().children(
+                        `#select-${ station.name }`
+                    ).length)
+                { continue; }
                 active = 'active';
                 selected = 'true';
+                pos = position.parent().children().first();
             }
             $(
                 `<button onclick="window.location.href='${editLink}'"
@@ -82,7 +89,7 @@ Template for stations list.
                     type="submit"
                     role="tab"
                     aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)}</button>`
-                ).insertBefore(position);
+                ).insertBefore(pos);
         }
     }
     $(document).ready(function() {
@@ -99,6 +106,13 @@ Template for stations list.
                 drawStations
             );
         }
+
+        searchInput.keypress(function (event) {
+            if (event.key === "Enter") {
+                searchInput.blur();
+                return false;
+            }
+        });
         searchInput.on('input', function() {
             clearTimeout(keyupTimeoutID);
             keyupTimeoutID = setTimeout(function() {
@@ -106,8 +120,10 @@ Template for stations list.
                 stationList.find('button').remove();
                 if (searchInput.val()) {
                     stationList.data('slmQuery', {name: searchInput.val()});
+                    stationList.data('slmPage', 0);
                 } else {
                     stationList.data('slmQuery', {});
+                    stationList.data('slmPage', 0);
                 }
                 init();
             }, 500);

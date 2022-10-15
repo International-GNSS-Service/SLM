@@ -10,6 +10,7 @@ from ipware import get_client_ip
 
 class SLMConfig(AppConfig):
     name = 'slm'
+    verbose_name = " SLM"
 
     def ready(self):
         from slm.defines import LogEntryType

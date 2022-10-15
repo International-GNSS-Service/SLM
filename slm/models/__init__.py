@@ -1,6 +1,7 @@
 from slm.models.system import (
     Agency,
-    Alert
+    Alert,
+    Network
 )
 from slm.models.user import (
     User,

@@ -154,4 +154,7 @@ class Alert(models.Model):
 class Network(models.Model):
 
     name = models.CharField(max_length=100, blank=False, null=False)
-    sites = models.ManyToManyField('slm.Site')
+    sites = models.ManyToManyField('slm.Site', related_name='networks')
+
+    def __str__(self):
+        return self.name

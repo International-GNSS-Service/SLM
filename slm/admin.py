@@ -67,7 +67,26 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
+class NetworkInline(admin.TabularInline):
+    model = Network.sites.through
+    extra = 0
+
+
+class AgencyInline(admin.TabularInline):
+    model = Agency.sites.through
+    extra = 0
+
+
+@admin.register(Site)
 class SiteAdmin(admin.ModelAdmin):
+
+    search_fields = ('name',)
+    inlines = [AgencyInline, NetworkInline]
+    exclude = ['agencies']
+
+
+@admin.register(Network)
+class NetworkAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
 
@@ -83,5 +102,4 @@ class AlertAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Agency, AgencyAdmin)
-admin.site.register(Site, SiteAdmin)
 admin.site.register(Alert, AlertAdmin)

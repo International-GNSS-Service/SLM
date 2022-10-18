@@ -64,9 +64,13 @@
                 <div class="container">
                     <div class="d-flex flex-column justify-content-left align-items-left min-vh-100">
                     <!-- Alert -->
-                    <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
-                        <strong>This application is still under development in Phase 1: Core Functionality Implementation.</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+                    <div class="m-3">
+                        {% include "messages.html" %}
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <strong>This application is still under development in Phase 1: Core Functionality Implementation.</strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
                     </div>
 
                     <!-- Title -->

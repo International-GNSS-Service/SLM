@@ -17,14 +17,7 @@
     <div class="d-flex flex-column justify-content-center align-items-center min-vh-100 ">
         <div class="card" style="width: 50rem;">
             <div class="card-body bg-light p-5">
-                {% if messages %}
-                    {% for message in messages %}
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        <strong>{{ message }}</strong>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    {% endfor%}
-                {% endif %}
+                {% include "messages.html" %}
                 <h1 class="card-title">Welcome</h1>
                 <p class="card-text">Please sign in with your IGS Member login information. For registration inquiries, please contact us.</p>
                 <p class="card-header" style="font-weight: bold;">(Note: This site is ONLY for Authorized Users to Edit and Maintain IGS Site Log Data. If you need to view Site Log Data go to igs.org)</p>

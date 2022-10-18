@@ -56,7 +56,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
         sitelog = f'{start}{self.site.name} Site Information Form (site log)\n'
         sitelog += f'{start}International GNSS Service\n'
         sitelog += f'{start}See Instructions at:\n'
-        sitelog += f'{start}{" "*self.INDENT}https://ftp.igs.org/pub/station/general/sitelog_instr.txt\n'
+        sitelog += f'{start}{" "*self.INDENT}https://files.igs.org/pub/station/general/sitelog_instr.txt\n'
         sitelog += '\n'
 
         section_numbers = list(Site.sections().keys())

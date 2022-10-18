@@ -10,9 +10,13 @@ Template for help/documentation page.
     <div class="container">
         <div class="row">
             <!-- Documentation Navigation -->
-            <div class="col-3 position-fixed mt-5">
+            <div class="col-3 mt-5">
                 <div id="doc-list" class="list-group">
-                    <a class="list-group-item list-group-item-action active" href="#getting-started" tabindex="0">Getting Started</a>
+                    <a class="list-group-item list-group-item-action active" href="#overview" tabindex="0">Overview</a>
+                        <a class="list-group-item list-group-item-action" href="#process" tabindex="0"><span class="ms-3">4 Step Process</span></a>
+                        <a class="list-group-item list-group-item-action" href="#about-slm" tabindex="0"><span class="ms-3">About SLM 2.0</span></a>
+                        <a class="list-group-item list-group-item-action" href="#changes" tabindex="0"><span class="ms-3">What Changed?</span></a>
+                        <a class="list-group-item list-group-item-action" href="#phases" tabindex="0"><span class="ms-3">Development Phases</span></a>
                     <a class="list-group-item list-group-item-action" href="#existing-sites" tabindex="0">Existing Sites</a>
                     <a class="list-group-item list-group-item-action" href="#new-sites" tabindex="0">New Sites</a>
                     <a class="list-group-item list-group-item-action" href="#editing-data" tabindex="0">Editing Data</a>
@@ -30,102 +34,128 @@ Template for help/documentation page.
             <!-- End of Documentation Navigation -->
 
             <!-- Documentation Content -->
-            <div class="col-8 offset-4">
+            <div class="col-8">
                 <!-- Title -->
                 <div class="mt-5 pb-3 border-bottom">
                     <h1>SLM Documentation</h1>
                 </div>
                 
-                <div id="help" class="position-relative">
-                    <div>
-                    <h2 id="getting-started" class="mb-3 pt-5">Getting Started</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                    </div>
-                    <div class="my-5">
-                    <h2 id="existing-sites" class="mb-3 pt-5">Existing Sites</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                    </div>
-                    <div class="my-5">
-                        <h2 id="new-sites" class="mb-3 pt-5">New Sites</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                    </div>
-                    <div class="my-5">
-                        <h2 id="editing-data" class="mb-3 pt-5">Editing Data</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <div class="my-5">
-                            <h3 id="data-entry" class="mb-3 pt-5">Data Entry</h3>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                <div id="help" class="position-relative overflow-auto" data-bs-spy="scroll" data-bs-target="#doc-list" data-bs-smooth-scroll="true" tabindex="0" style="max-height: 800px;">
+                    <div id="overview">
+                        <h2 class="pt-4">Overview</h2>
+                        <p>This documentation goes over usage for phase 1 of the new Site Log Manager 2.0 on slmdemo.igs.org. This is the second version of the original IGS SIte Log Manager (slm.igs.org) built in (2007?). Steps in this documentation are subject to change. To use the Site Log Manager 2.0, view the simple 4 step process below.</p>
+                        <div id="process">
+                            <h3 class="pt-4">4 Step Process</h3>
+                            <ol>
+                                <li>
+                                    <strong>Select Station:</strong> Select a station from the list at the left. (If the Station you need is not there you will need to fill out the Propose a New IGS Site form or contact IGS for help)
+                                </li>
+                                <li>
+                                    <strong>Edit Data:</strong> Once you select a station you will then be redirected to the “Edit” tab of the station with forms for each site log section. Select the form you would like to add/update metadata to and fill out the fields.
+                                    <ul>
+                                        <li>
+                                            <strong>Upload Data (Optional):</strong>  There is also the ability to upload files instead of manually entering in data. To upload a file: select “Upload Logs” in the top menu bar and click any of the download options
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <strong>Correct Data:</strong> Once the data is either manually entered or a sitelog file is uploaded, the system will let you know if there are any errors or missing data. This will be indicated by the Error Badge with a description of the error underneath the field. Make any corrections where needed. There are tooltips on the right of each field to help guide you.
+                                </li>
+                                <li>
+                                    <strong>Submit Data:</strong> Once the data has been corrected select the “Review” tab to view your changes and click the “Publish” button at the top of the page. After the data has been visually validated you will receive an email of approval and that the data has been posted to IGS's main databases ready for use.
+                                </li>
+                                <li>
+                                    <strong>Download Data (Optional):</strong> As you wait for the site log to be approved by the network coordinator, you can download your modified site log or download any of the past site logs by going to the “Downloads” tab.
+                                </li>
+                            </ol>
                         </div>
-                        <div class="my-5">
-                            <h3 id="data-upload" class="mb-3 pt-5">Data Upload</h3>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                        <div id="about-slm">
+                            <h3 class="pt-4">About SLM</h3>
+                            <p>The IGS Site Log Manager (SLM) is a web based online application designed for the purpose of managing the metadata of IGS GNSS ground-based sites. The SLM utilizes a relational database with a new and improved web-based User Interface that allows for uploading of the traditional IGS ASCII Logs and/or Manual Data Entry. The SLM Validates the data against a set of criteria defined at: Site Log Instructions</p>
                         </div>
-                        <div class="my-5">
-                            <h3 id="data-sections" class="mb-3 pt-5">Data Sections</h3>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                        <div id="changes">
+                            <h3 class="pt-4">What Changed</h3>
+                            <ul>
+                                <li>Test</li>
+                            </ul>
                         </div>
-                        <div class="my-5">
-                            <h3 id="data-validation" class="mb-3 pt-5">Data Validation</h3>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                            <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                        <div id="phases">
+                            <h3 class="pt-4">Development phases</h3>
+                            <ul>
+                                <li>Test</li>
+                            </ul>
                         </div>
                     </div>
-                    <div class="my-5">
-                        <h2 id="viewdiff" class="mb-3 pt-5">View/Diff</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                    <div id="existing-sites" class="my-5">
+                        <h2 class="pt-4">Existing Sites</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
                     </div>
-                    <div class="my-5">
-                        <h2 id="submit" class="mb-3 pt-5">Submit Data</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                    <div id="new-sites" class="my-5">
+                        <h2 class="pt-4">New Sites</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
                     </div>
-                    <div class="my-5">
-                        <h2 id="download" class="mb-3 pt-5">Download Data</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                    <div id="editing-data" class="my-5">
+                        <h2 class="pt-4">Editing Data</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
+                    <div id="data-entry" class="my-5">
+                        <h3 class="pt-4">Data Entry</h3>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
                     </div>
-                    <div class="my-5">
-                        <h2 id="alerts" class="mb-3 pt-5">Alerts</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                    <div id="data-upload" cclass="my-5">
+                        <h3 lass="pt-4">Data Upload</h3>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
                     </div>
-                    <div class="my-5">
-                        <h2 id="account-settings" class="mb-3 pt-5">Account Settings</h2>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
-                        <p>This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.</p>
+                    <div id="data-sections" class="my-5">
+                        <h3 class="pt-4">Data Sections</h3>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
+                    </div>
+                    <div id="data-validation" class="my-5">
+                        <h3 class="pt-4">Data Validation</h3>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting
+                        </p>
+                    </div>
+                    <div id="viewdiff" class="my-5">
+                        <h2 class="pt-4">View/Diff</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
+                    </div>
+                    <div id="submit" class="my-5">
+                        <h2 class="pt-4">Submit Data</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
+                    </div>
+                    <div id="download" class="my-5">
+                        <h2 class="pt-4">Download Data</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
+                    </div>
+                    <div id="alerts" class="my-5">
+                        <h2 class="pt-4">Alerts</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
+                    </div>
+                    <div id="account-settings" class="my-5">
+                        <h2 class="pt-4">Account Settings</h2>
+                        <p>
+                            This is some placeholder content for the scrollspy page. Note that as you scroll down the page, the appropriate navigation link is highlighted. It's repeated throughout the component example. We keep adding some more example copy here to emphasize the scrolling and highlighting.
+                        </p>
                     </div>
                 </div>
             </div>

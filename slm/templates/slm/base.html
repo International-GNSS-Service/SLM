@@ -55,11 +55,11 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
 <body>
   <!-- Top Navigation Menu -->
   <div id="top-bar">
-    <nav class="navbar navbar-light bg-igs-blue border-bottom border-dark navbar-expand-md bg-faded justify-content-between">
+    <nav class="navbar navbar-dark bg-igs-blue border-bottom border-dark navbar-expand-xl bg-faded justify-content-between">
       <div class="container-fluid mx-4">
         <a href="{% url "slm:home" %}" class="navbar-brand d-flex w-50"><img id="logo" src="{% static 'images/beta_logo_white.png' %}" alt="International GNSS Service"></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3">
-            <span class="navbar-toggler-icon"></span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3" title="Navigation">
+          <span class="navbar-toggler-icon"></span>
         </button>
         {% if user.is_authenticated %}
           {% block top_menu %}
@@ -108,7 +108,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                   </li>
                   <li class="nav-item dropdown">
                     <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
-                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarScrollingDropdown">
+                    <ul class="dropdown-menu dropdown-menu-right">
                       <!-- User Drop Down -->
                       {% if request.user.is_superuser %}
                       <li><a class="dropdown-item" href="{% url "admin:index" %}">Admin</a></li>

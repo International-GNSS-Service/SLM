@@ -20,7 +20,7 @@
             $('#slm-log-scroll .slm-loader'),
             "slm_edit_api:logentries-list",
             {},
-            {% if station %}{site: '{{ station }}'}{% else %}{}{% endif %},
+            {% if station %}{site: '{{ station }}'}{% elif log_user %}{user: '{{ log_user.email }}'}{% else %}{}{% endif %},
             slm.drawLogs
         );
     });

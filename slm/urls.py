@@ -11,7 +11,8 @@ from slm.views import (
     NewSiteView,
     register_user,
     NotificationsView,
-    SLMView
+    SLMView,
+    UserActivityLogView
 )
 from django.urls import path, register_converter
 from datetime import datetime
@@ -121,4 +122,10 @@ urlpatterns = [
     path('about/', SLMView.as_view(template_name='slm/about.html'), name='about'),
     path('help/', SLMView.as_view(template_name='slm/help.html'), name='help'),
     path('notifications/', NotificationsView.as_view(), name='notifications'),
+    path('activity/', UserActivityLogView.as_view(), name='user_activity'),
+    path(
+        'activity/<int:log_user>',
+        UserActivityLogView.as_view(),
+        name='user_activity'
+    )
 ]

@@ -361,6 +361,31 @@ class LogView(StationContextView):
     template_name = 'slm/station/log.html'
 
 
+class UserActivityLogView(SLMView):
+
+    template_name = 'slm/user_activity.html'
+
+    def get_context_data(self, log_user=None, **kwargs):
+        context = super().get_context_data()
+        try:
+            if log_user:
+                # must be a super user to see other people's log history
+                # todo configurable perm for this? like is mod for user's
+                #  agency?
+                if not self.request.user.is_superuser:
+                    raise PermissionDenied()
+
+                context['log_user'] = get_user_model().objects.get(pk=log_user)
+            else:
+                # otherwise we're getting the logged in user's log history
+                context['log_user'] = self.request.user
+
+        except get_user_model().DoesNotExist:
+            raise Http404()
+
+        return context
+
+
 class StationReviewView(StationContextView):
 
     template_name = 'slm/station/review.html'

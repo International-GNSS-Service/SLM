@@ -108,7 +108,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                   </li>
                   <li class="nav-item dropdown">
                     <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
-                    <ul class="dropdown-menu dropdown-menu-right">
+                    <ul class="dropdown-menu dropdown-menu-end">
                       <!-- User Drop Down -->
                       {% if request.user.is_superuser %}
                       <li><a class="dropdown-item" href="{% url "admin:index" %}">Admin</a></li>
@@ -118,7 +118,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                       {% endif %}
                       <li><a class="dropdown-item" href="{% url "slm:profile" %}">Profile</a></li>
                       <li><a class="dropdown-item" href="{% url "account_change_password" %}">Change Password</a></li>
-                      <li><a class="dropdown-item" href="/changelog">Change Log</a></li>
+                      <li><a class="dropdown-item" href="{% url "slm:user_activity" %}">Activity Log</a></li>
                       <li>
                         <hr class="dropdown-divider">
                       </li>

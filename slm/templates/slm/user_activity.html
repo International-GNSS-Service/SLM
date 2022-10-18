@@ -1,0 +1,16 @@
+{% extends "slm/base.html" %}
+{% load widget_tweaks i18n %}
+
+{% block page_content %}
+    <div class="container mb-5">
+        <!-- Title -->
+        <div class="mt-5 mb-4 pb-3 border-bottom">
+            <h1>{% if log_user.name %}{{ log_user.name }}{% else %}{{ log_user.email }}{% endif %} {% translate "Activity Log" %}</h1>
+        </div>
+
+        <div class="container form-group px-lg-5">
+            {% include 'slm/widgets/log_scroll.html' with log_user=log_user %}
+        </div>
+    </div>
+
+{% endblock %}

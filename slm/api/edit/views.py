@@ -2,39 +2,17 @@ from slm.api.permissions import (
     CanEditSite,
     IsUserOrAdmin,
     UpdateAdminOnly,
-    CanDeleteAlert,
-    IsAdmin
+    CanDeleteAlert
 )
 from rest_framework.permissions import IsAuthenticated
-
-from rest_framework.filters import (
-    SearchFilter,
-    OrderingFilter
-)
-from django.db.models import (
-    Q,
-    OuterRef,
-    Subquery,
-    Count,
-    F,
-    IntegerField,
-    Prefetch,
-    Max,
-    Window,
-    RowRange
-)
-from django.http.response import Http404
+from django.db.models import Q
 from slm.api.views import BaseSiteLogDownloadViewSet
-from slm.utils import to_bool
-from django_filters import filters
 from rest_framework import (
-    viewsets,
     mixins,
     status,
     serializers
 )
 from rest_framework.serializers import ModelSerializer
-from urllib.parse import unquote_plus
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import (
     DjangoFilterBackend,
@@ -43,27 +21,23 @@ from django_filters.rest_framework import (
 from django.db import transaction
 import django_filters
 from rest_framework.response import Response
-from slm.defines import SiteLogStatus
 from slm.api.edit.serializers import (
     StationListSerializer,
     UserSerializer,
     LogEntrySerializer,
     AlertSerializer
 )
-from slm.api.serializers import SiteLogSerializer
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from slm.models import (
     Site,
     SiteSection,
     SiteSubSection,
-    UserProfile,
     SiteForm,
     SiteIdentification,
     SiteLocation,
     SiteReceiver,
     SiteAntenna,
-    AntennaType,
     SiteSurveyedLocalTies,
     SiteFrequencyStandard,
     SiteCollocation,
@@ -79,21 +53,14 @@ from slm.models import (
     SiteOperationalContact,
     SiteResponsibleAgency,
     SiteMoreInformation,
-    UserProfile,
-    Agency,
     LogEntry,
     Alert
 )
 from slm.api.pagination import DataTablesPagination
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
-from django.http import HttpResponse
 from rest_framework import viewsets, renderers
-import json
-from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from ipware import get_client_ip
-from slm.api.views import LegacyRenderer
 from django.utils.translation import gettext as _
 
 
@@ -122,12 +89,34 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
 
     class StationFilter(FilterSet):
 
-        name = django_filters.CharFilter(field_name='name', lookup_expr='istartswith')
-        published_before = django_filters.CharFilter(field_name='last_publish', lookup_expr='lt')
-        published_after = django_filters.CharFilter(field_name='last_publish', lookup_expr='gte')
-        updated_before = django_filters.CharFilter(field_name='last_update', lookup_expr='lt')
-        updated_after = django_filters.CharFilter(field_name='last_update', lookup_expr='gte')
-        agency = django_filters.CharFilter(field_name='agencies__name', lookup_expr='iexact')
+        name = django_filters.CharFilter(
+            field_name='name',
+            lookup_expr='istartswith'
+        )
+        published_before = django_filters.CharFilter(
+            field_name='last_publish',
+            lookup_expr='lt'
+        )
+        published_after = django_filters.CharFilter(
+            field_name='last_publish',
+            lookup_expr='gte'
+        )
+        updated_before = django_filters.CharFilter(
+            field_name='last_update',
+            lookup_expr='lt'
+        )
+        updated_after = django_filters.CharFilter(
+            field_name='last_update',
+            lookup_expr='gte'
+        )
+        agency = django_filters.CharFilter(
+            field_name='agencies__name',
+            lookup_expr='iexact'
+        )
+        network = django_filters.CharFilter(
+            field_name='networks__name',
+            lookup_expr='iexact'
+        )
 
         class Meta:
             model = Site
@@ -138,16 +127,25 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                 'updated_before',
                 'updated_after',
                 'agency',
-                'status'
+                'status',
+                'network'
             )
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = StationFilter
-    ordering_fields = ['name', 'num_flags', 'created', 'last_update', 'last_publish']
+    ordering_fields = [
+        'name',
+        'num_flags',
+        'created',
+        'last_update',
+        'last_publish'
+    ]
     ordering = ('name',)
 
     def get_queryset(self):
-        return Site.objects.editable_by(self.request.user).prefetch_related('agencies').select_related('owner')
+        return Site.objects.editable_by(
+            self.request.user
+        ).prefetch_related('agencies').select_related('owner')
 
 
 class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
@@ -156,11 +154,26 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
 
     class LogEntryFilter(FilterSet):
 
-        site = django_filters.CharFilter(field_name='site__name', lookup_expr='iexact')
-        user = django_filters.CharFilter(field_name='user__email', lookup_expr='iexact')
-        before = django_filters.CharFilter(field_name='timestamp', lookup_expr='lt')
-        after = django_filters.CharFilter(field_name='timestamp', lookup_expr='gte')
-        ip = django_filters.CharFilter(field_name='ip', lookup_expr='iexact')
+        site = django_filters.CharFilter(
+            field_name='site__name',
+            lookup_expr='iexact'
+        )
+        user = django_filters.CharFilter(
+            field_name='user__email',
+            lookup_expr='iexact'
+        )
+        before = django_filters.CharFilter(
+            field_name='timestamp',
+            lookup_expr='lt'
+        )
+        after = django_filters.CharFilter(
+            field_name='timestamp',
+            lookup_expr='gte'
+        )
+        ip = django_filters.CharFilter(
+            field_name='ip',
+            lookup_expr='iexact'
+        )
 
         class Meta:
             model = LogEntry
@@ -170,18 +183,35 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     filterset_class = LogEntryFilter
 
     def get_queryset(self):
-        return LogEntry.objects.for_user(self.request.user).prefetch_related('site_log_object')
+        return LogEntry.objects.for_user(
+            self.request.user
+        ).prefetch_related(
+            'site_log_object'
+        )
 
 
-class AlertViewSet(DataTablesListMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class AlertViewSet(
+    DataTablesListMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = AlertSerializer
     permission_classes = (IsAuthenticated, CanDeleteAlert)
 
     class AlertFilter(FilterSet):
 
-        site = django_filters.CharFilter(field_name='site__name', lookup_expr='iexact')
-        user = django_filters.CharFilter(field_name='user__email', lookup_expr='iexact')
-        agency = django_filters.CharFilter(field_name='agency__name', lookup_expr='iexact')
+        site = django_filters.CharFilter(
+            field_name='site__name',
+            lookup_expr='iexact'
+        )
+        user = django_filters.CharFilter(
+            field_name='user__email',
+            lookup_expr='iexact'
+        )
+        agency = django_filters.CharFilter(
+            field_name='agency__name',
+            lookup_expr='iexact'
+        )
 
         class Meta:
             model = Alert
@@ -191,7 +221,9 @@ class AlertViewSet(DataTablesListMixin, mixins.DestroyModelMixin, viewsets.Gener
     filterset_class = AlertFilter
 
     def get_queryset(self):
-        return Alert.objects.for_user(self.request.user).select_related('user', 'site', 'agency')
+        return Alert.objects.for_user(
+            self.request.user
+        ).select_related('user', 'site', 'agency')
 
 
 class UserProfileViewSet(
@@ -205,7 +237,9 @@ class UserProfileViewSet(
     permission_classes = (IsUserOrAdmin,)
 
     def get_queryset(self):
-        return get_user_model().objects.filter(id=self.request.user.id).select_related('profile', 'agency')
+        return get_user_model().objects.filter(
+            id=self.request.user.id
+        ).select_related('profile', 'agency')
 
     def list(self, request, **kwargs):
         resp = super(UserProfileViewSet, self).list(request, **kwargs)
@@ -213,7 +247,9 @@ class UserProfileViewSet(
         return resp
 
     def create(self, request, *args, **kwargs):
-        kwargs[self.lookup_url_kwarg or self.lookup_field] = self.request.user.pk
+        kwargs[
+            self.lookup_url_kwarg or self.lookup_field
+        ] = self.request.user.pk
         self.update(request, *args, **kwargs)
 
 
@@ -288,7 +324,7 @@ class SectionViewSet(type):
 
             def update(self, instance, validated_data):
                 if '_flags' in validated_data:
-                    # let the log generator know that this is just a flag update
+                    # let the log generator know that this is just a flag updt
                     instance._flag_update = True
                 elif 'published' in validated_data:
                     instance._publisher = self.context['request'].user
@@ -298,9 +334,11 @@ class SectionViewSet(type):
             def create(self, validated_data):
                 with transaction.atomic():
                     site = validated_data.get('site')
-                    # if id is present we use it to make sure this edit is taking place on HEAD, otherwise we just
-                    # allow it
-                    validated_data.pop('published')  # dont allow edits to published here - must go through admin
+                    # if id is present we use it to make sure this edit is
+                    # taking place on HEAD, otherwise we just allow it
+                    # dont allow edits to published here - must go through
+                    # admin
+                    validated_data.pop('published')
                     section_id = validated_data.pop('id', None)
                     subsection = validated_data.get('subsection', None)
                     validated_data['editor'] = self.context['request'].user

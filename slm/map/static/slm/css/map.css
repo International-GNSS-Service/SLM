@@ -62,7 +62,8 @@ table.dataTable {
     margin-top: 20px;
 }
 
-.slm-agency-col {
+.slm-agency-col,
+.slm-network-col {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -34,7 +34,7 @@
             <div class="col-12">
                 <table id="slm-map-station-table" class="table table-sm table-striped table-hover" style="width: 100%; padding-top: 30px; margin-top: 50px" cellspacing="0">
                     <colgroup>
-                        <col span="5">
+                        <col span="6">
                     </colgroup>
                     <colgroup>
                         <col class="pos left">
@@ -50,7 +50,7 @@
                     </colgroup>
                     <thead>
                         <tr>
-                            <th colspan="5"></th>
+                            <th colspan="6"></th>
                             <th class="text-center" colspan="2" data-bs-toggle="tooltip" title="{% trans "Position" %}">Position</th>
                             <th class="text-center" colspan="3" data-bs-toggle="tooltip" title="{% trans "The most recent activity on the site log information." %}">Latest Activity</th>
                             <th colspan="1"></th>
@@ -77,6 +77,15 @@
                                     {% endfor %}
                                 </select>
                             </th>
+                            <th class="form-group">
+                                <label for="slm-network-select" style="display: none">Network</label>
+                                <select name="network" id="slm-network-select" class="form-control">
+                                    <option value="" {% if not network %}selected>{% endif %}</option>
+                                    {% for ntwrk in networks %}
+                                        <option value="{{ ntwrk.name }}" {% if network and network.id == ntwrk.id %}selected{% endif %}>{{ ntwrk.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </th>
                             <th></th>
                             <th></th>
                             <th></th>
@@ -90,6 +99,7 @@
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'num_flags' }}">Flags</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'created' }}">Registered</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'agencies' }}">Agencies</th>
+                            <th data-bs-toggle="tooltip" title="">Networks</th>
                             <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'latitude' }}">Latitude</th>
                             <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'longitude' }}">Longitude</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_user' }}">User</th>
@@ -105,6 +115,7 @@
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'num_flags' }}">Flags</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'created' }}">Registered</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'agencies' }}">Agencies</th>
+                            <th data-bs-toggle="tooltip" title="">Networks</th>
                             <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'latitude' }}">Latitude</th>
                             <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'longitude' }}">Longitude</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_user' }}">User</th>
@@ -113,7 +124,7 @@
                             <th>Download</th>
                         </tr>
                         <tr>
-                            <th colspan="5"></th>
+                            <th colspan="6"></th>
                             <th colspan="2" data-bs-toggle="tooltip" title="{% trans "Position" %}">Position</th>
                             <th colspan="3" data-bs-toggle="tooltip" title="{% trans "The most recent activity on the site log information." %}">Latest Activity</th>
                             <th colspan="1"></th>
@@ -125,6 +136,7 @@
     {% compress js %}
     <script>
         const agencySelect = $('#slm-agency-select');
+        const networkSelect = $('#slm-network-select');
         const statusSelect = $('#slm-status-select');
         function getQuery(data) {
             data = data || {};
@@ -166,6 +178,9 @@
             }
             if (agencySelect.val()) {
                 data.agency = agencySelect.val();
+            }
+            if (networkSelect.val()) {
+                data.network = networkSelect.val();
             }
             if (statusSelect.val()) {
                 data.status = statusSelect.val();
@@ -238,6 +253,18 @@
                             agency_list.push(data[tidx].name);
                         }
                         return `<span title="${agency_list.join(', ')}">${agency_list.join(', ')}</span>`;
+                    },
+                    orderable: false,
+                },
+                {
+                    data: 'networks',
+                    className: 'slm-network-col',
+                    render: function (data, type, full, meta) {
+                        let network_list = [];
+                        for (let tidx = 0; tidx < data.length; tidx++) {
+                            network_list.push(data[tidx].name);
+                        }
+                        return `<span title="${network_list.join(', ')}">${network_list.join(', ')}</span>`;
                     },
                     orderable: false,
                 },

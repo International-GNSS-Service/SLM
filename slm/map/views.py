@@ -3,7 +3,8 @@ from slm.map.models import MapSettings
 from slm.models import (
     Site,
     SiteLocation,
-    Agency
+    Agency,
+    Network
 )
 from slm.defines import SiteLogStatus
 from slm.views import SLMView
@@ -18,6 +19,10 @@ class MapView(SLMView):
         if agency:
             agency = Agency.objects.get(name=agency)
 
+        network = kwargs.get('network', None)
+        if network:
+            network = Network.objects.get(name=network)
+
         map_settings = MapSettings.load()
         context.update({
             'api_key': map_settings.api_key,
@@ -25,11 +30,13 @@ class MapView(SLMView):
             'projection': str(map_settings.map_projection),
             'zoom': map_settings.zoom,
             'agency': agency,
+            'network': network,
             'Site': Site,
             'SiteLocation': SiteLocation,
             'SiteLogStatus': SiteLogStatus,
             'agencies': Agency.objects.membership(
                 user=self.request.user
-            )
+            ),
+            'networks': Network.objects.all()
         })
         return context

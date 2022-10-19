@@ -153,7 +153,13 @@ class Alert(models.Model):
 
 class Network(models.Model):
 
-    name = models.CharField(max_length=100, blank=False, null=False)
+    name = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+        db_index=True
+    )
+
     sites = models.ManyToManyField('slm.Site', related_name='networks')
 
     def __str__(self):

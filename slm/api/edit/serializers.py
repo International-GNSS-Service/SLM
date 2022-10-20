@@ -205,4 +205,3 @@ class UserSerializer(serializers.ModelSerializer):
             'html_emails'
         ]
         read_only_fields = ('id', 'agency', 'date_joined')
-

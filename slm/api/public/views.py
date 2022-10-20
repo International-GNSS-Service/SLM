@@ -8,13 +8,13 @@ from django_filters.rest_framework import (
     FilterSet
 )
 import django_filters
-from slm.defines import SiteLogStatus
+from slm.defines import RinexVersion
 from slm.api.public.serializers import StationListSerializer
 from slm.api.views import BaseSiteLogDownloadViewSet
 from django.db.models import ExpressionWrapper, F, Value, Case, When, DurationField, DateField
 from django.db.models import IntegerField, F, Avg, fields, BooleanField
 from django.db import models
-from django.db.models.functions import Cast, ExtractDay, TruncDate, Now, ExtractMonth, ExtractYear
+from django.db.models.functions import Now, Cast, ExtractDay, TruncDate, Now, ExtractMonth, ExtractYear
 from django.utils import timezone
 
 from slm.models import (
@@ -191,10 +191,11 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             published=True
         ).order_by('-edited')
 
-        """
-        last_published_data_avail = DataAvailability.objects.filter(
+        last_data_avail = DataAvailability.objects.filter(
             site=OuterRef('pk')
-        )
+        ).order_by('-last')
+        from django.db.models.functions import Now
+        """
 
         last_data_1=ExpressionWrapper(((ExtractYear(now().date()) - (ExtractYear('rinex2')))*12*30) + 
                                 ((ExtractMonth(now().date()) - (ExtractMonth('rinex2')))*30) + 
@@ -204,7 +205,6 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                             ((ExtractMonth(now().date()) - (ExtractMonth('rinex3')))*30) + 
                             ((ExtractDay(now().date()) - (ExtractDay('rinex3')))) , models.IntegerField())
         """
-        from random import randint
 
         return Site.objects.public().prefetch_related('agencies').annotate(
             latitude=Subquery(last_published_location.values('latitude')[:1]),
@@ -221,10 +221,20 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             domes_number=Subquery(last_published_iden.values('iers_domes_number')[:1]),
             satellite_system=Subquery(last_published_receiver.values('satellite_system')[:1]),
             data_center=Subquery(last_published_info.values('primary')[:1]),
-            last_data=Value(randint(0,30))
-            #rinex3=Subquery(last_published_data_avail.values('cddis_daily_rinex3')[:1]),
-            #rinex2=Subquery(last_published_data_avail.values('cddis_daily_rinex2')[:1]),
-            #last_data=Case(When(rinex3=ExpressionWrapper(Q(rinex3=None),output_field=BooleanField()), then=last_data_1), default=last_data_2)
+            last_data_time=Subquery(last_data_avail.values('last')[:1]),
+            last_data=Now() - F('last_data_time'),
+            last_rinex2=Subquery(
+                last_data_avail.filter(
+                    RinexVersion(2).major_q()
+                ).values('last')[:1]),
+            last_rinex3=Subquery(
+                last_data_avail.filter(
+                    RinexVersion(3).major_q()
+                ).values('last')[:1]),
+            last_rinex4=Subquery(
+                last_data_avail.filter(
+                    RinexVersion(4).major_q()
+                ).values('last')[:1]),
         )
 
 

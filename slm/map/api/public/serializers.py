@@ -23,6 +23,6 @@ class StationMapSerializer(serializers.Serializer):
                 "name": instance.name,
                 "publish": instance.last_publish,
                 "status": instance.status,
-                "last_data": instance.last_data
+                "last_data": max(0, instance.last_data.days)
             }
         }

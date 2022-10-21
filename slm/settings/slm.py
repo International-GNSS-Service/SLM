@@ -10,3 +10,7 @@ SLM_STATUS_COLORS = {
     SiteLogStatus.UPDATED: '#8D6708',
     SiteLogStatus.PUBLISHED: '#008000',
 }
+
+# if True, for subsections and missing sections, placeholder structures will
+# be added to the logs
+SLM_LEGACY_PLACEHOLDERS = True

@@ -5,7 +5,7 @@ Template for View/Diff page.
 -->
 
 {% extends "slm/station/base.html" %}
-{% load compress slm %}
+{% load compress slm i18n %}
 
 {% block action_content %}
 <div class="container">
@@ -14,7 +14,8 @@ Template for View/Diff page.
       <h2>Review and Submit</h2>
       <div>
         <!-- <button class="btn btn-primary" {% if not unpublished_changes %}disabled{% endif %}>Submit</button> -->
-        <button class="btn btn-primary" {% if not can_publish or not unpublished_changes %}disabled{% endif %}>Submit to IGS</button>
+        <button class="btn btn-danger {% if not moderator or not site.pending_review %}d-none{% endif %}">{% trans 'Reject Changes' %}</button>
+        <button class="btn btn-primary" {% if not can_publish and unpublished_changes %}disabled{% endif %} data-btn-action="" data-pub-label="{% trans '' %}" data-submit-label="{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}" data-submitted-label="{% trans 'Changes Submitted' %}"></button>
       </div>
   </div>
 

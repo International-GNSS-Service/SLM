@@ -17,11 +17,13 @@ from django.contrib.auth import authenticate, login
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from slm.models import (
     Alert,
     Site,
     SiteSubSection,
-    LogEntry
+    LogEntry,
+    UserProfile
 )
 from slm.defines import (
     SiteLogStatus,
@@ -90,10 +92,17 @@ class SLMView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        max_alert = Alert.objects.for_user(self.request.user).aggregate(Max('level'))['level__max']
+        max_alert = Alert.objects.for_user(
+            self.request.user
+        ).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
         context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+        context['SLM_ORG_NAME'] = getattr(
+            settings,
+            'SLM_ORG_NAME',
+            None
+        )
         return context
 
 
@@ -128,6 +137,7 @@ class StationContextView(SLMView):
             'site': self.site if self.site else None,
             'agencies': self.agencies,
             'SiteLogStatus': SiteLogStatus,
+            'moderator': self.site.is_moderator(self.request.user),
             'link_view': 'slm:edit' if self.request.resolver_match.view_name not in {
                 'slm:alerts',
                 'slm:download',

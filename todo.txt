@@ -1,5 +1,6 @@
 TODO
 - Fix Ashley Bug
+- NOT ADMIN MODE
 - network_QC layout
 - Data Availability scripts
 - Blank site log output

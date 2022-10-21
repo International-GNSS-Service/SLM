@@ -4,15 +4,20 @@ from django.db.models.signals import (
     pre_save,
     post_save
 )
+from slm import signals as slm_signals
 from django.db.models import Q, Max
 from ipware import get_client_ip
 
 
 class SLMConfig(AppConfig):
     name = 'slm'
+
+    # space is used as a workaround to alphabetically push SLM to the
+    # top of the admin
     verbose_name = " SLM"
 
     def ready(self):
+        from slm import receivers  # import our default receivers
         from slm.defines import LogEntryType
         from slm.models import (
             Site,
@@ -106,3 +111,4 @@ class SLMConfig(AppConfig):
             if issubclass(model_class, SiteSection):
                 post_save.connect(handle_section_update, model_class)
                 pre_save.connect(validate_updates, model_class)
+

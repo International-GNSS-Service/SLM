@@ -33,6 +33,12 @@ class UserManager(DjangoUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
+class UserQueryset(models.QuerySet):
+
+    def emails_ok(self):
+        return self.filter(silence_emails=False)
+
+
 class UserProfile(models.Model):
 
     # contact
@@ -171,6 +177,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=None
     )
 
+    silence_emails = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        help_text=_(
+            'If set to true this user will not be sent any emails by the '
+            'system. Note: this does not apply to account related emails '
+            '(i.e. password resets).'
+        )
+    )
+
     def is_moderator(self, station):
         # stub for per-station moderation authority
         return self.is_superuser
@@ -179,6 +196,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def name(self):
         if self.first_name or self.last_name:
             return f'{self.first_name} {self.last_name}'
+        elif self.email:
+            return self.email
         return None
 
     #@property
@@ -190,7 +209,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             return f'{self.email} | {self.name}'
         return self.email
 
-    objects = UserManager()
+    objects = UserManager().from_queryset(UserQueryset)()
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'

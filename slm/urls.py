@@ -25,6 +25,7 @@ api = {
         'serializer_module': 'slm.api.edit.serializers',
         'endpoints': [
             ('stations', edit_views.StationListViewSet),
+            ('submit', edit_views.ReviewRequestView),
             ('profile', edit_views.UserProfileViewSet),
             ('download', edit_views.SiteLogDownloadViewSet),
             ('siteform', edit_views.SiteFormViewSet),

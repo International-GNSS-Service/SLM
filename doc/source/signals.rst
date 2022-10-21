@@ -1,0 +1,6 @@
+.. include:: signals.rst
+
+=======
+Signals
+=======
+

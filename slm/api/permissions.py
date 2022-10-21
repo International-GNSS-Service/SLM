@@ -27,6 +27,21 @@ class UpdateAdminOnly(permissions.BasePermission):
         return True
 
 
+class DestroyAdminOnly(permissions.BasePermission):
+    """
+    """
+    def has_permission(self, request, view):
+        if view.action in {'destroy'}:
+            return request.user.is_superuser
+        return True
+
+
+class CanModerate(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.is_moderator(request.user)
+
+
 class CanDeleteAlert(permissions.BasePermission):
     """
     """

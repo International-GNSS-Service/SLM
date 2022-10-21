@@ -1,0 +1,9 @@
+{% load slm i18n %}
+
+{{ rejecter.name }} {% trans 'has rejected the proposed site log changes for' %} {{site.name}}.
+
+{% url 'slm:review' station=site.name %}
+
+{% comment %}
+todo list errors
+{% endcomment %}

@@ -6,8 +6,10 @@ from slm.models import (
     Agency,
     LogEntry,
     Alert,
-    Network
+    Network,
+    ReviewRequest
 )
+from django.utils.timezone import now
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -43,6 +45,34 @@ class EmbeddedUserSerializer(serializers.ModelSerializer):
             'last_name',
             'agency'
         ]
+
+
+class ReviewRequestSerializer(serializers.ModelSerializer):
+
+    site = serializers.CharField(source='site.name')
+    review_pending = None
+
+    def create(self, validated_data):
+        validated_data['requester'] = getattr(
+            self.context['request'],
+            'user',
+            None
+        )
+        validated_data['site'] = Site.objects.get(
+            name__iexact=validated_data['site']
+        )
+        self.review_pending = validated_data['site'].review_pending
+        return ReviewRequest.objects.update_or_create(
+            site=validated_data['site'],
+            defaults={
+                'requester': validated_data['requester'],
+                'timestamp': now()
+            }
+        )[0]
+
+    class Meta:
+        model = Site
+        fields = ['site', 'requester', 'timestamp']
 
 
 class StationListSerializer(serializers.ModelSerializer):

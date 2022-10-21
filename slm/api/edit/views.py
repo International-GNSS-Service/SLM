@@ -2,8 +2,10 @@ from slm.api.permissions import (
     CanEditSite,
     IsUserOrAdmin,
     UpdateAdminOnly,
-    CanDeleteAlert
+    CanDeleteAlert,
+    DestroyAdminOnly
 )
+from slm import signals as slm_signals
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from slm.api.views import BaseSiteLogDownloadViewSet
@@ -25,7 +27,8 @@ from slm.api.edit.serializers import (
     StationListSerializer,
     UserSerializer,
     LogEntrySerializer,
-    AlertSerializer
+    AlertSerializer,
+    ReviewRequestSerializer
 )
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -54,12 +57,16 @@ from slm.models import (
     SiteResponsibleAgency,
     SiteMoreInformation,
     LogEntry,
-    Alert
+    Alert,
+    ReviewRequest
 )
 from slm.api.pagination import DataTablesPagination
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
-from rest_framework import viewsets, renderers
+from rest_framework import (
+    viewsets,
+    renderers
+)
 from ipware import get_client_ip
 from django.utils.translation import gettext as _
 
@@ -80,6 +87,34 @@ class DataTablesListMixin(mixins.ListModelMixin):
     A mixin for adapting list views to work with the datatables library.
     """
     pagination_class = DataTablesPagination
+
+
+class ReviewRequestView(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    queryset = ReviewRequest.objects.all()
+    serializer_class = ReviewRequestSerializer
+    permission_classes = (CanEditSite, DestroyAdminOnly)
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        if serializer.review_pending:
+            slm_signals.review_requested.send(
+                sender=self,
+                request=serializer.instance
+            )
+
+    def perform_destroy(self, instance):
+        review_pending = instance.site.review_pending
+        super().perform_destroy(instance)
+        if review_pending:
+            slm_signals.changes_rejected.send(
+                sender=self,
+                request=instance,
+                rejecter=self.request.user
+            )
 
 
 class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):

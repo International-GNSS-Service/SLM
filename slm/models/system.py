@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from slm.defines import AlertLevel
 from django_enum import EnumField
 from django.db.models import Q
+from django.contrib.auth import get_user_model
 
 
 class AgencyManager(models.Manager):
@@ -164,3 +165,28 @@ class Network(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ReviewRequest(models.Model):
+
+    site = models.OneToOneField(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        blank=False,
+        null=False,
+        related_name='review_request'
+    )
+
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        default=None
+    )
+
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        blank=True
+    )

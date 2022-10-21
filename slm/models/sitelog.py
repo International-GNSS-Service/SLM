@@ -478,6 +478,46 @@ class Site(models.Model):
 
     last_recalc = models.DateTimeField(null=True, blank=True, default=None)
 
+    def is_moderator(self, user):
+        return self.moderators.exists(pk=user.pk)
+
+    @cached_property
+    def moderators(self):
+        """
+        Get the users who have moderate permission for this site. Moderators
+        are also editors, but are not listed in editors
+
+        :return: A queryset containing users with moderate permission for the
+            site
+        """
+        return get_user_model().objects.filter(is_superuser=True)
+
+    @cached_property
+    def editors(self):
+        """
+        Get the users who have edit permission, but not moderate permission on
+        for this site.
+
+        :return: A queryset containing users with edit permissions for the site
+        """
+        return get_user_model().objects.filter(
+            ~Q(pk__in=self.moderators) & Q(agency__in=self.agencies)
+        )
+
+    @cached_property
+    def review_pending(self):
+        """
+        Checks if a review is pending.
+
+        :return: True if a review is pending for this site.
+        """
+        if hasattr(self, 'review_request') and self.review_request:
+            return (
+                self.last_publish is None or
+                self.review_request.timestamp >= self.last_publish
+            )
+        return False
+
     @classmethod
     def sections(cls):
         if hasattr(cls, 'sections_'):
@@ -946,7 +986,7 @@ class SiteSubSection(SiteSection):
 class SiteForm(SiteSection):
     """
     TODO - this can be reconstituted on the fly
-        (i.e. this is denomralized data - with the exception of prepared by?) - get rid of it?
+        (i.e. this is denormalized data - with the exception of prepared by?) - get rid of it?
 
     0.   Form
 

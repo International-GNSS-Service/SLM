@@ -25,7 +25,7 @@
             $(`<div class="slm-alert-item slm-alert-${level.label.toLowerCase()} border-${level.bootstrap} d-flex gap-3 py-3 mt-1" aria-current="true">` +
                     `<div class="d-flex gap-2 w-100 justify-content-between">` +
                         `<div>` +
-                            `<h4 class="mb-2">${alert.header ? alert.header : alert.site}</h4>` +
+                            `<h3 class="mb-2">${alert.header ? alert.header : alert.site}</h3>` +
                             `<p class="opacity-75">${alert.detail}</p>` + (
                                 siteUrl ?
                                 `<button class="btn btn-outline-secondary" onclick="window.location='${siteUrl}'" type="submit">${alert.site}</button>` :

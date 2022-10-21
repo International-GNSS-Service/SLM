@@ -320,7 +320,7 @@ slm.drawLogs = function(position, data) {
         $(`<div class="slm-log-item d-flex gap-3 py-3 mt-1 ${type.css}" aria-current="true" onclick="window.location='${diffUrl}'">` +
                 `<div class="d-flex gap-2 w-100 justify-content-between">` +
                     `<div>` +
-                        `<h4 class="mb-2">${entry.site}</h4>` +
+                        `<h3 class="mb-2">${entry.site}</h3>` +
                         `<span class="badge ${type.css}">${type.label}</span> <span>${entry.target}</span>` +
                     `</div>` +
                     `<div class="opacity-75">` +

@@ -71,21 +71,21 @@
 
                     <!-- Title -->
                     <div class="mb-4 pb-3 border-bottom">
-                    <h1 class="mt-4">Welcome to the SLM 2.0 </h1>
+                    <h1 class="mt-4">Welcome to the SLM 2.0, {% if user.name %}{{ user.first_name }}{% else %}{{ user.email }}{% endif %}</h1>
                     </div>
 
                     <!-- Feeds -->
                     <div class="row vh-100">
-                    <!-- All Notifications Feed -->
+                    <!-- All Alerts Feed -->
                     <div class="my-2 mr-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
-                      <h3 class="border-bottom pb-2 mb-4">Notifications</h3>
+                      <h3 class="border-bottom pb-2 mb-4">Alerts</h3>
                       {% include 'slm/widgets/notification_scroll.html' %}
                     </div>
-                    <!-- End of All Notifications Feed -->
+                    <!-- End of All Alerts Feed -->
 
                     <!-- Announcements Feed -->
                     <div class="my-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
-                      <h3 class="border-bottom pb-2 mb-4">Recent Station Updates</h3>
+                      <h3 class="border-bottom pb-2 mb-4">Activity Log</h3>
                       {% include 'slm/widgets/log_scroll.html' %}
                     </div>
                     <!-- End of Announcements Feed -->

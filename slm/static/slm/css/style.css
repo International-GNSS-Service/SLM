@@ -19,7 +19,7 @@ button {
 }
 
 a, a:hover {
-    color: inherit;
+    color: #175A7D;
 }
 
 .mono {
@@ -429,6 +429,7 @@ header.slm-agency {
 }
 .slm-bg-updated {
     background-color: #BF8C0D;
+    color: #000;
 }
 .slm-bg-dormant {
     background-color: #3D4543;
@@ -449,3 +450,4 @@ header.slm-agency {
 .slm-text-published {
     color: #008000;
 }
+

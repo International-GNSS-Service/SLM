@@ -61,7 +61,7 @@
                       {% endif %}
                       {% if not field.is_hidden %}
                       {% if request.user|is_moderator:form.instance %}
-                      <label for="{{ field.label|to_id:'flag'}}" style="display: none;"></label>
+                      <label for="{{ field.label|to_id:'flag'}}" style="display: none;"><span class="visually-hidden">Flag for {{ field.label }}</span></label>
                       <input id="{{ field.label|to_id:'flag'}}" type="text" name="{{ field.name }}_flag" data-slm-field="{{ field.name }}" {% if flag %}value="{{ flag }}"{% endif %} {% if not flag %}style="display: none;"{% endif %} class="form-control slm-flag-input" {% if form.instance.is_deleted %}disabled{% endif %}/>
                       {% elif flag %}
                           <div id="{{ field.label|to_id:'flag'}}" class="invalid-feedback slm-form-error">{{ flag }}</div>

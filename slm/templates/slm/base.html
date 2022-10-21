@@ -57,7 +57,9 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
   <div id="top-bar">
     <nav class="navbar navbar-dark bg-igs-blue border-bottom border-dark navbar-expand-xl bg-faded justify-content-between">
       <div class="container-fluid mx-4">
-        <a href="{% url "slm:home" %}" class="navbar-brand d-flex w-50"><img id="logo" src="{% static 'images/beta_logo_white.png' %}" alt="International GNSS Service"></a>
+        <div class="d-flex align-items-center w-50">
+          <a href="{% url "slm:home" %}" class="navbar-brand"><img id="logo" class="me-4" src="{% static 'images/slm_beta_white_border.svg' %}" alt="International GNSS Service"> Site Log Manager 2.0 Beta</a>
+        </div>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3" title="Navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -70,22 +72,15 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                 <ul class="navbar-nav w-100 justify-content-evenly">
                   {% include "slm/top_nav.html" with url_name=request.resolver_match.url_name %}
                 </ul>
-                <ul class="nav navbar-nav ms-auto w-100 justify-content-end">
-
-                  <div hidden>
-                    <div id="quick-help-info">
-                      <p>This is the custom popover html content that should be inserted into my example popover</p>
-                      <button type="button" class="btn btn-primary">and the button as well</button>
-                    </div>
-                  </div>
-                  
+                <ul class="nav navbar-nav ms-auto w-100 justify-content-end">             
                   <li class="nav-item dropdown">
-                    <a id="quick-help" class="btn btn-primary example-popover" role="button" tabindex="0"  title="Quick Help">
-                      <i class="bi bi-info-circle"></i></a>
+                    <a id="quick-help" class="nav-link help-popover" role="button" tabindex="0"  title="Legend">
+                      Legend <i class="bi bi-info-circle ms-1"></i></a>
+                      {% include "slm/hidden.html" with url_name=request.resolver_match.url_name %}
                   </li>
 
                   <li class="nav-item dropdown">
-                    <a class="nav-link" href="{% url 'slm:notifications' %}" aria-label="notifications"><i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %}"></i></a>
+                    <a class="nav-link" href="{% url 'slm:notifications' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %} ms-1"></i></a>
                   </li>
                   <li class="nav-item dropdown">
                     <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
@@ -132,8 +127,8 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
         html: true,
         content: $('[data-name="quick-help-info"]')
       }
-      var exampleEl = document.getElementById('quick-help')
-      var popover = new bootstrap.Popover(document.querySelector('.example-popover'), {
+      var helpPopover = document.getElementById('quick-help')
+      var popover = new bootstrap.Popover(document.querySelector('.help-popover'), {
         container: 'body',
         html: true,
         content: document.getElementById('quick-help-info'),

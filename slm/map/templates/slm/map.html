@@ -50,28 +50,28 @@
                     </colgroup>
                     <thead>
                         <tr>
-                            <th colspan="6"></th>
+                            <td colspan="6"></td>
                             <th class="text-center" colspan="2" data-bs-toggle="tooltip" title="{% trans "Position" %}">Position</th>
                             <th class="text-center" colspan="3" data-bs-toggle="tooltip" title="{% trans "The most recent activity on the site log information." %}">Latest Activity</th>
-                            <th colspan="1"></th>
+                            <td colspan="1"></td>
                         </tr>
                         <tr>
-                            <th></th>
+                            <td></td>
                             <th class="form-group">
                                 <label for="slm-status-select" style="display: none">Status</label>
                                 <select type="text" name="status" id="slm-status-select" class="form-control">
-                                    <option value="" selected></option>
+                                    <option value="" selected>- Select Status -</option>
                                     {% for status in SiteLogStatus %}
                                         <option value="{{ status.value }}">{{ status.label }}</option>
                                     {% endfor %}
                                 </select>
                             </th>
-                            <th></th>
-                            <th></th>
+                            <td></td>
+                            <td></td>
                             <th class="form-group">
                                 <label for="slm-agency-select" style="display: none">Agency</label>
                                 <select name="agency" id="slm-agency-select" class="form-control">
-                                    <option value="" {% if not agency %}selected>{% endif %}</option>
+                                    <option value="" {% if not agency %}selected>{% endif %}- Select Agency -</option>
                                     {% for agcy in agencies %}
                                         <option value="{{ agcy.name }}" {% if agency and agency.id == agcy.id %}selected{% endif %}>{{ agcy.name }}</option>
                                     {% endfor %}
@@ -80,18 +80,18 @@
                             <th class="form-group">
                                 <label for="slm-network-select" style="display: none">Network</label>
                                 <select name="network" id="slm-network-select" class="form-control">
-                                    <option value="" {% if not network %}selected>{% endif %}</option>
+                                    <option value="" {% if not network %}selected>{% endif %}- Select Network -</option>
                                     {% for ntwrk in networks %}
                                         <option value="{{ ntwrk.name }}" {% if network and network.id == ntwrk.id %}selected{% endif %}>{{ ntwrk.name }}</option>
                                     {% endfor %}
                                 </select>
                             </th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
                         </tr>
                         <tr>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'name' }}">Name</th>
@@ -124,10 +124,10 @@
                             <th>Download</th>
                         </tr>
                         <tr>
-                            <th colspan="6"></th>
+                            <td colspan="6"></td>
                             <th colspan="2" data-bs-toggle="tooltip" title="{% trans "Position" %}">Position</th>
                             <th colspan="3" data-bs-toggle="tooltip" title="{% trans "The most recent activity on the site log information." %}">Latest Activity</th>
-                            <th colspan="1"></th>
+                            <td colspan="1"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -197,7 +197,11 @@
             slm.urls.reverse('slm_edit_api:map-list', {kwargs: {}, query: getQuery()})
         );
         const stationTable = $( '#slm-map-station-table' ).DataTable({
-            pageLength: 20,
+            pageLength: 25,
+            lengthMenu: [
+                [10, 25, 50, 100, 1000],
+                [10, 25, 50, 100, 'All'],
+            ],
             stateSave: false,
             serverSide: true,
             fixedHeader: true,
@@ -321,21 +325,21 @@
                                     site: station.name,
                                     format: 'text'
                                 }
-                            })}"><i class="bi bi bi-file-text slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a> ` +
+                            })}" title="Download ASCII"><i class="bi bi bi-file-text slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a> ` +
                             `<a href="${slm.urls.reverse('slm_edit_api:download-detail', {
                                 kwargs: {
                                     site: station.name,
                                     format: 'xml'
                                 }
-                            })}"><i class="bi bi-filetype-xml slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a> ` +
+                            })}" title="Download XML"<i class="bi bi-filetype-xml slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a> ` +
                             `<a href="${slm.urls.reverse('slm_edit_api:download-detail', {
                                 kwargs: {
                                     site: station.name,
                                     format: 'json'
                                 }
-                            })}"><i class="bi bi-filetype-json slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a>`;
+                            })}" title="Download JSON"><i class="bi bi-filetype-json slm-text-${SiteLogStatus.get(station.status).label.toLowerCase()}"></i></a>`;
                     },
-                    orderable: true
+                    orderable: false
                 }
             ],
             columnDefs: [

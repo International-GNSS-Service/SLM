@@ -17,12 +17,18 @@ class StationMapSerializer(serializers.Serializer):
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [instance.longitude / 10000, instance.latitude / 10000],
+                "coordinates": [
+                    instance.longitude / 10000,
+                    instance.latitude / 10000
+                ],
             },
             "properties": {
                 "name": instance.name,
                 "publish": instance.last_publish,
                 "status": instance.status,
-                "last_data": max(0, instance.last_data.days)
+                "last_data": (
+                    max(0, instance.last_data.days)
+                    if instance.last_data else None
+                )
             }
         }

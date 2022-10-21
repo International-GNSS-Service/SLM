@@ -568,3 +568,19 @@ slm.dataTablesAdaptor = function( data, select=null ) {
         }
     }
 }
+
+slm.submitForReview = function(site) {
+    return $.ajax({
+        url: slm.urls.reverse(`slm_edit_api:submit-list`, {'site': site}),
+        method: 'POST',
+        headers: {'X-CSRFToken': csrf}
+    });
+}
+
+slm.rejectSiteUpdates = function(site) {
+    return $.ajax({
+        url: slm.urls.reverse(`slm_edit_api:submit-detail`, {'site': site}),
+        method: 'DELETE',
+        headers: {'X-CSRFToken': csrf}
+    });
+}

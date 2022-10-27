@@ -10,7 +10,7 @@ from slm.views import (
     UploadView,
     NewSiteView,
     register_user,
-    NotificationsView,
+    AlertsView,
     SLMView,
     UserActivityLogView
 )
@@ -121,7 +121,7 @@ urlpatterns = [
     path('log/<station:station>', LogView.as_view(), name='log'),
     path('about/', SLMView.as_view(template_name='slm/about.html'), name='about'),
     path('help/', SLMView.as_view(template_name='slm/help.html'), name='help'),
-    path('notifications/', NotificationsView.as_view(), name='notifications'),
+    path('alerts/', AlertsView.as_view(), name='alerts'),
     path('activity/', UserActivityLogView.as_view(), name='user_activity'),
     path(
         'activity/<int:log_user>',

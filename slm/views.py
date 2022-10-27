@@ -444,5 +444,5 @@ class StationReviewView(StationContextView):
         return context
 
 
-class NotificationsView(SLMView):
-    template_name = 'slm/notifications.html'
+class AlertsView(SLMView):
+    template_name = 'slm/alerts.html'

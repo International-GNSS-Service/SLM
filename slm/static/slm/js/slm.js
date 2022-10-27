@@ -14,15 +14,6 @@ $(document).ready(function() {
     });
 });
 
-
-/*slm.popover = new bootstrap.Popover(
-    document.querySelector('.popover-dismiss'),
-    {
-        trigger: 'focus',
-        container: 'body'
-    }
-);*/
-
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
     const data = response.hasOwnProperty('results') ? response.results : response;
@@ -306,34 +297,6 @@ slm.mailToUser = function(user) {
     return '';
 }
 
-slm.drawLogs = function(position, data) {
-    function getName(entry) {
-        if (entry.hasOwnProperty('user') && entry.user !== null) {
-            return slm.mailToUser(entry.user);
-        }
-        return '';
-    }
-    for (const entry of data) {
-        const type = slm.LogEntryType.get(entry.type);
-        const timestamp = new Date(entry.timestamp);
-        const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site, 'epoch': entry.epoch}, query: {pub: false}});
-        $(`<div class="slm-log-item d-flex gap-3 py-3 mt-1 ${type.css}" aria-current="true" onclick="window.location='${diffUrl}'">` +
-                `<div class="d-flex gap-2 w-100 justify-content-between">` +
-                    `<div>` +
-                        `<h3 class="mb-2">${entry.site}</h3>` +
-                        `<span class="badge ${type.css}">${type.label}</span> <span>${entry.target}</span>` +
-                    `</div>` +
-                    `<div class="opacity-75">` +
-                        `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
-                        `<div class="d-flex justify-content-end">${getName(entry)}</div>` +
-                        `<small class="d-flex justify-content-end">${entry.ip ? entry.ip : ''}</small>` +
-                    `<div/>` +
-                `</div>` +
-            `</div>`
-        ).insertBefore(position);
-    }
-}
-
 slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, draw) {
     div = $(div);
     scrollDiv = scrollDiv === null ? $(window) : scrollDiv;
@@ -377,7 +340,7 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
             }
         );
     }
-    fetchPage();
+    fetchPage(); 
 }
 
 slm.scrollAtBottom = function(div) {

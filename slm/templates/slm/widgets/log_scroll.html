@@ -13,6 +13,39 @@
 
 {% compress js inline %}
 <script>
+    slm.drawLogs = function(position, data) {
+        function getName(entry) {
+            if (entry.hasOwnProperty('user') && entry.user !== null) {
+                return slm.mailToUser(entry.user);
+            }
+            return '';
+        }
+        for (const entry of data) {
+            const type = slm.LogEntryType.get(entry.type);
+            const timestamp = new Date(entry.timestamp);
+            const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site, 'epoch': entry.epoch}, query: {pub: false}});
+            $(`<div class="slm-log-item d-flex gap-3 py-3 mt-1 ${type.css}" aria-current="true" tabindex="0" onclick="window.location='${diffUrl}'">` +
+                    `<div class="d-flex gap-2 w-100 justify-content-between">` +
+                        `<div>` +
+                            `<h3 class="mb-2">${entry.site}</h3>` +
+                            `<span class="badge ${type.css}">${type.label}</span> <span>${entry.target}</span>` +
+                        `</div>` +
+                        `<div class="opacity-75">` +
+                            `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
+                            `<div class="d-flex justify-content-end">${getName(entry)}</div>` +
+                            // `<small class="d-flex justify-content-end">${entry.ip ? entry.ip : ''}</small>` +
+                        `<div/>` +
+                    `</div>` +
+                `</div>`
+            ).insertBefore(position);
+        }
+        let div = $("#slm-alert-scroll");
+        if (data.length === 0 && div.data('slmPage') === div.data('slmPageSize') ) { 
+            $(`<h3 class="text-center text-secondary">No Rec3nt Activity</h3>`
+            ).insertBefore(position);
+        }
+    }
+    
     $(document).ready(function() {
         slm.initInfiniteScroll(
             $("#slm-log-scroll"),

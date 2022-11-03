@@ -94,6 +94,7 @@ class SLMView(TemplateView):
         if max_alert is NOT_PROVIDED:
             max_alert = None
         context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+        context['SiteLogStatus'] = SiteLogStatus
         return context
 
 

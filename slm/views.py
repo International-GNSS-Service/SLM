@@ -21,7 +21,9 @@ from slm.models import (
     Alert,
     Site,
     SiteSubSection,
-    LogEntry
+    LogEntry,
+    Network,
+    Agency
 )
 from slm.defines import (
     SiteLogStatus,
@@ -95,6 +97,12 @@ class SLMView(TemplateView):
             max_alert = None
         context['alert_level'] = AlertLevel(max_alert) if max_alert else None
         context['SiteLogStatus'] = SiteLogStatus
+        context['networks'] = Network.objects.all()
+        context['user_agencies'] = (
+            Agency.objects.all()
+            if self.request.user.is_superuser
+            else Agency.objects.filter(pk=self.request.user.agency.pk)
+        )
         return context
 
 

@@ -16,13 +16,7 @@
             {% block actions_bar %}
                 <div id="station_nav">
                     {% if agencies %}
-                    {% block station_agencies %}
-                    <header class="d-flex flex-wrap justify-content-center p-3 slm-agency">
-                        {% for agency in agencies %}
-                        <h3>{{ agency }}</h3>
-                        {% endfor %}
-                    </header>
-                    {% endblock %}
+                    {% block station_agencies %}{% endblock %}
                     {% endif %}
                     {% if station %}
                     <header class="d-flex flex-wrap justify-content-center py-3 px-3 border-bottom">

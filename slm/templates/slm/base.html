@@ -75,8 +75,9 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                 <ul class="nav navbar-nav ms-auto w-100 justify-content-end">             
                   <li class="nav-item dropdown">
                     <a id="quick-help" class="nav-link help-popover" role="button" tabindex="0"  title="Legend">
-                      Legend <i class="bi bi-info-circle ms-1"></i></a>
-                      {% include "slm/hidden.html" with url_name=request.resolver_match.url_name %}
+                      Legend <i class="bi bi-info-circle ms-1"></i>
+                    </a>
+                    {% include "slm/widgets/legend.html" with url_name=request.resolver_match.url_name %}
                   </li>
                   <li class="nav-item dropdown">
                     <a class="nav-link" href="{% url 'slm:alerts' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %} ms-1"></i></a>

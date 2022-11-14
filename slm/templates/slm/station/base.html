@@ -16,13 +16,7 @@
             {% block actions_bar %}
                 <div id="station_nav">
                     {% if agencies %}
-                    {% block station_agencies %}
-                    <header class="d-flex flex-wrap justify-content-center p-3 slm-agency">
-                        {% for agency in agencies %}
-                        <h3>{{ agency }}</h3>
-                        {% endfor %}
-                    </header>
-                    {% endblock %}
+                    {% block station_agencies %}{% endblock %}
                     {% endif %}
                     {% if station %}
                     <header class="d-flex flex-wrap justify-content-center py-3 px-3 border-bottom">
@@ -71,25 +65,28 @@
 
                     <!-- Title -->
                     <div class="mb-4 pb-3 border-bottom">
-                    <h1 class="mt-4">Welcome to the SLM 2.0, {% if user.name %}{{ user.first_name }}{% else %}{{ user.email }}{% endif %}</h1>
+                        <h1 class="mt-4">Welcome to the SLM 2.0, {% if user.name %}{{ user.first_name }}{% else %}{{ user.email }}{% endif %}</h1>
                     </div>
 
                     <!-- Feeds -->
                     <div class="row vh-100">
-                    <!-- All Alerts Feed -->
-                    <div class="my-2 mr-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
-                      <h3 class="border-bottom pb-2 mb-4">Alerts</h3>
-                      {% include 'slm/widgets/notification_scroll.html' %}
-                    </div>
-                    <!-- End of All Alerts Feed -->
+                        <!-- All Alerts Feed -->
+                        <div class="my-2 mr-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
+                            <h2 class="border-bottom pb-2 mb-4">Alerts</h2>
+                            <div class="overflow-auto" style="max-height: 925px;">
+                                {% include 'slm/widgets/alert_scroll.html' %}
+                            </div>
+                        </div>
+                        <!-- End of All Alerts Feed -->
 
-                    <!-- Announcements Feed -->
-                    <div class="my-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
-                      <h3 class="border-bottom pb-2 mb-4">Activity Log</h3>
-                      {% include 'slm/widgets/log_scroll.html' %}
-                    </div>
-                    <!-- End of Announcements Feed -->
-
+                        <!-- Activity Log Feed -->
+                        <div class="my-2 p-3 bg-body rounded shadow-sm col-12 col-md-6">
+                            <h2 class="border-bottom pb-2 mb-4">Activity Log</h2>
+                            <div class="overflow-auto" style="max-height: 925px;">
+                                {% include 'slm/widgets/log_scroll.html' %}
+                            </div>
+                        </div>
+                        <!-- End of Activity Log Feed -->
                     </div>
                 </div>
                 <!-- End of Feeds -->

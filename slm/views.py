@@ -84,14 +84,10 @@ class SLMView(TemplateView):
         ).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
-        context['networks'] = Network.objects.all()
-        context['user_agencies'] = (
-            Agency.objects.all()
-            if self.request.user.is_superuser
-            else Agency.objects.filter(pk=self.request.user.agency.pk)
-        )
+
         context['SiteLogStatus'] = SiteLogStatus
         context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+
         context['SLM_ORG_NAME'] = getattr(
             settings,
             'SLM_ORG_NAME',
@@ -99,6 +95,12 @@ class SLMView(TemplateView):
         )
         context['is_moderator'] = (
             self.request.user.is_superuser if self.request.user else None
+        )
+        context['networks'] = Network.objects.all()
+        context['user_agencies'] = (
+            Agency.objects.all()
+            if self.request.user.is_superuser
+            else Agency.objects.filter(pk=self.request.user.agency.pk)
         )
         return context
 
@@ -473,5 +475,5 @@ class StationReviewView(StationContextView):
         return context
 
 
-class NotificationsView(SLMView):
-    template_name = 'slm/notifications.html'
+class AlertsView(SLMView):
+    template_name = 'slm/alerts.html'

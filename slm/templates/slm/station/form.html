@@ -19,9 +19,10 @@
               {% with diff=form.diff|key_value:field.name %}
               {% with flag=form.flags|key_value:field.name %}
                 <fieldset class="form-group slm-form-fieldset" data-slm-field="{{ field.name }}">
+                <legend></legend>
                 <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-field"{% endif %}>
                   <div class="col-3">
-                      <label class="form-label">{{ field.label }}</label>
+                      <label class="form-label" for="id_{{ field.name }}">{{ field.label }}</label>
                   </div>
                   {% if is_moderator and not form.instance.is_deleted %}
                   <div class="col-1 slm-mod-col p-0 text-end slm-flag">

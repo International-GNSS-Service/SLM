@@ -3167,7 +3167,7 @@ class AgencyPOC(SiteSection):
             'agency',
             'preferred_abbreviation',
             'mailing_address',
-            (_('Primary Contact'), (
+            (_('Primary Contact (Organization Only)'), (
                 'primary_name',
                 'primary_phone1',
                 'primary_phone2',

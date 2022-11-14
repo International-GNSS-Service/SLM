@@ -19,6 +19,10 @@ class SiteLogStatus(IntegerChoices):
     @property
     def css(self):
         return f'slm-status-{self.label.lower()}'
+    
+    @property
+    def color(self):
+        return getattr(settings, 'SLM_STATUS_COLORS', {}).get(self, None)
 
     @property
     def color(self):

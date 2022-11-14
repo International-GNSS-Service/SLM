@@ -1,6 +1,5 @@
 {% load compress %}
 
-
 <div
     id='slm-alert-scroll'
     class="list-group w-100"
@@ -11,9 +10,9 @@
         <div class="slm-loader"></div>
     </div>
 </div>
+
 {% compress js inline %}
 <script>
-
     function drawAlerts(position, data) {
         for (const alert of data) {
             const level = slm.AlertLevel.get(alert.level);
@@ -28,7 +27,7 @@
                             `<h3 class="mb-2">${alert.header ? alert.header : alert.site}</h3>` +
                             `<p class="opacity-75">${alert.detail}</p>` + (
                                 siteUrl ?
-                                `<button class="btn btn-outline-secondary" onclick="window.location='${siteUrl}'" type="submit">${alert.site}</button>` :
+                                `<button class="btn btn-outline-secondary" tabindex= "0" onclick="window.location='${siteUrl}'" type="submit">${alert.site}</button>` :
                                 ``
                             ) +
                         `</div>` +
@@ -37,6 +36,11 @@
                         `<div/>` +
                     `</div>` +
                 `</div>`
+            ).insertBefore(position);
+        }
+        let div = $("#slm-alert-scroll");
+        if (data.length === 0 && div.data('slmPage') === div.data('slmPageSize') ) { 
+            $(`<h3 class="text-center text-secondary">No Alerts</h3>`
             ).insertBefore(position);
         }
     }

@@ -28,8 +28,12 @@ a, a:hover {
 
 
 /*------- Button/Icon CSS -------*/
-.btn {
+.btn-primary {
     color: #fff;
+    background-color: #185A7D;
+}
+
+.btn-success {
     background-color: #185A7D;
 }
 
@@ -51,6 +55,10 @@ a, a:hover {
     border: none;
     padding: 0px;
 }
+
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+ }
 
 
 /*------- Layout CSS -------*/
@@ -451,3 +459,6 @@ header.slm-agency {
     color: #008000;
 }
 
+.slm-agency a {
+    color: #fff;
+}

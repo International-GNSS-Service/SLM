@@ -1,4 +1,4 @@
-if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
+if (typeof slm === 'undefined' || slm === null) { var slm = {}; }
 
 $(document).ready(function() {
     $(".collapse .nav-link").click(function () {
@@ -22,6 +22,9 @@ $(document).ready(function() {
         container: 'body'
     }
 );*/
+
+slm.isModerator = !slm.hasOwnProperty('isModerator') ? false : slm.isModerator;
+slm.canPublish = !slm.hasOwnProperty('canPublish') ? false : slm.canPublish;
 
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
@@ -61,7 +64,7 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         form.data('slmErrorFlags', data._flags);
         slm.setFormFlagUI(form);
     }
-    if (data.hasOwnProperty('published') && !data.published) {
+    if (data.hasOwnProperty('published') && !data.published && data.can_publish) {
         form.find('button[name="publish"]').show();
     }
     if (data.hasOwnProperty('is_deleted') && data.is_deleted) {
@@ -130,7 +133,7 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
             })
         } else if (action === 'publish') {
             let toPublish = transform(data);
-            toPublish['published'] = true;
+            toPublish['publish'] = true;
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-detail`, {'pk': dataId}),
                 method: 'PATCH',
@@ -354,7 +357,6 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
             data: pageQuery
         }).done(
             function(data, status, jqXHR) {
-                div.data('slmPage', div.data('slmPage') + pageQuery.length);
                 loader.hide();
                 if (data.next) {
                     scrollDiv.scroll(function() {
@@ -369,6 +371,7 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
                         data.results : data.hasOwnProperty('data') ?
                         data.data : data
                 );
+                div.data('slmPage', div.data('slmPage') + pageQuery.length);
             }
         ).fail(
             function(data, status, jqXHR) {
@@ -569,18 +572,28 @@ slm.dataTablesAdaptor = function( data, select=null ) {
     }
 }
 
-slm.submitForReview = function(site) {
+slm.requestReview = function(site_name) {
     return $.ajax({
-        url: slm.urls.reverse(`slm_edit_api:submit-list`, {'site': site}),
-        method: 'POST',
-        headers: {'X-CSRFToken': csrf}
+        url: slm.urls.reverse('slm_edit_api:submit-list'),
+        data: {'site_name': site_name},
+        method: 'POST'
     });
 }
 
-slm.rejectSiteUpdates = function(site) {
+slm.rejectReview = function(review) {
     return $.ajax({
-        url: slm.urls.reverse(`slm_edit_api:submit-detail`, {'site': site}),
-        method: 'DELETE',
-        headers: {'X-CSRFToken': csrf}
+        url: slm.urls.reverse(
+            'slm_edit_api:submit-detail',
+            {'pk': review}
+        ),
+        method: 'DELETE'
+    });
+}
+
+slm.publish = function(siteId) {
+    return $.ajax({
+        url: slm.urls.reverse('slm_edit_api:stations-detail', kwargs={'pk': siteId}),
+        data: {'publish': true},
+        method: 'PATCH'
     });
 }

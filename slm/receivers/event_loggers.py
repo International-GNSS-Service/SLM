@@ -38,12 +38,36 @@ def log_propose(sender, site, user, timestamp, request, agencies, **kwargs):
 
 
 @receiver(slm_signals.section_edited)
-def log_edit(sender, site, user, timestamp, request, section, **kwargs):
+def log_edit(
+        sender,
+        site,
+        user,
+        timestamp,
+        request,
+        section,
+        fields,
+        **kwargs
+):
     from slm.models import LogEntry
     from slm.defines import LogEntryType
 
     LogEntry.objects.create(
         type=LogEntryType.UPDATE,
+        user=user,
+        site=site,
+        site_log_object=section,
+        epoch=timestamp,
+        ip=get_client_ip(request)[0] if request else None
+    )
+
+
+@receiver(slm_signals.section_added)
+def log_add(sender, site, user, timestamp, request, section, **kwargs):
+    from slm.models import LogEntry
+    from slm.defines import LogEntryType
+
+    LogEntry.objects.create(
+        type=LogEntryType.ADD,
         user=user,
         site=site,
         site_log_object=section,

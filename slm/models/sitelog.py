@@ -44,6 +44,16 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from django.utils.deconstruct import deconstructible
 import json
+from django.db.models import ExpressionWrapper
+from django.utils.timezone import now
+from slm import signals as slm_signals
+
+
+def bool_condition(*args, **kwargs):
+    return ExpressionWrapper(
+        Q(*args, **kwargs),
+        output_field=models.BooleanField()
+    )
 
 
 class DefaultToStrEncoder(json.JSONEncoder):
@@ -319,6 +329,14 @@ class SiteQuerySet(models.QuerySet):
             return self
         return self.filter(agencies__in=[user.agency])
 
+    def annotate_review_pending(self):
+        return self.annotate(
+            _review_pending=bool_condition(
+                review_request__isnull=False,
+                review_request__timestamp__gte=F('last_publish')
+            )
+        )
+
     def meta(self):
         """
         It is expensive to query these normalized values on the fly, so we
@@ -479,7 +497,9 @@ class Site(models.Model):
     last_recalc = models.DateTimeField(null=True, blank=True, default=None)
 
     def is_moderator(self, user):
-        return self.moderators.exists(pk=user.pk)
+        if user.is_superuser:
+            return True
+        return self.moderators.filter(pk=user.pk).exists()
 
     @cached_property
     def moderators(self):
@@ -501,16 +521,21 @@ class Site(models.Model):
         :return: A queryset containing users with edit permissions for the site
         """
         return get_user_model().objects.filter(
-            ~Q(pk__in=self.moderators) & Q(agency__in=self.agencies)
+            ~Q(pk__in=self.moderators) & (
+                Q(agency__in=self.agencies.all()) | Q(pk=self.owner.pk)
+            )
         )
 
-    @cached_property
+    @property
     def review_pending(self):
         """
         Checks if a review is pending.
 
         :return: True if a review is pending for this site.
         """
+        if hasattr(self, '_review_pending'):
+            return self._review_pending
+
         if hasattr(self, 'review_request') and self.review_request:
             return (
                 self.last_publish is None or
@@ -595,9 +620,27 @@ class Site(models.Model):
         return cls.subsection_accessors_
 
     def can_publish(self, user):
-        return True
+        """
+        This is a future hook to use for instances where non-moderators are
+        allowed to publish a site log under certain conditions.
 
-    def update_status(self, save=True, head=True):
+        :param user:
+        :return:
+        """
+        if user:
+            return self.is_moderator(user)
+        return False
+
+    def can_edit(self, user):
+        if user:
+            return (
+                self.is_moderator(user) or
+                self.owner == user or
+                user.agency in self.agencies.all()
+            )
+        return False
+
+    def update_status(self, save=True, head=True, user=None, timestamp=None):
         """
         Update the denormalized data that is too expensive to query on the
         fly. This includes flag count, moderation status and DateTimes.
@@ -605,12 +648,21 @@ class Site(models.Model):
         :param save:
         :param head: False if status update should be done on the most recent
             published version of the site log.
+        :param user: The user responsible for a status update check
+        :param timestamp: The time at which the status update is triggered
         :return:
         """
         if head:
             self.head()
         else:
             self.current()
+
+        if timestamp:
+            self.last_update = timestamp
+
+        if user:
+            self.last_user = user
+
         self.num_flags = 0
         status = SiteLogStatus.PUBLISHED
         for section in self.section_fields():
@@ -630,8 +682,17 @@ class Site(models.Model):
                     continue
                 self.num_flags += len(subsection._flags or {})
                 status = status.merge(subsection.mod_status)
+
+        # if in either of these two states - status update must come from
+        # a global publish of the site log, not from this which can be
+        # triggered by a section publish
         if self.status not in {SiteLogStatus.DORMANT, SiteLogStatus.PENDING}:
             self.status = status
+            if (
+                self.status == SiteLogStatus.PUBLISHED
+                and hasattr(self, 'review_request')
+            ):
+                self.review_request.delete()
         if save:
             self.save()
 
@@ -664,6 +725,66 @@ class Site(models.Model):
     @property
     def fourid(self):
         return self.name[:4]
+
+    def publish(self, request=None, silent=False, timestamp=None):
+        """
+        Publish the current HEAD edits on this SiteLog.
+
+        :param request: The request that triggered the publish (optional)
+        :param silent: If True, no publish signal will be sent.
+        :param timestamp: Timestamp to use for the publish, if none - will
+            be the time of this call
+        :return: The number of sections and subsections that had changes
+            that were published or 0 if no changes were at HEAD to publish.
+        """
+        if timestamp is None:
+            timestamp = now()
+
+        sections_published = 0
+        for section_name in self.section_fields():
+            current = getattr(self, f'{section_name}_set').current()
+            if current:
+                sections_published += int(
+                    current.publish(
+                        request=request,
+                        silent=True,
+                        timestamp=timestamp,
+                        update_site=False
+                    )
+                )
+
+        for subsection_name in self.subsection_fields():
+            for subsection in getattr(
+                self, f'{subsection_name}_set'
+            ).current():
+                sections_published += int(
+                    subsection.publish(
+                        request=request,
+                        silent=True,
+                        timestamp=timestamp,
+                        update_site=False
+                    )
+                )
+
+        # this might be an initial PUBLISH when we're in PENDING or DORMANT
+        if sections_published or self.status != SiteLogStatus.PUBLISHED:
+            self.status = SiteLogStatus.PUBLISHED
+            self.last_publish = timestamp
+            self.last_user = request.user if request else None
+            self.save()
+            if hasattr(self, 'review_request'):
+                self.review_request.delete()
+            if not silent:
+                slm_signals.site_published.send(
+                    sender=self,
+                    site=self,
+                    user=request.user if request else None,
+                    timestamp=timestamp,
+                    request=request,
+                    section=None
+                )
+
+        return sections_published
 
     def __str__(self):
         return self.name
@@ -726,6 +847,61 @@ class SiteSection(models.Model):
     )
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
+
+    def publish(
+        self,
+        request=None,
+        silent=False,
+        timestamp=None,
+        update_site=True
+    ):
+        """
+        Publish the current HEAD edits on this SiteLog.
+
+        :param request: The request that triggered the publish (optional)
+        :param silent: If True, no publish signal will be sent.
+        :param timestamp: Timestamp to use for the publish, if none - will
+            be the time of this call
+        :param update_site: If True, site will be updated with publish
+            information (i.e. pass False if this section is being published as
+            part of a larger site publish)
+        :return: True if a change was published, False otherwise.
+        """
+        if self.published:
+            return False
+
+        if timestamp is None:
+            timestamp = now()
+
+        self.published = True
+        self.save()
+
+        if update_site:
+            self.site.update_status(save=True)
+
+        if not silent:
+            slm_signals.site_published.send(
+                sender=self,
+                site=self.site,
+                user=request.user if request else None,
+                timestamp=timestamp,
+                request=request,
+                section=self
+            )
+        return True
+
+    def can_publish(self, user):
+        """
+        This is a future hook to use for instances where non-moderators are
+        allowed to publish a site log section under certain conditions.
+
+        :param user:
+        :return:
+        """
+        return self.site.is_moderator(user)
+
+    def can_edit(self, user):
+        return self.site.can_edit(user)
 
     def clean(self):
         for field in self._meta.fields:

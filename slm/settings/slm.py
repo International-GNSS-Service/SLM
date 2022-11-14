@@ -14,3 +14,5 @@ SLM_STATUS_COLORS = {
 # if True, for subsections and missing sections, placeholder structures will
 # be added to the logs
 SLM_LEGACY_PLACEHOLDERS = True
+
+SLM_SITE_RECORD = 'slm.DefaultSiteRecord'

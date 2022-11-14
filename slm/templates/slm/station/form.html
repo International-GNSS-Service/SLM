@@ -23,7 +23,7 @@
                   <div class="col-3">
                       <label class="form-label">{{ field.label }}</label>
                   </div>
-                  {% if request.user|is_moderator:form.instance and not form.instance.is_deleted %}
+                  {% if is_moderator and not form.instance.is_deleted %}
                   <div class="col-1 slm-mod-col p-0 text-end slm-flag">
                       <a tabindex="0"
                          type="button"
@@ -60,7 +60,7 @@
                           {% endif %}
                       {% endif %}
                       {% if not field.is_hidden %}
-                      {% if request.user|is_moderator:form.instance %}
+                      {% if is_moderator %}
                       <label for="{{ field.label|to_id:'flag'}}" style="display: none;"><span class="visually-hidden">Flag for {{ field.label }}</span></label>
                       <input id="{{ field.label|to_id:'flag'}}" type="text" name="{{ field.name }}_flag" data-slm-field="{{ field.name }}" {% if flag %}value="{{ flag }}"{% endif %} {% if not flag %}style="display: none;"{% endif %} class="form-control slm-flag-input" {% if form.instance.is_deleted %}disabled{% endif %}/>
                       {% elif flag %}
@@ -100,7 +100,7 @@
           <button type='button' name='save' class="btn btn-success" {% if form.instance.is_deleted %}style="display: none"{% endif %}>
             {% translate "Save" %}
           </button>
-          <button type='button' name='publish' class="btn btn-success" {% if not request.user|is_moderator:form.instance or not form.instance.id or form.instance.published %}style="display: none"{% endif %}>
+          <button type='button' name='publish' class="btn btn-success" {% if not can_publish or form.instance.published %}style="display: none"{% endif %}>
             {% translate "Publish Changes" %}
           </button>
       </div>

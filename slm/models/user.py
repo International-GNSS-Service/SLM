@@ -9,6 +9,8 @@ from django.utils.translation import gettext as _
 
 class UserManager(DjangoUserManager):
 
+    use_in_migrations = False
+
     def _create_user(self, email, password, **extra_fields):
         """
         Create and save a user with the given username, email, and password.
@@ -189,8 +191,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     def is_moderator(self, station):
-        # stub for per-station moderation authority
-        return self.is_superuser
+        return station.is_moderator(self)
 
     @property
     def name(self):
@@ -200,16 +201,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             return self.email
         return None
 
-    #@property
-    #def is_admin(self):
-    #    return self.is_superuser
-
     def __str__(self):
         if self.name:
             return f'{self.email} | {self.name}'
         return self.email
 
-    objects = UserManager().from_queryset(UserQueryset)()
+    objects = UserManager.from_queryset(UserQueryset)()
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'

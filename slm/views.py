@@ -23,7 +23,9 @@ from slm.models import (
     Site,
     SiteSubSection,
     LogEntry,
-    UserProfile
+    UserProfile,
+    Agency,
+    Network
 )
 from slm.defines import (
     SiteLogStatus,
@@ -68,24 +70,9 @@ from slm.new_forms import (
     UserForm,
     NewSiteForm
 )
+from slm import signals as slm_signals
 
 User = get_user_model()
-
-# Create your views here.
-
-# Registration Page
-def register_user (request):
-    form_class = UserAdminCreationForm
-    form = form_class(request.POST or None)
-    if request.method == "POST":
-        if form.is_valid():
-            form.save()
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-            user = authenticate(request, email=email, password=password)
-            login(request, user)
-            return redirect ('home')
-    return render(request, 'register.html', {'form':form})
 
 
 class SLMView(TemplateView):
@@ -97,11 +84,21 @@ class SLMView(TemplateView):
         ).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
+        context['networks'] = Network.objects.all()
+        context['user_agencies'] = (
+            Agency.objects.all()
+            if self.request.user.is_superuser
+            else Agency.objects.filter(pk=self.request.user.agency.pk)
+        )
+        context['SiteLogStatus'] = SiteLogStatus
         context['alert_level'] = AlertLevel(max_alert) if max_alert else None
         context['SLM_ORG_NAME'] = getattr(
             settings,
             'SLM_ORG_NAME',
             None
+        )
+        context['is_moderator'] = (
+            self.request.user.is_superuser if self.request.user else None
         )
         return context
 
@@ -137,7 +134,9 @@ class StationContextView(SLMView):
             'site': self.site if self.site else None,
             'agencies': self.agencies,
             'SiteLogStatus': SiteLogStatus,
-            'moderator': self.site.is_moderator(self.request.user),
+            'is_moderator': self.site.is_moderator(self.request.user) if self.site else None,
+            # some non-moderators may be able to publish a some changes
+            'can_publish': self.site.can_publish(self.request.user) if self.site else None,
             'link_view': 'slm:edit' if self.request.resolver_match.view_name not in {
                 'slm:alerts',
                 'slm:download',
@@ -265,8 +264,6 @@ class EditView(StationContextView):
                     else:
                         context['sections'][form.section_name()]['active'] = True
 
-
-
             else:
                 instance = form._meta.model.objects.station(self.station).head()
                 if section is form:
@@ -298,20 +295,39 @@ class NewSiteView(StationContextView):
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         data = {
-            field: request.POST[field] for field in NewSiteForm._meta.fields if field in request.POST
+            field: request.POST[field]
+            for field in NewSiteForm._meta.fields if field in request.POST
         }
         if data.get('agencies', None):
-            data['agencies'] = [Agency.objects.get(pk=int(agency)) for agency in [data['agencies']]]
+            data['agencies'] = [
+                Agency.objects.get(pk=int(agency))
+                for agency in [data['agencies']]
+            ]
         data['name'] = data['name'].upper()
         if not request.user.is_superuser:
             for agency in data['agencies']:
                 if request.user.agency != agency:
-                    raise PermissionDenied('Only allowed to create new sites for your agency.')
+                    raise PermissionDenied(
+                        'Only allowed to create new sites for your agency.'
+                    )
 
         new_site = NewSiteForm(data)
         if new_site.is_bound and new_site.is_valid():
             new_site.save()
-            return redirect(to=reverse('slm:edit', kwargs={'station': new_site.instance.name}))
+            slm_signals.site_proposed.send(
+                sender=self,
+                site=new_site,
+                user=request.user,
+                timestamp=new_site.created,
+                request=request,
+                agencies=data['agencies']
+            )
+            return redirect(
+                to=reverse(
+                    'slm:edit',
+                    kwargs={'station': new_site.instance.name}
+                )
+            )
 
         context = super().get_context_data(**kwargs)
         context['form'] = new_site
@@ -320,10 +336,14 @@ class NewSiteView(StationContextView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = NewSiteForm(
-            initial={'agencies': Agency.objects.filter(id=self.request.user.agency.id)} if not self.request.user.is_superuser else {}
+            initial={
+                'agencies': Agency.objects.filter(
+                    id=self.request.user.agency.id
+                )} if not self.request.user.is_superuser else {}
         )
         if not self.request.user.is_superuser:
-            context['form'].fields["agencies"].queryset = Agency.objects.filter(id=self.request.user.agency.id)
+            context['form'].fields["agencies"].queryset = \
+                Agency.objects.filter(id=self.request.user.agency.id)
         return context
 
 
@@ -441,7 +461,6 @@ class StationReviewView(StationContextView):
             'forward_text': forward_text,
             'back_text': back_text,
             'unpublished_changes': not forward_inst.is_published,
-            'can_publish': self.station.can_publish(self.request.user),
             'forward_prev': forward_prev.epoch.isoformat() if forward_prev else None,
             'forward_current': forward_inst.epoch.isoformat(),
             'forward_next': forward_next.epoch.isoformat() if forward_next else None,

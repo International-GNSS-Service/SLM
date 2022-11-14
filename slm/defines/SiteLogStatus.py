@@ -1,6 +1,7 @@
 from django_enum import IntegerChoices
 from enum_properties import s
 from django.utils.translation import gettext as _
+from django.conf import settings
 
 
 class SiteLogStatus(IntegerChoices):
@@ -18,6 +19,10 @@ class SiteLogStatus(IntegerChoices):
     @property
     def css(self):
         return f'slm-status-{self.label.lower()}'
+
+    @property
+    def color(self):
+        return getattr(settings, 'SLM_STATUS_COLORS', {}).get(self, None)
 
     def merge(self, other):
         if other.value < self.value:

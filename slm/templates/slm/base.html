@@ -47,6 +47,17 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
             <script src="{% static 'slm/js/slm.js' %}"></script>
             <script src="{% static 'slm/js/env.js' %}"></script>
             <script src="{% static 'slm/js/urls.js' %}"></script>
+            <script>
+                slm.isModerator = {% if is_moderator %}true{% else %}false{% endif %};
+                slm.canPublish = {% if can_publish %}true{% else %}false{% endif %};
+                $.ajaxSetup({
+                    beforeSend: function (xhr)
+                    {
+                       xhr.setRequestHeader(
+                           'X-CSRFToken', '{{ csrf_token }}');
+                    }
+                });
+            </script>
         {% endcompress %}
     {% endblock javascript %}
     {% endblock head %}

@@ -3,7 +3,8 @@ from slm.api.permissions import (
     IsUserOrAdmin,
     UpdateAdminOnly,
     CanDeleteAlert,
-    DestroyAdminOnly
+    CanRequestReview,
+    CanRejectReview
 )
 from slm import signals as slm_signals
 from rest_framework.permissions import IsAuthenticated
@@ -24,12 +25,13 @@ from django.db import transaction
 import django_filters
 from rest_framework.response import Response
 from slm.api.edit.serializers import (
-    StationListSerializer,
+    StationSerializer,
     UserSerializer,
     LogEntrySerializer,
     AlertSerializer,
     ReviewRequestSerializer
 )
+from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from slm.models import (
@@ -91,19 +93,21 @@ class DataTablesListMixin(mixins.ListModelMixin):
 
 class ReviewRequestView(
     mixins.CreateModelMixin,
+    mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    queryset = ReviewRequest.objects.all()
+
     serializer_class = ReviewRequestSerializer
-    permission_classes = (CanEditSite, DestroyAdminOnly)
+    permission_classes = (CanRequestReview, CanRejectReview)
 
     def perform_create(self, serializer):
         super().perform_create(serializer)
         if serializer.review_pending:
             slm_signals.review_requested.send(
                 sender=self,
-                request=serializer.instance
+                review_request=serializer.instance,
+                request=self.request
             )
 
     def perform_destroy(self, instance):
@@ -112,14 +116,26 @@ class ReviewRequestView(
         if review_pending:
             slm_signals.changes_rejected.send(
                 sender=self,
-                request=instance,
+                review_request=instance,
+                request=self.request,
                 rejecter=self.request.user
             )
 
+    def get_queryset(self):
+        return ReviewRequest.objects.editable_by(
+            self.request.user
+        )
 
-class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
+
+class StationListViewSet(
+    DataTablesListMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
+):
     
-    serializer_class = StationListSerializer
+    serializer_class = StationSerializer
     permission_classes = (CanEditSite,)
 
     class StationFilter(FilterSet):
@@ -152,6 +168,9 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             field_name='networks__name',
             lookup_expr='iexact'
         )
+        review_pending = django_filters.BooleanFilter(
+            field_name='_review_pending'
+        )
 
         class Meta:
             model = Site
@@ -163,7 +182,8 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                 'updated_after',
                 'agency',
                 'status',
-                'network'
+                'network',
+                'review_pending'
             )
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
@@ -180,7 +200,15 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     def get_queryset(self):
         return Site.objects.editable_by(
             self.request.user
-        ).prefetch_related('agencies').select_related('owner')
+        ).prefetch_related(
+            'agencies',
+            'networks'
+        ).annotate_review_pending().select_related(
+            'owner',
+            'owner__agency',
+            'last_user',
+            'last_user__agency'
+        )
 
 
 class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
@@ -311,6 +339,14 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
 
 
 class SectionViewSet(type):
+    """
+    POST, PUT and PATCH all behave the same way for the section edit API.
+
+    Each runs through the following steps:
+
+    1) Permission check - only moderators are permitted to submit _flags or
+        publish=True
+    """
 
     def __new__(metacls, name, bases, namespace, **kwargs):
         ModelClass = kwargs.pop('model')
@@ -354,98 +390,207 @@ class SectionViewSet(type):
                 decoder=SiteSection._meta.get_field('_flags').decoder
             )
 
+            can_publish = serializers.SerializerMethodField(read_only=True)
+
+            publish = serializers.BooleanField(write_only=True)
+
+            def get_can_publish(self, obj):
+                if 'request' in self.context:
+                    return obj.can_publish(self.context['request'].user)
+                return None
+
             def get__diff(self, obj):
                 return obj.published_diff()
 
-            def update(self, instance, validated_data):
-                if '_flags' in validated_data:
-                    # let the log generator know that this is just a flag updt
-                    instance._flag_update = True
-                elif 'published' in validated_data:
-                    instance._publisher = self.context['request'].user
-                instance._ip = get_client_ip(self.context['request'])[0]
-                return super().update(instance, validated_data)
+            def perform_section_update(self, validated_data, instance=None):
+                """
+                We perform the same update routines on either a PUT, PATCH or
+                POST for uniformity and convenience. This could include:
 
-            def create(self, validated_data):
+                    1. Field Update
+                        * If current instance is published and this contains
+                        edits create a new db row
+                        * If current instance is not published update instance
+                        * Issue section edited event.
+                    2. New Section
+                        * Issue section added event.
+                    3. Flag Update
+                        * Issue fields_flagged or flags_cleared event.
+                    4. Publish
+                        * Set instance (old or added) to published and issue
+                        site_published event.
+                    5. Any combination of 1, 2, 3 and 4
+
+                :param validated_data: The validated POST data
+                :param instance: The instance if this was a PUT or PATCH. POST
+                    behaves the same way - so we also resolve the instance from
+                    POST data if the update url was not used.
+                :return:
+                """
                 with transaction.atomic():
-                    site = validated_data.get('site')
-                    # if id is present we use it to make sure this edit is
-                    # taking place on HEAD, otherwise we just allow it
-                    # dont allow edits to published here - must go through
-                    # admin
-                    validated_data.pop('published')
+                    # permission check - we do this here because operating
+                    # directly on POST data in a Permission object is more
+                    # difficult
+                    site = validated_data.get('site') or instance.site
+                    is_moderator = site.is_moderator(
+                        self.context['request'].user
+                    )
+                    do_publish = validated_data.pop('publish', False)
+                    update_status = None
+
+                    if not is_moderator:
+                        # non-moderators are not allowed to publish!
+                        if do_publish:
+                            raise PermissionDenied(_(
+                                'You must have moderator privileges to '
+                                'publish site log edits.'
+                            ))
+
+                        # we don't disallow an accompanying edit with _flags -
+                        # we just strip them out of the user doesnt have
+                        # permission to add them
+                        validated_data.pop('_flags', None)
+
                     section_id = validated_data.pop('id', None)
                     subsection = validated_data.get('subsection', None)
-                    validated_data['editor'] = self.context['request'].user
 
-                    qry = Q(site=site)
-                    if subsection is not None:
-                        qry &= Q(subsection=subsection)
+                    # get the previous section instance - if it exists
+                    if instance is None:
+                        # this is either a section where only one can exist or
+                        # a subsection where multiple can exist
+                        if not self.allow_multiple():
+                            instance = ModelClass.objects.filter(
+                                site=site
+                            ).order_by('-edited').select_for_update().first()
+                        # this is a subsection - if the subsection IDs are not
+                        # present it is
+                        elif subsection is not None:
+                            instance = ModelClass.objects.filter(
+                                site=site,
+                                subsection=subsection
+                            ).order_by('-edited').select_for_update().first()
+                    else:
+                        instance = ModelClass.objects.filter(
+                            pk=instance.pk
+                        ).select_for_update().first()
 
-                    if (
-                        section_id is None and
-                        subsection is None and
-                        issubclass(ModelClass, SiteSubSection)
-                    ):
-                        # this is a new subsection
+                    # this is a new section
+                    if instance is None:
                         new_section = super().create(validated_data)
                         new_section.full_clean()
                         new_section.save()
-                        return new_section
-
-                    existing = ModelClass.objects.filter(
-                        qry
-                    ).order_by('-edited').select_for_update().first()
-                    if not existing:
-                        # todo how to pass IP to logger signal handler?
-                        new_section = super().create(validated_data)
-                        new_section.full_clean()
-                        new_section.save()
-                        return new_section
-
-                    existing.edited = now()
-                    existing._ip = get_client_ip(self.context['request'])[0]
-                    if section_id and existing.id != section_id:
-                        raise serializers.ValidationError(
-                            _(
-                                'Edits must be made on HEAD. Someone else may '
-                                'be editing the log concurrently. Refresh and '
-                                'try again.'
-                            )
+                        update_status = new_section.edited
+                        slm_signals.section_added.send(
+                            sender=self,
+                            site=site,
+                            user=self.context['request'].user,
+                            request=self.context['request'],
+                            timestamp=update_status,
+                            section=new_section
                         )
+                        instance = new_section
+                    else:
+                        # if an object id was present and it is not at or past
+                        # the last section ID - we have a concurrent edit race
+                        # condition between one or more users.
+                        if section_id is not None and section_id < instance.id:
+                            raise serializers.ValidationError(
+                                _(
+                                    'Edits must be made on HEAD. Someone else '
+                                    'may be editing the log concurrently. '
+                                    'Refresh and try again.'
+                                )
+                            )
 
+                    # if not new - does this section have edits?
                     update = False
-                    flags = existing._flags
+                    flags = validated_data.get('_flags', instance._flags)
+                    edited_fields = []
                     for field in ModelClass.site_log_fields():
-                        new_value = validated_data.get(field, None)
-                        if new_value != getattr(existing, field):
-                            update = True
-                            if not existing.published:
-                                setattr(existing, field, new_value)
-                            if field in flags:
-                                del flags[field]
+                        if field in validated_data:
+                            new_value = validated_data.get(field)
+                            if new_value != getattr(instance, field):
+                                update = True
+                                if not instance.published:
+                                    edited_fields.append(field)
+                                    setattr(instance, field, new_value)
+                                if field in flags:
+                                    del flags[field]
 
                     if update:
-                        if existing.published:
+                        if instance.published:
                             validated_data['_flags'] = flags
-                            new_section = super().create(
-                                validated_data,
-                            )
+                            new_section = super().create(validated_data)
                             new_section.full_clean()
                             new_section.save()
-                            return new_section
+                            instance = new_section
                         else:
-                            existing._flags = flags
-                            existing.full_clean()
-                            existing.save()
-                    return existing
+                            instance._flags = flags
+                            instance.full_clean()
+                            instance.save()
+
+                        # make sure we use edit timestamp if publish and edit
+                        # are simultaneous
+                        update_status = instance.edited
+                        slm_signals.section_edited.send(
+                            sender=self,
+                            site=site,
+                            user=self.context['request'].user,
+                            request=self.context['request'],
+                            timestamp=update_status,
+                            section=instance,
+                            fields=edited_fields
+                        )
+                    elif '_flags' in validated_data:
+                        # this is just a flag update
+                        instance._flags = flags
+                        instance.save()
+
+                    if do_publish:
+                        update_status = update_status or now()
+                        instance.publish(
+                            request=self.context.get('request', None),
+                            timestamp=update_status,
+                            update_site=False
+                        )
+                        instance.refresh_from_db()
+
+                    if update_status:
+                        instance.site.update_status(
+                            save=True,
+                            user=self.context['request'].user,
+                            timestamp=update_status
+                        )
+                    return instance
+
+            def update(self, instance, validated_data):
+                return self.perform_section_update(
+                    validated_data=validated_data,
+                    instance=instance
+                )
+
+            def create(self, validated_data):
+                return self.perform_section_update(
+                    validated_data=validated_data
+                )
+
+            @classmethod
+            def allow_multiple(cls):
+                """
+                Does this serializer allow multiple sections per site?
+                :return: True if multiple sections are allowed - False
+                    otherwise
+                """
+                return issubclass(ModelClass, SiteSubSection)
 
             class Meta:
                 model = ModelClass
                 fields = [
                     'site',
                     'id',
+                    'publish',
                     'published',
+                    'can_publish',
                     '_flags',
                     '_diff',
                     *ModelClass.site_log_fields()
@@ -461,6 +606,9 @@ class SectionViewSet(type):
                         'required': False,
                         'read_only': False
                     },
+                    'site': {
+                        'required': True
+                    },
                     **({
                         'heading': {'required': False, 'read_only': True},
                         'effective': {'required': False, 'read_only': True},
@@ -472,6 +620,7 @@ class SectionViewSet(type):
         obj.serializer_class = ViewSetSerializer
         obj.filterset_class = ViewSetFilter
         obj.permission_classes = (CanEditSite, UpdateAdminOnly)
+        obj.pagination_class = DataTablesPagination
         obj.filter_backends = (DjangoFilterBackend,)
 
         def get_queryset(self):
@@ -531,6 +680,14 @@ class SectionViewSet(type):
                     section.published = False
                     section.editor = self.request.user
                     section.save()
+                    slm_signals.section_deleted.send(
+                        sender=self,
+                        site=section.site,
+                        user=self.request.user,
+                        request=self.request,
+                        timestamp=now(),
+                        section=section
+                    )
                 return section
 
         obj.get_queryset = get_queryset

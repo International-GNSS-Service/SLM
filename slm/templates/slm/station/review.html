@@ -12,10 +12,10 @@ Template for View/Diff page.
   <!-- Title -->
   <div class="d-flex justify-content-between mt-4 pb-3 mx-5 border-bottom">
       <h2>Review and Submit</h2>
-      <div>
-        <!-- <button class="btn btn-primary" {% if not unpublished_changes %}disabled{% endif %}>Submit</button> -->
-        <button class="btn btn-danger {% if not moderator or not site.pending_review %}d-none{% endif %}">{% trans 'Reject Changes' %}</button>
-        <button class="btn btn-primary" {% if not can_publish and unpublished_changes %}disabled{% endif %} data-btn-action="" data-pub-label="{% trans '' %}" data-submit-label="{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}" data-submitted-label="{% trans 'Changes Submitted' %}"></button>
+      <div id="review-actions">
+        <button name="reject" onclick="reject();" class="btn btn-danger" {% if not can_publish or not site.review_pending %}style="display: none"{% endif %} {% if site.review_pending %}data-slm-review-request={{site.review_request.id}}{% endif %}>{% trans 'Reject Changes' %}</button>
+        <button name="publish" onclick="publish();" class="btn btn-primary" {% if not can_publish or not unpublished_changes %}style="display: none"{% endif %}>{% trans 'Publish' %}</button>
+        <button name="submit" onclick="submit();" class="btn btn-primary" {% if can_publish or not unpublished_changes %}style="display: none"{% endif %} {% if site.review_pending %}disabled{% endif %}>{% if site.review_pending %}{% trans 'Pending Review' %}{% else %}{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}{% endif %}</button>
       </div>
   </div>
 
@@ -50,6 +50,86 @@ Template for View/Diff page.
 </div>
 {% compress js inline %}
 <script>
+    const reviewActions = $('#review-actions');
+    const submitBtn = reviewActions.find('button[name="submit"]');
+    const publishBtn = reviewActions.find('button[name="publish"]');
+    const rejectBtn = reviewActions.find('button[name="reject"]');
+
+    const updateButtonState = function(request) {
+        console.log(request);
+        let site = request.site;
+        rejectBtn.data('slmReviewRequest', request.id);
+        rejectBtn.hide();
+        submitBtn.hide();
+        publishBtn.hide();
+        if (site.can_publish) {
+            if (site.review_pending) {
+                rejectBtn.show();
+                publishBtn.show();
+            } else if (site.status !== 3) {
+                publishBtn.show();
+            }
+        } else {
+            if (site.review_pending) {
+                submitBtn.html("{% trans 'Pending Review' %}");
+                submitBtn.prop('disabled', true);
+                submitBtn.show();
+            } else if (site.status !== 3) {
+                submitBtn.html(
+                    "{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}" +
+                    "{% else %}{% trans 'Submit for Review' %}{% endif %}"
+                );
+                submitBtn.prop('disabled', false);
+                submitBtn.show();
+            }
+        }
+    }
+
+    const submit = function() {
+        slm.requestReview('{{station}}').done(
+            function(data, status, jqXHR) {
+                updateButtonState(data);
+            }
+        ).fail(
+            function(jqXHR, textStatus, errorThrown) {
+                //alert(`{% trans 'Failed to submit' %}: ${jqXHR.responseText}`);
+                $('body').html(jqXHR.responseText);
+                console.log(jqXHR);
+            }
+        );
+    }
+
+    const publish = function() {
+        slm.publish({{site.id}}).done(
+            function(data, status, jqXHR) {
+                updateButtonState({'site': data});
+            }
+        ).fail(
+            function(jqXHR, textStatus, errorThrown) {
+                //alert(`{% trans 'Failed to submit' %}: ${jqXHR.responseText}`);
+                $('body').html(jqXHR.responseText);
+                console.log(jqXHR);
+            }
+        );
+    }
+
+    const reject = function() {
+        console.log(rejectBtn);
+        console.log();
+        slm.rejectReview(rejectBtn.data('slmReviewRequest')).done(
+            function(data, status, jqXHR) {
+                rejectBtn.data('slmReviewRequest', null);
+                rejectBtn.hide();
+            }
+        ).fail(
+            function(jqXHR, textStatus, errorThrown) {
+                //alert(`{% trans 'Reject failed:' %}: ${jqXHR.responseText}`);
+                $('body').html(jqXHR.responseText);
+                console.log(jqXHR);
+            }
+        );
+    }
+
     {% autoescape off %}
     const back_text = `{{ back_text }}`;
     const forward_text = `{{ forward_text }}`;

@@ -11,8 +11,7 @@ def main():
     #   a management command vs serving
     if len(sys.argv) > 1:
         subcommand = sys.argv[1]
-        if subcommand != 'runserver':
-            os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
+        os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
     ##################################################
 
     try:

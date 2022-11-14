@@ -19,6 +19,7 @@ set_default('DEBUG', False)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 set_default('BASE_DIR', Path(__file__).resolve().parent.parent)
+set_default('SITE_DIR', BASE_DIR)
 set_default('DJANGO_DEBUG_TOOLBAR', False)
 
 # manage.py will set this to true if django has been loaded to run a management command
@@ -127,13 +128,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Following two statements added to assist with handling of static files
 STATIC_URL = '/static/'
 
-set_default('SITE_NAME', ALLOWED_HOSTS[0] if ALLOWED_HOSTS else 'localhost')
+set_default(
+    'SITE_NAME',
+    ALLOWED_HOSTS[0] if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS
+    else 'localhost'
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+include('secrets.py')
 include('logging.py')
 include('internationalization.py')
 include('routines.py')

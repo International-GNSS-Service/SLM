@@ -167,6 +167,32 @@ class Network(models.Model):
         return self.name
 
 
+class ReviewRequestManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'site',
+            'requester',
+            'requester__agency',
+            'site__owner',
+            'site__owner__agency',
+            'site__last_user',
+            'site__last_user__agency'
+        ).prefetch_related(
+            'site__agencies',
+            'site__networks'
+        )
+
+
+class ReviewRequestQuerySet(models.QuerySet):
+
+    def editable_by(self, user):
+        from slm.models.sitelog import Site
+        return self.filter(
+            site__in=Site.objects.editable_by(user)
+        )
+
+
 class ReviewRequest(models.Model):
 
     site = models.OneToOneField(
@@ -190,3 +216,5 @@ class ReviewRequest(models.Model):
         db_index=True,
         blank=True
     )
+
+    objects = ReviewRequestManager.from_queryset(ReviewRequestQuerySet)()

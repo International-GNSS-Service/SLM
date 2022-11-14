@@ -35,11 +35,6 @@ def key_value(dictionary, key):
     return dictionary.get(key, None)
 
 
-@register.filter(name='is_moderator')
-def is_moderator(user, station):
-    return user.is_moderator(station)
-
-
 @register.filter(name='value_filter')
 def value_filter(value):
     if value is None:

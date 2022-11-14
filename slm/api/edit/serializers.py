@@ -9,6 +9,8 @@ from slm.models import (
     Network,
     ReviewRequest
 )
+from slm import signals as slm_signals
+from django.core.exceptions import PermissionDenied
 from django.utils.timezone import now
 
 
@@ -47,40 +49,53 @@ class EmbeddedUserSerializer(serializers.ModelSerializer):
         ]
 
 
-class ReviewRequestSerializer(serializers.ModelSerializer):
+class StationSerializer(serializers.ModelSerializer):
 
-    site = serializers.CharField(source='site.name')
-    review_pending = None
+    owner = EmbeddedUserSerializer(many=False, read_only=True)
+    last_user = EmbeddedUserSerializer(many=False, read_only=True)
+    agencies = EmbeddedAgencySerializer(many=True, read_only=True)
+    networks = EmbeddedNetworkSerializer(many=True, read_only=True)
+
+    can_publish = serializers.SerializerMethodField(read_only=True)
+
+    publish = serializers.BooleanField(write_only=True)
+
+    def get_can_publish(self, obj):
+        if 'request' in self.context:
+            return obj.can_publish(self.context['request'].user)
+        return None
+
+    def update(self, instance, validated_data):
+        if validated_data.get('publish', False):
+            instance.publish(request=self.context.get('request', None))
+            # this might have been cached by an annotation - clear it in case
+            # because publish may invalidate it
+            if hasattr(instance, '_review_pending'):
+                del instance._review_pending
+        return instance
 
     def create(self, validated_data):
-        validated_data['requester'] = getattr(
-            self.context['request'],
-            'user',
-            None
+        # strip out anything but name or agencies
+        validated_data = {
+            key: val
+            for key, val in validated_data.items()
+            if key in {'name'}
+        }
+
+        validated_data['name'] = validated_data['name'].upper()
+        new_site = super().create(validated_data)
+        if not self.context['request'].user.is_superuser:
+            new_site.agencies.add(self.context['request'].user.agency)
+
+        slm_signals.site_proposed.send(
+            sender=self,
+            site=new_site,
+            user=self.context['request'].user,
+            timestamp=new_site.created,
+            request=self.context['request'],
+            agencies=new_site.agencies.all()
         )
-        validated_data['site'] = Site.objects.get(
-            name__iexact=validated_data['site']
-        )
-        self.review_pending = validated_data['site'].review_pending
-        return ReviewRequest.objects.update_or_create(
-            site=validated_data['site'],
-            defaults={
-                'requester': validated_data['requester'],
-                'timestamp': now()
-            }
-        )[0]
-
-    class Meta:
-        model = Site
-        fields = ['site', 'requester', 'timestamp']
-
-
-class StationListSerializer(serializers.ModelSerializer):
-
-    owner = EmbeddedUserSerializer(many=False)
-    last_user = EmbeddedUserSerializer(many=False)
-    agencies = EmbeddedAgencySerializer(many=True)
-    networks = EmbeddedNetworkSerializer(many=True)
+        return new_site
 
     class Meta:
         model = Site
@@ -95,8 +110,49 @@ class StationListSerializer(serializers.ModelSerializer):
             'num_flags',
             'last_publish',
             'last_update',
-            'last_user'
+            'last_user',
+            'can_publish',
+            'publish',
+            'review_pending'
         ]
+        extra_kwargs = {
+            field: {'read_only': True} for field in fields if field not in {
+                'name', 'publish', 'owner', 'last_user',
+                'agencies', 'networks', 'can_publish'
+            }
+        }
+
+
+class ReviewRequestSerializer(serializers.ModelSerializer):
+
+    site_name = serializers.CharField(source='site.name', required=True)
+    site = StationSerializer(many=False, read_only=True)
+    requester = EmbeddedUserSerializer(many=False, read_only=True)
+    review_pending = None
+
+    def create(self, validated_data):
+        validated_data['requester'] = getattr(
+            self.context['request'],
+            'user',
+            None
+        )
+        validated_data['site'] = Site.objects.get(
+            name__iexact=validated_data['site']['name']
+        )
+        request = ReviewRequest.objects.update_or_create(
+            site=validated_data['site'],
+            defaults={
+                'requester': validated_data['requester'],
+                'timestamp': now()
+            }
+        )[0]
+        request.refresh_from_db()
+        self.review_pending = validated_data['site'].review_pending
+        return request
+
+    class Meta:
+        model = ReviewRequest
+        fields = ['site_name', 'site', 'requester', 'timestamp']
 
 
 class LogEntrySerializer(serializers.ModelSerializer):

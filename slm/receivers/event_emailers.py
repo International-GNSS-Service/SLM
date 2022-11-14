@@ -27,6 +27,8 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
         'user': review_request.requester,
         'site': review_request.site
     }
+
+    print('SENING MAIL')
     try:
         send_mail(
             subject=f'{_("Site Log Review Requested:")} '
@@ -50,6 +52,10 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
             ),
             fail_silently=False,
             html_message=html.render(context)
+        )
+        logger.info(
+            'Sent review request email for %s',
+            review_request.site.name
         )
     except SMTPException as smtp_exc:
         logger.exception(smtp_exc)
@@ -96,6 +102,10 @@ def send_changes_rejected_emails(
             ),
             fail_silently=False,
             html_message=html.render(context)
+        )
+        logger.info(
+            'Sent changes rejected for %s',
+            review_request.site.name
         )
     except SMTPException as smtp_exc:
         logger.exception(smtp_exc)

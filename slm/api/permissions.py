@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from slm.models import Alert
+from slm.models import Alert, Site
 
 
 class IsAdmin(permissions.BasePermission):
@@ -23,15 +23,6 @@ class UpdateAdminOnly(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         if view.action in {'update', 'partial_update'}:
-            return request.user.is_superuser
-        return True
-
-
-class DestroyAdminOnly(permissions.BasePermission):
-    """
-    """
-    def has_permission(self, request, view):
-        if view.action in {'destroy'}:
             return request.user.is_superuser
         return True
 
@@ -61,10 +52,31 @@ class CanEditSite(permissions.BasePermission):
         return False
 
     def has_object_permission(self, request, view, obj):
-        return (
-            request.user and (
-                request.user.is_superuser or
-                obj.owner == request.user or
-                request.user.agency in obj.agencies
-            )
-        )
+        return obj.can_edit(request.user)
+
+
+class CanRequestReview(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        """
+        Anyone with edit permission on a site can request a publish.
+        """
+        if view.action == 'create' and 'site_name' in request.POST:
+            site = Site.objects.filter(
+                name__iexact=request.POST['site_name']
+            ).first()
+            return site and site.can_edit(request.user)
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        return obj.site.can_edit(request.user)
+
+
+class CanRejectReview(permissions.BasePermission):
+    """
+    Only site moderators can reject publish requests.
+    """
+    def has_object_permission(self, request, view, obj):
+        if view.action in {'destroy'}:
+            return obj.site.is_moderator(request.user)
+        return True

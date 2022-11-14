@@ -6,7 +6,7 @@ from django.db.models import (
 )
 from slm.models import SiteLocation
 from slm.map.api.edit.serializers import (
-    StationListSerializer,
+    StationSerializer,
     StationMapSerializer
 )
 from rest_framework.response import Response
@@ -15,7 +15,7 @@ from rest_framework import status
 
 class StationListViewSet(slm_views.StationListViewSet):
 
-    serializer_class = StationListSerializer
+    serializer_class = StationSerializer
 
     ordering_fields = slm_views.StationListViewSet.ordering_fields + ['latitude', 'longitude']
 

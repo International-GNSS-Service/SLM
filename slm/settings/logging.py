@@ -63,7 +63,7 @@ LOGGING = {
         },
         'django.utils.autoreload': {
             'handlers': ['file'],
-            'level': 'INFO',  # this logger got really noisy in django 2.2
+            'level': 'WARNING',  # this logger got really noisy in django 2.2
             'propagate': False
         },
         'django_auth_ldap': {
@@ -94,6 +94,10 @@ if MANAGEMENT_MODE:
     if 'root' in LOGGING:
         if 'console' not in LOGGING['root']['handlers']:
             LOGGING['root']['handlers'].append('console')
+
+    for name, config in LOGGING.get('loggers', {}).items():
+        if 'handlers' in config and 'console' not in config['handlers']:
+            config['handlers'].append('console')
 
 # create logging dirs if necessary
 for name, handler_spec in LOGGING['handlers'].items():

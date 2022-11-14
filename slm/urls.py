@@ -9,7 +9,6 @@ from slm.views import (
     AlertsView,
     UploadView,
     NewSiteView,
-    register_user,
     NotificationsView,
     SLMView,
     UserActivityLogView
@@ -109,7 +108,6 @@ urlpatterns = [
     path('', IndexView.as_view(), name='home'),
     path('edit/<station:station>', EditView.as_view(), name='edit'),
     path('edit/<station:station>/<str:section>', EditView.as_view(), name='edit'),
-    path('register/', register_user, name='register_user'),
     path('newsite/', NewSiteView.as_view(), name='new_site'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('alerts/', AlertsView.as_view(), name='alerts'),

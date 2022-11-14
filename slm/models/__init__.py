@@ -1,3 +1,5 @@
+from django.core.exceptions import ImproperlyConfigured
+from django.conf import settings
 from slm.models.system import (
     Agency,
     Alert,
@@ -40,6 +42,8 @@ from slm.models.sitelog import (
 from django.db import models
 from django.core.cache import cache
 
+_site_record = None
+
 
 class SingletonModel(models.Model):
 
@@ -64,3 +68,33 @@ class SingletonModel(models.Model):
 
     def set_cache(self):
         cache.set(self.__class__.__name__, self)
+
+
+def get_record_model():
+    global _site_record
+    if _site_record is not None:
+        return _site_record
+
+    from django.apps import apps
+    slm_site_record = getattr(
+        settings,
+        'SLM_SITE_RECORD',
+        'slm.DefaultSiteRecord'
+    )
+    try:
+        app_label, model_class = slm_site_record.split('.')
+        _site_record = apps.get_app_config(
+            app_label
+        ).get(model_class.lower(), None)
+        if not _site_record:
+            raise ImproperlyConfigured(
+                f'SLM_SITE_RECORD "{slm_site_record}" is not a registered '
+                f'model'
+            )
+        return _site_record
+    except ValueError as ve:
+        raise ImproperlyConfigured(
+            f'SLM_SITE_RECORD value {slm_site_record} is invalid, must be '
+            f'"app_label.ModelClass"'
+        ) from ve
+

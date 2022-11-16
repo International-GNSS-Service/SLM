@@ -142,13 +142,13 @@ Template for stations list.
         filterInput.click(function() {
             stationList.find('button').remove();
             let query = stationList.data('slmQuery') || {};
-            console.log(query["status"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
-                return this.value;
-            }).get().join(","));
-            query["network"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
+            query["status"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
                 return this.value;
             }).get().join(",");
-            query["agency"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
+            query["network"] = $("#slm-network-filter input[name=filterToggle]:checked").map(function () {
+                return this.value;
+            }).get().join(",");
+            query["agency"] = $("#slm-agency-filter input[name=filterToggle]:checked").map(function () {
                 return this.value;
             }).get().join(",");
             stationList.data('slmPage', 0);

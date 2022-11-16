@@ -161,16 +161,28 @@ class StationListViewSet(
             lookup_expr='gte'
         )
         agency = django_filters.CharFilter(
-            field_name='agencies__name',
-            lookup_expr='iexact'
+            method='filter_agencies'
         )
         network = django_filters.CharFilter(
-            field_name='networks__name',
-            lookup_expr='iexact'
+            method='filter_networks'
         )
         review_pending = django_filters.BooleanFilter(
             field_name='_review_pending'
         )
+
+        def filter_agencies(self, queryset, name, value):
+            values = value.split(',')
+            return queryset.filter(
+                Q(agencies__pk__in=[int(val) for val in values if val.isdigit()]) |
+                Q(agencies__name__in=values)
+            )
+
+        def filter_networks(self, queryset, name, value):
+            values = value.split(',')
+            return queryset.filter(
+                Q(networks__pk__in=[int(val) for val in values if val.isdigit()]) |
+                Q(networks__name__in=values)
+            )
 
         class Meta:
             model = Site

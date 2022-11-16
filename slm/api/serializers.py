@@ -5,8 +5,8 @@ from slm.models import (
 )
 from django.utils.functional import cached_property
 import json
+from django.template.loader import get_template
 from django.utils.translation import gettext as _
-
 
 class _Heading:
     pass
@@ -29,6 +29,8 @@ class SiteLogSerializer(serializers.BaseSerializer):
     is_published = None
     graphic = ''
 
+    text_tmpl = get_template('slm/sitelog/site.log')
+
     """
     1.x       Section
     << start >(Field Name)        COLON_COLUMN        >: (Value)
@@ -49,6 +51,14 @@ class SiteLogSerializer(serializers.BaseSerializer):
     def json(self):
         # todo
         return json.dumps({})
+
+    @cached_property
+    def text2(self):
+
+        return str(self.text_tmpl.render({
+            'site': self.site,
+            'include_templates': True
+        }))
 
     @cached_property
     def text(self):

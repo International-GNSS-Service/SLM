@@ -1622,7 +1622,7 @@ class SiteLocation(SiteSection):
         verbose_name=_('Longitude (E is +)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. '
-            'Format: (+/-DDMMSS.SS)'
+            'Format: (+/-DDDMMSS.SS)'
         ),
         db_index=True
     )
@@ -1743,7 +1743,6 @@ class SiteReceiver(SiteSubSection):
         )
     )
 
-    # todo down-grade to date?
     installed = models.DateTimeField(
         null=True,
         default=None,
@@ -3192,7 +3191,7 @@ class AgencyPOC(SiteSection):
         help_text=_('Enter contact agency name')
     )
     preferred_abbreviation = models.CharField(
-        max_length=50,
+        max_length=50, # todo A10
         default='',
         blank=True,
         verbose_name=_('Preferred Abbreviation'),

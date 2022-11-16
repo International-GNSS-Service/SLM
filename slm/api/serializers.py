@@ -8,6 +8,7 @@ import json
 from django.template.loader import get_template
 from django.utils.translation import gettext as _
 
+
 class _Heading:
     pass
 
@@ -53,15 +54,99 @@ class SiteLogSerializer(serializers.BaseSerializer):
         return json.dumps({})
 
     @cached_property
-    def text2(self):
+    def text(self):
 
         return str(self.text_tmpl.render({
             'site': self.site,
+            'form': self.site.siteform_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ),
+            'identification': self.site.siteidentification_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ),
+            'location': self.site.sitelocation_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ),
+            'receivers': self.site.sitereceiver_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'antennas': self.site.siteantenna_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'local_ties': self.site.sitesurveyedlocalties_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'frequency_standards': self.site.sitefrequencystandard_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'collocations': self.site.sitecollocation_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'humidity_sensors': self.site.sitehumiditysensor_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'pressure_sensors': self.site.sitepressuresensor_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'temp_sensors': self.site.sitetemperaturesensor_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'wv_radiometers': self.site.sitewatervaporradiometer_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'other_instruments': self.site.siteotherinstrumentation_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'radio_interferences': self.site.siteradiointerferences_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'multipaths': self.site.sitemultipathsources_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'signal_obstructions': self.site.sitesignalobstructions_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'episodic_effects': self.site.sitelocalepisodiceffects_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False),
+            'poc': self.site.siteoperationalcontact_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ),
+            'agency': self.site.siteresponsibleagency_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ),
+            'info': self.site.sitemoreinformation_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ),
+            'graphic': self.site.siteantenna_set.current(
+                epoch=self.epoch_param,
+                published=self.published_param
+            ).filter(is_deleted=False).last().graphic,
             'include_templates': True
         }))
 
     @cached_property
-    def text(self):
+    def text2(self):
         start = ' ' * self.START
         sitelog = f'{start}{self.site.name} Site Information Form (site log)\n'
         sitelog += f'{start}International GNSS Service\n'

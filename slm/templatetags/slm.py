@@ -2,6 +2,8 @@ from django import template
 from slm.utils import to_snake_case
 from django.utils.translation import gettext as _
 from datetime import datetime, timezone, date
+from html import unescape
+from enum import Enum
 
 register = template.Library()
 
@@ -88,9 +90,9 @@ def multi_line(text):
         limited = []
         for line in lines:
             while len(line) > limit:
-                limited.append({line[0:limit]})
+                limited.append(unescape(line[0:limit]))
                 line = line[limit:]
-            limited.append(line)
+            limited.append(unescape(line))
         return f'\n{" "*30}: '.join(limited)
     return ''
 
@@ -114,3 +116,19 @@ def pos(number):
     if float(number) > 0:
         return f'+{number}'
     return number
+
+
+@register.filter(name='none2empty')
+def none2empty(number, suffix=''):
+    if number is None:
+        return ''
+    return f'{number}{suffix}'
+
+
+@register.filter(name='enum_str')
+def enum_str(value):
+    if value is None:
+        return ''
+    if isinstance(value, Enum):
+        return value.label
+    return value

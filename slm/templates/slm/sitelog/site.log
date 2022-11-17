@@ -2,7 +2,7 @@
      International GNSS Service
      See Instructions at:
        https://files.igs.org/pub/station/general/sitelog_instr.txt
-
+{% autoescape off %}
 0.   Form
 
      Prepared by (full name)  : {{ form.prepared_by }}
@@ -21,15 +21,15 @@
      IERS DOMES Number        : {% if identification %}{{ identification.iers_domes_number }}{% else %}(A9){% endif %}
      CDP Number               : {% if identification %}{{ identification.cdp_number }}{% else %}(A4){% endif %}
      Monument Description     : {% if identification %}{{ identification.monument_description }}{% else %}(PILLAR/BRASS PLATE/STEEL MAST/etc){% endif %}
-       Height of the Monument : {% if identification %}{{ identification.monument_height }} m{% else %}(m){% endif %}
+       Height of the Monument : {% if identification %}{{ identification.monument_height|none2empty:" m" }}{% else %}(m){% endif %}
        Monument Foundation    : {% if identification %}{{ identification.monument_foundation }}{% else %}(STEEL RODS, CONCRETE BLOCK, ROOF, etc){% endif %}
-       Foundation Depth       : {% if identification %}{{ identification.foundation_depth }} m{% else %}(m){% endif %}
+       Foundation Depth       : {% if identification %}{{ identification.foundation_depth|none2empty:" m" }}{% else %}(m){% endif %}
      Marker Description       : {% if identification %}{{ identification.marker_description }}{% else %}(CHISELLED CROSS/DIVOT/BRASS NAIL/etc){% endif %}
      Date Installed           : {% if identification %}{{ identification.date_installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Geologic Characteristic  : {% if identification %}{{ identification.geologic_characteristic }}{% else %}(BEDROCK/CLAY/CONGLOMERATE/GRAVEL/SAND/etc){% endif %}
        Bedrock Type           : {% if identification %}{{ identification.bedrock_type }}{% else %}(IGNEOUS/METAMORPHIC/SEDIMENTARY){% endif %}
        Bedrock Condition      : {% if identification %}{{ identification.bedrock_condition }}{% else %}(FRESH/JOINTED/WEATHERED){% endif %}
-       Fracture Spacing       : {% if identification %}{{ identification.fracture_spacing }}{% else %}(1-10 cm/11-50 cm/51-200 cm/over 200 cm){% endif %}
+       Fracture Spacing       : {% if identification %}{{ identification.fracture_spacing|enum_str|lower }}{% else %}(1-10 cm/11-50 cm/51-200 cm/over 200 cm){% endif %}
        Fault zones nearby     : {% if identification %}{{ identification.fault_zones }}{% else %}(YES/NO/Name of the zone){% endif %}
          Distance/activity    : {% if identification %}{{ identification.distance|multi_line }}{% else %}(multiple lines){% endif %}
      Additional Information   : {% if identification %}{{ identification.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
@@ -40,7 +40,7 @@
      City or Town             : {{ location.city }}
      State or Province        : {{ location.state }}
      Country                  : {{ location.country }}
-     Tectonic Plate           : {{ location.tectonic }}
+     Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
      Approximate Position (ITRF)
        X coordinate (m)       : {{ location.x|precision:4 }}
        Y coordinate (m)       : {{ location.y|precision:4 }}
@@ -58,8 +58,8 @@
      Serial Number            : {{ receiver.serial_number }}
      Firmware Version         : {{ receiver.firmware }}
      Elevation Cutoff Setting : {{ receiver.elevation_cutoff }}
-     Date Installed           : {{ receiver.installed|iso_utc }}
-     Date Removed             : {{ receiver.removed|iso_utc }}
+     Date Installed           : {% if receiver.installed %}{{ receiver.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Date Removed             : {% if receiver.removed %}{{ receiver.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Temperature Stabiliz.    : {{ receiver.temp_stab }}
      Additional Information   : {{ receiver.additional_info|multi_line }}
 {% endfor %}
@@ -87,8 +87,8 @@
      Radome Serial Number     : {{ antenna.radome_serial_number }}
      Antenna Cable Type       : {{ antenna.cable_type }}
      Antenna Cable Length     : {% if antenna.cable_length %}{{ antenna.cable_length|precision:4 }} m{% endif %}
-     Date Installed           : {{ antenna.installed|iso_utc }}
-     Date Removed             : {{ antenna.removed|iso_utc }}
+     Date Installed           : {% if antenna.installed %}{{ antenna.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Date Removed             : {% if antenna.removed %}{{ antenna.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Additional Information   : {{ antenna.additional_information|multi_line }}
 {% endfor %}
 {% if not receivers or include_templates %}4.x  Antenna Type             : (A20, from rcvr_ant.tab; see instructions)
@@ -119,7 +119,7 @@
        dz (m)                 : {% if tie.dz %}{{ tie.dz }} m{% endif %}
      Accuracy (mm)            : {{ tie.accuracy }}{% comment %}{% if tie.accuracy %}{{ tie.accuracy|precision:0 }} mm{% endif %}{% endcomment %}
      Survey method            : {{ tie.survey_method }}
-     Date Measured            : {{ tie.measured|iso_utc }}
+     Date Measured            : {% if tie.measured %}{{ tie.measured|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Additional Information   : {{ tie.additional_information|multi_line }}
 {% endfor %}
 {% if not local_ties or include_templates %}5.x  Tied Marker Name         :
@@ -152,7 +152,7 @@
 7.   Collocation Information
 {% for collocation in collocations %}
 7.{{ forloop.counter }}  Instrumentation Type     : {{ collocation.instrument_type}}
-       Status                 : {{ collocation.status }}
+       Status                 : {{ collocation.status|enum_str|upper }}
        Effective Dates        : {% if collocation.effective_start %}{{collocation.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if collocation.effective_end %}{{collocation.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ collocation.notes|multi_line }}
 {% endfor %}
@@ -345,3 +345,4 @@
 
 {% if graphic %}{{ graphic }}{% else %}     (insert text graphic from file antenna.gra){% endif %}
 
+{% endautoescape %}

@@ -31,7 +31,11 @@ if DJANGO_DEBUG_TOOLBAR:
         INSTALLED_APPS.append('debug_toolbar')
 
     import socket  # only if you haven't already imported this
-    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    try:
+        _, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    except OSError:
+        _, _, ips = socket.gethostbyname_ex('localhost')
+
     set_default(
         'INTERNAL_IPS',
         []

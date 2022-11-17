@@ -14,6 +14,8 @@ def main():
         os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
     ##################################################
 
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'slm.tests.settings')
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -40,6 +40,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
     def __init__(self, *args, instance, epoch=None, published=True, **kwargs):
         self.site = instance
         self.epoch_param = epoch
+        self.epoch = epoch
         self.published_param = published
         super().__init__(*args, instance=instance, **kwargs)
 
@@ -55,7 +56,8 @@ class SiteLogSerializer(serializers.BaseSerializer):
 
     @cached_property
     def text(self):
-
+        if self.epoch is None:
+            self.epoch = self.site.created  # todo resolve this to the real one
         return str(self.text_tmpl.render({
             'site': self.site,
             'form': self.site.siteform_set.current(

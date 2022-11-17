@@ -187,12 +187,28 @@ class SiteLocationForm(SectionForm):
 
 class SiteReceiverForm(SubSectionForm):
 
+    elevation_cutoff = forms.FloatField(
+        required=SiteReceiver._meta.get_field('elevation_cutoff').blank,
+        help_text=SiteReceiver._meta.get_field('elevation_cutoff').help_text,
+        label=SiteReceiver._meta.get_field('elevation_cutoff').verbose_name,
+        max_value=15,
+        min_value=-5
+    )
+
     class Meta:
         model = SiteReceiver
         fields = SubSectionForm.Meta.fields + SiteReceiver.site_log_fields()
 
 
 class SiteAntennaForm(SubSectionForm):
+
+    alignment = forms.FloatField(
+        required=SiteAntenna._meta.get_field('alignment').blank,
+        help_text=SiteAntenna._meta.get_field('alignment').help_text,
+        label=SiteAntenna._meta.get_field('alignment').verbose_name,
+        max_value=180,
+        min_value=-180
+    )
 
     class Meta:
         model = SiteAntenna
@@ -212,12 +228,24 @@ class AntennaTypeForm(SectionForm):
 
 class SiteSurveyedLocalTiesForm(SubSectionForm):
 
+    accuracy = forms.FloatField(
+        required=SiteSurveyedLocalTies._meta.get_field('accuracy').blank,
+        help_text=SiteSurveyedLocalTies._meta.get_field('accuracy').help_text,
+        label=SiteSurveyedLocalTies._meta.get_field('accuracy').verbose_name
+    )
+
     class Meta:
         model = SiteSurveyedLocalTies
         fields = SubSectionForm.Meta.fields + SiteSurveyedLocalTies.site_log_fields()
 
 
 class SiteFrequencyStandardForm(SubSectionForm):
+
+    input_frequency = forms.FloatField(
+        required=SiteFrequencyStandard._meta.get_field('input_frequency').blank,
+        help_text=SiteFrequencyStandard._meta.get_field('input_frequency').help_text,
+        label=SiteFrequencyStandard._meta.get_field('input_frequency').verbose_name
+    )
 
     class Meta:
         model = SiteFrequencyStandard
@@ -238,6 +266,18 @@ class MeteorologicalForm(SubSectionForm):
 
 class SiteHumiditySensorForm(MeteorologicalForm):
 
+    accuracy = forms.FloatField(
+        required=SiteHumiditySensor._meta.get_field('accuracy').blank,
+        help_text=SiteHumiditySensor._meta.get_field('accuracy').help_text,
+        label=SiteHumiditySensor._meta.get_field('accuracy').verbose_name
+    )
+
+    sampling_interval = forms.FloatField(
+        required=SiteHumiditySensor._meta.get_field('sampling_interval').blank,
+        help_text=SiteHumiditySensor._meta.get_field('sampling_interval').help_text,
+        label=SiteHumiditySensor._meta.get_field('sampling_interval').verbose_name
+    )
+
     class Meta:
         model = SiteHumiditySensor
         fields = MeteorologicalForm.Meta.fields + SiteHumiditySensor.site_log_fields()
@@ -245,12 +285,38 @@ class SiteHumiditySensorForm(MeteorologicalForm):
 
 class SitePressureSensorForm(MeteorologicalForm):
 
+    accuracy = forms.FloatField(
+        required=SitePressureSensor._meta.get_field('accuracy').blank,
+        help_text=SitePressureSensor._meta.get_field('accuracy').help_text,
+        label=SitePressureSensor._meta.get_field('accuracy').verbose_name
+    )
+
+    sampling_interval = forms.FloatField(
+        required=SitePressureSensor._meta.get_field('sampling_interval').blank,
+        help_text=SitePressureSensor._meta.get_field('sampling_interval').help_text,
+        label=SitePressureSensor._meta.get_field('sampling_interval').verbose_name
+    )
+
     class Meta:
         model = SitePressureSensor
         fields = MeteorologicalForm.Meta.fields + SitePressureSensor.site_log_fields()
 
 
 class SiteTemperatureSensorForm(MeteorologicalForm):
+
+    accuracy = forms.FloatField(
+        required=SiteTemperatureSensor._meta.get_field('accuracy').blank,
+        help_text=SiteTemperatureSensor._meta.get_field('accuracy').help_text,
+        label=SiteTemperatureSensor._meta.get_field('accuracy').verbose_name
+    )
+
+    sampling_interval = forms.FloatField(
+        required=SiteTemperatureSensor._meta.get_field('sampling_interval').blank,
+        help_text=SiteTemperatureSensor._meta.get_field(
+            'sampling_interval').help_text,
+        label=SiteTemperatureSensor._meta.get_field(
+            'sampling_interval').verbose_name
+    )
 
     class Meta:
         model = SiteTemperatureSensor

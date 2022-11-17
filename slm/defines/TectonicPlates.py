@@ -1,9 +1,9 @@
-from django_enum import IntegerChoices
+from django_enum import TextChoices
 from enum_properties import s
 from django.utils.translation import gettext as _
 
 
-class TectonicPlates(IntegerChoices):
+class TectonicPlates(TextChoices):
     """
     <enumeration value="African"/>
     <enumeration value="African Indian/Australia"/>
@@ -30,21 +30,21 @@ class TectonicPlates(IntegerChoices):
         s('label', case_fold=True)
     ]
 
-    AFRICAN        = 1, _('African')
-    ANTARCTIC      = 2, _('Antarctic')
-    ARABIAN        = 3, _('Arabian')
-    AUSTRALIAN     = 4, _('Australian')
-    CARIBBEAN      = 5, _('Caribbean')
-    COCOS          = 6, _('Cocos')
-    EURASIAN       = 7, _('Eurasian')
-    INDIAN         = 8, _('Indian')
-    JUAN_DE_FUCA   = 9, _('Juan de Fuca')
-    NAZCA          = 10, _('Nazca')
-    NORTH_AMERICAN = 11, _('North American')
-    PACIFIC        = 12, _('Pacific')
-    PHILIPPINE     = 13, _('Philippine')
-    SCOTIA         = 14, _('Scotia')
-    SOUTH_AMERICAN = 15, _('South American')
-    NUBIA          = 17, _('Nubia')
-    SOMALIA        = 18, _('Somalia')
-    MARIANA        = 19, _('Mariana')
+    AFRICAN        = 'AF', _('African')
+    ANTARCTIC      = 'AN', _('Antarctic')
+    ARABIAN        = 'AR', _('Arabian')
+    AUSTRALIAN     = 'AU', _('Australian')
+    CARIBBEAN      = 'CA', _('Caribbean')
+    COCOS          = 'CO', _('Cocos')
+    EURASIAN       = 'EU', _('Eurasian')
+    INDIAN         = 'IN', _('Indian')
+    JUAN_DE_FUCA   = 'JU', _('Juan de Fuca')
+    NAZCA          = 'NZ', _('Nazca')
+    NORTH_AMERICAN = 'NA', _('North American')
+    PACIFIC        = 'PA', _('Pacific')
+    PHILIPPINE     = 'PH', _('Philippine')
+    SCOTIA         = 'SC', _('Scotia')
+    SOUTH_AMERICAN = 'SA', _('South American')
+    NUBIA          = 'NU', _('Nubia')
+    SOMALIA        = 'SO', _('Somalia')
+    MARIANA        = 'MA', _('Mariana')

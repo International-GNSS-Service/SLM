@@ -131,8 +131,8 @@ Template for View/Diff page.
     }
 
     {% autoescape off %}
-    const back_text = `{{ back_text }}`;
-    const forward_text = `{{ forward_text }}`;
+    const back_text = `{{ back_text|escapejs }}`;
+    const forward_text = `{{ forward_text|escapejs }}`;
     const epoch = '{{ epoch }}';
     const published = {% if published %}true{% else %}false{% endif %};
     const options = {

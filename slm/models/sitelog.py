@@ -3,7 +3,10 @@ from slm.defines import (
     SiteLogStatus,
     LogEntryType,
     AntennaReferencePoint,
-    AntennaFeatures
+    AntennaFeatures,
+    CollocationStatus,
+    TectonicPlates,
+    FractureSpacing
 )
 from django_enum import EnumField
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -1378,7 +1381,7 @@ class SiteIdentification(SiteSection):
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Height of the Monument'),
+        verbose_name=_('Height of the Monument (m)'),
         help_text=_(
             'Enter the height of the monument above the ground surface in '
             'meters. Units: (m)'
@@ -1398,7 +1401,7 @@ class SiteIdentification(SiteSection):
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Foundation Depth'),
+        verbose_name=_('Foundation Depth (m)'),
         help_text=_(
             'Enter the depth of the monument foundation below the ground '
             'surface in meters. Format: (m)'
@@ -1449,7 +1452,9 @@ class SiteIdentification(SiteSection):
         )
     )
 
-    fracture_spacing = models.CharField(
+    fracture_spacing = EnumField(
+        FractureSpacing,
+        strict=False,
         max_length=50,
         default='',
         blank=True,
@@ -1562,7 +1567,9 @@ class SiteLocation(SiteSection):
         help_text=_('Enter the country/region the site is located in')
     )
 
-    tectonic = models.CharField(
+    tectonic = EnumField(
+        TectonicPlates,
+        strict=False,
         max_length=50,
         default='',
         blank=True,
@@ -1736,7 +1743,7 @@ class SiteReceiver(SiteSubSection):
         max_length=50,
         default='',
         blank=True,
-        verbose_name=_('Elevation Cutoff Setting'),
+        verbose_name=_('Elevation Cutoff Setting (°)'),
         help_text=_(
             'Please respond with the tracking cutoff as set in the receiver, '
             'regardless of terrain or obstructions in the area. Format: (deg)'
@@ -1888,7 +1895,7 @@ class SiteAntenna(SiteSubSection):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Marker->ARP Up Ecc. (m)'),
+        verbose_name=_('Marker->ARP Up Ecc (m)'),
         help_text=_(
             'Up eccentricity is the antenna height measured to an accuracy of '
             '1mm and defined as the vertical distance of the ARP from the '
@@ -1899,7 +1906,7 @@ class SiteAntenna(SiteSubSection):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Marker->ARP North Ecc(m)'),
+        verbose_name=_('Marker->ARP North Ecc (m)'),
         help_text=_(
             'North eccentricity is the offset between the ARP and marker '
             'described in section 1 measured to an accuracy of 1mm. '
@@ -1910,7 +1917,7 @@ class SiteAntenna(SiteSubSection):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Marker->ARP East Ecc(m)'),
+        verbose_name=_('Marker->ARP East Ecc (m)'),
         help_text=_(
             'East eccentricity is the offset between the ARP and marker '
             'described in section 1 measured to an accuracy of 1mm. '
@@ -1922,7 +1929,7 @@ class SiteAntenna(SiteSubSection):
         max_length=50,
         blank=True,
         default='',
-        verbose_name=_('Alignment from True N'),
+        verbose_name=_('Alignment from True N (°)'),
         help_text=_(
             'Enter the clockwise offset from true north in degrees. '
             'Format: (deg; + is clockwise/east)'
@@ -2309,7 +2316,7 @@ class SiteFrequencyStandard(SiteSubSection):
         max_length=50,
         blank=True,
         default='',
-        verbose_name=_('Input Frequency'),
+        verbose_name=_('Input Frequency (MHz)'),
         help_text=_('Enter the input frequency in MHz if known.')
     )
 
@@ -2406,14 +2413,16 @@ class SiteCollocation(SiteSubSection):
         help_text=_('Select all collocated instrument types that apply')
     )
 
-    # todo should be enum
-    status = models.CharField(
+    status = EnumField(
+        CollocationStatus,
         max_length=50,
+        strict=False,
         default='',
         blank=True,
         verbose_name=_('Status'),
         help_text=_('Select appropriate status')
     )
+
     notes = models.TextField(
         blank=True,
         default='',
@@ -2513,7 +2522,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Height Diff to Ant'),
+        verbose_name=_('Height Diff to Ant (m)'),
         help_text=_(
             'In meters, enter the difference in height between the sensor and '
             'the GNSS antenna. Positive number indicates the sensor is above '
@@ -2560,7 +2569,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
         default='',
         verbose_name=_('Notes'),
         help_text=_(
-            'Enter any additional information relevant to the humidity sensor.'
+            'Enter any additional information relevant to the sensor.'
             ' Format: (multiple lines)'
         )
     )
@@ -2623,7 +2632,7 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
         default='',
         blank=True,
         max_length=50,
-        verbose_name=_('Data Sampling Interval'),
+        verbose_name=_('Data Sampling Interval (sec)'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
@@ -2632,7 +2641,7 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
         default='',
         blank=True,
         max_length=50,
-        verbose_name=_('Accuracy'),
+        verbose_name=_('Accuracy (% rel h)'),
         help_text=_(
             'Enter the accuracy in % relative humidity. Format: (% rel h)'
         )
@@ -2707,7 +2716,7 @@ class SitePressureSensor(MeteorologicalInstrumentation):
         default='',
         blank=True,
         max_length=50,
-        verbose_name=_('Accuracy'),
+        verbose_name=_('Accuracy (hPa)'),
         help_text=_('Enter the accuracy in hectopascal. Format: (hPa)')
     )
 
@@ -2771,7 +2780,7 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
         default='',
         blank=True,
         max_length=50,
-        verbose_name=_('Accuracy'),
+        verbose_name=_('Accuracy (deg C)'),
         help_text=_(
             'Enter the accuracy in degrees Centigrade. Format: (deg C)'
         )
@@ -2834,7 +2843,7 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
         default=None,
         blank=True,
         null=True,
-        verbose_name=_('Distance to Antenna'),
+        verbose_name=_('Distance to Antenna (m)'),
         help_text=_(
             'Enter the horizontal distance between the WVR and the GNSS '
             'antenna to the nearest meter. Format: (m)'

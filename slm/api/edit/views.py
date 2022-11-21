@@ -436,6 +436,15 @@ class SectionViewSet(type):
                         )
                     ):
                         data[field] = None
+
+                # if these are set to None - validation rejects them
+                # todo anything else like this?
+                if data.get('id', False) in {None, ''}:
+                    del data['id']
+
+                if data.get('subsection', False) in {None, ''}:
+                    del data['subsection']
+
                 return super().to_internal_value(data)
 
             def get_can_publish(self, obj):
@@ -693,11 +702,6 @@ class SectionViewSet(type):
                 headers=headers
             )
 
-        def dispatch(self, request, *args, **kwargs):
-            import pdb
-            pdb.set_trace()
-            return super().dispatch(request, *args, **kwargs)
-
         def destroy(self, request, *args, **kwargs):
             instance = self.get_object()
             instance = self.perform_destroy(instance)
@@ -750,7 +754,6 @@ class SectionViewSet(type):
             obj.perform_destroy = perform_destroy
             obj.destroy = destroy
         obj.create = create
-        #obj.dispatch = dispatch
         return obj
 
 

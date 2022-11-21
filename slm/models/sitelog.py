@@ -958,7 +958,8 @@ class SiteSection(models.Model):
                 self._meta.get_field(field),
                 models.ManyToManyField
             ):
-                return '+'.join([str(val) for val in value.all()])
+                if value:
+                    return '+'.join([str(val) for val in value.all()])
             return value
 
         for field in self.site_log_fields():

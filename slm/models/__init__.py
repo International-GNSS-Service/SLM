@@ -8,7 +8,8 @@ from slm.models.system import (
     SatelliteSystem,
     Antenna,
     Receiver,
-    Radome
+    Radome,
+    Manufacturer
 )
 from slm.models.user import (
     User,

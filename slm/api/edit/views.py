@@ -167,6 +167,9 @@ class StationListViewSet(
         network = django_filters.CharFilter(
             method='filter_networks'
         )
+        status = django_filters.CharFilter(
+            method='filter_status'
+        )
         review_pending = django_filters.BooleanFilter(
             field_name='_review_pending'
         )
@@ -183,6 +186,12 @@ class StationListViewSet(
             return queryset.filter(
                 Q(networks__pk__in=[int(val) for val in values if val.isdigit()]) |
                 Q(networks__name__in=values)
+            )
+
+        def filter_status(self, queryset, name, value):
+            values = value.split(',')
+            return queryset.filter(
+                Q(status__in=values)
             )
 
         class Meta:

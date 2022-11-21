@@ -116,6 +116,10 @@ class RadomeAdmin(admin.ModelAdmin):
     pass
 
 
+class ManufacturerAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Agency, AgencyAdmin)
 admin.site.register(Alert, AlertAdmin)
@@ -123,3 +127,4 @@ admin.site.register(SatelliteSystem, SatelliteSystemAdmin)
 admin.site.register(Antenna, AntennaAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Radome, RadomeAdmin)
+admin.site.register(Manufacturer, ManufacturerAdmin)

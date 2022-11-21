@@ -93,7 +93,7 @@ def multi_line(text):
                 limited.append(unescape(line[0:limit]))
                 line = line[limit:]
             limited.append(unescape(line))
-        return f'\n{" "*30}: '.join(limited)
+        return f'\n{" "*30}: '.join([line for line in limited if line.strip()])
     return ''
 
 

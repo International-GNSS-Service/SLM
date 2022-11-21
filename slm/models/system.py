@@ -242,12 +242,15 @@ class ReviewRequest(models.Model):
     objects = ReviewRequestManager.from_queryset(ReviewRequestQuerySet)()
 
 
-class EquipmentManufacturer(models.Model):
+class Manufacturer(models.Model):
 
     name = models.CharField(max_length=45, unique=True)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ('name',)
 
 
 class Equipment(models.Model):
@@ -273,7 +276,7 @@ class Equipment(models.Model):
     )
 
     manufacturer = models.ForeignKey(
-        EquipmentManufacturer,
+        Manufacturer,
         on_delete=models.PROTECT,
         null=True,
         default=None,

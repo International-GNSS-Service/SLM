@@ -45,7 +45,7 @@ from django.db.models import (
     Max,
     Q
 )
-from slm.new_forms import (
+from slm.forms import (
     SiteFormForm,
     SiteIdentificationForm,
     SiteLocationForm,
@@ -170,7 +170,6 @@ class EditView(StationContextView):
             SiteLocationForm,
             SiteReceiverForm,
             SiteAntennaForm,
-            #AntennaTypeForm,
             SiteSurveyedLocalTiesForm,
             SiteFrequencyStandardForm,
             SiteCollocationForm,

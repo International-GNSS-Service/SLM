@@ -4,6 +4,12 @@ from django.utils.translation import gettext as _
 from slm.defines import AlertLevel
 from django_enum import EnumField
 from django.db.models import Q
+from slm.defines import (
+    AntennaReferencePoint,
+    AntennaFeatures,
+    EquipmentType,
+    EquipmentState
+)
 from django.contrib.auth import get_user_model
 
 
@@ -55,6 +61,22 @@ class Agency(models.Model):
 
     class Meta:
         managed = True
+
+
+class SatelliteSystem(models.Model):
+
+    name = models.CharField(
+        primary_key=True,
+        max_length=16,
+        null=False,
+        blank=False
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = _('Satellite Systems')
 
 
 class AlertManager(models.Manager):
@@ -218,3 +240,101 @@ class ReviewRequest(models.Model):
     )
 
     objects = ReviewRequestManager.from_queryset(ReviewRequestQuerySet)()
+
+
+class EquipmentManufacturer(models.Model):
+
+    name = models.CharField(max_length=45, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Equipment(models.Model):
+
+    model = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=_(
+            'The alphanumeric model of designation of this equipment.'
+        ),
+        db_index=True
+    )
+
+    description = models.CharField(
+        max_length=500,
+        help_text=_('The equipment characteristics.')
+    )
+
+    state = EnumField(
+        EquipmentState,
+        db_index=True,
+        help_text=_('Is this equipment in active production?')
+    )
+
+    manufacturer = models.ForeignKey(
+        EquipmentManufacturer,
+        on_delete=models.PROTECT,
+        null=True,
+        default=None,
+        blank=True,
+        help_text=_('The manufacturing organization.')
+    )
+
+    def __str__(self):
+        return self.model
+
+    class Meta:
+        abstract = True
+        ordering = ('model',)
+
+
+class Antenna(Equipment):
+
+    graphic = models.TextField(blank=True, null=False, default='')
+
+    reference_point = EnumField(
+        AntennaReferencePoint,
+        blank=True,
+        default=None,
+        null=True,
+        verbose_name=_('Antenna Reference Point'),
+        help_text=_(
+            'Locate your antenna in the file '
+            'https://files.igs.org/pub/station/general/antenna.gra. Indicate '
+            'the three-letter abbreviation for the point which is indicated '
+            'equivalent to ARP for your antenna. Contact the Central Bureau if'
+            ' your antenna does not appear. Format: (BPA/BCR/XXX from '
+            'antenna.gra; see instr.)'
+        )
+    )
+
+    features = EnumField(
+        AntennaFeatures,
+        blank=True,
+        default=None,
+        null=True,
+        verbose_name=_('Antenna Features'),
+        help_text=_('NOM/RXC/XXX from "antenna.gra"; see NRP abbreviations.')
+    )
+
+    verified = models.BooleanField(
+        default=False,
+        help_text=_('Has this antenna type been verified to be accurate?')
+    )
+
+    @property
+    def full(self):
+        return f'{self.model} {self.reference_point.label} ' \
+               f'{self.features.label}'
+
+    def __str__(self):
+        return self.model
+
+
+class Receiver(Equipment):
+    pass
+
+
+class Radome(Equipment):
+    pass

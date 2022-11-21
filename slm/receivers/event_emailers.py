@@ -28,8 +28,18 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
         'site': review_request.site
     }
 
-    print('SENING MAIL')
     try:
+
+        html_ok = not (
+            bool(
+                review_request.site.moderators.emails_ok().filter(
+                    html_emails=False).count()
+            ) or bool(
+                review_request.site.editors.emails_ok().filter(
+                    html_emails=False).count()
+            )
+        )
+
         send_mail(
             subject=f'{_("Site Log Review Requested:")} '
                     f'{review_request.site.name}',
@@ -51,7 +61,7 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
                 ]
             ),
             fail_silently=False,
-            html_message=html.render(context)
+            html_message=html.render(context) if html_ok else None
         )
         logger.info(
             'Sent review request email for %s',
@@ -80,6 +90,16 @@ def send_changes_rejected_emails(
         'requester': review_request.requester
     }
     try:
+        html_ok = not (
+            bool(
+                review_request.site.moderators.emails_ok().filter(
+                    html_emails=False).count()
+            ) or bool(
+                review_request.site.editors.emails_ok().filter(
+                    html_emails=False).count()
+            )
+        )
+
         send_mail(
             subject=f'{_("Site Log Changes Rejected:")} '
                     f'{review_request.site.name}',
@@ -101,7 +121,7 @@ def send_changes_rejected_emails(
                 ]
             ),
             fail_silently=False,
-            html_message=html.render(context)
+            html_message=html.render(context) if html_ok else None
         )
         logger.info(
             'Sent changes rejected for %s',

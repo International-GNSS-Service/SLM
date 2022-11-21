@@ -21,6 +21,7 @@ from django_filters.rest_framework import (
     DjangoFilterBackend,
     FilterSet
 )
+from django.db import models
 from django.db import transaction
 import django_filters
 from rest_framework.response import Response
@@ -404,7 +405,29 @@ class SectionViewSet(type):
 
             can_publish = serializers.SerializerMethodField(read_only=True)
 
-            publish = serializers.BooleanField(write_only=True)
+            publish = serializers.BooleanField(write_only=True, required=False)
+
+            def to_internal_value(self, data):
+                """
+                Swap empty string for None in post data for any field that
+                allows null. (You'd think this wouldn't be necessary or that
+                DRF would have some kind of switch?)
+
+                :param data:
+                :return:
+                """
+                data = data.copy()
+                for field, value in data.items():
+                    if (
+                        value == '' and
+                        getattr(
+                            self.fields.get(field, None),
+                            'allow_null',
+                            False
+                        )
+                    ):
+                        data[field] = None
+                return super().to_internal_value(data)
 
             def get_can_publish(self, obj):
                 if 'request' in self.context:
@@ -525,7 +548,13 @@ class SectionViewSet(type):
                                 update = True
                                 if not instance.published:
                                     edited_fields.append(field)
-                                    setattr(instance, field, new_value)
+                                    if isinstance(
+                                        instance._meta.get_field(field),
+                                        models.ManyToManyField
+                                    ):
+                                        getattr(instance, field).set(new_value)
+                                    else:
+                                        setattr(instance, field, new_value)
                                 if field in flags:
                                     del flags[field]
 
@@ -655,6 +684,11 @@ class SectionViewSet(type):
                 headers=headers
             )
 
+        def dispatch(self, request, *args, **kwargs):
+            import pdb
+            pdb.set_trace()
+            return super().dispatch(request, *args, **kwargs)
+
         def destroy(self, request, *args, **kwargs):
             instance = self.get_object()
             instance = self.perform_destroy(instance)
@@ -707,6 +741,7 @@ class SectionViewSet(type):
             obj.perform_destroy = perform_destroy
             obj.destroy = destroy
         obj.create = create
+        #obj.dispatch = dispatch
         return obj
 
 

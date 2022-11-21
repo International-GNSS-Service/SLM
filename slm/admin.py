@@ -23,7 +23,7 @@ from .models import *
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from slm.forms import UserAdminCreationForm, UserAdminChangeForm
-from slm.models import Agency, Site
+from slm.models import Agency, Site, SatelliteSystem
 from django.utils.translation import gettext as _
 from slm.authentication import initiate_password_resets
 
@@ -100,6 +100,26 @@ class AlertAdmin(admin.ModelAdmin):
     pass
 
 
+class SatelliteSystemAdmin(admin.ModelAdmin):
+    pass
+
+
+class AntennaAdmin(admin.ModelAdmin):
+    pass
+
+
+class ReceiverAdmin(admin.ModelAdmin):
+    pass
+
+
+class RadomeAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Agency, AgencyAdmin)
 admin.site.register(Alert, AlertAdmin)
+admin.site.register(SatelliteSystem, SatelliteSystemAdmin)
+admin.site.register(Antenna, AntennaAdmin)
+admin.site.register(Receiver, ReceiverAdmin)
+admin.site.register(Radome, RadomeAdmin)

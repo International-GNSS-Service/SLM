@@ -132,3 +132,10 @@ def enum_str(value):
     if isinstance(value, Enum):
         return value.label
     return value
+
+
+@register.filter(name='satellite_str')
+def satellite_str(satellite_systems):
+    if satellite_systems:
+        return '+'.join([system.name for system in satellite_systems.all()])
+    return ''

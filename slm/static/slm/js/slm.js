@@ -28,7 +28,6 @@ slm.canPublish = !slm.hasOwnProperty('canPublish') ? false : slm.canPublish;
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
     const data = response.hasOwnProperty('results') ? response.results : response;
-    console.log(data);
     if (data.published && data.is_deleted) {
         form.closest('.accordion-item').remove();
         return;
@@ -119,7 +118,16 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
     }
     const handleSubmit = function(action) {
         slm.resetFormErrorsAndWarnings(form);
-        const data = Object.fromEntries(new FormData(form.get(0)).entries());
+        let formData = new FormData(form.get(0));
+        let data = {};
+        for (const [key, val] of formData.entries()) {
+            if (formData.getAll(key).length === 1) {
+                data[key] = val;
+            } else {
+                data[key] = formData.getAll(key);
+            }
+        }
+        //const data = Object.fromEntries(new FormData(form.get(0)).entries());
         const csrf = data.csrfmiddlewaretoken;
         delete data.csrfmiddlewaretoken;
         let request = null;
@@ -140,11 +148,14 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
                 data: toPublish
             });
         } else {
+            console.log(data);
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-list`),
                 method: form.attr('data-slm-method') ? form.attr('data-slm-method') : 'POST',
                 headers: {'X-CSRFToken': csrf},
-                data: transform(data)
+                data: JSON.stringify(transform(data)),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
             });
         }
 

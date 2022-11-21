@@ -951,16 +951,21 @@ class SiteSection(models.Model):
         if published and published.id == self.id:
             return diff
 
-        def transform(value):
+        def transform(value, field_name):
             if isinstance(value, models.Model):
-                return value.pk
+                return str(value)
+            elif isinstance(
+                self._meta.get_field(field),
+                models.ManyToManyField
+            ):
+                return '+'.join([str(val) for val in value.all()])
             return value
 
         for field in self.site_log_fields():
             if getattr(self, field) != getattr(published, field, None):
                 diff[field] = {
-                    'pub': transform(getattr(published, field, None)),
-                    'head': transform(getattr(self, field))
+                    'pub': transform(getattr(published, field, None), field),
+                    'head': transform(getattr(self, field), field)
                 }
         return diff
 
@@ -1563,7 +1568,7 @@ class SiteLocation(SiteSection):
         max_length=100,
         default='',
         blank=True,
-        verbose_name=_('Country'),
+        verbose_name=_('Country/Region'),
         help_text=_('Enter the country/region the site is located in')
     )
 
@@ -1672,6 +1677,22 @@ class SiteReceiver(SiteSubSection):
          Temperature Stabiliz.    : (none or tolerance in degrees C)
          Additional Information   : (multiple lines)
     """
+    @classmethod
+    def site_log_fields(cls):
+        # satellite_system is not picked up by the super site_log_fields
+        # because its many to many - just establish this list here manually
+        # instead
+        return [
+            'receiver_type',
+            'satellite_system',
+            'serial_number',
+            'firmware',
+            'elevation_cutoff',
+            'installed',
+            'removed',
+            'temp_stab',
+            'additional_info'
+        ]
 
     @classmethod
     def section_number(cls):
@@ -1687,7 +1708,7 @@ class SiteReceiver(SiteSubSection):
 
     @property
     def heading(self):
-        return self.receiver_type
+        return self.receiver_type.model
 
     @property
     def effective(self):
@@ -1697,9 +1718,8 @@ class SiteReceiver(SiteSubSection):
             return f'{date_to_str(self.installed)}'
         return ''
 
-    receiver_type = models.CharField(
-        max_length=50,
-        default='',
+    receiver_type = models.ForeignKey(
+        'slm.Receiver',
         blank=True,
         verbose_name=_('Receiver Type'),
         help_text=_(
@@ -1709,13 +1729,12 @@ class SiteReceiver(SiteSubSection):
             'etc. exactly correct. If you do not find a listing for your '
             'receiver, please notify the IGS Central Bureau. '
             'Format: (A20, from rcvr_ant.tab; see instructions)'
-        )
+        ),
+        on_delete=models.PROTECT
     )
 
-    satellite_system = models.CharField(
-        max_length=50,
-        default='',
-        blank=True,
+    satellite_system = models.ManyToManyField(
+        'slm.SatelliteSystem',
         verbose_name=_('Satellite System'),
         help_text=_('Check all GNSS systems that apply')
     )
@@ -1823,7 +1842,7 @@ class SiteAntenna(SiteSubSection):
 
     @property
     def heading(self):
-        return self.antenna_type.name
+        return self.antenna_type.model
 
     @property
     def effective(self):
@@ -1846,7 +1865,7 @@ class SiteAntenna(SiteSubSection):
         return None
 
     antenna_type = models.ForeignKey(
-        'slm.AntennaType',
+        'slm.Antenna',
         on_delete=models.PROTECT,
         default=None,
         blank=True,
@@ -1936,11 +1955,9 @@ class SiteAntenna(SiteSubSection):
         )
     )
 
-    # TODO should this be an Enumeration - or foreign key into table
-    radome_type = models.CharField(
-        max_length=50,
+    radome_type = models.ForeignKey(
+        'slm.Radome',
         blank=True,
-        default='',
         verbose_name=_('Antenna Radome Type'),
         help_text=_(
             'Please find your antenna radome type in '
@@ -1953,7 +1970,8 @@ class SiteAntenna(SiteSubSection):
             'zenith- and azimuth-dependent calibration values down to the '
             'horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; '
             'see instructions)'
-        )
+        ),
+        on_delete=models.PROTECT
     )
 
     radome_serial_number = models.CharField(
@@ -2020,69 +2038,13 @@ class SiteAntenna(SiteSubSection):
     def graphic(self):
         if self.custom_graphic:
             return self.custom_graphic
-        return self.antenna_type.graphic.graphic
+        return self.antenna_type.graphic
 
     custom_graphic = models.TextField(
         default='',
         blank=True,
         help_text=_('Custom antenna graphic - if different than the default.')
     )
-
-
-class AntennaGraphic(models.Model):
-
-    graphic = models.TextField(blank=False, null=False)
-
-
-class AntennaType(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(default='', blank=True)
-    graphic = models.ForeignKey(
-        AntennaGraphic,
-        null=True,
-        default=None,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='antennas'
-    )
-
-    reference_point = EnumField(
-        AntennaReferencePoint,
-        blank=True,
-        default=None,
-        null=True,
-        verbose_name=_('Antenna Reference Point'),
-        help_text=_(
-            'Locate your antenna in the file '
-            'https://files.igs.org/pub/station/general/antenna.gra. Indicate '
-            'the three-letter abbreviation for the point which is indicated '
-            'equivalent to ARP for your antenna. Contact the Central Bureau if'
-            ' your antenna does not appear. Format: (BPA/BCR/XXX from '
-            'antenna.gra; see instr.)'
-        )
-    )
-
-    features = EnumField(
-        AntennaFeatures,
-        blank=True,
-        default=None,
-        null=True,
-        verbose_name=_('Antenna Features'),
-        help_text=_('NOM/RXC/XXX from "antenna.gra"; see NRP abbreviations.')
-    )
-
-    verified = models.BooleanField(
-        default=False,
-        help_text=_('Has this antenna type been verified to be accurate?')
-    )
-
-    @property
-    def full(self):
-        return f'{self.name} {self.reference_point.label} ' \
-               f'{self.features.label}'
-
-    def __str__(self):
-        return self.name
 
 
 class SiteSurveyedLocalTies(SiteSubSection):
@@ -3192,7 +3154,7 @@ class AgencyPOC(SiteSection):
             'additional_information',
         ]
 
-    agency = models.CharField(
+    agency = models.TextField(
         max_length=300,
         default='',
         blank=True,
@@ -3206,7 +3168,7 @@ class AgencyPOC(SiteSection):
         verbose_name=_('Preferred Abbreviation'),
         help_text=_("Enter the contact agency's preferred abbreviation")
     )
-    mailing_address = models.CharField(
+    mailing_address = models.TextField(
         max_length=300,
         default='',
         blank=True,

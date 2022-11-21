@@ -4,7 +4,11 @@ from slm.models.system import (
     Agency,
     Alert,
     Network,
-    ReviewRequest
+    ReviewRequest,
+    SatelliteSystem,
+    Antenna,
+    Receiver,
+    Radome
 )
 from slm.models.user import (
     User,
@@ -36,8 +40,7 @@ from slm.models.sitelog import (
     SiteLocalEpisodicEffects,
     SiteWaterVaporRadiometer,
     SiteSurveyedLocalTies,
-    LogEntry,
-    AntennaType
+    LogEntry
 )
 from django.db import models
 from django.core.cache import cache

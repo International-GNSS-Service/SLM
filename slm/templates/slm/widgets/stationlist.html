@@ -63,7 +63,6 @@ Template for stations list.
 <script>
     let keyupTimeoutID = 0;
     function drawStations(position, data) {
-        console.log(data);
         function getBadge(station) {
             if (station.hasOwnProperty('num_flags') && station.num_flags) {
                 return `<span class="badge rounded-pill bg-danger">${station.num_flags}</span>`;

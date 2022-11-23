@@ -4,7 +4,6 @@ from slm.models import (
     Agency,
 )
 
-
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Agency
@@ -13,7 +12,6 @@ class EmbeddedAgencySerializer(serializers.ModelSerializer):
             'shortname',
             'country'
         ]
-
 
 class StationListSerializer(serializers.ModelSerializer):
 
@@ -38,6 +36,8 @@ class StationListSerializer(serializers.ModelSerializer):
     last_rinex4 = serializers.DateTimeField()
     last_data_time = serializers.DateTimeField()
     last_data = serializers.SerializerMethodField()
+    network_id = serializers.FloatField()
+    network_name = serializers.CharField()
 
     def get_last_data(self, obj):
         if obj.last_data:
@@ -80,5 +80,7 @@ class StationListSerializer(serializers.ModelSerializer):
             'last_rinex3',
             'last_rinex4',
             'last_data_time',
-            'last_data'
+            'last_data',
+            'network_id',
+            'network_name'
         ]

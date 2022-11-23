@@ -26,6 +26,8 @@ from slm.models import (
     SiteIdentification,
     SiteMoreInformation,
     DataAvailability,
+    Networksites,
+    NetworkInfo,
 )
 from slm.api.pagination import DataTablesPagination
 from django.utils.timezone import now
@@ -141,7 +143,6 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                 Q(domes_number__icontains=value) |
                 Q(satellite_system__icontains=value) |
                 Q(data_center__icontains=value) 
-
             )
 
         class Meta:
@@ -194,6 +195,14 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         last_data_avail = DataAvailability.objects.filter(
             site=OuterRef('pk')
         ).order_by('-last')
+
+        network_info = Networksites.objects.filter(
+            id=OuterRef('pk')
+        )
+        network_name = NetworkInfo.objects.filter(
+            networkid=OuterRef('pk')
+        )
+
         from django.db.models.functions import Now
         """
 
@@ -222,6 +231,8 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             satellite_system=Subquery(last_published_receiver.values('satellite_system')[:1]),
             data_center=Subquery(last_published_info.values('primary')[:1]),
             last_data_time=Subquery(last_data_avail.values('last')[:1]),
+            network_id=Subquery(network_info.values('fk')[:1]),
+            network_name=Subquery(network_name.values('networkname')[:1]),
             last_data=Now() - F('last_data_time'),
             last_rinex2=Subquery(
                 last_data_avail.filter(

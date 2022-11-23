@@ -7,6 +7,11 @@ from slm.models.user import (
     User,
     UserProfile
 )
+from slm.models.network import (
+    NetworkInfo,
+    Networksites,
+    Networkscategory
+)
 from slm.models.data import DataAvailability
 from slm.models.sitelog import (
     Site,

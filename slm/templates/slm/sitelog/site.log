@@ -39,7 +39,7 @@
 
      City or Town             : {{ location.city }}
      State or Province        : {{ location.state }}
-     Country                  : {{ location.country }}
+     Country                  : {{ location.country|enum_str }}
      Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
      Approximate Position (ITRF)
        X coordinate (m)       : {{ location.x|precision:4 }}

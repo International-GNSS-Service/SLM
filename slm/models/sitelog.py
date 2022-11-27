@@ -4,6 +4,7 @@ from slm.defines import (
     LogEntryType,
     AntennaReferencePoint,
     AntennaFeatures,
+    ISOCountry,
     CollocationStatus,
     TectonicPlates,
     FractureSpacing
@@ -1565,11 +1566,13 @@ class SiteLocation(SiteSection):
         help_text=_('Enter the state or province the site is located in')
     )
 
-    country = models.CharField(
+    country = EnumField(
+        ISOCountry,
+        strict=False,
         max_length=100,
         default='',
         blank=True,
-        verbose_name=_('Country/Region'),
+        verbose_name=_('Country or Region'),
         help_text=_('Enter the country/region the site is located in')
     )
 

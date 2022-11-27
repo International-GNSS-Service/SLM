@@ -413,6 +413,12 @@ button.nav-link.slm-status-dormant  {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-empty,
+button.nav-link.slm-status-empty  {
+    border-left: 10px solid #00000000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
 
 .accordion,
 .accordion-item,

@@ -73,6 +73,7 @@ def simple_utc(datetime_field):
         return datetime_field.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M')
     return ''
 
+
 @register.filter(name='iso_utc')
 def iso_utc(datetime_field):
     if datetime_field:
@@ -139,3 +140,19 @@ def satellite_str(satellite_systems):
     if satellite_systems:
         return '+'.join([system.name for system in satellite_systems.all()])
     return ''
+
+
+@register.filter(name='inspect')
+def inspect(obj):
+    from pprint import pprint
+    pprint(dir(obj))
+
+
+@register.filter(name='get_key')
+def get_key(obj, key):
+    return obj.get(key)
+
+
+@register.filter(name='merge')
+def merge(obj1, obj2):
+    return obj1.merge(obj2)

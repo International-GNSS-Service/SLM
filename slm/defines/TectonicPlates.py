@@ -5,24 +5,6 @@ from django.utils.translation import gettext as _
 
 class TectonicPlates(TextChoices):
     """
-    <enumeration value="African"/>
-    <enumeration value="African Indian/Australia"/>
-    <enumeration value="African Eurasian"/>
-    <enumeration value="Antarctic"/>
-    <enumeration value="Arabian"/>
-    <enumeration value="Caribbean"/>
-    <enumeration value="Cocos"/>
-    <enumeration value="Eurasian"/>
-    <enumeration value="Indian/Australian"/>
-    <enumeration value="Nazca"/>
-    <enumeration value="North America"/>
-    <enumeration value="North America Pacific"/>
-    <enumeration value="Pacific"/>
-    <enumeration value="Phillipine"/>
-    <enumeration value="South American"/>
-    <enumeration value="South American African"/>
-    <enumeration value="Juan De Fuca"/>
-    <enumeration value="Scotia"/>
     """
 
     __symmetric_builtins__ = [

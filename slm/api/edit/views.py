@@ -15,6 +15,7 @@ from rest_framework import (
     status,
     serializers
 )
+from slm.defines import SiteLogStatus
 from rest_framework.serializers import ModelSerializer
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import (
@@ -602,6 +603,15 @@ class SectionViewSet(type):
                         )
                     elif '_flags' in validated_data:
                         # this is just a flag update
+                        added = (
+                            len(flags) -
+                            (len(instance._flags) if instance._flags else 0)
+                        )
+                        site.num_flags += added
+                        if site.num_flags < 0:
+                            site.num_flags = 0
+
+                        site.save()
                         instance._flags = flags
                         instance.save()
 
@@ -705,12 +715,16 @@ class SectionViewSet(type):
         def destroy(self, request, *args, **kwargs):
             instance = self.get_object()
             instance = self.perform_destroy(instance)
-            serializer = self.get_serializer(instance=instance)
-            headers = self.get_success_headers(serializer.data)
+            if instance:
+                serializer = self.get_serializer(instance=instance)
+                headers = self.get_success_headers(serializer.data)
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_200_OK,
+                    headers=headers
+                )
             return Response(
-                serializer.data,
-                status=status.HTTP_200_OK,
-                headers=headers
+                status=status.HTTP_204_NO_CONTENT
             )
 
         def perform_destroy(self, instance):
@@ -731,6 +745,21 @@ class SectionViewSet(type):
                                 'try again.'
                             )
                         )
+
+                    previous = ModelClass.objects.filter(
+                        site=section.site,
+                        subsection=section.subsection,
+                        published=True
+                    )
+                else:
+                    previous = ModelClass.objects.filter(
+                        site=section.site,
+                        published=True
+                    )
+
+                if previous.count() == 0:
+                    section.delete()
+                    return None
 
                 if not section.is_deleted:
                     # this is how you copy a model in Django

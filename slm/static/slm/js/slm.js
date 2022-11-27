@@ -22,13 +22,78 @@ $(document).ready(function() {
     }
 );*/
 
+class ErrorBadgeUpdater {
+
+    constructor(form) {
+        this.form = form;
+        this.delta = null;
+    }
+    
+    visit(node) {
+        if (this.delta === null) {
+            this.delta = Object.keys(this.form.data('slmErrorFlags')).length -
+                (node.data('slmFlags') || 0);
+        }
+        let badge = node.find('span.slm-error-badge');
+        let newNum = (node.data('slmFlags') || 0) + this.delta;
+        newNum = newNum < 0 ? 0 : newNum;
+        node.data('slmFlags', newNum);
+        if (newNum <= 0) {
+            badge.hide();
+            badge.html(0);
+        } else {
+            badge.show();
+            badge.html(newNum);
+        }
+    }
+}
+
+class StatusUpdater {
+
+    constructor(form, status) {
+        this.form = form;
+        if (!status instanceof SiteLogStatus) {
+            this.status = slm.SiteLogStatus.get(status);
+        } else {
+            this.status = status;
+        }
+    }
+
+    visit(node) {
+        /* update navigation button status classes and data */
+        let currentStatus = slm.SiteLogStatus.get(
+            node.data('slmStatus')
+        );
+        this.status = currentStatus.set(this.status);
+        node.removeClass(currentStatus.css);
+        node.addClass(this.status.css);
+        node.data('slmStatus', this.status.val);
+        slm.getNavSiblings(node).each(function(idx, sibling) {
+            this.status = this.status.merge(
+                slm.SiteLogStatus.get(
+                    $(sibling).data('slmStatus')
+                )
+            )
+        }.bind(this));
+    }
+}
+
 slm.isModerator = !slm.hasOwnProperty('isModerator') ? false : slm.isModerator;
 slm.canPublish = !slm.hasOwnProperty('canPublish') ? false : slm.canPublish;
 
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
-    const data = response.hasOwnProperty('results') ? response.results : response;
-    if (data.published && data.is_deleted) {
+    const data = response && response.hasOwnProperty('results') ? response.results : response;
+    if (jqXHR.status === 204 || (data.published && data.is_deleted)) {
+        form.data('slmErrorFlags', {});
+        slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+        slm.visitEditNavTree(
+            form,
+            new StatusUpdater(
+                form,
+                SiteLogStatus.EMPTY
+            )
+        );
         form.closest('.accordion-item').remove();
         return;
     }
@@ -39,7 +104,12 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         form.find('.alert.slm-form-deleted').show();
         form.find('.form-control:visible').attr('disabled', '');
         form.find('.slm-flag').hide();
+    } else if (slm.isModerator){
+        form.find('.slm-flag').show();
+    } else {
+        form.find('.slm-flag').hide();
     }
+
     if (data.hasOwnProperty('_diff') && Object.keys(data._diff).length) {
         if (!data.is_deleted) {
             form.find('.alert.slm-form-unpublished').show();
@@ -71,6 +141,15 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
     } else if (data.hasOwnProperty('is_deleted')) {
         form.find('button[name="delete"]').show();
     }
+
+    slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+    slm.visitEditNavTree(
+        form,
+        new StatusUpdater(
+            form,
+            data.published ? SiteLogStatus.PUBLISHED : SiteLogStatus.UPDATED
+        )
+    );
 }
 
 slm.handlePostErrors = function(form, jqXHR, status, text) {
@@ -133,6 +212,10 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         let request = null;
         const dataId = data.id || form.data('slmId');
         if (action === 'delete') {
+            if (!dataId) {
+                form.closest('.accordion-item').remove();
+                return;
+            }
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-detail`, {'pk': dataId}),
                 method: 'DELETE',
@@ -141,14 +224,21 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         } else if (action === 'publish') {
             let toPublish = transform(data);
             toPublish['publish'] = true;
+            let options = {};
+            let endpoint = `${form_api}-list`;
+            let method = 'POST';
+            if (dataId) {
+                endpoint = `${form_api}-detail`;
+                options['pk'] = dataId;
+                method = 'PATCH';
+            }
             request = $.ajax({
-                url: form_url ? form_url : slm.urls.reverse(`${form_api}-detail`, {'pk': dataId}),
-                method: 'PATCH',
+                url: form_url ? form_url : slm.urls.reverse(endpoint, options),
+                method: method,
                 headers: {'X-CSRFToken': csrf},
                 data: toPublish
             });
         } else {
-            console.log(data);
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-list`),
                 method: form.attr('data-slm-method') ? form.attr('data-slm-method') : 'POST',
@@ -257,6 +347,24 @@ slm.setFormFlagUI = function(form) {
             }
         }
     );
+    slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+}
+
+slm.visitEditNavTree = function(form, visitor) {
+    /* visit navigation ancestor buttons from the top up */
+    let node = $(form).closest('.accordion-item').find('button.slm-subsection');
+    if (!node.length) {
+        node = $(`button[data-slm-section="${form.data('slmSection')}"]`);
+    }
+    while (node.data('slmParent')) {
+        visitor.visit(node);
+        node = $(`button#${node.data('slmParent')}`);
+    }
+    visitor.visit(node);
+}
+
+slm.getNavSiblings = function(editNavButton) {
+    return $(`button[data-slm-parent="${editNavButton.data('slmParent')}"`);
 }
 
 slm.isUnpublished = function(fieldset) {

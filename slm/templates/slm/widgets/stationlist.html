@@ -45,7 +45,9 @@ Template for stations list.
             data-bs-toggle="pill"
             type="submit"
             role="tab"
-            aria-selected="true"><span>{{ station }}</span> {% if site.num_flags %}<span class="badge rounded-pill bg-danger">{{site.num_flags}}</span>{% endif %}</button>
+            data-slm-flags={{ site.num_flags }}
+            data-slm-status={{ site.status.value }}
+            aria-selected="true"><span>{{ station }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not site.num_flags %}style="display: none"{% endif %}>{{site.num_flags}}</span></button>
         {% endif %}
         <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
             <div class="slm-loader"></div>
@@ -65,7 +67,9 @@ Template for stations list.
     function drawStations(position, data) {
         function getBadge(station) {
             if (station.hasOwnProperty('num_flags') && station.num_flags) {
-                return `<span class="badge rounded-pill bg-danger">${station.num_flags}</span>`;
+                return `<span class="badge rounded-pill bg-danger slm-error-badge">${station.num_flags}</span>`;
+            } else {
+                return `<span class="badge rounded-pill bg-danger slm-error-badge" style="display: none">${station.num_flags}</span>`;
             }
             return '';
         }
@@ -95,6 +99,8 @@ Template for stations list.
                     data-bs-toggle="pill"
                     type="submit"
                     role="tab"
+                    data-slm-flags=${station.num_flags}
+                    data-slm-status=${status.val}
                     aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)}</button>`
                 ).insertBefore(pos);
         }

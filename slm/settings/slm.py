@@ -9,6 +9,7 @@ SLM_STATUS_COLORS = {
     SiteLogStatus.PENDING: '#913D88',
     SiteLogStatus.UPDATED: '#8D6708',
     SiteLogStatus.PUBLISHED: '#008000',
+    SiteLogStatus.EMPTY: '#00000000'
 }
 
 # if True, for subsections and missing sections, placeholder structures will

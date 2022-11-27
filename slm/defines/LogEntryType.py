@@ -15,3 +15,7 @@ class LogEntryType(IntegerChoices):
     UPDATE   = 3, _('Update')
     DELETE   = 4, _('Delete')
     PUBLISH  = 5, _('Publish')
+
+    @property
+    def css(self):
+        return f'slm-log-{self.label.lower()}'

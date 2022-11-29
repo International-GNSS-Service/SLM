@@ -107,7 +107,7 @@ def iso6709(lat_lng):
 
 @register.filter(name='precision')
 def precision(alt, precision):
-    if alt:
+    if alt is not None:
         return f'{alt:.{precision}f}'.rstrip('0').rstrip('.')
     return ''
 

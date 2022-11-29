@@ -282,7 +282,7 @@
 
 10.  Local Episodic Effects Possibly Affecting Data Quality
 {% for effect in episodic_effects %}
-10.1 Date                     : {% if effect.effective_start %}{{effect.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if effect.effective_end %}{{effect.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+10.{{ forloop.counter }} Date                     : {% if effect.effective_start %}{{effect.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if effect.effective_end %}{{effect.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
      Event                    : {{ effect.event|multi_line }}
 {% endfor %}
 {% if not episodic_effects or include_templates %}10.x Date                     : (CCYY-MM-DD/CCYY-MM-DD)

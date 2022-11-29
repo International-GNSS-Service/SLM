@@ -212,7 +212,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             city=Subquery(last_published_location.values('city')[:1]),
             country=Subquery(last_published_location.values('country')[:1]),
             elevation=Subquery(last_published_location.values('elevation')[:1]),
-            antenna_type=Subquery(last_published_antenna.values('antenna_type__name')[:1]),
+            antenna_type=Subquery(last_published_antenna.values('antenna_type__model')[:1]),
             radome_type=Subquery(last_published_antenna.values('radome_type')[:1]),
             receiver_type=Subquery(last_published_receiver.values('receiver_type')[:1]),
             serial_number=Subquery(last_published_receiver.values('serial_number')[:1]),

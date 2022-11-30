@@ -52,19 +52,6 @@ INSTALLED_APPS = [
     'allauth.account',
 ]
 
-STATIC_TEMPLATES = {
-    'templates': {
-        'slm/js/urls.js': {
-            'context': {
-                'exclude': ['admin']
-            }
-        },
-        'slm/js/env.js': {
-            'context': {}
-        }
-    }
-}
-
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -143,6 +130,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 include('secrets.py')
 include('logging.py')
 include('internationalization.py')
+include('static_templates.py')
 include('routines.py')
 include('auth.py')
 include('rest.py')

@@ -28,6 +28,8 @@ import inspect
 from django.dispatch import Signal
 from django.test import Client
 from django.urls import reverse
+from slm.tests.defines.ISOCountry import TestISOCountry  # dont remove
+from slm.tests.defines.SiteLogStatus import TestSiteLogStatus  # dont remove
 
 
 class ReceivedSignal:

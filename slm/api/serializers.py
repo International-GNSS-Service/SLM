@@ -140,10 +140,14 @@ class SiteLogSerializer(serializers.BaseSerializer):
                 epoch=self.epoch_param,
                 published=self.published_param
             ),
-            'graphic': self.site.siteantenna_set.current(
-                epoch=self.epoch_param,
-                published=self.published_param
-            ).filter(is_deleted=False).last().graphic,
+            'graphic': getattr(
+                self.site.siteantenna_set.current(
+                    epoch=self.epoch_param,
+                    published=self.published_param
+                ).filter(is_deleted=False).last(),
+                'graphic',
+                ''
+            ),
             'include_templates': True
         }))
 

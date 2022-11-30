@@ -4,6 +4,7 @@ from slm.defines import (
     LogEntryType,
     AntennaReferencePoint,
     AntennaFeatures,
+    ISOCountry,
     CollocationStatus,
     TectonicPlates,
     FractureSpacing
@@ -13,6 +14,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.functions import Greatest
 from django.utils.functional import cached_property
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import (
     F,
     Q,
@@ -57,6 +59,22 @@ def bool_condition(*args, **kwargs):
         Q(*args, **kwargs),
         output_field=models.BooleanField()
     )
+
+
+class TextToFloatMixin:
+
+    def clean(self, value):
+        if isinstance(value, str):
+            return float(value)
+        return value
+
+
+class MinValueTextValidator(TextToFloatMixin, MinValueValidator):
+    pass
+
+
+class MaxValueTextValidator(TextToFloatMixin, MaxValueValidator):
+    pass
 
 
 class DefaultToStrEncoder(json.JSONEncoder):
@@ -1565,11 +1583,13 @@ class SiteLocation(SiteSection):
         help_text=_('Enter the state or province the site is located in')
     )
 
-    country = models.CharField(
+    country = EnumField(
+        ISOCountry,
+        strict=False,
         max_length=100,
         default='',
         blank=True,
-        verbose_name=_('Country/Region'),
+        verbose_name=_('Country or Region'),
         help_text=_('Enter the country/region the site is located in')
     )
 
@@ -1767,7 +1787,8 @@ class SiteReceiver(SiteSubSection):
         help_text=_(
             'Please respond with the tracking cutoff as set in the receiver, '
             'regardless of terrain or obstructions in the area. Format: (deg)'
-        )
+        ),
+        #validators=[MinValueTextValidator, MaxValueTextValidator]
     )
 
     installed = models.DateTimeField(

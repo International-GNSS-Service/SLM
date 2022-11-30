@@ -31,14 +31,14 @@ Add new section capability is not functional.
                     aria-selected="{% if section.active %}true{% else %}false{% endif %}"
                     data-slm-status={{ section.status.value }}
                     data-slm-flags={{ section.flags }}
+                    data-slm-section="{{ section.id }}"
+                    data-slm-parent="select-{{ station }}"
                     {% if not section.subsections %}onclick="window.location='{% url "slm:edit" station=station section=section.id %}'"{% endif %}
                 >
                     {{ name }}{% if section.subsections %}<i class="bi bi-chevron-down"></i>{% endif %}
-                    {% if section.flags %}
-                      <span class="badge rounded-pill bg-danger">
+                      <span class="badge rounded-pill bg-danger slm-error-badge" {% if not section.flags %}style="display: none"{% endif %}>
                         {{ section.flags }}
                       </span>
-                    {% endif %}
                 </button>
                 {% if section.subsections %}
                 <div class="{% if not section.active %}collapse{% endif %} w-100" id="{{ section.id }}-menu">
@@ -54,14 +54,15 @@ Add new section capability is not functional.
                       aria-selected="{% if subsection.active %}true{% else %}false{% endif %}"
                       data-slm-status={{ subsection.status.value }}
                       data-slm-flags={{ subsection.flags }}
+                      data-slm-section="{{ subsection.id }}"
+                      {% if subsection.group %}data-slm-group="{{ subsection.group }}"{% endif %}
+                      data-slm-parent="{{ section.id }}-tab"
                       onclick="window.location='{% url "slm:edit" station=station section=subsection.id %}'"
                   >
                     &ensp; {{ subname }}
-                      {% if subsection.flags %}
-                      <span class="badge rounded-pill bg-danger">
+                      <span class="badge rounded-pill bg-danger slm-error-badge" {% if not subsection.flags %}style="display: none"{% endif %}>
                         {{ subsection.flags }}
                       </span>
-                      {% endif %}
                   </button>
                 {% endfor %}
                 </div>
@@ -92,8 +93,8 @@ Add new section capability is not functional.
                     {% with form_inst_id=section_id|to_id:forloop.counter %}
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
-                                    <span>{{ form.instance.heading }}{% if form.flags|length %} <span class="badge rounded-pill bg-danger">{{ form.flags|length }}</span>{% endif %}</span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
+                                <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" data-slm-flags={{ form.flags|length }} data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ form.instance.mod_status.value }} aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
+                                    <span>{{ form.instance.heading }} <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
                                 </button>
                             </h2>
                             <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordion-{{ section_id }}">
@@ -122,7 +123,7 @@ Add new section capability is not functional.
                 stack.prepend(`
                     <div class="accordion-item">
                         <h2 class="accordion-header">
-                            <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-${formId}" aria-expanded="true" aria-controls="accordion-${formId}">
+                            <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ SiteLogStatus.EMPTY.value }} data-bs-target="#accordion-${formId}" aria-expanded="true" aria-controls="accordion-${formId}">
                                 <span>{% translate "New" %} {% if subname %}{{ subname }}{% else %}{{ name }}{% endif %}</span><span class="slm-effective"></span>
                             </button>
                         </h2>
@@ -134,6 +135,7 @@ Add new section capability is not functional.
                     </div>
                 `.replace('new_form_id', formId));
                 slm.initForm($(`#site-${formId}`));
+                $(`#site-${formId} div.slm-flag`).hide();
                 $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();
                 $(`#site-${formId} a[data-bs-toggle="popover"]`).popover();
                 newIdx += 1;

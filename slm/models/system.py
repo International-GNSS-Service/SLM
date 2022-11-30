@@ -7,7 +7,6 @@ from django.db.models import Q
 from slm.defines import (
     AntennaReferencePoint,
     AntennaFeatures,
-    EquipmentType,
     EquipmentState
 )
 from django.contrib.auth import get_user_model

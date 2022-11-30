@@ -208,6 +208,13 @@ class SubSectionForm(SectionForm):
                 return super().save(commit=commit)
         return super().save(commit=commit)
 
+    @classmethod
+    def group_name(cls):
+        if hasattr(cls, 'NAV_HEADING'):
+            return cls.NAV_HEADING.replace(
+                ' ', '_'
+            ).replace('.', '').strip().lower()
+        return None
 
     class Meta:
         fields = SectionForm.Meta.fields + ['subsection']
@@ -469,6 +476,7 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = [
+            'html_emails',
             'phone1',
             'phone2',
             'address1',
@@ -477,7 +485,6 @@ class UserProfileForm(forms.ModelForm):
             'city',
             'state_province',
             'country',
-            'postal_code',
-            'registration_agency',
-            #'html_emails'  todo not rendering right
+            'postal_code'
         ]
+

@@ -120,6 +120,7 @@ class UserProfile(models.Model):
     # preferences
     html_emails = models.BooleanField(
         default=True,
+        blank=True,
         verbose_name=_('HTML Emails'),
         help_text=_('Receive HTML in email communications.')
     )

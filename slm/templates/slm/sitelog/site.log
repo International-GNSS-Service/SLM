@@ -39,7 +39,7 @@
 
      City or Town             : {{ location.city }}
      State or Province        : {{ location.state }}
-     Country                  : {{ location.country }}
+     Country                  : {{ location.country|enum_str }}
      Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
      Approximate Position (ITRF)
        X coordinate (m)       : {{ location.x|precision:4 }}
@@ -86,7 +86,7 @@
      Antenna Radome Type      : {{ antenna.radome_type.model }}
      Radome Serial Number     : {{ antenna.radome_serial_number }}
      Antenna Cable Type       : {{ antenna.cable_type }}
-     Antenna Cable Length     : {% if antenna.cable_length %}{{ antenna.cable_length|precision:4 }} m{% endif %}
+     Antenna Cable Length     : {% if antenna.cable_length is not None %}{{ antenna.cable_length|precision:4 }} m{% endif %}
      Date Installed           : {% if antenna.installed %}{{ antenna.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Date Removed             : {% if antenna.removed %}{{ antenna.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Additional Information   : {{ antenna.additional_information|multi_line }}
@@ -114,10 +114,10 @@
      Tied Marker CDP Number   : {{ tie.cdp_number }}
      Tied Marker DOMES Number : {{ tie.domes_number }}
      Differential Components from GNSS Marker to the tied monument (ITRS)
-       dx (m)                 : {% if tie.dx %}{{ tie.dx }} m{% endif %}
-       dy (m)                 : {% if tie.dy %}{{ tie.dy }} m{% endif %}
-       dz (m)                 : {% if tie.dz %}{{ tie.dz }} m{% endif %}
-     Accuracy (mm)            : {{ tie.accuracy }}{% comment %}{% if tie.accuracy %}{{ tie.accuracy|precision:0 }} mm{% endif %}{% endcomment %}
+       dx (m)                 : {% if tie.dx is not None %}{{ tie.dx }} m{% endif %}
+       dy (m)                 : {% if tie.dy is not None %}{{ tie.dy }} m{% endif %}
+       dz (m)                 : {% if tie.dz is not None %}{{ tie.dz }} m{% endif %}
+     Accuracy (mm)            : {{ tie.accuracy }}{% comment %}{% if tie.accuracy is not None %}{{ tie.accuracy|precision:0 }} mm{% endif %}{% endcomment %}
      Survey method            : {{ tie.survey_method }}
      Date Measured            : {% if tie.measured %}{{ tie.measured|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Additional Information   : {{ tie.additional_information|multi_line }}
@@ -168,9 +168,9 @@
        Manufacturer           : {{ sensor.manufacturer }}
        Serial Number          : {{ sensor.serial_number }}
        Data Sampling Interval : {{ sensor.sampling_interval}}
-       Accuracy (% rel h)     : {{ sensor.accuracy}}
+       Accuracy (% rel h)     : {{ sensor.accuracy }}
        Aspiration             : {{ sensor.aspiration }}
-       Height Diff to Ant     : {% if sensor.height_diff %}{{ sensor.height_diff }} m{% endif %}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ sensor.notes|multi_line }}
@@ -191,7 +191,7 @@
        Serial Number          : {{ sensor.serial_number }}
        Data Sampling Interval : {{ sensor.sampling_interval }}
        Accuracy               : {{ sensor.accuracy }}
-       Height Diff to Ant     : {% if sensor.height_diff %}{{ sensor.height_diff }} m{% endif %}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ sensor.notes|multi_line }}
@@ -212,7 +212,7 @@
        Data Sampling Interval : {{ sensor.sampling_interval }}
        Accuracy               : {{ sensor.accuracy }}
        Aspiration             : {{ sensor.aspiration }}
-       Height Diff to Ant     : {% if sensor.height_diff %}{{ sensor.height_diff }} m{% endif %}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ sensor.notes|multi_line }}
@@ -231,8 +231,8 @@
 8.4.{{ forloop.counter }} Water Vapor Radiometer  : {{ sensor.model }}
        Manufacturer           : {{ sensor.manufacturer }}
        Serial Number          : {{ sensor.serial_number }}
-       Distance to Antenna    : {% if sensor.distance_to_antenna %}{{sensor.distance_to_antenna}} m{% endif %}
-       Height Diff to Ant     : {% if sensor.height_diff %}{{ sensor.height_diff }} m{% endif %}
+       Distance to Antenna    : {% if sensor.distance_to_antenna is not None %}{{sensor.distance_to_antenna}} m{% endif %}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ sensor.notes|multi_line }}
@@ -282,7 +282,7 @@
 
 10.  Local Episodic Effects Possibly Affecting Data Quality
 {% for effect in episodic_effects %}
-10.1 Date                     : {% if effect.effective_start %}{{effect.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if effect.effective_end %}{{effect.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+10.{{ forloop.counter }} Date                     : {% if effect.effective_start %}{{effect.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if effect.effective_end %}{{effect.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
      Event                    : {{ effect.event|multi_line }}
 {% endfor %}
 {% if not episodic_effects or include_templates %}10.x Date                     : (CCYY-MM-DD/CCYY-MM-DD)

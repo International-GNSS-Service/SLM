@@ -1,5 +1,5 @@
 # stations view
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q, Subquery, OuterRef, Exists
 from slm.utils import to_bool
 from rest_framework import mixins
 from rest_framework.filters import OrderingFilter
@@ -194,6 +194,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         last_data_avail = DataAvailability.objects.filter(
             site=OuterRef('pk')
         ).order_by('-last')
+
         from django.db.models.functions import Now
         """
 
@@ -206,13 +207,13 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                             ((ExtractDay(now().date()) - (ExtractDay('rinex3')))) , models.IntegerField())
         """
 
-        return Site.objects.public().prefetch_related('agencies').annotate(
+        return Site.objects.public().prefetch_related('agencies', 'networks').annotate(
             latitude=Subquery(last_published_location.values('latitude')[:1]),
             longitude=Subquery(last_published_location.values('longitude')[:1]),
             city=Subquery(last_published_location.values('city')[:1]),
             country=Subquery(last_published_location.values('country')[:1]),
             elevation=Subquery(last_published_location.values('elevation')[:1]),
-            antenna_type=Subquery(last_published_antenna.values('antenna_type__name')[:1]),
+            antenna_type=Subquery(last_published_antenna.values('antenna_type')[:1]),
             radome_type=Subquery(last_published_antenna.values('radome_type')[:1]),
             receiver_type=Subquery(last_published_receiver.values('receiver_type')[:1]),
             serial_number=Subquery(last_published_receiver.values('serial_number')[:1]),

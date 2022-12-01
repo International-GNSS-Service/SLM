@@ -513,8 +513,6 @@ class UserProfileView(SLMView):
         if user_form.is_bound and user_form.is_valid():
             user_form.save()
 
-        import pdb
-        pdb.set_trace()
         if profile_form.is_bound and profile_form.is_valid():
             profile_form.save()
 
@@ -620,7 +618,10 @@ class StationReviewView(StationContextView):
         context.update({
             'forward_text': forward_text,
             'back_text': back_text,
-            'unpublished_changes': not forward_inst.is_published,
+            'needs_publish': self.station.status in {
+                SiteLogStatus.PENDING,
+                SiteLogStatus.UPDATED
+            },
             'forward_prev': forward_prev.epoch.isoformat()
             if forward_prev else None,
             'forward_current': forward_inst.epoch.isoformat(),

@@ -37,8 +37,10 @@ class UserManager(DjangoUserManager):
 
 class UserQueryset(models.QuerySet):
 
-    def emails_ok(self):
-        return self.filter(silence_emails=False)
+    def emails_ok(self, html=None):
+        if html is None:
+            return self.filter(silence_emails=False)
+        return self.filter(silence_emails=False, profile__html_emails=html)
 
 
 class UserProfile(models.Model):

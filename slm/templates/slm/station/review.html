@@ -14,8 +14,8 @@ Template for View/Diff page.
       <h2>Review and Submit</h2>
       <div id="review-actions">
         <button name="reject" onclick="reject();" class="btn btn-danger" {% if not can_publish or not site.review_pending %}style="display: none"{% endif %} {% if site.review_pending %}data-slm-review-request={{site.review_request.id}}{% endif %}>{% trans 'Reject Changes' %}</button>
-        <button name="publish" onclick="publish();" class="btn btn-primary" {% if not can_publish or not unpublished_changes %}style="display: none"{% endif %}>{% trans 'Publish' %}</button>
-        <button name="submit" onclick="submit();" class="btn btn-primary" {% if can_publish or not unpublished_changes %}style="display: none"{% endif %} {% if site.review_pending %}disabled{% endif %}>{% if site.review_pending %}{% trans 'Pending Review' %}{% else %}{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}{% endif %}</button>
+        <button name="publish" onclick="publish();" class="btn btn-primary" {% if not can_publish or not needs_publish %}style="display: none"{% endif %}>{% trans 'Publish' %}</button>
+        <button name="submit" onclick="submit();" class="btn btn-primary" {% if can_publish or not needs_publish %}style="display: none"{% endif %} {% if site.review_pending %}disabled{% endif %}>{% if site.review_pending %}{% trans 'Pending Review' %}{% else %}{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}{% endif %}</button>
       </div>
   </div>
 
@@ -56,17 +56,21 @@ Template for View/Diff page.
     const rejectBtn = reviewActions.find('button[name="reject"]');
 
     const updateButtonState = function(request) {
-        console.log(request);
         let site = request.site;
         rejectBtn.data('slmReviewRequest', request.id);
         rejectBtn.hide();
         submitBtn.hide();
         publishBtn.hide();
+        let status = slm.SiteLogStatus.get(site.status);
         if (site.can_publish) {
             if (site.review_pending) {
                 rejectBtn.show();
                 publishBtn.show();
-            } else if (site.status !== 3) {
+            } else if (
+                status === slm.SiteLogStatus.UPDATED ||
+                status === slm.SiteLogStatus.PENDING ||
+                status === slm.SiteLogStatus.EMPTY
+            ) {
                 publishBtn.show();
             }
         } else {
@@ -103,6 +107,9 @@ Template for View/Diff page.
         slm.publish({{site.id}}).done(
             function(data, status, jqXHR) {
                 updateButtonState({'site': data});
+                let navBtn = $(`button#select-${data.name}`);
+                navBtn.data('slmStatus', data.status);
+                navBtn.addClass(slm.SiteLogStatus.get(data.status).css);
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {

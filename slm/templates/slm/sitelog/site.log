@@ -45,8 +45,8 @@
        X coordinate (m)       : {{ location.x|precision:4 }}
        Y coordinate (m)       : {{ location.y|precision:4 }}
        Z coordinate (m)       : {{ location.z|precision:4 }}
-       Latitude (N is +)      : {% if location %}{{ location.latitude|iso6709 }}{% else %}(+/-DDMMSS.SS){% endif %}
-       Longitude (E is +)     : {% if location %}{{ location.longitude|iso6709 }}{% else %}(+/-DDDMMSS.SS){% endif %}
+       Latitude (N is +)      : {% if location %}{{ location.latitude|iso6709:6 }}{% else %}(+/-DDMMSS.SS){% endif %}
+       Longitude (E is +)     : {% if location %}{{ location.longitude|iso6709:7 }}{% else %}(+/-DDDMMSS.SS){% endif %}
        Elevation (m,ellips.)  : {% if location %}{{ location.elevation|precision:4 }}{% else %}(F7.1){% endif %}
      Additional Information   : {% if location %}{{ location.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
 
@@ -57,7 +57,7 @@
      Satellite System         : {{ receiver.satellite_system|satellite_str }}
      Serial Number            : {{ receiver.serial_number }}
      Firmware Version         : {{ receiver.firmware }}
-     Elevation Cutoff Setting : {{ receiver.elevation_cutoff }}
+     Elevation Cutoff Setting : {% if receiver.elevation_cutoff is not None %}{{ receiver.elevation_cutoff|precision:1 }} deg{% endif %}
      Date Installed           : {% if receiver.installed %}{{ receiver.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Date Removed             : {% if receiver.removed %}{{ receiver.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Temperature Stabiliz.    : {{ receiver.temp_stab }}
@@ -76,7 +76,7 @@
 
 4.   GNSS Antenna Information
 {% for antenna in antennas %}
-4.{{ forloop.counter }}  Antenna Type             : {{ antenna.antenna_type.model }}
+4.{{ forloop.counter }}  Antenna Type             : {{ antenna|antenna_radome }}
      Serial Number            : {{ antenna.serial_number }}
      Antenna Reference Point  : {{ antenna.reference_point.name }}
      Marker->ARP Up Ecc. (m)  : {{ antenna.marker_up|precision:4 }}
@@ -138,8 +138,8 @@
 
 6.   Frequency Standard
 {% for standard in frequency_standards %}
-6.{{ forloop.counter }}  Standard Type            : {{ standard.standard_type }}
-       Input Frequency        : {{ standard.input_frequency }}
+6.{{ forloop.counter }}  Standard Type            : {{ standard.standard_type|enum_str|upper }}
+       Input Frequency        : {% if standard.input_frequency is not None %}{{ standard.input_frequency }} MHz{% endif %}
        Effective Dates        : {% if standard.effective_start %}{{standard.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if standard.effective_end %}{{standard.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ notes|multi_line }}
 {% endfor %}
@@ -167,9 +167,9 @@
 8.1.{{ forloop.counter }} Humidity Sensor Model   : {{ sensor.model }}
        Manufacturer           : {{ sensor.manufacturer }}
        Serial Number          : {{ sensor.serial_number }}
-       Data Sampling Interval : {{ sensor.sampling_interval}}
-       Accuracy (% rel h)     : {{ sensor.accuracy }}
-       Aspiration             : {{ sensor.aspiration }}
+       Data Sampling Interval : {% if sensor.sampling_interval is not None %}{{ sensor.sampling_interval}} sec{% endif %}
+       Accuracy (% rel h)     : {% if sensor.accuracy is not None %}{{ sensor.accuracy|precision:1 }}{% endif %}
+       Aspiration             : {{ sensor.aspiration|enum_str|upper }}
        Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
@@ -189,8 +189,8 @@
 8.2.{{ forloop.counter }} Pressure Sensor Model   : {{ sensor.model }}
        Manufacturer           : {{ sensor.manufacturer }}
        Serial Number          : {{ sensor.serial_number }}
-       Data Sampling Interval : {{ sensor.sampling_interval }}
-       Accuracy               : {{ sensor.accuracy }}
+       Data Sampling Interval : {% if sensor.sampling_interval is not None %}{{ sensor.sampling_interval}} sec{% endif %}
+       Accuracy               : {% if sensor.accuracy is not None %}{{ sensor.accuracy|precision:1 }} hPa{% endif %}
        Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
@@ -209,9 +209,9 @@
 8.3.{{ forloop.counter }} Temp. Sensor Model      : {{ sensor.model }}
        Manufacturer           : {{ sensor.manufacturer }}
        Serial Number          : {{ sensor.serial_number }}
-       Data Sampling Interval : {{ sensor.sampling_interval }}
-       Accuracy               : {{ sensor.accuracy }}
-       Aspiration             : {{ sensor.aspiration }}
+       Data Sampling Interval : {% if sensor.sampling_interval is not None %}{{ sensor.sampling_interval}} sec{% endif %}
+       Accuracy               : {% if sensor.accuracy is not None %}{{ sensor.accuracy|precision:1 }} deg C{% endif %}
+       Aspiration             : {{ sensor.aspiration|enum_str|upper }}
        Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
        Calibration date       : {{ sensor.calibration|simple_utc }}
        Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}

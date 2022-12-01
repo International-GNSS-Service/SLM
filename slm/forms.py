@@ -111,6 +111,10 @@ class SectionForm(forms.ModelForm):
         self.diff = instance.published_diff() if instance else {}
         self.flags = instance._flags if instance else {}
         super().__init__(instance=instance, **kwargs)
+        for field in self.fields:
+            model_field = self.Meta.model._meta.get_field(field)
+            if not (hasattr(model_field, 'default') and model_field.blank):
+                self.fields[field].required = True
 
     @classmethod
     def section_name(cls):
@@ -247,15 +251,9 @@ class SiteReceiverForm(SubSectionForm):
         queryset=SatelliteSystem.objects.all(),
         help_text=SiteReceiver._meta.get_field('satellite_system').help_text,
         label=SiteReceiver._meta.get_field('satellite_system').verbose_name,
-        widget=forms.SelectMultiple
-    )
-
-    elevation_cutoff = forms.FloatField(
-        required=SiteReceiver._meta.get_field('elevation_cutoff').blank,
-        help_text=SiteReceiver._meta.get_field('elevation_cutoff').help_text,
-        label=SiteReceiver._meta.get_field('elevation_cutoff').verbose_name,
-        max_value=15,
-        min_value=-5
+        required=True,
+        widget=forms.SelectMultiple,
+        empty_label=None
     )
 
     def __init__(self, **kwargs):

@@ -99,9 +99,12 @@ def multi_line(text):
 
 
 @register.filter(name='iso6709')
-def iso6709(lat_lng):
+def iso6709(lat_lng, padding):
     if lat_lng:
-        return f'{"+" if lat_lng > 0 else ""}{lat_lng:.2f}'
+        number = f'{lat_lng:.2f}'
+        integer, dec = number.split('.') if '.' in number else (number, None)
+        iso_frmt = f"{abs(int(integer)):0{int(padding)}}{'.' if dec else ''}{dec}"
+        return f'{"+" if float(lat_lng) > 0 else "-"}{iso_frmt}'
     return ''
 
 
@@ -156,3 +159,12 @@ def get_key(obj, key):
 @register.filter(name='merge')
 def merge(obj1, obj2):
     return obj1.merge(obj2)
+
+
+@register.filter(name='antenna_radome')
+def antenna_radome(antenna):
+    spacing = max(abs(16-len(antenna.antenna_type.model)), 1)
+    radome = 'NONE'
+    if hasattr(antenna, 'radome_type'):
+        radome = antenna.radome_type.model
+    return f'{antenna.antenna_type.model}{" " * spacing}{radome}'

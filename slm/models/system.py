@@ -71,11 +71,18 @@ class SatelliteSystem(models.Model):
         blank=False
     )
 
+    order = models.IntegerField(
+        null=False,
+        default=0,
+        blank=True
+    )
+
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name_plural = _('Satellite Systems')
+        ordering = ('order',)
 
 
 class AlertManager(models.Manager):

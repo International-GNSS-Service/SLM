@@ -12,3 +12,5 @@ from slm.defines.DataRate import DataRate
 from slm.defines.CollocationStatus import CollocationStatus
 from slm.defines.FractureSpacing import FractureSpacing
 from slm.defines.ISOCountry import ISOCountry
+from slm.defines.Aspiration import Aspiration
+from slm.defines.FrequencyStandardType import FrequencyStandardType

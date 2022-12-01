@@ -29,15 +29,10 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
     }
 
     try:
-
         html_ok = not (
-            bool(
-                review_request.site.moderators.emails_ok().filter(
-                    html_emails=False).count()
-            ) or bool(
-                review_request.site.editors.emails_ok().filter(
-                    html_emails=False).count()
-            )
+            review_request.site.moderators.emails_ok(html=False).count()
+            or
+            review_request.site.editors.emails_ok(html=False).count()
         )
 
         send_mail(
@@ -91,13 +86,9 @@ def send_changes_rejected_emails(
     }
     try:
         html_ok = not (
-            bool(
-                review_request.site.moderators.emails_ok().filter(
-                    html_emails=False).count()
-            ) or bool(
-                review_request.site.editors.emails_ok().filter(
-                    html_emails=False).count()
-            )
+            review_request.site.moderators.emails_ok(html=False).count()
+            or
+            review_request.site.editors.emails_ok(html=False).count()
         )
 
         send_mail(

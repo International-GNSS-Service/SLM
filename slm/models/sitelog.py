@@ -7,7 +7,9 @@ from slm.defines import (
     ISOCountry,
     CollocationStatus,
     TectonicPlates,
-    FractureSpacing
+    FractureSpacing,
+    Aspiration,
+    FrequencyStandardType
 )
 from django_enum import EnumField
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -44,7 +46,7 @@ from slm.defines import FlagSeverity
 # Greatest on MYSQL
 NULL_TIME = datetime.datetime.utcfromtimestamp(0)
 
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, BaseValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from django.utils.deconstruct import deconstructible
@@ -59,22 +61,6 @@ def bool_condition(*args, **kwargs):
         Q(*args, **kwargs),
         output_field=models.BooleanField()
     )
-
-
-class TextToFloatMixin:
-
-    def clean(self, value):
-        if isinstance(value, str):
-            return float(value)
-        return value
-
-
-class MinValueTextValidator(TextToFloatMixin, MinValueValidator):
-    pass
-
-
-class MaxValueTextValidator(TextToFloatMixin, MaxValueValidator):
-    pass
 
 
 class DefaultToStrEncoder(json.JSONEncoder):
@@ -108,7 +94,11 @@ class SLMValidator:
         super().__init__(*args, **kwargs)
 
     def __eq__(self, other):
-        return self.severity == other.severity and super().__eq__(other)
+        return (
+            self.__class__ is other.__class__ and
+            self.severity == other.severity and
+            super().__eq__(other)
+        )
 
     def __call__(self, callable):
         try:
@@ -170,16 +160,19 @@ class SLMValidator:
 
 class FieldPreferred(SLMValidator):
 
+    statement = 'This field is recommended'
+
     def __call__(self, value):
-        if self.section and value is None or value == NULL_TIME:
-            self.throw_error(
-                f'{self.verbose_name(self.field_name)} '
-                f'{_("is required to publish")}.'
-            )
+        if isinstance(value, str):
+            value = value.strip()
+        if self.section and not value or value == NULL_TIME:
+            self.throw_error(f'{_(self.statement)}.')
         self.clear()
 
 
 class FieldRequiredToPublish(FieldPreferred):
+
+    statement = 'This field is required to publish'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, severity=FlagSeverity.BLOCK_PUBLISH, **kwargs)
@@ -197,6 +190,24 @@ class FourIDValidator(SLMValidator, RegexValidator):
                 f'{self.verbose_name(self.field_name)} '
                 f'{_("must be the prefix of the 9 character site name")}.'
             )
+        self.clear()
+
+
+class ARPValidator(SLMValidator):
+
+    def __call__(self, value):
+        if self.section:
+            at_arp = getattr(
+                getattr(self.section, 'antenna_type', None),
+                'reference_point',
+                None
+            )
+            if at_arp != value:
+                self.throw_error(
+                    f'{getattr(value, "name", None)} '
+                    f'{_("must does not match the antenna reference point: ")}'
+                    f'{getattr(at_arp, "name", None)}.'
+                )
         self.clear()
 
 
@@ -1220,15 +1231,13 @@ class SiteForm(SiteSection):
 
     prepared_by = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Prepared by (full name)'),
         help_text=_('Enter the name of who prepared this site log')
     )
     date_prepared = models.DateField(
         null=True,
-        blank=True,
-        default=None,
+        blank=False,
         verbose_name=_('Date Prepared'),
         help_text=_('Enter the date the site log was prepared (CCYY-MM-DD).')
     )
@@ -1243,7 +1252,7 @@ class SiteForm(SiteSection):
     previous_log = models.CharField(
         max_length=50,
         blank=True,
-        default=None,
+        default='',
         verbose_name=_('Previous Site Log'),
         help_text=_(
             'Enter previous site log in this format: ssss_CCYYMMDD.log '
@@ -1329,15 +1338,13 @@ class SiteIdentification(SiteSection):
 
     site_name = models.CharField(
         max_length=255,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Site Name'),
         help_text=_('Enter the name of the site.')
     )
     four_character_id = models.CharField(
         max_length=4,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Four Character ID'),
         help_text=_(
             'This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 '
@@ -1357,8 +1364,7 @@ class SiteIdentification(SiteSection):
 
     iers_domes_number = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('IERS DOMES Number'),
         help_text=_(
             'This is strictly required. '
@@ -1380,8 +1386,7 @@ class SiteIdentification(SiteSection):
 
     date_installed = models.DateTimeField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Date Installed'),
         help_text=_(
             'Enter the original date that this site was included in the IGS. '
@@ -1570,8 +1575,7 @@ class SiteLocation(SiteSection):
 
     city = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('City or Town'),
         help_text=_('Enter the city or town the site is located in')
     )
@@ -1587,8 +1591,7 @@ class SiteLocation(SiteSection):
         ISOCountry,
         strict=False,
         max_length=100,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Country or Region'),
         help_text=_('Enter the country/region the site is located in')
     )
@@ -1607,8 +1610,7 @@ class SiteLocation(SiteSection):
 
     x = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('X Coordinate (m)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -1617,8 +1619,7 @@ class SiteLocation(SiteSection):
 
     y = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Y Coordinate (m)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -1627,8 +1628,7 @@ class SiteLocation(SiteSection):
 
     z = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Z Coordinate (m)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -1638,39 +1638,38 @@ class SiteLocation(SiteSection):
     # todo convert these to geodjango native PointField
     latitude = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Latitude (N is +)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. '
             'Format: (+/-DDMMSS.SS)'
         ),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(900000), MinValueValidator(-900000)]
     )
 
     longitude = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Longitude (E is +)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. '
             'Format: (+/-DDDMMSS.SS)'
         ),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(1800000), MinValueValidator(-1800000)]
     )
 
     elevation = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
         verbose_name=_('Elevation (m,ellips.)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format: The '
             'elevation may be given to more decimal places than F7.1. 7.1 is '
             'a minimum for the SINEX format'
         ),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(9000), MinValueValidator(-500)]
     )
 
     additional_information = models.TextField(
@@ -1741,7 +1740,7 @@ class SiteReceiver(SiteSubSection):
 
     receiver_type = models.ForeignKey(
         'slm.Receiver',
-        blank=True,
+        blank=False,
         verbose_name=_('Receiver Type'),
         help_text=_(
             'Please find your receiver in '
@@ -1757,13 +1756,13 @@ class SiteReceiver(SiteSubSection):
     satellite_system = models.ManyToManyField(
         'slm.SatelliteSystem',
         verbose_name=_('Satellite System'),
+        blank=False,
         help_text=_('Check all GNSS systems that apply')
     )
 
     serial_number = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Serial Number'),
         help_text=_(
             'Enter the receiver serial number. '
@@ -1773,28 +1772,29 @@ class SiteReceiver(SiteSubSection):
 
     firmware = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Firmware Version'),
         help_text=_('Enter the receiver firmware version. Format: (A11)')
     )
 
-    elevation_cutoff = models.CharField(
-        max_length=50,
-        default='',
+    elevation_cutoff = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Elevation Cutoff Setting (°)'),
         help_text=_(
             'Please respond with the tracking cutoff as set in the receiver, '
             'regardless of terrain or obstructions in the area. Format: (deg)'
         ),
-        #validators=[MinValueTextValidator, MaxValueTextValidator]
+        validators=[
+            MinValueValidator(-5),
+            MaxValueValidator(15)
+        ]
     )
 
     installed = models.DateTimeField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Date Installed'),
         help_text=_(
             'Enter the date and time the receiver was installed. '
@@ -1889,8 +1889,7 @@ class SiteAntenna(SiteSubSection):
     antenna_type = models.ForeignKey(
         'slm.Antenna',
         on_delete=models.PROTECT,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Antenna Type'),
         help_text=_(
             'Please find your antenna radome type in '
@@ -1909,8 +1908,7 @@ class SiteAntenna(SiteSubSection):
 
     serial_number = models.CharField(
         max_length=128,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Serial Number'),
         help_text=_('Only Alpha Numeric Chars and - . Symbols allowed')
     )
@@ -1918,9 +1916,7 @@ class SiteAntenna(SiteSubSection):
     # todo remove this b/c it belongs solely on antenna type?
     reference_point = EnumField(
         AntennaReferencePoint,
-        blank=True,
-        default=None,
-        null=True,
+        blank=False,
         verbose_name=_('Antenna Reference Point'),
         help_text=_(
             'Locate your antenna in the file '
@@ -1929,13 +1925,12 @@ class SiteAntenna(SiteSubSection):
             'equivalent to ARP for your antenna. Contact the Central Bureau if'
             ' your antenna does not appear. Format: (BPA/BCR/XXX from '
             'antenna.gra; see instr.)'
-        )
+        ),
+        validators=[ARPValidator()]
     )
 
     marker_up = models.FloatField(
-        null=True,
-        blank=True,
-        default=None,
+        blank=False,
         verbose_name=_('Marker->ARP Up Ecc (m)'),
         help_text=_(
             'Up eccentricity is the antenna height measured to an accuracy of '
@@ -1944,9 +1939,7 @@ class SiteAntenna(SiteSubSection):
         )
     )
     marker_north = models.FloatField(
-        null=True,
-        blank=True,
-        default=None,
+        blank=False,
         verbose_name=_('Marker->ARP North Ecc (m)'),
         help_text=_(
             'North eccentricity is the offset between the ARP and marker '
@@ -1955,9 +1948,7 @@ class SiteAntenna(SiteSubSection):
         )
     )
     marker_east = models.FloatField(
-        null=True,
-        blank=True,
-        default=None,
+        blank=False,
         verbose_name=_('Marker->ARP East Ecc (m)'),
         help_text=_(
             'East eccentricity is the offset between the ARP and marker '
@@ -1968,8 +1959,7 @@ class SiteAntenna(SiteSubSection):
 
     alignment = models.CharField(
         max_length=50,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Alignment from True N (°)'),
         help_text=_(
             'Enter the clockwise offset from true north in degrees. '
@@ -1979,7 +1969,7 @@ class SiteAntenna(SiteSubSection):
 
     radome_type = models.ForeignKey(
         'slm.Radome',
-        blank=True,
+        blank=False,
         verbose_name=_('Antenna Radome Type'),
         help_text=_(
             'Please find your antenna radome type in '
@@ -2024,15 +2014,15 @@ class SiteAntenna(SiteSubSection):
     )
 
     installed = models.DateTimeField(
-        null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Date Installed'),
         help_text=_(
             'Enter the date the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
-        )
+        ),
+        validators=[TimeRangeValidator(end_field='removed')]
     )
+
     removed = models.DateTimeField(
         default=None,
         blank=True,
@@ -2042,7 +2032,8 @@ class SiteAntenna(SiteSubSection):
             'Enter the date the receiver was removed. It is important that '
             'the date removed is entered before the addition of a new '
             'receiver. Format: (CCYY-MM-DDThh:mmZ)'
-        )
+        ),
+        validators=[TimeRangeValidator(start_field='installed')]
     )
 
     additional_information = models.TextField(
@@ -2152,7 +2143,9 @@ class SiteSurveyedLocalTies(SiteSubSection):
         default='',
         blank=True,
         verbose_name=_('Tied Marker CDP Number'),
-        help_text=_('Enter the NASA CDP identifier if available. Format: (A4)')
+        help_text=_(
+            'Enter the NASA CDP identifier if available. Format: (A4)'
+        )
     )
     domes_number = models.CharField(
         max_length=50,
@@ -2282,24 +2275,23 @@ class SiteFrequencyStandard(SiteSubSection):
     def subsection_number(cls):
         return None
 
-    # todo - enumeration?
-    standard_type = models.CharField(
+    standard_type = EnumField(
+        FrequencyStandardType,
         max_length=50,
-        blank=True,
-        default='',
+        strict=False,
+        blank=False,
         verbose_name=_('Standard Type'),
         help_text=_(
             'Select whether the frequency standard is INTERNAL or EXTERNAL '
             'and describe the oscillator type. '
-            'Format: (H-MASER/CESIUM/etc)'
+            'Format: (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)'
         )
     )
 
-    # todo - to numeric?
-    input_frequency = models.CharField(
-        max_length=50,
+    input_frequency = models.FloatField(
+        null=True,
         blank=True,
-        default='',
+        default=None,
         verbose_name=_('Input Frequency (MHz)'),
         help_text=_('Enter the input frequency in MHz if known.')
     )
@@ -2315,13 +2307,13 @@ class SiteFrequencyStandard(SiteSubSection):
     )
 
     effective_start = models.DateField(
-        blank=True,
+        blank=False,
         null=True,
-        default=None,
         help_text=_(
             'Enter the effective start date for the frequency standard. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(end_field='effective_end')]
     )
     effective_end = models.DateField(
         blank=True,
@@ -2330,7 +2322,8 @@ class SiteFrequencyStandard(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the frequency standard. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(start_field='effective_start')]
     )
 
     def effective_dates(self):
@@ -2391,8 +2384,7 @@ class SiteCollocation(SiteSubSection):
 
     instrument_type = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Instrumentation Type'),
         help_text=_('Select all collocated instrument types that apply')
     )
@@ -2401,8 +2393,7 @@ class SiteCollocation(SiteSubSection):
         CollocationStatus,
         max_length=50,
         strict=False,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Status'),
         help_text=_('Select appropriate status')
     )
@@ -2420,12 +2411,13 @@ class SiteCollocation(SiteSubSection):
     # effdate and effstart merged into this field
     effective_start = models.DateField(
         max_length=50,
-        blank=True,
+        blank=False,
         null=True,
         help_text=_(
             'Enter the effective start date of the collocated instrument. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(end_field='effective_end')]
     )
     effective_end = models.DateField(
         max_length=50,
@@ -2434,7 +2426,8 @@ class SiteCollocation(SiteSubSection):
         help_text=_(
             'Enter the effective end date of the collocated instrument. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(start_field='effective_start')]
     )
 
     def effective_dates(self):
@@ -2489,8 +2482,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
 
     manufacturer = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Manufacturer'),
         help_text=_("Enter manufacturer's name")
     )
@@ -2503,9 +2495,8 @@ class MeteorologicalInstrumentation(SiteSubSection):
     )
 
     height_diff = models.FloatField(
-        default=None,
         null=True,
-        blank=True,
+        blank=False,
         verbose_name=_('Height Diff to Ant (m)'),
         help_text=_(
             'In meters, enter the difference in height between the sensor and '
@@ -2530,13 +2521,13 @@ class MeteorologicalInstrumentation(SiteSubSection):
     calibration_date.field = calibration
 
     effective_start = models.DateField(
+        blank=False,
         null=True,
-        blank=True,
-        default=None,
         help_text=_(
             'Enter the effective start date for the sensor. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(end_field='effective_end')]
     )
     effective_end = models.DateField(
         null=True,
@@ -2545,7 +2536,8 @@ class MeteorologicalInstrumentation(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the sensor. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(start_field='effective_start')]
     )
 
     notes = models.TextField(
@@ -2605,36 +2597,35 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Humidity Sensor Model'),
         help_text=_('Enter humidity sensor model')
     )
 
-    # todo integer?
-    sampling_interval = models.CharField(
-        default='',
+    sampling_interval = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Data Sampling Interval (sec)'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
-    # todo enforce float?
-    accuracy = models.CharField(
-        default='',
+    accuracy = models.FloatField(
+        default=None,
         blank=True,
-        max_length=50,
+        null=True,
         verbose_name=_('Accuracy (% rel h)'),
         help_text=_(
             'Enter the accuracy in % relative humidity. Format: (% rel h)'
         )
     )
 
-    # todo enum?
-    aspiration = models.CharField(
-        default='',
+    aspiration = EnumField(
+        Aspiration,
+        null=True,
+        default=None,
         blank=True,
+        strict=False,
         max_length=50,
         verbose_name=_('Aspiration'),
         help_text=_(
@@ -2680,26 +2671,23 @@ class SitePressureSensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Pressure Sensor Model'),
         help_text=_('Enter pressure sensor model')
     )
 
-    # todo integer?
-    sampling_interval = models.CharField(
-        default='',
+    sampling_interval = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Data Sampling Interval'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
-    # todo enforce float?
-    accuracy = models.CharField(
-        default='',
+    accuracy = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Accuracy (hPa)'),
         help_text=_('Enter the accuracy in hectopascal. Format: (hPa)')
     )
@@ -2744,38 +2732,37 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Temp. Sensor Model'),
         help_text=_('Enter temperature sensor model')
     )
 
-    # todo integer?
-    sampling_interval = models.CharField(
-        default='',
+    sampling_interval = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Data Sampling Interval'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
-    # todo enforce float?
-    accuracy = models.CharField(
-        default='',
+    accuracy = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Accuracy (deg C)'),
         help_text=_(
             'Enter the accuracy in degrees Centigrade. Format: (deg C)'
         )
     )
 
-    # todo enum?
-    aspiration = models.CharField(
-        default='',
+    aspiration = EnumField(
+        Aspiration,
+        null=True,
+        default=None,
         blank=True,
+        strict=False,
         max_length=50,
-        verbose_name='Aspiration',
+        verbose_name=_('Aspiration'),
         help_text=_(
             'Enter the aspiration type if known. '
             'Format: (UNASPIRATED/NATURAL/FAN/etc)'
@@ -2817,15 +2804,14 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Water Vapor Radiometer'),
         help_text=_('Enter water vapor radiometer')
     )
 
     distance_to_antenna = models.FloatField(
         default=None,
-        blank=True,
+        blank=False,
         null=True,
         verbose_name=_('Distance to Antenna (m)'),
         help_text=_(
@@ -2864,8 +2850,7 @@ class SiteOtherInstrumentation(SiteSubSection):
         return None
 
     instrumentation = models.TextField(
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Other Instrumentation'),
         help_text=_(
             'Enter any other relevant information regarding meteorological '
@@ -2900,25 +2885,27 @@ class Condition(SiteSubSection):
         return 'Local Ongoing Conditions Possibly Affecting Computed Position'
 
     effective_start = models.DateField(
-        max_length=50,
         blank=True,
         null=True,
         default=None,
         help_text=_(
             'Enter the effective start date for the condition. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[
+            TimeRangeValidator(end_field='effective_end')
+        ]
     )
 
     effective_end = models.DateField(
-        max_length=50,
         blank=True,
         null=True,
         default=None,
         help_text=_(
             'Enter the effective end date for the condition. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(start_field='effective_start')]
     )
 
     additional_information = models.TextField(
@@ -3115,7 +3102,10 @@ class SiteLocalEpisodicEffects(SiteSubSection):
         help_text=_(
             'Enter the effective start date for the local episodic effect. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[
+            TimeRangeValidator(end_field='effective_end')
+        ]
     )
 
     effective_end = models.DateField(
@@ -3125,7 +3115,8 @@ class SiteLocalEpisodicEffects(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the local episodic effect. '
             'Format: (CCYY-MM-DD)'
-        )
+        ),
+        validators=[TimeRangeValidator(start_field='effective_start')]
     )
 
     def date(self):
@@ -3178,15 +3169,13 @@ class AgencyPOC(SiteSection):
 
     agency = models.TextField(
         max_length=300,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Agency'),
         help_text=_('Enter contact agency name')
     )
     preferred_abbreviation = models.CharField(
-        max_length=50, # todo A10
-        default='',
-        blank=True,
+        max_length=50,  # todo A10
+        blank=False,
         verbose_name=_('Preferred Abbreviation'),
         help_text=_("Enter the contact agency's preferred abbreviation")
     )
@@ -3200,15 +3189,13 @@ class AgencyPOC(SiteSection):
 
     primary_name = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Contact Name'),
         help_text=_('Enter primary contact organization name')
     )
     primary_phone1 = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Telephone (primary)'),
         help_text=_('Enter primary contact primary phone number')
     )
@@ -3227,8 +3214,7 @@ class AgencyPOC(SiteSection):
         help_text=_('Enter primary contact organization fax number')
     )
     primary_email = models.EmailField(
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('E-mail'),
         help_text=_(
             'Enter primary contact organization email address. MUST be a '
@@ -3390,15 +3376,13 @@ class SiteMoreInformation(SiteSection):
 
     primary = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Primary Data Center'),
         help_text=_('Enter the name of the primary operational data center')
     )
     secondary = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Secondary Data Center'),
         help_text=_('Enter the name of the secondary or backup data center')
     )

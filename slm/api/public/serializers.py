@@ -2,6 +2,7 @@ from rest_framework import serializers
 from slm.models import (
     Site,
     Agency,
+    Network
 )
 
 
@@ -14,10 +15,18 @@ class EmbeddedAgencySerializer(serializers.ModelSerializer):
             'country'
         ]
 
+class EmbeddedNetworkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Network
+        fields = [
+            'name'
+        ]
+
 
 class StationListSerializer(serializers.ModelSerializer):
 
     agencies = EmbeddedAgencySerializer(many=True)
+    networks = EmbeddedNetworkSerializer(many=True)
     registered = serializers.CharField(source='created')
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
@@ -59,6 +68,7 @@ class StationListSerializer(serializers.ModelSerializer):
         fields = [
             'name',
             'agencies',
+            'networks',
             'registered',
             'last_publish', 
             'status',
@@ -80,5 +90,5 @@ class StationListSerializer(serializers.ModelSerializer):
             'last_rinex3',
             'last_rinex4',
             'last_data_time',
-            'last_data'
+            'last_data',
         ]

@@ -53,7 +53,7 @@
 
 3.   GNSS Receiver Information
 {% for receiver in receivers %}
-3.{{ forloop.counter }}  Receiver Type            : {{ receiver.receiver_type.model }}
+3.{{ forloop.counter|rpad_space:3 }}Receiver Type            : {{ receiver.receiver_type.model }}
      Satellite System         : {{ receiver.satellite_system|satellite_str }}
      Serial Number            : {{ receiver.serial_number }}
      Firmware Version         : {{ receiver.firmware }}
@@ -76,13 +76,13 @@
 
 4.   GNSS Antenna Information
 {% for antenna in antennas %}
-4.{{ forloop.counter }}  Antenna Type             : {{ antenna|antenna_radome }}
+4.{{ forloop.counter|rpad_space:3 }}Antenna Type             : {{ antenna|antenna_radome }}
      Serial Number            : {{ antenna.serial_number }}
      Antenna Reference Point  : {{ antenna.reference_point.name }}
      Marker->ARP Up Ecc. (m)  : {{ antenna.marker_up|precision:4 }}
      Marker->ARP North Ecc(m) : {{ antenna.marker_north|precision:4 }}
      Marker->ARP East Ecc(m)  : {{ antenna.marker_east|precision:4 }}
-     Alignment from True N    : {{ antenna.alignment }}{% comment %}{{ antenna.alignment|precision:1|pos }}{% endcomment %}
+     Alignment from True N    : {% if antenna.alignment is not None %}{{ antenna.alignment|precision:1|pos }} deg{% endif %}
      Antenna Radome Type      : {{ antenna.radome_type.model }}
      Radome Serial Number     : {{ antenna.radome_serial_number }}
      Antenna Cable Type       : {{ antenna.cable_type }}
@@ -109,7 +109,7 @@
 
 5.   Surveyed Local Ties
 {% for tie in local_ties %}
-5.{{ forloop.counter }}  Tied Marker Name         : {{ tie.name }}
+5.{{ forloop.counter|rpad_space:3 }}Tied Marker Name         : {{ tie.name }}
      Tied Marker Usage        : {{ tie.usage }}
      Tied Marker CDP Number   : {{ tie.cdp_number }}
      Tied Marker DOMES Number : {{ tie.domes_number }}
@@ -138,7 +138,7 @@
 
 6.   Frequency Standard
 {% for standard in frequency_standards %}
-6.{{ forloop.counter }}  Standard Type            : {{ standard.standard_type|enum_str|upper }}
+6.{{ forloop.counter|rpad_space:3 }}Standard Type            : {{ standard.standard_type|enum_str|upper }}
        Input Frequency        : {% if standard.input_frequency is not None %}{{ standard.input_frequency }} MHz{% endif %}
        Effective Dates        : {% if standard.effective_start %}{{standard.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if standard.effective_end %}{{standard.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ notes|multi_line }}
@@ -151,7 +151,7 @@
 
 7.   Collocation Information
 {% for collocation in collocations %}
-7.{{ forloop.counter }}  Instrumentation Type     : {{ collocation.instrument_type}}
+7.{{ forloop.counter|rpad_space:3 }}Instrumentation Type     : {{ collocation.instrument_type}}
        Status                 : {{ collocation.status|enum_str|upper }}
        Effective Dates        : {% if collocation.effective_start %}{{collocation.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if collocation.effective_end %}{{collocation.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
        Notes                  : {{ collocation.notes|multi_line }}

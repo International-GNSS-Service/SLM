@@ -1342,18 +1342,11 @@ class SiteIdentification(SiteSection):
         verbose_name=_('Site Name'),
         help_text=_('Enter the name of the site.')
     )
-    four_character_id = models.CharField(
-        max_length=4,
-        blank=False,
-        verbose_name=_('Four Character ID'),
-        help_text=_(
-            'This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 '
-            'filenames. Format: (XXXX - existing four character IGS station '
-            'name, M - Monument or marker number (0-9), R - Receiver number '
-            '(0-9), CCC - Three digit ISO 3166-1 country code)'
-        ),
-        validators=[FourIDValidator()]
-    )
+
+    @cached_property
+    def four_character_id(self):
+        return self.site.name[0:4].upper()
+
     monument_inscription = models.CharField(
         max_length=50,
         default='',
@@ -1819,6 +1812,7 @@ class SiteReceiver(SiteSubSection):
         validators=[TimeRangeValidator(start_field='installed')]
     )
 
+    # this field is a string in GeodesyML - therefore leaving it as character
     temp_stab = models.CharField(
         max_length=50,
         default='',
@@ -1957,14 +1951,17 @@ class SiteAntenna(SiteSubSection):
         )
     )
 
-    alignment = models.CharField(
-        max_length=50,
+    alignment = models.FloatField(
         blank=False,
+        null=True,
         verbose_name=_('Alignment from True N (°)'),
         help_text=_(
-            'Enter the clockwise offset from true north in degrees. '
+            'Enter the clockwise offset from true north in degrees. The '
+            'positive direction is clockwise, so that due east would be '
+            'equivalent to a response of "+90". '
             'Format: (deg; + is clockwise/east)'
-        )
+        ),
+        validators=[MinValueValidator(-180), MaxValueValidator(180)]
     )
 
     radome_type = models.ForeignKey(
@@ -2188,9 +2185,9 @@ class SiteSurveyedLocalTies(SiteSubSection):
         )
     )
 
-    accuracy = models.CharField(
-        max_length=50,
-        default='',
+    accuracy = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Accuracy (mm)'),
         help_text=_('Enter the accuracy of the tied survey. Format: (mm).')
@@ -2315,6 +2312,7 @@ class SiteFrequencyStandard(SiteSubSection):
         ),
         validators=[TimeRangeValidator(end_field='effective_end')]
     )
+
     effective_end = models.DateField(
         blank=True,
         null=True,

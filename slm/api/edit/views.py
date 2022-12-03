@@ -682,7 +682,10 @@ class SectionViewSet(type):
                         'heading': {'required': False, 'read_only': True},
                         'effective': {'required': False, 'read_only': True},
                         'is_deleted': {'required': False, 'read_only': True},
-                        'subsection': {'required': False}
+                        'subsection': {'required': False},
+                        'four_character_id': {  # special case
+                            'required': False, 'read_only': True
+                        }
                     } if issubclass(ModelClass, SiteSubSection) else {})
                 }
 

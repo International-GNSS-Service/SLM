@@ -16,6 +16,11 @@ def load_satellitesystems(apps, schema_editor):
         SatelliteSystem.objects.create(**system)
 
 
+def unload_satellitesystems(apps, schema_editor):
+    SatelliteSystem = apps.get_model('slm', 'SatelliteSystem')
+    SatelliteSystem.objects.all().delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -23,5 +28,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(load_satellitesystems)
+        migrations.RunPython(load_satellitesystems, unload_satellitesystems)
     ]

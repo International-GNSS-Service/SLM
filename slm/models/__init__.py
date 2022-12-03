@@ -9,7 +9,10 @@ from slm.models.system import (
     Antenna,
     Receiver,
     Radome,
-    Manufacturer
+    Manufacturer,
+    SiteFileUpload,
+    RenderedSiteLog,
+    LogEntry
 )
 from slm.models.user import (
     User,
@@ -40,8 +43,7 @@ from slm.models.sitelog import (
     SiteOtherInstrumentation,
     SiteLocalEpisodicEffects,
     SiteWaterVaporRadiometer,
-    SiteSurveyedLocalTies,
-    LogEntry
+    SiteSurveyedLocalTies
 )
 from django.db import models
 from django.core.cache import cache

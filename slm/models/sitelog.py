@@ -1,17 +1,13 @@
 from django.db import models
 from slm.defines import (
     SiteLogStatus,
-    LogEntryType,
     AntennaReferencePoint,
-    AntennaFeatures,
     ISOCountry,
     CollocationStatus,
     TectonicPlates,
     FractureSpacing
 )
 from django_enum import EnumField
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.db.models.functions import Greatest
 from django.utils.functional import cached_property
 from django.db.models import (
@@ -34,6 +30,7 @@ from django.db.models.functions import (
 )
 from slm.models import compat
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from slm.utils import date_to_str
 import datetime
 import threading
@@ -836,7 +833,7 @@ class SiteSection(models.Model):
     published = models.BooleanField(default=False, db_index=True)
 
     editor = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         default=None,
@@ -3443,92 +3440,3 @@ class SiteMoreInformation(SiteSection):
     #antenna_graphic.verbose_name = _('')
     #antenna_graphic.no_indent = True
 
-
-class LogEntryManager(models.Manager):
-    pass
-
-
-class LogEntryQuerySet(models.QuerySet):
-
-    def for_user(self, user):
-        if user.is_superuser:
-            return self
-        return self.filter(site__agencies__in=[user.agency])
-
-
-class LogEntry(models.Model):
-
-    user = models.ForeignKey(
-        get_user_model(),
-        on_delete=models.SET_NULL,
-        null=True,
-        default=None,
-        blank=True,
-        related_name='logentries'
-    )
-
-    timestamp = models.DateTimeField(
-        auto_now_add=True,
-        null=False,
-        blank=True,
-        db_index=True
-    )
-
-    # this is the timestamp of the data change which may be different than
-    # the timestamp on the LogEntry, for instance in the event of a publish
-    epoch = models.DateTimeField(
-        null=False,
-        blank=True,
-        db_index=True
-    )
-
-    type = EnumField(LogEntryType, null=False, blank=False)
-
-    site = models.ForeignKey(
-        Site,
-        on_delete=models.CASCADE,
-        null=True,
-        default=None,
-        blank=True
-    )
-
-    site_log_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        related_name='logentries',
-        null=True,
-        default=None,
-        blank=True
-    )
-    site_log_id = models.PositiveIntegerField(
-        null=True,
-        default=None,
-        blank=True
-    )
-    site_log_object = GenericForeignKey('site_log_type', 'site_log_id')
-
-    ip = models.GenericIPAddressField(null=True, default=None, blank=True)
-
-    objects = LogEntryManager.from_queryset(LogEntryQuerySet)()
-
-    @property
-    def target(self):
-        if self.type == LogEntryType.NEW_SITE:
-            return self.site.name
-        if self.site_log_type:
-            if issubclass(self.site_log_type.model_class(), SiteSubSection):
-                return self.site_log_type.model_class().subsection_name()
-            elif issubclass(self.site_log_type.model_class(), SiteSection):
-                return self.site_log_type.model_class().section_name()
-            return self.site_log_type.verbose_name
-        return ''
-
-    def __str__(self):
-        return f'({self.user.name or self.user.email if self.user else ""}) ' \
-               f'[{self.timestamp}]: {self.type} -> {self.target}'
-
-    class Meta:
-        indexes = [
-            models.Index(fields=["site_log_type", "site_log_id"]),
-        ]
-        ordering = ('-timestamp',)

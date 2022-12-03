@@ -10,12 +10,14 @@ class LogEntryType(IntegerChoices):
         s('label', case_fold=True)
     ]
 
-    NEW_SITE = 1, _('New Site')
-    ADD      = 2, _('Add')
-    UPDATE   = 3, _('Update')
-    DELETE   = 4, _('Delete')
-    PUBLISH  = 5, _('Publish')
+    NEW_SITE    = 1, _('New Site')
+    ADD         = 2, _('Add')
+    UPDATE      = 3, _('Update')
+    DELETE      = 4, _('Delete')
+    PUBLISH     = 5, _('Publish')
+    LOG_UPLOAD  = 6, _('Site Log Upload')
+    FILE_UPLOAD = 7, _('Site File Upload')
 
     @property
     def css(self):
-        return f'slm-log-{self.label.lower()}'
+        return f'slm-log-{self.label.lower().replace("_", "-")}'

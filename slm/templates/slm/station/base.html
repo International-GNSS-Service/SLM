@@ -36,6 +36,9 @@
                                 <li class="nav-item {% if url_name == 'edit' %}active{% endif %}">
                                     <a href="{% if station %}{% url 'slm:edit' station=station %}{% else %}{% url 'slm:edit' %}{% endif %}" class="nav-link"><i class="bi bi-pencil-square"></i> Edit</a>
                                 </li>
+                                <li class="nav-item {% if url_name == 'upload' %}active{% endif %}">
+                                    <a href="{% if station %}{% url 'slm:upload' station=station %}{% else %}{% url 'slm:upload' %}{% endif %}" class="nav-link"><i class="bi bi-upload"></i> Upload</a>
+                                </li>
                                 <li class="nav-item {% if url_name == 'download' %}active{% endif %}">
                                     <a href="{% if station %}{% url 'slm:download' station=station %}{% else %}{% url 'slm:download' %}{% endif %}" class="nav-link"><i class="bi bi-download"></i> Download</a>
                                 </li>

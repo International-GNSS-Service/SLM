@@ -7,6 +7,8 @@ class LogEntryType {
     static UPDATE = new LogEntryType(3, 'Update', 'slm-log-update');
     static DELETE = new LogEntryType(4, 'Delete', 'slm-log-delete');
     static PUBLISH = new LogEntryType(5, 'Publish', 'slm-log-publish');
+    static LOG_UPLOAD = new LogEntryType(6, 'Site Log Upload', 'slm-log-site log upload');
+    static FILE_UPLOAD = new LogEntryType(7, 'Site File Upload', 'slm-log-site file upload');
 
     constructor(val, label, css) {
         this.val = val;
@@ -30,6 +32,10 @@ class LogEntryType {
                 return LogEntryType.DELETE;
             case 5:
                 return LogEntryType.PUBLISH;
+            case 6:
+                return LogEntryType.LOG_UPLOAD;
+            case 7:
+                return LogEntryType.FILE_UPLOAD;
         }
     }
 }

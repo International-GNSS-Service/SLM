@@ -7,9 +7,14 @@ from django.db.models import Q
 from slm.defines import (
     AntennaReferencePoint,
     AntennaFeatures,
-    EquipmentState
+    EquipmentState,
+    SLMFileType,
+    SiteLogFormat,
+    LogEntryType
 )
-from django.contrib.auth import get_user_model
+from slm.models.sitelog import SiteSubSection, SiteSection
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 class AgencyManager(models.Manager):
@@ -22,7 +27,9 @@ class AgencyQuerySet(models.QuerySet):
         """Get the agency(s) this user is a member of."""
         if user.is_superuser:
             return self
-        return self.filter(pk__in=[user.agency.pk])
+        if user.agency:
+            return self.filter(pk__in=[user.agency.pk])
+        return self.none()
 
 
 class Agency(models.Model):
@@ -340,3 +347,191 @@ class Receiver(Equipment):
 
 class Radome(Equipment):
     pass
+
+
+def site_upload_path(instance, filename):
+    """
+     file will be saved to:
+        MEDIA_ROOT/uploads/<9-char site name>/year/month/day/filename
+    """
+    prefix = ''
+    if instance.SUB_DIRECTORY:
+        prefix = f'{instance.SUB_DIRECTORY}/'
+    return f'{prefix}{instance.site.name}/{instance.timestamp.year}/' \
+           f'{instance.timestamp.month}/{instance.timestamp.day}/{filename}'
+
+
+class SiteFile(models.Model):
+
+    SUB_DIRECTORY = 'misc'
+
+    site = models.ForeignKey(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        null=False
+    )
+
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    upload = models.FileField(
+        upload_to=site_upload_path,
+        null=False
+    )
+
+    mimetype = models.CharField(max_length=255, null=False, db_index=True)
+
+    file_type = EnumField(
+        SLMFileType,
+        null=False,
+        default=SLMFileType.UNKNOWN,
+        db_index=True,
+        help_text=_('The file type of the upload.')
+    )
+
+    log_format = EnumField(
+        SiteLogFormat,
+        null=True,
+        default=None,
+        db_index=True,
+        help_text=_('The site log format. (Only if file_type is Site Log)')
+    )
+
+    def save(self, *args, **kwargs):
+        if self.mimetype is None:
+            import mimetypes
+            self.mimetype = mimetypes.guess_type(self.upload.path)[0]
+        if self.file_type is SLMFileType.UNKNOWN:
+            self.file_type, self.log_format = self.determine_type(
+                self.upload,
+                self.mimetype
+            )
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def determine_type(cls, upload, mimetype):
+        file_type, log_format = SLMFileType.UNKNOWN, None
+        with upload.open() as upl:
+            content = upl.read()
+            if mimetype == SiteLogFormat.LEGACY.mimetype:
+                # todo - better criteria??
+                if (
+                    'Site Identification of the GNSS Monument' in content and
+                    'Site Location Information' in content and
+                    'GNSS Receiver Information' in content and
+                    'GNSS Antenna Information' in content
+                ):
+                    return SLMFileType.SITE_LOG, SiteLogFormat.LEGACY
+            elif mimetype == SiteLogFormat.GEODESY_ML.mimetype:
+                pass
+            elif mimetype == SiteLogFormat.JSON.mimetype:
+                pass
+            elif mimetype.split('/')[0] == 'image':
+                return SLMFileType.SITE_IMAGE, None
+
+        return file_type, log_format
+
+    class Meta:
+        abstract = True
+        ordering = ('-timestamp',)
+
+
+class SiteFileUpload(SiteFile):
+
+    SUB_DIRECTORY = 'uploads'
+
+    published = models.BooleanField(default=False, db_index=True)
+
+
+class RenderedSiteLog(SiteFile):
+
+    SUB_DIRECTORY = 'logs'
+
+
+class LogEntryManager(models.Manager):
+    pass
+
+
+class LogEntryQuerySet(models.QuerySet):
+
+    def for_user(self, user):
+        if user.is_superuser:
+            return self
+        return self.filter(site__agencies__in=[user.agency])
+
+
+class LogEntry(models.Model):
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        default=None,
+        blank=True,
+        related_name='logentries'
+    )
+
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        null=False,
+        blank=True,
+        db_index=True
+    )
+
+    # this is the timestamp of the data change which may be different than
+    # the timestamp on the LogEntry, for instance in the event of a publish
+    epoch = models.DateTimeField(
+        null=False,
+        blank=True,
+        db_index=True
+    )
+
+    type = EnumField(LogEntryType, null=False, blank=False)
+
+    site = models.ForeignKey(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        null=True,
+        default=None,
+        blank=True
+    )
+
+    site_log_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name='logentries',
+        null=True,
+        default=None,
+        blank=True
+    )
+    site_log_id = models.PositiveIntegerField(
+        null=True,
+        default=None,
+        blank=True
+    )
+    site_log_object = GenericForeignKey('site_log_type', 'site_log_id')
+
+    ip = models.GenericIPAddressField(null=True, default=None, blank=True)
+
+    objects = LogEntryManager.from_queryset(LogEntryQuerySet)()
+
+    @property
+    def target(self):
+        if self.type == LogEntryType.NEW_SITE:
+            return self.site.name
+        if self.site_log_type:
+            if issubclass(self.site_log_type.model_class(), SiteSubSection):
+                return self.site_log_type.model_class().subsection_name()
+            elif issubclass(self.site_log_type.model_class(), SiteSection):
+                return self.site_log_type.model_class().section_name()
+            return self.site_log_type.verbose_name
+        return ''
+
+    def __str__(self):
+        return f'({self.user.name or self.user.email if self.user else ""}) ' \
+               f'[{self.timestamp}]: {self.type} -> {self.target}'
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["site_log_type", "site_log_id"]),
+        ]
+        ordering = ('-timestamp',)

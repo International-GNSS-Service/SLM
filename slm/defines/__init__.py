@@ -12,3 +12,5 @@ from slm.defines.DataRate import DataRate
 from slm.defines.CollocationStatus import CollocationStatus
 from slm.defines.FractureSpacing import FractureSpacing
 from slm.defines.ISOCountry import ISOCountry
+from slm.defines.SLMFileType import SLMFileType
+from slm.defines.SiteLogFormat import SiteLogFormat

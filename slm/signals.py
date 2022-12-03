@@ -117,11 +117,10 @@ Sent when a user uploads a site log.
 :param user: The user that uploaded the site log.
 :param timestamp: The time the site log was uploaded.
 :param request: The Django request object that contained the upload.
-:param format: The site log upload format.
-:param updated_sections: The list of section objects that were updated.
+:param upload: The uploaded file (SiteFileUpload).
 :param kwargs: Misc other key word arguments
 """
-site_log_uploaded = dispatch.Signal()
+site_file_uploaded = dispatch.Signal()
 
 """
 Sent when a user requests a site log be reviewed and published by moderators.

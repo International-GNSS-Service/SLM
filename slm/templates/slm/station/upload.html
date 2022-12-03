@@ -1,0 +1,63 @@
+<!--
+
+Template for Download page.
+
+-->
+
+{% extends "slm/station/base.html" %}
+{% load i18n %}
+
+{% block head %}
+    {{ block.super }}
+
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css"/>
+
+    <style>
+        #upload-container {}
+
+        #sitefile-upload {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+
+{% endblock head %}
+
+{% block action_content %}
+<div class="container px-5">
+  <!-- Title -->
+  <div class="d-flex flex-column justify-content-left align-items-left mt-4">
+    <div class="mb-4 pb-3 border-bottom">
+      <h2>{% trans "Upload" %}</h2>
+    </div>
+  </div>
+
+  <!-- Download Options -->
+  <div id="upload-container" class="p-3">
+
+      <div id="sitefile-upload" class="dropzone">
+          <div class="dz-message" data-dz-message><h5>{% translate "Click or drag files to upload an updated site log, site images or miscellaneous files." %}</h5></div>
+      </div>
+
+        <script>
+          Dropzone.autoDiscover = false;
+          // Dropzone has been added as a global variable.
+          const dropzone = new Dropzone(
+              "div#sitefile-upload",
+              {
+                  url: slm.urls.reverse(
+                      'slm_edit_api:upload-detail', kwargs={'site': '{{ station }}'}
+                  ),
+                  method: 'put',
+                  headers:{
+                    'X-CSRFToken' : "{{ csrf_token }}"
+                  }
+              }
+          );
+        </script>
+
+  </div>
+</div>
+{% endblock %}

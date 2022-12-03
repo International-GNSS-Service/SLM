@@ -30,6 +30,7 @@ from django.test import Client
 from django.urls import reverse
 from slm.tests.defines.ISOCountry import TestISOCountry  # dont remove
 from slm.tests.defines.SiteLogStatus import TestSiteLogStatus  # dont remove
+from slm.tests.parsing.legacy import TestLegacyParser  # dont remove
 
 
 class ReceivedSignal:

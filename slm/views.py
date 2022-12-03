@@ -98,11 +98,14 @@ class SLMView(TemplateView):
             self.request.user.is_superuser if self.request.user else None
         )
         context['networks'] = Network.objects.all()
-        context['user_agencies'] = (
-            Agency.objects.all()
-            if self.request.user.is_superuser
-            else Agency.objects.filter(pk=self.request.user.agency.pk)
-        )
+        if self.request.user.is_superuser:
+            context['user_agencies'] = Agency.objects.all()
+        elif self.request.user.agency:
+            context['user_agencies'] = Agency.objects.filter(
+                pk=self.request.user.agency.pk
+            )
+        else:
+            context['user_agencies'] = Agency.objects.none()
         return context
 
 
@@ -407,8 +410,8 @@ class AlertsView(StationContextView):
     template_name = 'slm/station/alerts.html'
 
 
-class UploadView(SLMView):
-    template_name = 'slm/upload.html'
+class UploadView(StationContextView):
+    template_name = 'slm/station/upload.html'
 
 
 class NewSiteView(StationContextView):

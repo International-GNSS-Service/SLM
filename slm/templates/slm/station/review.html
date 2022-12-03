@@ -5,7 +5,18 @@ Template for View/Diff page.
 -->
 
 {% extends "slm/station/base.html" %}
-{% load compress slm i18n %}
+{% load compress slm i18n static %}
+
+{% block head %}
+    {{ block.super }}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/1.0.5/index.min.js" integrity="sha512-s/r2YIRA8VD7KT0c9uJqKrZFrNFgKlOPeLyVXp7noa6+F8vw5LMvR+hxteawjCpp6+5A4nTYoWtwLcXEJW1YzA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    {% compress js %}
+        <script src="{% static 'slm/js/diff.js' %}"></script>
+    {% endcompress js %}
+
+{% endblock head %}
 
 {% block action_content %}
 <div class="container">

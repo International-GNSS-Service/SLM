@@ -89,3 +89,21 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
         epoch=timestamp,
         ip=get_client_ip(request)[0] if request else None
     )
+
+
+@receiver(slm_signals.site_file_uploaded)
+def log_file_upload(sender, site, user, timestamp, request, upload, **kwargs):
+    from slm.models import LogEntry
+    from slm.defines import LogEntryType
+
+    LogEntry.objects.create(
+        type=(
+            LogEntryType.LOG_UPLOAD if upload.file_type.SITE_LOG
+            else LogEntryType.FILE_UPLOAD
+        ),
+        user=user,
+        site=site,
+        epoch=timestamp,
+        ip=get_client_ip(request)[0] if request else None
+    )
+

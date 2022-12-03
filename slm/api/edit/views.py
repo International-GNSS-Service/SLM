@@ -15,12 +15,17 @@ from rest_framework import (
     status,
     serializers
 )
-from slm.defines import SiteLogStatus
+from slm.defines import SiteLogFormat, SLMFileType
 from rest_framework.serializers import ModelSerializer
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import (
     DjangoFilterBackend,
     FilterSet
+)
+from rest_framework.viewsets import ViewSet
+from rest_framework.parsers import (
+    FileUploadParser,
+    MultiPartParser
 )
 from django.db import models
 from django.db import transaction
@@ -62,7 +67,8 @@ from slm.models import (
     SiteMoreInformation,
     LogEntry,
     Alert,
-    ReviewRequest
+    ReviewRequest,
+    SiteFileUpload
 )
 from slm.api.pagination import DataTablesPagination
 from django.contrib.auth import get_user_model
@@ -758,12 +764,15 @@ class SectionViewSet(type):
                     )
 
                 if previous.count() == 0:
+                    # we delete it if this section or subsection has never
+                    # been published before
                     section.delete()
                     return None
 
                 if not section.is_deleted:
-                    # this is how you copy a model in Django
-                    section.pk = None
+                    # if it has been published before we copy and save it with
+                    # the is_deleted flag set to True
+                    section.pk = None  # this is how you copy a model
                     section.is_deleted = True
                     section.published = False
                     section.editor = self.request.user
@@ -784,6 +793,34 @@ class SectionViewSet(type):
             obj.destroy = destroy
         obj.create = create
         return obj
+
+
+class SiteFileUploadView(ViewSet):
+
+    parser_classes = (MultiPartParser, FileUploadParser)
+    lookup_url_kwarg = 'site'
+
+
+    def update(self, request, site=None):
+        with transaction.atomic():
+            site = Site.objects.filter(name__iexact=site).first()
+            if not (site and site.can_edit(request.user)):
+                raise PermissionDenied()
+
+            upload = SiteFileUpload(
+                site=site,
+                upload=request.FILES['file']
+            )
+            upload.save()
+            slm_signals.site_file_uploaded.send(
+                sender=self,
+                site=site,
+                user=request.user,
+                timestamp=upload.timestamp,
+                request=request,
+                upload=upload
+            )
+        return Response(status=204)
 
 
 # TODO all these can be constructed dynamically from the models

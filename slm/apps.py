@@ -15,5 +15,6 @@ class SLMConfig(AppConfig):
         from slm.receivers import (
             event_emailers,  # register signal receivers that send emails
             event_loggers,  # register signal receivers that log events
-            site_record
+            site_record,
+            cleanup
         )

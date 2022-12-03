@@ -1,4 +1,4 @@
-'''
+"""
 Handles admin site for Django project.
 
 
@@ -16,7 +16,7 @@ group (same command with unregister).
 
 More info:
 https://docs.djangoproject.com/en/3.2/ref/contrib/admin/
-'''
+"""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import *
@@ -120,6 +120,12 @@ class ManufacturerAdmin(admin.ModelAdmin):
     pass
 
 
+class SiteFileUploadAdmin(admin.ModelAdmin):
+
+    search_fields = ['site__name']
+    list_filter = ['file_type', 'log_format']
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Agency, AgencyAdmin)
 admin.site.register(Alert, AlertAdmin)
@@ -128,3 +134,4 @@ admin.site.register(Antenna, AntennaAdmin)
 admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Radome, RadomeAdmin)
 admin.site.register(Manufacturer, ManufacturerAdmin)
+admin.site.register(SiteFileUpload, SiteFileUploadAdmin)

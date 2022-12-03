@@ -177,6 +177,14 @@ a, a:hover {
     border-left-color: #913D88;
 }
 
+.slm-log-log-upload {
+    border-left-color: dodgerblue;
+}
+
+.slm-log-file-upload {
+    border-left-color: darkblue;
+}
+
 span.badge.slm-log-add,
 span.badge.slm-log-update {
     background-color: #BF8C0D;

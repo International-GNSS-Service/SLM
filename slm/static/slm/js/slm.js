@@ -115,7 +115,7 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
             form.find('.alert.slm-form-unpublished').show();
         }
         for (const [field, diff] of Object.entries(data._diff)) {
-            const formField = form.find(`#id_${field}`);
+            const formField = form.find(`#id_${field}-${form.attr('id').replace('site-', '')}`);
             formField.addClass('is-invalid');
             if (data.hasOwnProperty('_flags') && !data._flags.hasOwnProperty(field)) {
                 formField.addClass('slm-form-unpublished');
@@ -161,7 +161,7 @@ slm.handlePostErrors = function(form, jqXHR, status, text) {
             }
         } else {
             for (const [key, value] of Object.entries(data)) {
-                let errorElem = form.find(`#id_${key}`);
+                let errorElem = form.find(`#id_${key}-${form.attr('id').replace('site-', '')}`);
                 errorElem.addClass('is-invalid');
                 errorElem.after(`<div class="invalid-feedback">${value}</div>`);
             }
@@ -200,10 +200,11 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         let formData = new FormData(form.get(0));
         let data = {};
         for (const [key, val] of formData.entries()) {
-            if (formData.getAll(key).length === 1) {
-                data[key] = val;
-            } else {
+            let element = form.find(`[name="${key}"]`).get(0);
+            if (element.hasAttribute( 'multiple' )) {
                 data[key] = formData.getAll(key);
+            } else {
+                data[key] = val;
             }
         }
         //const data = Object.fromEntries(new FormData(form.get(0)).entries());

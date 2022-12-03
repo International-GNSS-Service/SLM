@@ -111,11 +111,19 @@ class SectionForm(forms.ModelForm):
         self.diff = instance.published_diff() if instance else {}
         self.flags = instance._flags if instance else {}
         super().__init__(instance=instance, **kwargs)
+        for field in self.fields:
+            try:
+                model_field = self.Meta.model._meta.get_field(field)
+                if not (hasattr(model_field, 'default') and model_field.blank):
+                    self.fields[field].required = True
+            except FieldDoesNotExist:
+                pass
 
     @classmethod
     def section_name(cls):
-        #return self.Meta.model.section_name
-        return to_snake_case(cls.Meta.model.__name__).replace('_', ' ').replace('site', '').title().strip()
+        return to_snake_case(
+            cls.Meta.model.__name__
+        ).replace('_', ' ').replace('site', '').title().strip()
 
     @property
     def num_flags(self):
@@ -128,7 +136,8 @@ class SectionForm(forms.ModelForm):
     @cached_property
     def structured_fields(self):
         # todo this is spaghetti
-        # arrange fields in structure to easily produce fieldsets in correct order in the template, reflects old site
+        # arrange fields in structure to easily produce fieldsets in
+        # correct order in the template, reflects old site
         # log order and groupings
         fields = []
 
@@ -153,7 +162,10 @@ class SectionForm(forms.ModelForm):
             else:
                 fields.append(field_name)
 
-            return [self.fields[field].get_bound_field(form=self, field_name=field) for field in fields]
+            return [
+                self.fields[field].get_bound_field(form=self, field_name=field)
+                for field in fields
+            ]
 
         for structure in self.Meta.model.structure():
             if isinstance(structure, tuple) or isinstance(structure, list):
@@ -174,8 +186,9 @@ class SectionForm(forms.ModelForm):
         fields += [(None, [field]) for field in self.hidden_fields()]
         return fields
 
+    # todo this might be a security hole - restrict queryset to user's stations
     site = forms.ModelChoiceField(
-        queryset=Site.objects.all(),  # todo this might be a security hole - restrict queryset to user's stations
+        queryset=Site.objects.all(),
         widget=forms.HiddenInput()
     )
 
@@ -201,9 +214,11 @@ class SubSectionForm(SectionForm):
         if self.instance.subsection is None:
             with transaction.atomic():
                 # todo is there a race condition here?
-                self.instance.subsection = (self.Meta.model.objects.select_for_update().filter(
-                    site=self.instance.site
-                ).aggregate(Max('subsection'))['subsection__max'] or 0) + 1
+                self.instance.subsection = (
+                    self.Meta.model.objects.select_for_update().filter(
+                        site=self.instance.site
+                    ).aggregate(Max('subsection'))['subsection__max'] or 0
+                ) + 1
 
                 return super().save(commit=commit)
         return super().save(commit=commit)
@@ -229,9 +244,23 @@ class SiteFormForm(SectionForm):
 
 class SiteIdentificationForm(SectionForm):
 
+    # we only include this for legacy purposes - this is not an editable value
+    four_character_id = forms.CharField(
+        label=_('Four Character ID'),
+        help_text=_(
+            'This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 '
+            'filenames. Format: (XXXX - existing four character IGS station '
+            'name, M - Monument or marker number (0-9), R - Receiver number '
+            '(0-9), CCC - Three digit ISO 3166-1 country code)'
+        ),
+        disabled=True,
+        required=False
+    )
+
     class Meta:
         model = SiteIdentification
-        fields = SectionForm.Meta.fields + SiteIdentification.site_log_fields()
+        fields = SectionForm.Meta.fields + \
+                 SiteIdentification.site_log_fields() + ['four_character_id']
 
 
 class SiteLocationForm(SectionForm):
@@ -247,15 +276,9 @@ class SiteReceiverForm(SubSectionForm):
         queryset=SatelliteSystem.objects.all(),
         help_text=SiteReceiver._meta.get_field('satellite_system').help_text,
         label=SiteReceiver._meta.get_field('satellite_system').verbose_name,
-        widget=forms.SelectMultiple
-    )
-
-    elevation_cutoff = forms.FloatField(
-        required=SiteReceiver._meta.get_field('elevation_cutoff').blank,
-        help_text=SiteReceiver._meta.get_field('elevation_cutoff').help_text,
-        label=SiteReceiver._meta.get_field('elevation_cutoff').verbose_name,
-        max_value=15,
-        min_value=-5
+        required=True,
+        widget=forms.SelectMultiple,
+        empty_label=None
     )
 
     def __init__(self, **kwargs):
@@ -298,20 +321,16 @@ class SiteSurveyedLocalTiesForm(SubSectionForm):
 
     class Meta:
         model = SiteSurveyedLocalTies
-        fields = SubSectionForm.Meta.fields + SiteSurveyedLocalTies.site_log_fields()
+        fields = SubSectionForm.Meta.fields + \
+                 SiteSurveyedLocalTies.site_log_fields()
 
 
 class SiteFrequencyStandardForm(SubSectionForm):
 
-    input_frequency = forms.FloatField(
-        required=SiteFrequencyStandard._meta.get_field('input_frequency').blank,
-        help_text=SiteFrequencyStandard._meta.get_field('input_frequency').help_text,
-        label=SiteFrequencyStandard._meta.get_field('input_frequency').verbose_name
-    )
-
     class Meta:
         model = SiteFrequencyStandard
-        fields = SubSectionForm.Meta.fields + SiteFrequencyStandard.site_log_fields()
+        fields = SubSectionForm.Meta.fields + \
+                 SiteFrequencyStandard.site_log_fields()
 
 
 class SiteCollocationForm(SubSectionForm):
@@ -328,75 +347,42 @@ class MeteorologicalForm(SubSectionForm):
 
 class SiteHumiditySensorForm(MeteorologicalForm):
 
-    accuracy = forms.FloatField(
-        required=SiteHumiditySensor._meta.get_field('accuracy').blank,
-        help_text=SiteHumiditySensor._meta.get_field('accuracy').help_text,
-        label=SiteHumiditySensor._meta.get_field('accuracy').verbose_name
-    )
-
-    sampling_interval = forms.FloatField(
-        required=SiteHumiditySensor._meta.get_field('sampling_interval').blank,
-        help_text=SiteHumiditySensor._meta.get_field('sampling_interval').help_text,
-        label=SiteHumiditySensor._meta.get_field('sampling_interval').verbose_name
-    )
-
     class Meta:
         model = SiteHumiditySensor
-        fields = MeteorologicalForm.Meta.fields + SiteHumiditySensor.site_log_fields()
+        fields = MeteorologicalForm.Meta.fields + \
+                 SiteHumiditySensor.site_log_fields()
 
 
 class SitePressureSensorForm(MeteorologicalForm):
 
-    accuracy = forms.FloatField(
-        required=SitePressureSensor._meta.get_field('accuracy').blank,
-        help_text=SitePressureSensor._meta.get_field('accuracy').help_text,
-        label=SitePressureSensor._meta.get_field('accuracy').verbose_name
-    )
-
-    sampling_interval = forms.FloatField(
-        required=SitePressureSensor._meta.get_field('sampling_interval').blank,
-        help_text=SitePressureSensor._meta.get_field('sampling_interval').help_text,
-        label=SitePressureSensor._meta.get_field('sampling_interval').verbose_name
-    )
-
     class Meta:
         model = SitePressureSensor
-        fields = MeteorologicalForm.Meta.fields + SitePressureSensor.site_log_fields()
+        fields = MeteorologicalForm.Meta.fields + \
+                 SitePressureSensor.site_log_fields()
 
 
 class SiteTemperatureSensorForm(MeteorologicalForm):
 
-    accuracy = forms.FloatField(
-        required=SiteTemperatureSensor._meta.get_field('accuracy').blank,
-        help_text=SiteTemperatureSensor._meta.get_field('accuracy').help_text,
-        label=SiteTemperatureSensor._meta.get_field('accuracy').verbose_name
-    )
-
-    sampling_interval = forms.FloatField(
-        required=SiteTemperatureSensor._meta.get_field('sampling_interval').blank,
-        help_text=SiteTemperatureSensor._meta.get_field(
-            'sampling_interval').help_text,
-        label=SiteTemperatureSensor._meta.get_field(
-            'sampling_interval').verbose_name
-    )
-
     class Meta:
         model = SiteTemperatureSensor
-        fields = MeteorologicalForm.Meta.fields + SiteTemperatureSensor.site_log_fields()
+        fields = MeteorologicalForm.Meta.fields + \
+                 SiteTemperatureSensor.site_log_fields()
 
 
 class SiteWaterVaporRadiometerForm(MeteorologicalForm):
 
     class Meta:
         model = SiteWaterVaporRadiometer
-        fields = MeteorologicalForm.Meta.fields + SiteWaterVaporRadiometer.site_log_fields()
+        fields = MeteorologicalForm.Meta.fields + \
+                 SiteWaterVaporRadiometer.site_log_fields()
 
 
 class SiteOtherInstrumentationForm(MeteorologicalForm):
 
     class Meta:
         model = SiteOtherInstrumentation
-        fields = MeteorologicalForm.Meta.fields + SiteOtherInstrumentation.site_log_fields()
+        fields = MeteorologicalForm.Meta.fields + \
+                 SiteOtherInstrumentation.site_log_fields()
 
 
 class LocalConditionForm(SubSectionForm):
@@ -408,55 +394,63 @@ class SiteRadioInterferencesForm(LocalConditionForm):
 
     class Meta:
         model = SiteRadioInterferences
-        fields = LocalConditionForm.Meta.fields + SiteRadioInterferences.site_log_fields()
+        fields = LocalConditionForm.Meta.fields + \
+                 SiteRadioInterferences.site_log_fields()
 
 
 class SiteMultiPathSourcesForm(LocalConditionForm):
 
     class Meta:
         model = SiteMultiPathSources
-        fields = LocalConditionForm.Meta.fields + SiteMultiPathSources.site_log_fields()
+        fields = LocalConditionForm.Meta.fields + \
+                 SiteMultiPathSources.site_log_fields()
 
 
 class SiteSignalObstructionsForm(LocalConditionForm):
 
     class Meta:
         model = SiteSignalObstructions
-        fields = LocalConditionForm.Meta.fields + SiteSignalObstructions.site_log_fields()
+        fields = LocalConditionForm.Meta.fields + \
+                 SiteSignalObstructions.site_log_fields()
 
 
 class SiteLocalEpisodicEffectsForm(SubSectionForm):
 
     class Meta:
         model = SiteLocalEpisodicEffects
-        fields = SubSectionForm.Meta.fields + SiteLocalEpisodicEffects.site_log_fields()
+        fields = SubSectionForm.Meta.fields + \
+                 SiteLocalEpisodicEffects.site_log_fields()
 
 
 class SiteOperationalContactForm(SectionForm):
 
     class Meta:
         model = SiteOperationalContact
-        fields = SectionForm.Meta.fields + SiteOperationalContact.site_log_fields()
+        fields = SectionForm.Meta.fields + \
+                 SiteOperationalContact.site_log_fields()
 
 
 class SiteResponsibleAgencyForm(SectionForm):
 
     class Meta:
         model = SiteResponsibleAgency
-        fields = SectionForm.Meta.fields + SiteResponsibleAgency.site_log_fields()
+        fields = SectionForm.Meta.fields + \
+                 SiteResponsibleAgency.site_log_fields()
 
 
 class SiteMoreInformationForm(SectionForm):
 
     class Meta:
         model = SiteMoreInformation
-        fields = SectionForm.Meta.fields + SiteMoreInformation.site_log_fields()
+        fields = SectionForm.Meta.fields + \
+                 SiteMoreInformation.site_log_fields()
 
 
 class UserForm(forms.ModelForm):
 
+    # todo this might be a security hole - restrict queryset to user's stations
     agency = forms.ModelChoiceField(
-        queryset=Agency.objects.all(),  # todo this might be a security hole - restrict queryset to user's stations
+        queryset=Agency.objects.all(),
         required=False,
         disabled=True
     )

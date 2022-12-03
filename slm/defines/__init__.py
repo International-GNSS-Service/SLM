@@ -14,3 +14,5 @@ from slm.defines.FractureSpacing import FractureSpacing
 from slm.defines.ISOCountry import ISOCountry
 from slm.defines.SLMFileType import SLMFileType
 from slm.defines.SiteLogFormat import SiteLogFormat
+from slm.defines.Aspiration import Aspiration
+from slm.defines.FrequencyStandardType import FrequencyStandardType

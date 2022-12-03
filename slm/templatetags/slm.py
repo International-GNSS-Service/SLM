@@ -87,27 +87,38 @@ def iso_utc(datetime_field):
 def multi_line(text):
     if text:
         limit = 49
-        lines = text.split('\n')
+        lines = [line.rstrip() for line in text.split('\n')]
         limited = []
         for line in lines:
             while len(line) > limit:
-                limited.append(unescape(line[0:limit]))
-                line = line[limit:]
+                mark = limit
+
+                # only chop on white space if we can
+                for ridx, char in enumerate(reversed(line[0:limit])):
+                    if not char.strip():
+                        mark = limit - ridx
+                        break
+
+                limited.append(unescape(line[0:mark]))
+                line = line[mark:]
             limited.append(unescape(line))
         return f'\n{" "*30}: '.join([line for line in limited if line.strip()])
     return ''
 
 
 @register.filter(name='iso6709')
-def iso6709(lat_lng):
+def iso6709(lat_lng, padding):
     if lat_lng:
-        return f'{"+" if lat_lng > 0 else ""}{lat_lng:.2f}'
+        number = f'{lat_lng:.2f}'
+        integer, dec = number.split('.') if '.' in number else (number, None)
+        iso_frmt = f"{abs(int(integer)):0{int(padding)}}{'.' if dec else ''}{dec}"
+        return f'{"+" if float(lat_lng) > 0 else "-"}{iso_frmt}'
     return ''
 
 
 @register.filter(name='precision')
 def precision(alt, precision):
-    if alt is not None:
+    if alt not in {None, ''}:
         return f'{alt:.{precision}f}'.rstrip('0').rstrip('.')
     return ''
 
@@ -156,3 +167,17 @@ def get_key(obj, key):
 @register.filter(name='merge')
 def merge(obj1, obj2):
     return obj1.merge(obj2)
+
+
+@register.filter(name='antenna_radome')
+def antenna_radome(antenna):
+    spacing = max(abs(16-len(antenna.antenna_type.model)), 1)
+    radome = 'NONE'
+    if hasattr(antenna, 'radome_type'):
+        radome = antenna.radome_type.model
+    return f'{antenna.antenna_type.model}{" " * spacing}{radome}'
+
+
+@register.filter(name='rpad_space')
+def rpad_space(text, length):
+    return f'{text}{" " * (int(length) - len(str(text)))}'

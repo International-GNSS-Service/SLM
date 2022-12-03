@@ -16,13 +16,14 @@
             <legend>{{ structure.0 }}</legend>
         {% endif %}
         {% for field in structure.1 %}
-              {% with diff=form.diff|key_value:field.name %}
-              {% with flag=form.flags|key_value:field.name %}
+          {% with diff=form.diff|key_value:field.name %}
+            {% with flag=form.flags|key_value:field.name %}
+              {% with field_id="id_"|add:field.name|add:"-"|add:form_id %}
                 <fieldset class="form-group slm-form-fieldset" data-slm-field="{{ field.name }}">
                 <legend></legend>
                 <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-field"{% endif %}>
                   <div class="col-3">
-                      <label class="form-label" for="id_{{ field.name }}">{{ field.label }}</label>
+                      <label class="form-label" for="{{ field_id }}">{{ field.label }}{% if field.field.required %} <span style="color: red">*</span>{% endif %}</label>
                   </div>
                   {% if is_moderator and not form.instance.is_deleted %}
                   <div class="col-1 slm-mod-col p-0 text-end slm-flag">
@@ -43,32 +44,32 @@
                   {% endif %}
                       {% if form.instance.is_deleted %}
                           {% if flag and not field.is_hidden %}
-                            {% render_field field class="form-control is-invalid" disabled="" %}
+                            {% render_field field id=field_id class="form-control is-invalid" disabled="" %}
                           {% elif diff and not field.is_hidden %}
-                            {% render_field field class="form-control is-invalid slm-form-unpublished" disabled="" %}
+                            {% render_field field id=field_id class="form-control is-invalid slm-form-unpublished" disabled="" %}
                           {% elif field.is_hidden %}
-                            {% render_field field class="form-control" %}
+                            {% render_field field id=field_id class="form-control" %}
                           {% else %}
-                            {% render_field field class="form-control" disabled="" %}
+                            {% render_field field id=field_id class="form-control" disabled="" %}
                           {% endif %}
                       {% else %}
                           {% if flag and not field.is_hidden %}
-                            {% render_field field class="form-control is-invalid" %}
+                            {% render_field field id=field_id class="form-control is-invalid" %}
                           {% elif diff and not field.is_hidden %}
-                            {% render_field field class="form-control is-invalid slm-form-unpublished" %}
+                            {% render_field field id=field_id class="form-control is-invalid slm-form-unpublished" %}
                           {% else %}
-                            {% render_field field class="form-control" %}
+                            {% render_field field id=field_id class="form-control" %}
                           {% endif %}
                       {% endif %}
                       {% if not field.is_hidden %}
                       {% if is_moderator %}
-                      <label for="{{ field.label|to_id:'flag'}}" style="display: none;"><span class="visually-hidden">Flag for {{ field.label }}</span></label>
-                      <input id="{{ field.label|to_id:'flag'}}" type="text" name="{{ field.name }}_flag" data-slm-field="{{ field.name }}" {% if flag %}value="{{ flag }}"{% endif %} {% if not flag %}style="display: none;"{% endif %} class="form-control slm-flag-input" {% if form.instance.is_deleted %}disabled{% endif %}/>
+                      <label for="{{ field_id|to_id:'flag'}}" style="display: none;"><span class="visually-hidden">Flag for {{ field.label }}</span></label>
+                      <input id="{{ field_id|to_id:'flag'}}" type="text" name="{{ field.name }}_flag" data-slm-field="{{ field.name }}" {% if flag %}value="{{ flag }}"{% endif %} {% if not flag %}style="display: none;"{% endif %} class="form-control slm-flag-input" {% if form.instance.is_deleted %}disabled{% endif %}/>
                       {% elif flag %}
-                          <div id="{{ field.label|to_id:'flag'}}" class="invalid-feedback slm-form-error">{{ flag }}</div>
+                          <div id="{{ field_id|to_id:'flag'}}" class="invalid-feedback slm-form-error">{{ flag }}</div>
                       {% endif %}
                       {% if diff %}
-                          <div id="{{ field.label|to_id:'diff'}}" class="invalid-feedback slm-form-unpublished">{% trans "The published value is " %}{{ diff.pub|value_filter }}</div>
+                          <div id="{{ field_id|to_id:'diff'}}" class="invalid-feedback slm-form-unpublished">{% trans "The published value is " %}{{ diff.pub|value_filter }}</div>
                       {% endif %}
                       {% endif %}
                   </div>
@@ -86,6 +87,7 @@
                   </div>
                 </div>
                 </fieldset>
+                {% endwith %}
               {% endwith %}
           {% endwith %}
         {% endfor %}

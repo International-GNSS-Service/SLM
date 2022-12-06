@@ -117,7 +117,7 @@
        dx (m)                 : {% if tie.dx is not None %}{{ tie.dx }} m{% endif %}
        dy (m)                 : {% if tie.dy is not None %}{{ tie.dy }} m{% endif %}
        dz (m)                 : {% if tie.dz is not None %}{{ tie.dz }} m{% endif %}
-     Accuracy (mm)            : {{ tie.accuracy }}{% comment %}{% if tie.accuracy is not None %}{{ tie.accuracy|precision:0 }} mm{% endif %}{% endcomment %}
+     Accuracy (mm)            : {% if tie.accuracy is not None %}{{ tie.accuracy|precision:0 }} mm{% endif %}
      Survey method            : {{ tie.survey_method }}
      Date Measured            : {% if tie.measured %}{{ tie.measured|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Additional Information   : {{ tie.additional_information|multi_line }}

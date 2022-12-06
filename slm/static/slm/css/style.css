@@ -244,11 +244,13 @@ span.badge.slm-log-delete {
     padding: 7px;
 }
 
-#slm-station-list {
+#slm-station-list,
+#slm-file-list {
     justify-content: flex-start;
     align-items: flex-start;
 }
-#slm-station-list button {
+#slm-station-list button,
+#slm-file-list button {
     height: fit-content;
     width: 100%;
     text-align: left;
@@ -257,8 +259,21 @@ span.badge.slm-log-delete {
     font-size: large;
     margin-top: 3px;
 }
+#slm-file-list button > i {
+    font-size: 20px;
+    margin-right: 5px;
+}
+
+#slm-file-list button {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 #slm-station-list button.active,
-#slm-station-list button:hover {
+#slm-station-list button:hover,
+#slm-file-list button.active,
+#slm-file-list button:hover {
     background-color: #175A7D;
     color: ghostwhite;
 }
@@ -268,10 +283,14 @@ span.badge.slm-log-delete {
     position: sticky;
     top: 0;
 }
+#slm-file-container {}
 #slm-form-menu {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
+}
+#file-actions > button {
+    margin-right: 5px;
 }
 
 .is-invalid.slm-form-unpublished {
@@ -424,6 +443,37 @@ button.nav-link.slm-status-dormant  {
 button.slm-status-empty,
 button.nav-link.slm-status-empty  {
     border-left: 10px solid #00000000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+button.slm-upload-unpublished,
+button.nav-link.slm-upload-unpublished {
+    border-left: 10px solid #BF8C0D;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-published,
+button.nav-link.slm-upload-published {
+    border-left: 10px solid #008000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-invalid,
+button.nav-link.slm-upload-invalid {
+    border-left: 10px solid #8b0000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-warnings,
+button.nav-link.slm-upload-warnings  {
+    border-left: 10px solid darkorange;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-valid,
+button.nav-link.slm-upload-valid  {
+    border-left: 10px solid #008000;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }

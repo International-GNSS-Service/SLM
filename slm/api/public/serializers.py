@@ -2,7 +2,8 @@ from rest_framework import serializers
 from slm.models import (
     Site,
     Agency,
-    Network
+    Network,
+    SiteFileUpload
 )
 
 
@@ -92,3 +93,27 @@ class StationListSerializer(serializers.ModelSerializer):
             'last_data_time',
             'last_data',
         ]
+
+
+class SiteFileUploadSerializer(serializers.ModelSerializer):
+
+    site = serializers.CharField(source='site.name', allow_null=True)
+    download = serializers.SerializerMethodField()
+
+    def get_download(self, obj):
+        if 'request' in self.context:
+            return self.context['request'].build_absolute_uri(obj.file.url)
+        return obj.file.url
+
+    class Meta:
+        model = SiteFileUpload
+        fields = [
+            'id',
+            'site',
+            'name',
+            'timestamp',
+            'download',
+            'mimetype',
+            'description'
+        ]
+        read_only_fields = fields

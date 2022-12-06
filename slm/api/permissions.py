@@ -47,11 +47,13 @@ class CanDeleteAlert(permissions.BasePermission):
 class CanEditSite(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        if request.user:
+        if request.user.is_authenticated:
             return True
         return False
 
     def has_object_permission(self, request, view, obj):
+        if hasattr(obj, 'site') and isinstance(obj.site, Site):
+            return obj.site.can_edit(request.user)
         return obj.can_edit(request.user)
 
 

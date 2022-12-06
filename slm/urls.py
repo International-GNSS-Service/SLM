@@ -16,6 +16,8 @@ from django.urls import path, register_converter
 from datetime import datetime
 from slm.api.edit import views as edit_views
 from slm.api.public import views as public_views
+from django.conf import settings
+from django.views.static import serve
 
 
 api = {
@@ -26,7 +28,11 @@ api = {
             ('submit', edit_views.ReviewRequestView),
             ('profile', edit_views.UserProfileViewSet),
             ('download', edit_views.SiteLogDownloadViewSet),
-            ('upload', edit_views.SiteFileUploadView),
+            (
+                'files/(?P<site>[^/.]+)',
+                edit_views.SiteFileUploadViewSet,
+                'files'
+            ),
             ('siteform', edit_views.SiteFormViewSet),
             ('siteidentification', edit_views.SiteIdentificationViewSet),
             ('sitelocation', edit_views.SiteLocationViewSet),
@@ -38,13 +44,31 @@ api = {
             ('sitehumiditysensor', edit_views.SiteHumiditySensorViewSet),
             ('sitepressuresensor', edit_views.SitePressureSensorViewSet),
             ('sitetemperaturesensor', edit_views.SiteTemperatureSensorViewSet),
-            ('sitewatervaporradiometer', edit_views.SiteWaterVaporRadiometerViewSet),
-            ('siteotherinstrumentation', edit_views.SiteOtherInstrumentationViewSet),
-            ('siteradiointerferences', edit_views.SiteRadioInterferencesViewSet),
+            (
+                'sitewatervaporradiometer',
+                edit_views.SiteWaterVaporRadiometerViewSet
+            ),
+            (
+                'siteotherinstrumentation',
+                edit_views.SiteOtherInstrumentationViewSet
+            ),
+            (
+                'siteradiointerferences',
+                edit_views.SiteRadioInterferencesViewSet
+            ),
             ('sitemultipathsources', edit_views.SiteMultiPathSourcesViewSet),
-            ('sitesignalobstructions', edit_views.SiteSignalObstructionsViewSet),
-            ('sitelocalepisodiceffects', edit_views.SiteLocalEpisodicEffectsViewSet),
-            ('siteoperationalcontact', edit_views.SiteOperationalContactViewSet),
+            (
+                'sitesignalobstructions',
+                edit_views.SiteSignalObstructionsViewSet
+            ),
+            (
+                'sitelocalepisodiceffects',
+                edit_views.SiteLocalEpisodicEffectsViewSet
+            ),
+            (
+                'siteoperationalcontact',
+                edit_views.SiteOperationalContactViewSet
+            ),
             ('siteresponsibleagency', edit_views.SiteResponsibleAgencyViewSet),
             ('sitemoreinformation', edit_views.SiteMoreInformationViewSet),
             ('logentries', edit_views.LogEntryViewSet),
@@ -55,7 +79,8 @@ api = {
         'serializer_module': 'slm.api.public.serializers',
         'endpoints': [
             ('stations', public_views.StationListViewSet),
-            ('download', public_views.SiteLogDownloadViewSet)
+            ('download', public_views.SiteLogDownloadViewSet),
+            ('files', public_views.SiteFileUploadViewSet)
         ]
     },
 }
@@ -107,18 +132,47 @@ app_name = 'slm'
 urlpatterns = [
     path('', IndexView.as_view(), name='home'),
     path('edit/<station:station>', EditView.as_view(), name='edit'),
-    path('edit/<station:station>/<str:section>', EditView.as_view(), name='edit'),
+    path(
+        'edit/<station:station>/<str:section>',
+        EditView.as_view(),
+        name='edit'
+    ),
     path('newsite/', NewSiteView.as_view(), name='new_site'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('alerts/', AlertsView.as_view(), name='alerts'),
     path('alerts/<station:station>', AlertsView.as_view(), name='alerts'),
     path('upload/<station:station>', UploadView.as_view(), name='upload'),
-    path('download/<station:station>', DownloadView.as_view(), name='download'),
-    path('download/<station:station>/<format:format>', DownloadView.as_view(), name='download'),
-    path('review/<station:station>', StationReviewView.as_view(), name='review'),
-    path('review/<station:station>/<datetime:epoch>', StationReviewView.as_view(), name='review'),
+    path(
+        'upload/<station:station>/<int:file>',
+        UploadView.as_view(),
+        name='upload'
+    ),
+    path(
+        'download/<station:station>',
+        DownloadView.as_view(),
+        name='download'
+    ),
+    path(
+        'download/<station:station>/<format:format>',
+        DownloadView.as_view(),
+        name='download'
+    ),
+    path(
+        'review/<station:station>',
+        StationReviewView.as_view(),
+        name='review'
+    ),
+    path(
+        'review/<station:station>/<datetime:epoch>',
+        StationReviewView.as_view(),
+        name='review'
+    ),
     path('log/<station:station>', LogView.as_view(), name='log'),
-    path('about/', SLMView.as_view(template_name='slm/about.html'), name='about'),
+    path(
+        'about/',
+        SLMView.as_view(template_name='slm/about.html'),
+        name='about'
+    ),
     path('help/', SLMView.as_view(template_name='slm/help.html'), name='help'),
     path('alerts/', AlertsView.as_view(), name='alerts'),
     path('activity/', UserActivityLogView.as_view(), name='user_activity'),
@@ -126,5 +180,6 @@ urlpatterns = [
         'activity/<int:log_user>',
         UserActivityLogView.as_view(),
         name='user_activity'
-    )
+    ),
+    path(r'media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT})
 ]

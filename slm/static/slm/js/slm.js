@@ -460,7 +460,9 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
                     position,
                     data.hasOwnProperty('results') ?
                         data.results : data.hasOwnProperty('data') ?
-                        data.data : data
+                        data.data : data,
+                    data.hasOwnProperty('recordsFiltered') ? data.recordsFiltered : null,
+                    data.hasOwnProperty('recordsTotal') ? data.recordsTotal : null
                 );
                 div.data('slmPage', div.data('slmPage') + pageQuery.length);
             }
@@ -686,5 +688,30 @@ slm.publish = function(siteId) {
         url: slm.urls.reverse('slm_edit_api:stations-detail', kwargs={'pk': siteId}),
         data: {'publish': true},
         method: 'PATCH'
+    });
+}
+
+slm.deleteFile = function(station, fileId) {
+    return $.ajax({
+        url: slm.urls.reverse(
+            'slm_edit_api:files-detail',
+            {'site': station, 'pk': fileId}
+        ),
+        method: 'DELETE'
+    });
+}
+
+slm.publishFile = function(station, fileId, publish) {
+    return $.ajax({
+        url: slm.urls.reverse(
+            'slm_edit_api:files-detail',
+            {'site': station, 'pk': fileId}
+        ),
+        method: 'PATCH',
+        data: {
+            'status': publish ?
+                slm.SiteFileUploadStatus.PUBLISHED.val :
+                slm.SiteFileUploadStatus.UNPUBLISHED.val
+        }
     });
 }

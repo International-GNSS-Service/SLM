@@ -63,6 +63,29 @@ class SiteLogStatus {
     }
 }
 
+class SiteFileUploadStatus {
+    {% for status in SiteFileUploadStatus %}
+    static {{status.name}} = new SiteFileUploadStatus({{status.value}}, '{{status.label}}', '{{status.css}}', '{{status.color}}');{% endfor %}
+
+    constructor(val, label, css, color) {
+        this.val = val;
+        this.label = label;
+        this.css = css;
+        this.color = color;
+    }
+
+    toString() {
+        return this.label;
+    }
+
+    static get(val) {
+        switch(val) {{% for status in SiteFileUploadStatus %}
+            case {{status.value}}:
+                return SiteFileUploadStatus.{{status.name}};{% endfor %}
+        }
+    }
+}
+
 class AlertLevel {
     {% for level in AlertLevel %}
     static {{level.name}} = new AlertLevel({{level.value}}, '{{level.label}}', '{{level.bootstrap}}');{% endfor %}
@@ -85,6 +108,53 @@ class AlertLevel {
     }
 }
 
+
+class SiteLogFormat {
+    {% for format in SiteLogFormat %}
+    static {{format.name}} = new SiteLogFormat({{format.value}}, '{{format.label}}', '{{format.icon}}');{% endfor %}
+
+    constructor(val, label, icon) {
+        this.val = val;
+        this.label = label;
+        this.icon = icon;
+    }
+
+    toString() {
+        return this.label;
+    }
+
+    static get(val) {
+        switch(val) {{% for format in SiteLogFormat %}
+            case {{format.value}}:
+                return SiteLogFormat.{{format.name}};{% endfor %}
+        }
+    }
+}
+
+class SLMFileType {
+    {% for typ in SLMFileType %}
+    static {{typ.name}} = new SLMFileType({{typ.value}}, '{{typ.label}}');{% endfor %}
+
+    constructor(val, label) {
+        this.val = val;
+        this.label = label;
+    }
+
+    toString() {
+        return this.label;
+    }
+
+    static get(val) {
+        switch(val) {{% for typ in SLMFileType %}
+            case {{typ.value}}:
+                return SLMFileType.{{typ.name}};{% endfor %}
+        }
+    }
+}
+
 slm.LogEntryType = LogEntryType;
 slm.SiteLogStatus = SiteLogStatus;
+slm.SiteFileUploadStatus = SiteFileUploadStatus;
 slm.AlertLevel = AlertLevel;
+slm.SiteLogFormat = SiteLogFormat;
+slm.SLMFileType = SLMFileType;

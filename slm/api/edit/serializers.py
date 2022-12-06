@@ -7,11 +7,13 @@ from slm.models import (
     LogEntry,
     Alert,
     Network,
-    ReviewRequest
+    ReviewRequest,
+    SiteFileUpload
 )
 from slm import signals as slm_signals
 from django.core.exceptions import PermissionDenied
 from django.utils.timezone import now
+import os
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -291,3 +293,28 @@ class UserSerializer(serializers.ModelSerializer):
             'html_emails'
         ]
         read_only_fields = ('id', 'agency', 'date_joined')
+
+
+class SiteFileUploadSerializer(serializers.ModelSerializer):
+
+    site = serializers.CharField(source='site.name', allow_null=True)
+    user = EmbeddedUserSerializer(many=False)
+
+    class Meta:
+        model = SiteFileUpload
+        fields = [
+            'id',
+            'site',
+            'name',
+            'user',
+            'status',
+            'timestamp',
+            'file_type',
+            'log_format',
+            'mimetype',
+            'description'
+        ]
+        read_only_fields = [
+            field for field in fields
+            if field not in {'status', 'description'}
+        ]

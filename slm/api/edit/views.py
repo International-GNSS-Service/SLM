@@ -10,12 +10,17 @@ from slm import signals as slm_signals
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from slm.api.views import BaseSiteLogDownloadViewSet
+from slm.legacy.parser import Error
 from rest_framework import (
     mixins,
     status,
     serializers
 )
-from slm.defines import SiteLogFormat, SLMFileType
+from slm.defines import (
+    SiteLogFormat,
+    SLMFileType,
+    SiteFileUploadStatus
+)
 from rest_framework.serializers import ModelSerializer
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import (
@@ -23,10 +28,14 @@ from django_filters.rest_framework import (
     FilterSet
 )
 from rest_framework.viewsets import ViewSet
+from django.core.exceptions import ValidationError
 from rest_framework.parsers import (
     FileUploadParser,
-    MultiPartParser
+    MultiPartParser,
+    FormParser,
+    JSONParser
 )
+from django.http import QueryDict
 from django.db import models
 from django.db import transaction
 import django_filters
@@ -36,8 +45,10 @@ from slm.api.edit.serializers import (
     UserSerializer,
     LogEntrySerializer,
     AlertSerializer,
-    ReviewRequestSerializer
+    ReviewRequestSerializer,
+    SiteFileUploadSerializer
 )
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -79,6 +90,7 @@ from rest_framework import (
 )
 from ipware import get_client_ip
 from django.utils.translation import gettext as _
+from logging import getLogger
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -107,7 +119,7 @@ class ReviewRequestView(
 ):
 
     serializer_class = ReviewRequestSerializer
-    permission_classes = (CanRequestReview, CanRejectReview)
+    permission_classes = (IsAuthenticated, CanRequestReview, CanRejectReview)
 
     def perform_create(self, serializer):
         super().perform_create(serializer)
@@ -144,7 +156,7 @@ class StationListViewSet(
 ):
     
     serializer_class = StationSerializer
-    permission_classes = (CanEditSite,)
+    permission_classes = (IsAuthenticated, CanEditSite,)
 
     class StationFilter(FilterSet):
 
@@ -326,7 +338,7 @@ class UserProfileViewSet(
     viewsets.GenericViewSet
 ):
     serializer_class = UserSerializer
-    permission_classes = (IsUserOrAdmin,)
+    permission_classes = (IsAuthenticated, IsUserOrAdmin,)
 
     def get_queryset(self):
         return get_user_model().objects.filter(
@@ -697,7 +709,11 @@ class SectionViewSet(type):
 
         obj.serializer_class = ViewSetSerializer
         obj.filterset_class = ViewSetFilter
-        obj.permission_classes = (CanEditSite, UpdateAdminOnly)
+        obj.permission_classes = (
+            IsAuthenticated,
+            CanEditSite,
+            UpdateAdminOnly
+        )
         obj.pagination_class = DataTablesPagination
         obj.filter_backends = (DjangoFilterBackend,)
 
@@ -798,40 +814,15 @@ class SectionViewSet(type):
         return obj
 
 
-class SiteFileUploadView(ViewSet):
-
-    parser_classes = (MultiPartParser, FileUploadParser)
-    lookup_url_kwarg = 'site'
-
-
-    def update(self, request, site=None):
-        with transaction.atomic():
-            site = Site.objects.filter(name__iexact=site).first()
-            if not (site and site.can_edit(request.user)):
-                raise PermissionDenied()
-
-            upload = SiteFileUpload(
-                site=site,
-                upload=request.FILES['file']
-            )
-            upload.save()
-            slm_signals.site_file_uploaded.send(
-                sender=self,
-                site=site,
-                user=request.user,
-                timestamp=upload.timestamp,
-                request=request,
-                upload=upload
-            )
-        return Response(status=204)
-
-
 # TODO all these can be constructed dynamically from the models
 class SiteFormViewSet(metaclass=SectionViewSet, model=SiteForm):
     pass
 
 
-class SiteIdentificationViewSet(metaclass=SectionViewSet, model=SiteIdentification):
+class SiteIdentificationViewSet(
+    metaclass=SectionViewSet,
+    model=SiteIdentification
+):
     pass
 
 
@@ -847,11 +838,17 @@ class SiteAntennaViewSet(metaclass=SectionViewSet, model=SiteAntenna):
     pass
 
 
-class SiteSurveyedLocalTiesViewSet(metaclass=SectionViewSet, model=SiteSurveyedLocalTies):
+class SiteSurveyedLocalTiesViewSet(
+    metaclass=SectionViewSet,
+    model=SiteSurveyedLocalTies
+):
     pass
 
 
-class SiteFrequencyStandardViewSet(metaclass=SectionViewSet, model=SiteFrequencyStandard):
+class SiteFrequencyStandardViewSet(
+    metaclass=SectionViewSet,
+    model=SiteFrequencyStandard
+):
     pass
 
 
@@ -859,49 +856,391 @@ class SiteCollocationViewSet(metaclass=SectionViewSet, model=SiteCollocation):
     pass
 
 
-class SiteHumiditySensorViewSet(metaclass=SectionViewSet, model=SiteHumiditySensor):
+class SiteHumiditySensorViewSet(
+    metaclass=SectionViewSet,
+    model=SiteHumiditySensor
+):
     pass
 
 
-class SitePressureSensorViewSet(metaclass=SectionViewSet, model=SitePressureSensor):
+class SitePressureSensorViewSet(
+    metaclass=SectionViewSet,
+    model=SitePressureSensor
+):
     pass
 
 
-class SiteTemperatureSensorViewSet(metaclass=SectionViewSet, model=SiteTemperatureSensor):
+class SiteTemperatureSensorViewSet(
+    metaclass=SectionViewSet,
+    model=SiteTemperatureSensor
+):
     pass
 
 
-class SiteWaterVaporRadiometerViewSet(metaclass=SectionViewSet, model=SiteWaterVaporRadiometer):
+class SiteWaterVaporRadiometerViewSet(
+    metaclass=SectionViewSet,
+    model=SiteWaterVaporRadiometer
+):
     pass
 
 
-class SiteOtherInstrumentationViewSet(metaclass=SectionViewSet, model=SiteOtherInstrumentation):
+class SiteOtherInstrumentationViewSet(
+    metaclass=SectionViewSet,
+    model=SiteOtherInstrumentation
+):
     pass
 
 
-class SiteRadioInterferencesViewSet(metaclass=SectionViewSet, model=SiteRadioInterferences):
+class SiteRadioInterferencesViewSet(
+    metaclass=SectionViewSet,
+    model=SiteRadioInterferences
+):
     pass
 
 
-class SiteMultiPathSourcesViewSet(metaclass=SectionViewSet, model=SiteMultiPathSources):
+class SiteMultiPathSourcesViewSet(
+    metaclass=SectionViewSet,
+    model=SiteMultiPathSources
+):
     pass
 
 
-class SiteSignalObstructionsViewSet(metaclass=SectionViewSet, model=SiteSignalObstructions):
+class SiteSignalObstructionsViewSet(
+    metaclass=SectionViewSet,
+    model=SiteSignalObstructions
+):
     pass
 
 
-class SiteLocalEpisodicEffectsViewSet(metaclass=SectionViewSet, model=SiteLocalEpisodicEffects):
+class SiteLocalEpisodicEffectsViewSet(
+    metaclass=SectionViewSet,
+    model=SiteLocalEpisodicEffects
+):
     pass
 
 
-class SiteOperationalContactViewSet(metaclass=SectionViewSet, model=SiteOperationalContact):
+class SiteOperationalContactViewSet(
+    metaclass=SectionViewSet,
+    model=SiteOperationalContact
+):
     pass
 
 
-class SiteResponsibleAgencyViewSet(metaclass=SectionViewSet, model=SiteResponsibleAgency):
+class SiteResponsibleAgencyViewSet(
+    metaclass=SectionViewSet,
+    model=SiteResponsibleAgency
+):
     pass
 
 
-class SiteMoreInformationViewSet(metaclass=SectionViewSet, model=SiteMoreInformation):
+class SiteMoreInformationViewSet(
+    metaclass=SectionViewSet,
+    model=SiteMoreInformation
+):
     pass
+
+
+class SiteFileUploadViewSet(
+    DataTablesListMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+
+    logger = getLogger('slm.api.edit.views.SiteFileUploadViewSet')
+
+    serializer_class = SiteFileUploadSerializer
+    permission_classes = (IsAuthenticated, CanEditSite,)
+    parser_classes = (
+        MultiPartParser,
+        FormParser,
+        JSONParser,
+        FileUploadParser
+    )
+
+    site = None
+
+    SECTION_VIEWS = {
+        0: SiteFormViewSet,
+        1: SiteIdentificationViewSet,
+        2: SiteLocationViewSet,
+        3: SiteReceiverViewSet,
+        4: SiteAntennaViewSet,
+        5: SiteSurveyedLocalTiesViewSet,
+        6: SiteFrequencyStandardViewSet,
+        7: SiteCollocationViewSet,
+        (8, 1): SiteHumiditySensorViewSet,
+        (8, 2): SitePressureSensorViewSet,
+        (8, 3): SiteTemperatureSensorViewSet,
+        (8, 4): SiteWaterVaporRadiometerViewSet,
+        (8, 5): SiteOtherInstrumentationViewSet,
+        (9, 1): SiteRadioInterferencesViewSet,
+        (9, 2): SiteMultiPathSourcesViewSet,
+        (9, 3): SiteSignalObstructionsViewSet,
+        10: SiteLocalEpisodicEffectsViewSet,
+        11: SiteOperationalContactViewSet,
+        12: SiteResponsibleAgencyViewSet,
+        13: SiteMoreInformationViewSet
+    }
+
+    @staticmethod
+    def get_subsection_id(section):
+        if section.section_number in {
+            3, 4, 5, 6, 7, 8, 9, 10
+        }:
+            return section.ordering_id
+        return None
+
+    class FileFilter(FilterSet):
+
+        name = django_filters.CharFilter(
+            field_name='name',
+            lookup_expr='istartswith'
+        )
+
+        class Meta:
+            model = SiteFileUpload
+            fields = (
+                'name',
+                'status',
+                'file_type',
+                'log_format'
+            )
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = FileFilter
+    ordering_fields = [
+        '-timestamp',
+        'name'
+    ]
+
+    original_request = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.site = kwargs.pop('site', None)
+        self.original_request = request
+        try:
+            self.site = Site.objects.get(name__iexact=self.site)
+        except Site.DoesNotExist:
+            return HttpResponseNotFound(f'{self.site} does not exist.')
+
+        if not self.site.can_edit(request.user):
+            return HttpResponseForbidden(
+                f'{request.user} cannot edit site {self.site.name}'
+            )
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return SiteFileUpload.objects.filter(site=self.site)
+
+    def create(self, request, *args, **kwargs):
+        with transaction.atomic():
+
+            upload = SiteFileUpload(
+                site=self.site,
+                file=request.FILES['file'],
+                name=request.FILES['file'].name[:255],
+                user=request.user
+            )
+            upload.save()
+            slm_signals.site_file_uploaded.send(
+                sender=self,
+                site=self.site,
+                user=request.user,
+                timestamp=upload.timestamp,
+                request=request,
+                upload=upload
+            )
+
+            if upload.file_type is SLMFileType.SITE_LOG:
+                from slm.legacy import (
+                    SiteLogParser,
+                    SiteLogBinder
+                )
+                if upload.log_format is SiteLogFormat.LEGACY:
+                    with upload.file.open() as uplf:
+                        content = uplf.read()
+                        bound_log = SiteLogBinder(
+                            SiteLogParser(
+                                content.decode(),
+                                site_name=self.site.name
+                            )
+                        ).parsed
+                        if not bound_log.errors:
+                            self.update_from_legacy(request, bound_log)
+
+                        upload.context = bound_log.context
+                        if bound_log.errors:
+                            upload.status = SiteFileUploadStatus.INVALID
+                            upload.save()
+                            return Response(
+                                _('There were errors parsing the site log.'),
+                                status=400
+                            )
+                        upload.status = (
+                            SiteFileUploadStatus.WARNINGS
+                            if bound_log.warnings
+                            else SiteFileUploadStatus.VALID
+                        )
+                        upload.save()
+
+                elif upload.log_format is SiteLogFormat.GEODESY_ML:
+                    return Response(
+                        f'GeodesyML uploads are not yet supported.',
+                        status=400
+                    )
+                elif upload.log_format is SiteLogFormat.JSON:
+                    return Response(
+                        f'JSON uploads are not yet supported.',
+                        status=400
+                    )
+                else:
+                    return Response(
+                        f'Unsupported site log upload format.',
+                        status=400
+                    )
+
+        return Response(status=204)
+
+    def update_from_legacy(self, request, parsed):
+        errors = {}
+
+        existing_sections = {}
+        posted_subsections = {
+            3: set(),
+            4: set(),
+            5: set(),
+            6: set(),
+            7: set(),
+            (8, 1): set(),
+            (8, 2): set(),
+            (8, 3): set(),
+            (8, 4): set(),
+            (8, 5): set(),
+            (9, 1): set(),
+            (9, 2): set(),
+            (9, 3): set(),
+            10: set()
+        }
+        with transaction.atomic():
+            for index, section in parsed.sections.items():
+                if section.example:
+                    continue
+
+                section_view = self.SECTION_VIEWS.get(
+                    section.heading_index,
+                    None
+                )
+                if section_view:
+                    data = {
+                        **section.binding,
+                        'site': self.site.id
+                    }
+                    subsection_number = self.get_subsection_id(section)
+                    if subsection_number is not None:
+                        # we have to find the right subsection identifiers
+                        # (which don't necessarily equal the existing ids)
+                        existing_sections.setdefault(
+                            section.heading_index,
+                            []
+                        )
+                        if not existing_sections[section.heading_index]:
+                            existing_sections[section.heading_index] = list(
+                                section_view.serializer_class.Meta.model.
+                                    objects.filter(
+                                        site=self.site,
+                                        is_deleted=False
+                                ).head().order_by('subsection')
+                            )
+
+                        if (
+                            len(existing_sections[section.heading_index]) >
+                            subsection_number - 1
+                        ):
+                            instance = existing_sections[
+                                section.heading_index
+                            ][subsection_number - 1]
+                            data['subsection'] = instance.subsection
+                            posted_subsections[section.heading_index].add(
+                                instance
+                            )
+
+                    serializer = section_view.serializer_class(
+                        data=data,
+                        context={'request': request}
+                    )
+                    if not serializer.is_valid(raise_exception=False):
+                        errors[index] = {
+                            param: "\n".join(
+                                [str(detail) for detail in details]
+                            )
+                            for param, details in serializer.errors.items()
+                        }
+                    else:
+                        try:
+                            serializer.save()
+                        except DjangoValidationError as dve:
+                            for param, error_list in dve.message_dict.items():
+                                errors.setdefault(
+                                    index, {}
+                                )[param] = '\n'.join(
+                                    [str(msg) for msg in error_list]
+                                )
+
+            if errors:
+                # if any section fails - rollback all sections
+                transaction.set_rollback(True)
+                for section_index, section_errors in errors.items():
+                    for param, error in section_errors.items():
+                        section = parsed.sections[section_index]
+                        param = section.get_param(param)
+                        if param:
+                            for line_no in range(
+                                    param.line_no,
+                                    param.line_end+1
+                            ):
+                                parsed.add_finding(
+                                    Error(
+                                        line_no,
+                                        parsed,
+                                        str(error),
+                                        section=section
+                                    )
+                                )
+                        else:
+                            parsed.add_finding(
+                                Error(
+                                    section.line_no,
+                                    parsed,
+                                    str(error),
+                                    section=section
+                                )
+                            )
+                return errors
+
+        # delete any subsections that are current but not present in the
+        # uploaded sitelog
+        for heading_index, existing in existing_sections.items():
+            section_view = self.SECTION_VIEWS.get(heading_index, None)
+            if section_view:
+                for instance in set(existing).difference(
+                    posted_subsections.get(heading_index, set())
+                ):
+                    view = section_view()
+                    view.request = request
+                    try:
+                        view.perform_destroy(instance)
+                    except:
+                        # catch everything here - if this does not happen
+                        # its not the end of the world - the exception log
+                        # will notify the relevant parties that there's some
+                        # kind of issue
+                        self.logger.exception(
+                            'Error deleting subsection %d of section %s',
+                            instance.subsection,
+                            heading_index
+                        )
+        return errors

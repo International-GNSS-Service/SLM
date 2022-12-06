@@ -661,12 +661,11 @@ class Site(models.Model):
         return False
 
     def can_edit(self, user):
-        if user:
-            return (
-                self.is_moderator(user) or
-                self.owner == user or
-                user.agency in self.agencies.all()
-            )
+        if user and user.is_authenticated:
+            if self.is_moderator(user) or self.owner == user:
+                return True
+            if hasattr(user, 'agency'):
+                return user.agency in self.agencies.all()
         return False
 
     def update_status(self, save=True, head=True, user=None, timestamp=None):

@@ -5,7 +5,7 @@ Template for Download page.
 -->
 
 {% extends "slm/station/base.html" %}
-{% load i18n %}
+{% load i18n slm %}
 
 {% block head %}
     {{ block.super }}
@@ -26,38 +26,135 @@ Template for Download page.
 {% endblock head %}
 
 {% block action_content %}
-<div class="container px-5">
-  <!-- Title -->
-  <div class="d-flex flex-column justify-content-left align-items-left mt-4">
-    <div class="mb-4 pb-3 border-bottom">
-      <h2>{% trans "Upload" %}</h2>
+<div class="row">
+    <div class="col-3">
+      {% block file_list %}
+        {% include 'slm/widgets/filelist.html' %}
+      {% endblock %}
     </div>
-  </div>
-
-  <!-- Download Options -->
-  <div id="upload-container" class="p-3">
-
-      <div id="sitefile-upload" class="dropzone">
-          <div class="dz-message" data-dz-message><h5>{% translate "Click or drag files to upload an updated site log, site images or miscellaneous files." %}</h5></div>
+    <div class="col-9">
+    <div class="container px-5">
+      <!-- Title -->
+      <div class="d-flex flex-column justify-content-left align-items-left mt-4">
+        <div class="mb-4 pb-3 border-bottom">
+            <h2>{% if file %}<a href="{{ file.file.url }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> {{ file.name }}</a>{% else %}{% trans "Upload" %}{% endif %}</h2>
+        </div>
       </div>
 
-        <script>
-          Dropzone.autoDiscover = false;
-          // Dropzone has been added as a global variable.
-          const dropzone = new Dropzone(
+      <!-- Download Options -->
+      <div id="upload-container" class="p-3">
+
+          {% if file %}
+            <!-- action bar -->
+              <div class="d-flex justify-content-between align-items-center">
+                <h5>{{ file.user.name }}</h5>
+                <h5>{{ file.timestamp }}</h5>
+                <div id="file-actions" class="d-flex justify-content-end">
+                    <button name="unpublish" onclick="publishFile(false);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.PUBLISHED %}display: none{% endif %}">{% trans 'Unpublish' %}</button>
+                    <button name="publish" onclick="publishFile(true);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.UNPUBLISHED %}display: none{% endif %}">{% trans 'Publish' %}</button>
+                    <button name="delete" onclick="deleteFile();" type="button" class="btn btn-danger">{% trans 'Delete' %}</button>
+                </div>
+              </div>
+
+              {% if file.file_type == SLMFileType.SITE_IMAGE %}
+                  {% include 'slm/station/uploads/image.html' %}
+              {% elif file.file_type == SLMFileType.SITE_LOG %}
+                  {% if file.log_format == SiteLogFormat.LEGACY %}
+                    {% include 'slm/station/uploads/legacy.html' %}
+                  {% elif file.log_format == SiteLogFormat.GEODESY_ML %}
+                    {% include 'slm/station/uploads/geodesyml.html' %}
+                  {% elif file.log_format == SiteLogFormat.JSON %}
+                    {% include 'slm/station/uploads/json.html' %}
+                  {% endif %}
+              {% else %}
+                  {% include 'slm/station/uploads/unknown.html' %}
+              {% endif %}
+
+              <script>
+
+                const fileActions = $('#file-actions');
+                const unpublishBtn = fileActions.find('button[name="unpublish"]');
+                const publishBtn = fileActions.find('button[name="publish"]');
+                const deleteBtn = fileActions.find('button[name="delete"]');
+
+                const deleteFile = function() {
+                    slm.deleteFile("{{ station }}", {{ file.id }}).done(
+                        function(data, status, jqXHR) {
+                            window.location = slm.urls.reverse(
+                                'slm:upload',
+                                {
+                                    kwargs: {'station': "{{ station }}"}
+                                }
+                            );
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
+                const publishFile = function(publish) {
+                    let btn = $('button#select-file-{{ file.id }}');
+                    let oldStatus = slm.SiteFileUploadStatus.get(btn.data('slmFileStatus'));
+                    slm.publishFile("{{ station }}", {{ file.id }}, publish).done(
+                        function(data, status, jqXHR) {
+                            let newStatus = slm.SiteFileUploadStatus.get(data.status);
+                            publishBtn.hide();
+                            unpublishBtn.hide();
+                            if (newStatus === slm.SiteFileUploadStatus.PUBLISHED) {
+                                unpublishBtn.show();
+                            } else if (newStatus === slm.SiteFileUploadStatus.UNPUBLISHED) {
+                                publishBtn.show();
+                            }
+                            btn.removeClass(oldStatus.css);
+                            btn.addClass(newStatus.css);
+                            btn.data('slmFileStatus', newStatus.val);
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
+              </script>
+          {% else %}
+          <div id="sitefile-upload" class="dropzone">
+              <div class="dz-message" data-dz-message><h5>{% translate "Click or drag files to upload an updated site log, site images or miscellaneous files." %}</h5></div>
+          </div>
+
+            <script>
+
+            Dropzone.autoDiscover = false;
+            // Dropzone has been added as a global variable.
+            const dropzone = new Dropzone(
               "div#sitefile-upload",
               {
                   url: slm.urls.reverse(
-                      'slm_edit_api:upload-detail', kwargs={'site': '{{ station }}'}
+                      'slm_edit_api:files-list',
+                      kwargs={'site': '{{ station }}'}
                   ),
-                  method: 'put',
+                  maxFilesize: {{ MAX_UPLOAD_MB }},
                   headers:{
                     'X-CSRFToken' : "{{ csrf_token }}"
-                  }
+                  },
+                  init: function () {
+                    this.on("complete", function (file) {
+                        initFileList($("#slm-file-list"));
+                    });
+                }
               }
-          );
-        </script>
+            );
+            </script>
+          {% endif %}
 
-  </div>
+        </div>
+      </div>
+    </div>
 </div>
 {% endblock %}

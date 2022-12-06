@@ -25,11 +25,15 @@ from slm.models import (
     LogEntry,
     UserProfile,
     Agency,
-    Network
+    Network,
+    SiteFileUpload
 )
 from slm.defines import (
     SiteLogStatus,
-    LogEntryType
+    LogEntryType,
+    SLMFileType,
+    SiteLogFormat,
+    SiteFileUploadStatus
 )
 from django.shortcuts import redirect
 from datetime import datetime
@@ -412,6 +416,30 @@ class AlertsView(StationContextView):
 
 class UploadView(StationContextView):
     template_name = 'slm/station/upload.html'
+
+    def get_context_data(self, file=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if file:
+            try:
+                file = SiteFileUpload.objects.get(pk=file)
+            except SiteFileUpload.DoesNotExist:
+                raise Http404(f'File {file} does not exist.')
+            context['file'] = file
+            if file.context:
+                context.update(file.context)
+        context['num_files'] = SiteFileUpload.objects.filter(
+            site=self.site
+        ).count()
+        context['MAX_UPLOAD_MB'] = getattr(
+            settings,
+            'SLM_MAX_UPLOAD_SIZE_MB',
+            100
+        )
+        context['SLMFileType'] = SLMFileType
+        context['SiteLogFormat'] = SiteLogFormat
+        context['SiteFileUploadStatus'] = SiteFileUploadStatus
+        context['link_view'] = 'slm:upload'
+        return context
 
 
 class NewSiteView(StationContextView):

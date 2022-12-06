@@ -1,10 +1,10 @@
 from django_enum import IntegerChoices
-from enum_properties import s
+from enum_properties import s, p
 from django.utils.translation import gettext as _
 
 
-class SiteLogFormat(IntegerChoices, s('mimetype')):
+class SiteLogFormat(IntegerChoices, s('mimetype'), p('icon')):
 
-    LEGACY     = 0, _('Legacy (ASCII)'), 'text/plain'
-    GEODESY_ML = 1, _('GeodesyML'),      'application/xml'
-    JSON =       2, _('JSON'),           'application/json'
+    LEGACY     = 0, _('Legacy (ASCII)'), 'text/plain'      , 'bi bi-file-text'
+    GEODESY_ML = 1, _('GeodesyML'),      'application/xml',  'bi bi-filetype-xml'
+    JSON =       2, _('JSON'),           'application/json', 'bi bi-filetype-json'

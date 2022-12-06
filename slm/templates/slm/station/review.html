@@ -132,8 +132,6 @@ Template for View/Diff page.
     }
 
     const reject = function() {
-        console.log(rejectBtn);
-        console.log();
         slm.rejectReview(rejectBtn.data('slmReviewRequest')).done(
             function(data, status, jqXHR) {
                 rejectBtn.data('slmReviewRequest', null);

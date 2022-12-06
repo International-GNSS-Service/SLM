@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from datetime import datetime, timezone, date
 from html import unescape
 from enum import Enum
+from django.conf import settings
 
 register = template.Library()
 
@@ -181,3 +182,70 @@ def antenna_radome(antenna):
 @register.filter(name='rpad_space')
 def rpad_space(text, length):
     return f'{text}{" " * (int(length) - len(str(text)))}'
+
+
+@register.filter(name='file_icon')
+def file_icon(file):
+    subtype = ''
+    if file and hasattr(file, 'mimetype'):
+        subtype = getattr(file, 'mimetype', '').split('/')[-1]
+    return getattr(
+        settings,
+        'SLM_FILE_ICONS',
+        {}
+    ).get(
+        subtype,
+        'bi bi-file-earmark'
+    )
+
+
+@register.filter(name='file_lines')
+def file_lines(file):
+    if file:
+        return file.file.open().read().decode().split('\n')
+    return ''
+
+
+@register.filter(name='finding_class')
+def finding_class(findings, line_number):
+    # in json keys can't be integers and our findings context might be integers
+    # or strings if its gone through a json cycle so we try both
+    if findings:
+        return {
+            'E': 'slm-parse-error',
+            'W': 'slm-parse-warning',
+            'I': 'slm-parse-ignore'
+        }.get(
+            findings.get(
+                str(line_number),
+                findings.get(
+                    int(line_number), [''])
+            )[0]
+        )
+    return ''
+
+
+@register.filter(name='finding_content')
+def finding_content(findings, line_number):
+    if findings:
+        return findings.get(
+            str(line_number),
+            findings.get(int(line_number), [None, ''])
+        )[1]
+    return ''
+
+
+@register.filter(name='finding_title')
+def finding_title(findings, line_number):
+    if findings:
+        return {
+            'E': 'Error',
+            'W': 'Warning',
+            'I': 'Ignored'
+        }.get(
+            findings.get(
+                str(line_number),
+                findings.get(int(line_number), [''])
+            )[0]
+        )
+    return ''

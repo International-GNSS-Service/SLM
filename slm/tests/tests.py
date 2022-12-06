@@ -216,7 +216,6 @@ class TestEditAPI(SLMSignalTracker, TestCase):
         edits = {
             'site': site.id,
             'site_name': 'Astronomical Observatory of INASAN',
-            'four_character_id': 'AAA2',
             'monument_inscription': 'Stable pillar on the roof of '
                                     'the main building',
             'iers_domes_number': '12330M001',
@@ -520,8 +519,8 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             'effective_end': '',
             'notes': '',
             'model': 'SCP1000',
-            'sampling_interval': '55',
-            'accuracy': '3',
+            'sampling_interval': 55,
+            'accuracy': 3.0,
             'aspiration': '',
             'heading': 'SCP1000',
             'effective': '2016-03-17',

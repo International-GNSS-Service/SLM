@@ -10,11 +10,17 @@ from slm.defines import (
     EquipmentState,
     SLMFileType,
     SiteLogFormat,
-    LogEntryType
+    LogEntryType,
+    SiteFileUploadStatus
 )
-from slm.models.sitelog import SiteSubSection, SiteSection
+from slm.models.sitelog import (
+    SiteSubSection,
+    SiteSection,
+    DefaultToStrEncoder
+)
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from slm.models import compat
 
 
 class AgencyManager(models.Manager):
@@ -375,17 +381,29 @@ class SiteFile(models.Model):
     site = models.ForeignKey(
         'slm.Site',
         on_delete=models.CASCADE,
-        null=False
+        null=False,
+        help_text=_('The site this file is attached to.')
     )
 
-    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text=_('When the file was uploaded.')
+    )
 
-    upload = models.FileField(
+    file = models.FileField(
         upload_to=site_upload_path,
-        null=False
+        null=False,
+        help_text=_('A pointer to the uploaded file on disk.')
     )
 
-    mimetype = models.CharField(max_length=255, null=False, db_index=True)
+    mimetype = models.CharField(
+        max_length=255,
+        null=False,
+        default='',
+        db_index=True,
+        help_text=_('The mimetype of the file.')
+    )
 
     file_type = EnumField(
         SLMFileType,
@@ -404,49 +422,111 @@ class SiteFile(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.mimetype is None:
+        if not self.mimetype:
             import mimetypes
-            self.mimetype = mimetypes.guess_type(self.upload.path)[0]
+            self.mimetype = mimetypes.guess_type(self.file.path)[0]
         if self.file_type is SLMFileType.UNKNOWN:
             self.file_type, self.log_format = self.determine_type(
-                self.upload,
+                self.file,
                 self.mimetype
             )
         return super().save(*args, **kwargs)
 
     @classmethod
-    def determine_type(cls, upload, mimetype):
+    def determine_type(cls, file, mimetype):
         file_type, log_format = SLMFileType.UNKNOWN, None
-        with upload.open() as upl:
-            content = upl.read()
-            if mimetype == SiteLogFormat.LEGACY.mimetype:
-                # todo - better criteria??
-                if (
-                    'Site Identification of the GNSS Monument' in content and
-                    'Site Location Information' in content and
-                    'GNSS Receiver Information' in content and
-                    'GNSS Antenna Information' in content
-                ):
-                    return SLMFileType.SITE_LOG, SiteLogFormat.LEGACY
-            elif mimetype == SiteLogFormat.GEODESY_ML.mimetype:
-                pass
-            elif mimetype == SiteLogFormat.JSON.mimetype:
-                pass
-            elif mimetype.split('/')[0] == 'image':
-                return SLMFileType.SITE_IMAGE, None
+        if mimetype == SiteLogFormat.LEGACY.mimetype:
+            # todo - better criteria??
+            upl = file.open()
+            content = upl.read().decode()
+            if (
+                'Site Identification of the GNSS Monument' in content and
+                'Site Location Information' in content and
+                'GNSS Receiver Information' in content and
+                'GNSS Antenna Information' in content
+            ):
+                return SLMFileType.SITE_LOG, SiteLogFormat.LEGACY
+        elif mimetype == SiteLogFormat.GEODESY_ML.mimetype:
+            pass
+        elif mimetype == SiteLogFormat.JSON.mimetype:
+            pass
+        elif mimetype.split('/')[0] == 'image':
+            return SLMFileType.SITE_IMAGE, None
 
         return file_type, log_format
+
+    def __str__(self):
+        return f'[{self.site.name}] {self.name}'
 
     class Meta:
         abstract = True
         ordering = ('-timestamp',)
 
 
+class SiteFileUploadManager(models.Manager):
+    pass
+
+
+class SiteFileUploadQuerySet(models.QuerySet):
+
+    def public(self):
+        from slm.models.sitelog import Site
+        return self.filter(
+            status=SiteFileUploadStatus.PUBLISHED,
+            site__in=Site.objects.public()
+        )
+
+
 class SiteFileUpload(SiteFile):
 
     SUB_DIRECTORY = 'uploads'
 
-    published = models.BooleanField(default=False, db_index=True)
+    name = models.CharField(
+        blank=True,
+        default='',
+        db_index=True,
+        max_length=255,
+        help_text=_('The name of the file when it was uploaded.')
+    )
+
+    status = EnumField(
+        SiteFileUploadStatus,
+        default=SiteFileUploadStatus.UNPUBLISHED,
+        null=False,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            'The status of the file. This will also depend on what type the '
+            'file is.'
+        )
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        help_text=_(
+            'The user that uploaded the file.'
+        )
+    )
+
+    # context generated at the time of upload - will be added to upload page
+    # rendering for the file.
+    context = compat.JSONField(
+        null=False,
+        blank=True,
+        default=dict,
+        encoder=DefaultToStrEncoder
+    )
+
+    description = models.TextField(
+        blank=True,
+        default='',
+        help_text=_('A description of what this file is (optional).')
+    )
+
+    objects = SiteFileUploadManager.from_queryset(SiteFileUploadQuerySet)()
 
 
 class RenderedSiteLog(SiteFile):

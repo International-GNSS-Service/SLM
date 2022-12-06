@@ -93,6 +93,41 @@ class SiteLogStatus {
     }
 }
 
+class SiteFileUploadStatus {
+    
+    static UNPUBLISHED = new SiteFileUploadStatus(0, 'Unpublished', 'slm-upload-unpublished', '#8D6708');
+    static PUBLISHED = new SiteFileUploadStatus(1, 'Published', 'slm-upload-published', '#008000');
+    static INVALID = new SiteFileUploadStatus(2, 'Invalid', 'slm-upload-invalid', '#8b0000');
+    static WARNINGS = new SiteFileUploadStatus(3, 'Warnings', 'slm-upload-warnings', '#8D6708');
+    static VALID = new SiteFileUploadStatus(4, 'Valid', 'slm-upload-valid', '#008000');
+
+    constructor(val, label, css, color) {
+        this.val = val;
+        this.label = label;
+        this.css = css;
+        this.color = color;
+    }
+
+    toString() {
+        return this.label;
+    }
+
+    static get(val) {
+        switch(val) {
+            case 0:
+                return SiteFileUploadStatus.UNPUBLISHED;
+            case 1:
+                return SiteFileUploadStatus.PUBLISHED;
+            case 2:
+                return SiteFileUploadStatus.INVALID;
+            case 3:
+                return SiteFileUploadStatus.WARNINGS;
+            case 4:
+                return SiteFileUploadStatus.VALID;
+        }
+    }
+}
+
 class AlertLevel {
     
     static INFO = new AlertLevel(0, 'INFO', 'info');
@@ -121,6 +156,65 @@ class AlertLevel {
     }
 }
 
+
+class SiteLogFormat {
+    
+    static LEGACY = new SiteLogFormat(0, 'Legacy (ASCII)', 'bi bi-file-text');
+    static GEODESY_ML = new SiteLogFormat(1, 'GeodesyML', 'bi bi-filetype-xml');
+    static JSON = new SiteLogFormat(2, 'JSON', 'bi bi-filetype-json');
+
+    constructor(val, label, icon) {
+        this.val = val;
+        this.label = label;
+        this.icon = icon;
+    }
+
+    toString() {
+        return this.label;
+    }
+
+    static get(val) {
+        switch(val) {
+            case 0:
+                return SiteLogFormat.LEGACY;
+            case 1:
+                return SiteLogFormat.GEODESY_ML;
+            case 2:
+                return SiteLogFormat.JSON;
+        }
+    }
+}
+
+class SLMFileType {
+    
+    static SITE_LOG = new SLMFileType(0, 'Site Log');
+    static SITE_IMAGE = new SLMFileType(1, 'Site Image');
+    static UNKNOWN = new SLMFileType(2, 'Unknown');
+
+    constructor(val, label) {
+        this.val = val;
+        this.label = label;
+    }
+
+    toString() {
+        return this.label;
+    }
+
+    static get(val) {
+        switch(val) {
+            case 0:
+                return SLMFileType.SITE_LOG;
+            case 1:
+                return SLMFileType.SITE_IMAGE;
+            case 2:
+                return SLMFileType.UNKNOWN;
+        }
+    }
+}
+
 slm.LogEntryType = LogEntryType;
 slm.SiteLogStatus = SiteLogStatus;
+slm.SiteFileUploadStatus = SiteFileUploadStatus;
 slm.AlertLevel = AlertLevel;
+slm.SiteLogFormat = SiteLogFormat;
+slm.SLMFileType = SLMFileType;

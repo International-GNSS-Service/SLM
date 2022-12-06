@@ -9,7 +9,10 @@ from django_filters.rest_framework import (
 )
 import django_filters
 from slm.defines import RinexVersion
-from slm.api.public.serializers import StationListSerializer
+from slm.api.public.serializers import (
+    StationListSerializer,
+    SiteFileUploadSerializer
+)
 from slm.api.views import BaseSiteLogDownloadViewSet
 from django.db.models import ExpressionWrapper, F, Value, Case, When, DurationField, DateField
 from django.db.models import IntegerField, F, Avg, fields, BooleanField
@@ -26,6 +29,7 @@ from slm.models import (
     SiteIdentification,
     SiteMoreInformation,
     DataAvailability,
+    SiteFileUpload
 )
 from slm.api.pagination import DataTablesPagination
 from django.utils.timezone import now
@@ -243,3 +247,44 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
     # limit downloads to public sites only! requests for non-public sites will
     # return 404s, also use legacy four id naming, revisit this?
     queryset = Site.objects.public()
+
+
+class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
+    serializer_class = SiteFileUploadSerializer
+    permission_classes = []
+
+    class FileFilter(FilterSet):
+
+        site = django_filters.CharFilter(
+            method='find_by_name'
+        )
+
+        name = django_filters.CharFilter(
+            field_name='name',
+            lookup_expr='istartswith'
+        )
+
+        def find_by_name(self, queryset, name, value):
+            return queryset.filter(
+                site__name__istartswith=value
+            )
+
+        class Meta:
+            model = SiteFileUpload
+            fields = (
+                'name',
+                'site',
+                'mimetype',
+                'file_type'
+            )
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = FileFilter
+    ordering_fields = [
+        '-timestamp',
+        'name',
+        'site'
+    ]
+
+    def get_queryset(self):
+        return SiteFileUpload.objects.public().select_related('site')

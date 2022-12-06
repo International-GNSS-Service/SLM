@@ -9,7 +9,7 @@ Template for stations list.
     
     <div class="pt-3 px-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center"> 
-            <h5 class="text-center mb-0"><b>{{ num_sites }}</b> Stations</h5>
+            <h5 class="text-center mb-0"><b><span id="slm-num-stations">{{ num_sites }}</span></b> Stations</h5>
             <a id="filter-stations" class="btn btn-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#filter" data-backdrop="false">
                 Filter <i class="bi bi-filter"></i>
             </a>
@@ -64,7 +64,12 @@ Template for stations list.
 {% compress js inline %}
 <script>
     let keyupTimeoutID = 0;
-    function drawStations(position, data) {
+    function drawStations(position, data, filtered, total) {
+
+        if (filtered !== null) {
+            $('#slm-num-stations').html(filtered);
+        }
+
         function getBadge(station) {
             if (station.hasOwnProperty('num_flags') && station.num_flags) {
                 return `<span class="badge rounded-pill bg-danger slm-error-badge">${station.num_flags}</span>`;

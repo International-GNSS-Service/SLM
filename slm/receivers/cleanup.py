@@ -28,4 +28,4 @@ def cleanup(file_path):
 
 @receiver(pre_delete, sender=SiteFileUpload)
 def file_deleted(sender, instance, using, **kwargs):
-    transaction.on_commit(lambda: cleanup(instance.upload.path))
+    transaction.on_commit(lambda: cleanup(instance.file.path))

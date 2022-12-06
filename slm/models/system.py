@@ -21,6 +21,7 @@ from slm.models.sitelog import (
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from slm.models import compat
+import os
 
 
 class AgencyManager(models.Manager):
@@ -366,12 +367,14 @@ def site_upload_path(instance, filename):
     """
      file will be saved to:
         MEDIA_ROOT/uploads/<9-char site name>/year/month/day/filename
+        MEDIA_ROOT/uploads/<9-char site name>/filename
     """
     prefix = ''
     if instance.SUB_DIRECTORY:
         prefix = f'{instance.SUB_DIRECTORY}/'
-    return f'{prefix}{instance.site.name}/{instance.timestamp.year}/' \
-           f'{instance.timestamp.month}/{instance.timestamp.day}/{filename}'
+    #return f'{prefix}{instance.site.name}/{instance.timestamp.year}/' \
+    #       f'{instance.timestamp.month}/{instance.timestamp.day}/{filename}'
+    return f'{prefix}{instance.site.name}/{filename}'
 
 
 class SiteFile(models.Model):
@@ -456,7 +459,9 @@ class SiteFile(models.Model):
         return file_type, log_format
 
     def __str__(self):
-        return f'[{self.site.name}] {self.name}'
+        if hasattr(self, 'name'):
+            return f'[{self.site.name}] {self.name}'
+        return f'[{self.site.name}] {os.path.basename(self.file.path)}'
 
     class Meta:
         abstract = True

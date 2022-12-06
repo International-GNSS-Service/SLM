@@ -24,8 +24,6 @@ SLM_FILE_COLORS = {
 # be added to the logs
 SLM_LEGACY_PLACEHOLDERS = True
 
-SLM_SITE_RECORD = 'slm.DefaultSiteRecord'
-
 # the maximum file upload size in Mega Bytes
 SLM_MAX_UPLOAD_SIZE_MB = 100
 

@@ -10,6 +10,7 @@ from slm.models.system import (
     Receiver,
     Radome,
     Manufacturer,
+    SiteFile,
     SiteFileUpload,
     RenderedSiteLog,
     LogEntry
@@ -17,6 +18,10 @@ from slm.models.system import (
 from slm.models.user import (
     User,
     UserProfile
+)
+from slm.models.index import (
+    SiteIndex,
+    ArchivedSiteLog
 )
 from slm.models.data import DataAvailability
 from slm.models.sitelog import (

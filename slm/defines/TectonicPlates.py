@@ -7,7 +7,7 @@ class TectonicPlates(TextChoices):
     """
     """
 
-    __symmetric_builtins__ = [
+    _symmetric_builtins_ = [
         s('name', case_fold=True),
         s('label', case_fold=True)
     ]

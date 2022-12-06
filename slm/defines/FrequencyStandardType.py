@@ -4,7 +4,7 @@ from enum_properties import s
 
 class FrequencyStandardType(TextChoices, s('geodesy_ml', case_fold=True)):
 
-    __symmetric_builtins__ = [
+    _symmetric_builtins_ = [
         s('name', case_fold=True),
         s('label', case_fold=True)
     ]

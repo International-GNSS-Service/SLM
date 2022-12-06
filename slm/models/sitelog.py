@@ -7,7 +7,8 @@ from slm.defines import (
     TectonicPlates,
     FractureSpacing,
     Aspiration,
-    FrequencyStandardType
+    FrequencyStandardType,
+    SiteLogFormat
 )
 from django_enum import EnumField
 from django.db.models.functions import Greatest
@@ -530,6 +531,12 @@ class Site(models.Model):
             return True
         return self.moderators.filter(pk=user.pk).exists()
 
+    def get_filename(self, log_format, epoch=None):
+        if epoch is None:
+            epoch = self.last_publish
+        return f'{self.name.upper()}_{epoch.year}{epoch.month:02}' \
+               f'{epoch.day:02}.{log_format.ext}'
+
     @cached_property
     def moderators(self):
         """
@@ -685,8 +692,10 @@ class Site(models.Model):
         else:
             self.current()
 
-        if timestamp:
-            self.last_update = timestamp
+        if not timestamp:
+            timestamp = now()
+
+        self.last_update = timestamp
 
         if user:
             self.last_user = user
@@ -715,6 +724,8 @@ class Site(models.Model):
         # a global publish of the site log, not from this which can be
         # triggered by a section publish
         if self.status not in {SiteLogStatus.DORMANT, SiteLogStatus.PENDING}:
+            if status == SiteLogStatus.PUBLISHED:
+                self.last_publish = timestamp
             self.status = status
             if (
                 self.status == SiteLogStatus.PUBLISHED
@@ -905,7 +916,7 @@ class SiteSection(models.Model):
         self.save()
 
         if update_site:
-            self.site.update_status(save=True)
+            self.site.update_status(save=True, timestamp=timestamp)
 
         if not silent:
             slm_signals.site_published.send(

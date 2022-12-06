@@ -113,7 +113,9 @@ class BaseSiteLogDownloadViewSet(
                 self.get_serializer(
                     instance=site,
                     epoch=self.request.GET.get('epoch', None),
-                    published=to_bool(self.request.GET.get('published', True)) or None
+                    published=to_bool(
+                        self.request.GET.get('published', True)
+                    ) or None
                 ),
                 kwargs.get('format', 'text')
             )  # todo can renderer just handle this?

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from slm.models import (
-    Site,
+    SiteIndex,
     Agency,
     Network,
     SiteFileUpload
@@ -16,6 +16,7 @@ class EmbeddedAgencySerializer(serializers.ModelSerializer):
             'country'
         ]
 
+
 class EmbeddedNetworkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Network
@@ -26,23 +27,14 @@ class EmbeddedNetworkSerializer(serializers.ModelSerializer):
 
 class StationListSerializer(serializers.ModelSerializer):
 
-    agencies = EmbeddedAgencySerializer(many=True)
-    networks = EmbeddedNetworkSerializer(many=True)
-    registered = serializers.CharField(source='created')
-    latitude = serializers.SerializerMethodField()
-    longitude = serializers.SerializerMethodField()
-    city = serializers.CharField()
-    country = serializers.CharField()
-    elevation = serializers.FloatField()
-    antenna_type = serializers.CharField()
-    radome_type = serializers.CharField()
-    receiver_type = serializers.CharField()
-    serial_number = serializers.CharField()
-    firmware = serializers.CharField()
-    frequency_standard = serializers.CharField()
-    domes_number = serializers.CharField()
-    satellite_system = serializers.CharField()
-    data_center = serializers.CharField()
+    name = serializers.CharField(source='site.name')
+    last_publish = serializers.CharField(source='site.last_publish')
+    agencies = EmbeddedAgencySerializer(source='site.agencies', many=True)
+    networks = EmbeddedNetworkSerializer(source='site.networks', many=True)
+    antenna_type = serializers.CharField(source='antenna.model')
+    radome_type = serializers.CharField(source='radome.model')
+    receiver_type = serializers.CharField(source='receiver.model')
+    registered = serializers.DateTimeField(source='site.created')
     last_rinex2 = serializers.DateTimeField()
     last_rinex3 = serializers.DateTimeField()
     last_rinex4 = serializers.DateTimeField()
@@ -54,25 +46,14 @@ class StationListSerializer(serializers.ModelSerializer):
             return max(0, obj.last_data.days)
         return None
 
-    def get_latitude(self, obj):
-        if obj.latitude is not None:
-            return obj.latitude / 10000
-        return obj.latitude
-
-    def get_longitude(self, obj):
-        if obj.longitude is not None:
-            return obj.longitude / 10000
-        return obj.longitude
-
     class Meta:
-        model = Site
+        model = SiteIndex
         fields = [
             'name',
             'agencies',
             'networks',
             'registered',
-            'last_publish', 
-            'status',
+            'last_publish',
             'latitude',
             'longitude',
             'city',

@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _
 
 class LogEntryType(IntegerChoices):
 
-    __symmetric_builtins__ = [
+    _symmetric_builtins_ = [
         s('name', case_fold=True),
         s('label', case_fold=True)
     ]

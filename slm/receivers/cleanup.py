@@ -1,7 +1,10 @@
 """ Signal handlers that cleanup filesystem artifacts """
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from slm.models import SiteFileUpload
+from slm.models import (
+    SiteFileUpload,
+    ArchivedSiteLog
+)
 from django.db import transaction
 from django.conf import settings
 import os
@@ -26,6 +29,6 @@ def cleanup(file_path):
         file_path = file_path.parent
 
 
-@receiver(pre_delete, sender=SiteFileUpload)
+@receiver(pre_delete, sender=[SiteFileUpload, ArchivedSiteLog])
 def file_deleted(sender, instance, using, **kwargs):
     transaction.on_commit(lambda: cleanup(instance.file.path))

@@ -3,6 +3,9 @@ from slm.models import (
     Site,
     SiteAntenna
 )
+from slm.defines import (
+    SiteLogFormat
+)
 from django.utils.functional import cached_property
 import json
 from django.template.loader import get_template
@@ -53,6 +56,13 @@ class SiteLogSerializer(serializers.BaseSerializer):
     def json(self):
         # todo
         return json.dumps({})
+
+    def format(self, log_format):
+        if log_format == SiteLogFormat.LEGACY:
+            return self.text
+        raise NotImplementedError(
+            f'Serialization for format {log_format} is not yet implemented.'
+        )
 
     @cached_property
     def text(self):

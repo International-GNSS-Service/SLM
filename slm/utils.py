@@ -6,6 +6,11 @@ from pprint import pformat
 from logging import Filter
 
 
+def get_url():
+    from django.contrib.sites.models import Site
+    return f'https://{Site.objects.get_current().domain}'
+
+
 class SquelchStackTraces(Filter):
 
     def filter(self, record):

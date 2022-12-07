@@ -1,68 +1,59 @@
 from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 
+from django_enum import IntegerChoices
+from enum_properties import p, s
 
-class MapBoxStyle(TextChoices):
+
+class MapBoxStyle(
+    IntegerChoices,
+    s('label', case_fold=True),
+    s('slug', case_fold=True),
+    p('version')
+):
     """
     https://docs.mapbox.com/api/maps/styles/
     """
-    STREETS = 'streets', _('Streets')
-    OUTDOORS = 'outdoors', _('Outdoors')
-    LIGHT = 'light', _('Light')
-    DARK = 'dark', _('Dark')
-    SATELLITE = 'satellite', _('Satellite')
-    SATELLITE_STREETS = 'satellite-streets', _('Satellite Streets')
-    NAVIGATION_DAY = 'navigation-day', _('Navigation Day')
-    NAVIGATION_NIGHT = 'navigation-night', _('Navigation Night')
+    _symmetric_builtins_ = ['name', 'label', 'uri']
 
-    # this will have to be updated periodically to keep pace with mapbox style updates
-    __versions__ = {
-        STREETS[0]: 11,
-        OUTDOORS[0]: 11,
-        LIGHT[0]: 10,
-        DARK[0]: 10,
-        SATELLITE[0]: 9,
-        SATELLITE_STREETS[0]: 11,
-        NAVIGATION_DAY[0]: 1,
-        NAVIGATION_NIGHT[0]: 1
-    }
-
-    @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str) and '-v' in value:
-            return cls(value.split('-')[0])
-        return super()._missing_(value)
+    # name             value    label                slug           version
+    STREETS           =  1,   _('Streets'),           'streets',           11
+    OUTDOORS          =  2,   _('Outdoors'),          'outdoors',          11
+    LIGHT             =  3,   _('Light'),             'light',             10
+    DARK              =  4,   _('Dark'),              'dark',              10
+    SATELLITE         =  5,   _('Satellite'),         'satellite',          9
+    SATELLITE_STREETS =  6,   _('Satellite Streets'), 'satellite-streets', 11
+    NAVIGATION_DAY    =  7,   _('Navigation Day'),    'navigation-day',     1
+    NAVIGATION_NIGHT  =  8,   _('Navigation Night'),  'navigation-night',   1
 
     @property
-    def version(self):
-        return f'{self.value}-v{self.__versions__[self.value]}'
+    def uri(self):
+        return f'mapbox://styles/mapbox/{self.version_slug}'
 
     @property
-    def url(self):
-        return f'mapbox://styles/mapbox/{self.version}'
+    def version_slug(self):
+        return f'{self.slug}-v{self.version}'
 
     def __str__(self):
-        return self.url
+        return self.uri
 
 
-class MapBoxProjection(TextChoices):
+class MapBoxProjection(IntegerChoices, s('slug', case_fold=True)):
     """
     https://docs.mapbox.com/mapbox-gl-js/style-spec/projection/
     """
-    ALBERS = 'albers', _('Albers')
-    EQUAL_EARTH = 'equalEarth', _('Equal Earth')
-    EQUI_RECTANGULAR = 'equirectangular', _('Equi-Rectangular')
-    LAMBERT_CONFORMAL_CONIC = 'lambertConformalConic', _('Lambert Conformal Conic')
-    MERCATOR = 'mercator', _('Mercator')
-    NATURAL_EARTH = 'naturalEarth', _('Natural Earth')
-    WINKEL_TRIPEL = 'winkelTripel', _('Winkel Tripel')
-    GLOBE = 'globe', _('Globe')
 
-    @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str) and '-v' in value:
-            return cls(value.split('-')[0])
-        return super()._missing_(value)
+    _symmetric_builtins_ = ['name', 'label']
+
+    # name                  value   label                        slug
+    ALBERS                  = 0, _('Albers'),                  'albers'
+    EQUAL_EARTH             = 1, _('Equal Earth'),             'equalEarth'
+    EQUI_RECTANGULAR        = 2, _('Equi-Rectangular'),        'equirectangular'
+    LAMBERT_CONFORMAL_CONIC = 3, _('Lambert Conformal Conic'), 'lambertConformalConic'
+    MERCATOR                = 4, _('Mercator'),                'mercator'
+    NATURAL_EARTH           = 5, _('Natural Earth'),           'naturalEarth'
+    WINKEL_TRIPEL           = 6, _('Winkel Tripel'),           'winkelTripel'
+    GLOBE                   = 7, _('Globe'),                   'globe'
 
     def __str__(self):
-        return self.value
+        return self.slug

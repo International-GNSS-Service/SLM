@@ -187,8 +187,12 @@ def rpad_space(text, length):
 @register.filter(name='file_icon')
 def file_icon(file):
     subtype = ''
-    if file and hasattr(file, 'mimetype'):
-        subtype = getattr(file, 'mimetype', '').split('/')[-1]
+    if file:
+        subtype = getattr(
+            file,
+            'mimetype',
+            file if isinstance(file, str) else ''
+        ).split('/')[-1]
     return getattr(
         settings,
         'SLM_FILE_ICONS',
@@ -249,3 +253,17 @@ def finding_title(findings, line_number):
             )[0]
         )
     return ''
+
+
+@register.filter(name='split_rows')
+def split_rows(iterable, row_length):
+    rows = []
+    row = []
+    for idx, item in enumerate(iterable):
+        row.append(item)
+        if idx and (idx % row_length) == 0:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    return rows

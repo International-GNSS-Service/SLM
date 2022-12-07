@@ -574,21 +574,29 @@ class SectionViewSet(type):
                                 )
                             )
 
+
                     # if not new - does this section have edits?
                     update = False
                     flags = validated_data.get('_flags', instance._flags)
                     edited_fields = []
                     for field in ModelClass.site_log_fields():
                         if field in validated_data:
+                            is_many = isinstance(
+                                instance._meta.get_field(field),
+                                models.ManyToManyField
+                            )
                             new_value = validated_data.get(field)
-                            if new_value != getattr(instance, field):
+                            if (
+                                not is_many and
+                                new_value != getattr(instance, field)) or (
+                                is_many and set(new_value) != set(
+                                    getattr(instance, field).all()
+                                )
+                            ):
                                 update = True
                                 if not instance.published:
                                     edited_fields.append(field)
-                                    if isinstance(
-                                        instance._meta.get_field(field),
-                                        models.ManyToManyField
-                                    ):
+                                    if is_many:
                                         getattr(instance, field).set(new_value)
                                     else:
                                         setattr(instance, field, new_value)
@@ -1039,6 +1047,12 @@ class SiteFileUploadViewSet(
     def create(self, request, *args, **kwargs):
         with transaction.atomic():
 
+            if 'file' not in request.FILES:
+                return Response(
+                    f"Expected a file upload with name 'file'.",
+                    status=400
+                )
+
             upload = SiteFileUpload(
                 site=self.site,
                 file=request.FILES['file'],
@@ -1102,8 +1116,35 @@ class SiteFileUploadViewSet(
                         f'Unsupported site log upload format.',
                         status=400
                     )
+        upload.site.refresh_from_db()
+        return Response(
+            self.get_serializer(instance=upload).data,
+            status=200
+        )
 
-        return Response(status=204)
+    def perform_update(self, serializer):
+        # do permissions check on publish/unpublish action - also only allow
+        # a subset of status changes
+        if (
+            serializer.validated_data.get('status', None) is not None and
+            serializer.validated_data['status'] != serializer.instance.status
+            and not self.site.can_publish(self.request.user)
+        ):
+            raise PermissionDenied(
+                f'Must be a moderator to publish site files.'
+            )
+        if (
+            SiteFileUploadStatus(
+                serializer.validated_data.get('status', None)
+            ) not in {
+                SiteFileUploadStatus.PUBLISHED,
+                SiteFileUploadStatus.UNPUBLISHED
+            }
+        ):
+            raise PermissionDenied(
+                f'Files may only be published or unpublished.'
+            )
+        super().perform_update(serializer)
 
     def update_from_legacy(self, request, parsed):
         errors = {}

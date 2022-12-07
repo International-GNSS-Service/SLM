@@ -129,6 +129,9 @@ class SiteIndexQuerySet(models.QuerySet):
             Q(begin__lte=epoch) & (Q(end__gt=epoch) | Q(end__isnull=True))
         )
 
+    def public(self):
+        return self.filter(site__agencies__public=True)
+
     def availability(self):
         last_data_avail = DataAvailability.objects.filter(
             site=OuterRef('pk')

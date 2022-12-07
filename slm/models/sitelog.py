@@ -355,9 +355,11 @@ class SiteQuerySet(models.QuerySet):
         :return: A queryset with all sites un-editable by the user filtered
             out.
         """
-        if user.is_superuser:
-            return self
-        return self.filter(agencies__in=[user.agency])
+        if user.is_authenticated:
+            if user.is_superuser:
+                return self
+            return self.filter(agencies__in=[user.agency])
+        return self.none()
 
     def annotate_review_pending(self):
         return self.annotate(
@@ -1485,7 +1487,8 @@ class SiteIdentification(SiteSection):
         FractureSpacing,
         strict=False,
         max_length=50,
-        default='',
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Fracture Spacing'),
         help_text=_(
@@ -1592,6 +1595,7 @@ class SiteLocation(SiteSection):
         strict=False,
         max_length=100,
         blank=False,
+        null=True,
         verbose_name=_('Country or Region'),
         help_text=_('Enter the country/region the site is located in')
     )
@@ -1600,7 +1604,8 @@ class SiteLocation(SiteSection):
         TectonicPlates,
         strict=False,
         max_length=50,
-        default='',
+        null=True,
+        default=None,
         blank=True,
         verbose_name=_('Tectonic Plate'),
         help_text=_(
@@ -1919,6 +1924,7 @@ class SiteAntenna(SiteSubSection):
         AntennaReferencePoint,
         blank=False,
         verbose_name=_('Antenna Reference Point'),
+        null=True,
         help_text=_(
             'Locate your antenna in the file '
             'https://files.igs.org/pub/station/general/antenna.gra. Indicate '
@@ -2284,6 +2290,7 @@ class SiteFrequencyStandard(SiteSubSection):
         max_length=50,
         strict=False,
         blank=False,
+        null=True,
         verbose_name=_('Standard Type'),
         help_text=_(
             'Select whether the frequency standard is INTERNAL or EXTERNAL '
@@ -2399,6 +2406,8 @@ class SiteCollocation(SiteSubSection):
         max_length=50,
         strict=False,
         blank=False,
+        null=True,
+        default=None,
         verbose_name=_('Status'),
         help_text=_('Select appropriate status')
     )
@@ -3393,8 +3402,8 @@ class SiteMoreInformation(SiteSection):
     )
 
     more_info = models.URLField(
-        default=None,
-        null=True,
+        default='',
+        null=False,
         blank=True,
         verbose_name=_('URL for More Information')
     )

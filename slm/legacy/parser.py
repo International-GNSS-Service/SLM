@@ -154,7 +154,7 @@ class ParsedParameter:
             self.parser.add_finding(
                 Ignored(
                     self.line_no,
-                    self,
+                    self.parser,
                     'Placeholder text',
                     match.group(0)
                 )

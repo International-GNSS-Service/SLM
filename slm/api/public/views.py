@@ -159,7 +159,7 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         ).prefetch_related(
             'site__agencies',
             'site__networks'
-        ).at_epoch().availability()
+        ).public().at_epoch().availability()
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

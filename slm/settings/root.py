@@ -35,6 +35,7 @@ if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
 
 # django.contrib.___ gives us useful tools for authentication, etc.
 INSTALLED_APPS = [
+    'slm.map',
     'slm',
     'rest_framework',
     'render_static',

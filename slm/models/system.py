@@ -64,7 +64,9 @@ class Agency(models.Model):
         null=False,
         help_text=_(
             'Set to false to exclude all sites affiliated with this agency '
-            'from public exposure.')
+            'from public exposure.'
+        ),
+        db_index=True
     )
 
     objects = AgencyManager.from_queryset(AgencyQuerySet)()
@@ -106,11 +108,13 @@ class AlertManager(models.Manager):
 class AlertQuerySet(models.QuerySet):
 
     def for_user(self, user):
-        from slm.models.sitelog import Site
-        return self.filter(
-            Q(user=user) | Q(agency=user.agency) |
-            Q(site__in=Site.objects.editable_by(user))
-        )
+        if user.is_authenticated:
+            from slm.models.sitelog import Site
+            qry = Q(user=user) | Q(site__in=Site.objects.editable_by(user))
+            if getattr(user, 'agency', None):
+                qry |= Q(agency=user.agency)
+            return self.filter(qry)
+        return self.none()
 
 
 class Alert(models.Model):
@@ -411,7 +415,7 @@ class SiteFile(models.Model):
     file_type = EnumField(
         SLMFileType,
         null=False,
-        default=SLMFileType.UNKNOWN,
+        default=SLMFileType.ATTACHMENT,
         db_index=True,
         help_text=_('The file type of the upload.')
     )
@@ -428,7 +432,7 @@ class SiteFile(models.Model):
         if not self.mimetype:
             import mimetypes
             self.mimetype = mimetypes.guess_type(self.file.path)[0]
-        if self.file_type is SLMFileType.UNKNOWN:
+        if self.file_type is SLMFileType.ATTACHMENT:
             self.file_type, self.log_format = self.determine_type(
                 self.file,
                 self.mimetype
@@ -437,7 +441,7 @@ class SiteFile(models.Model):
 
     @classmethod
     def determine_type(cls, file, mimetype):
-        file_type, log_format = SLMFileType.UNKNOWN, None
+        file_type, log_format = SLMFileType.ATTACHMENT, None
         if mimetype == SiteLogFormat.LEGACY.mimetype:
             # todo - better criteria??
             upl = file.open()
@@ -532,6 +536,9 @@ class SiteFileUpload(SiteFile):
     )
 
     objects = SiteFileUploadManager.from_queryset(SiteFileUploadQuerySet)()
+
+    class Meta:
+        ordering = ('-timestamp',)
 
 
 class RenderedSiteLog(SiteFile):

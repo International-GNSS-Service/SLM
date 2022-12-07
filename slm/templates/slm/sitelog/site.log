@@ -141,7 +141,7 @@
 6.{{ forloop.counter|rpad_space:3 }}Standard Type            : {{ standard.standard_type|enum_str|upper }}
        Input Frequency        : {% if standard.input_frequency is not None %}{{ standard.input_frequency }} MHz{% endif %}
        Effective Dates        : {% if standard.effective_start %}{{standard.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if standard.effective_end %}{{standard.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
-       Notes                  : {{ notes|multi_line }}
+       Notes                  : {{ standard.notes|multi_line }}
 {% endfor %}
 {% if not frequency_standards or include_templates %}6.x  Standard Type            : (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)
        Input Frequency        : (if external)

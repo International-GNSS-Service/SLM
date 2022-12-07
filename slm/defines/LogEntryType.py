@@ -15,9 +15,10 @@ class LogEntryType(IntegerChoices):
     UPDATE      = 3, _('Update')
     DELETE      = 4, _('Delete')
     PUBLISH     = 5, _('Publish')
-    LOG_UPLOAD  = 6, _('Site Log Upload')
-    FILE_UPLOAD = 7, _('Site File Upload')
+    LOG_UPLOAD  = 6, _('Log Upload')
+    FILE_UPLOAD = 7, _('File Upload')
 
     @property
     def css(self):
-        return f'slm-log-{self.label.lower().replace("_", "-")}'
+        return f'slm-log-' \
+               f'{self.label.lower().replace("_", "-").replace(" ", "-")}'

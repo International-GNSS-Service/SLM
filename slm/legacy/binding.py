@@ -120,15 +120,17 @@ def to_satellites(value):
     return sats
 
 
-def to_enum(enum_cls, value):
-    try:
-        return enum_cls(value).value
-    except ValueError as ve:
-        valid_list = "  \n".join(en.label for en in enum_cls)
-        raise ValueError(
-            f'Invalid value {value} must be one of:\n'
-            f'{valid_list}'
-        ) from ve
+def to_enum(enum_cls, value, blank=None):
+    if value:
+        try:
+            return enum_cls(value).value
+        except ValueError as ve:
+            valid_list = "  \n".join(en.label for en in enum_cls)
+            raise ValueError(
+                f'Invalid value {value} must be one of:\n'
+                f'{valid_list}'
+            ) from ve
+    return blank
 
 
 def to_numeric(numeric_type, value):
@@ -604,7 +606,11 @@ class SiteLogBinder:
                 else [translation]
             ):
                 try:
-                    parameter.bind(param, parse(parameter.value))
+                    parameter.bind(
+                        param,
+                        parse('') if parameter.is_placeholder else
+                        parse(parameter.value)
+                    )
                 except Exception as err:
                     binding_errors.add(param)
                     for line_no in range(

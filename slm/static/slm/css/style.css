@@ -202,6 +202,21 @@ span.badge.slm-log-delete {
     background-color: #CD2026;
     color: white;
 }
+span.badge.slm-log-log-upload {
+    background-color: dodgerblue;
+    color: white;
+}
+span.badge.slm-log-file-upload {
+    background-color: darkblue;
+    color: white;
+}
+
+img.slm-station-location {
+  width:400px;
+  height:300px;
+  background: url(http://goo.gl/vyAs27) no-repeat scroll 0 0;
+}
+
 
 /*------- Background CSS -------*/
 .login-bg {

@@ -2,13 +2,13 @@ if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
 
 class LogEntryType {
     
-    static NEW_SITE = new LogEntryType(1, 'New Site', 'slm-log-new site');
+    static NEW_SITE = new LogEntryType(1, 'New Site', 'slm-log-new-site');
     static ADD = new LogEntryType(2, 'Add', 'slm-log-add');
     static UPDATE = new LogEntryType(3, 'Update', 'slm-log-update');
     static DELETE = new LogEntryType(4, 'Delete', 'slm-log-delete');
     static PUBLISH = new LogEntryType(5, 'Publish', 'slm-log-publish');
-    static LOG_UPLOAD = new LogEntryType(6, 'Site Log Upload', 'slm-log-site log upload');
-    static FILE_UPLOAD = new LogEntryType(7, 'Site File Upload', 'slm-log-site file upload');
+    static LOG_UPLOAD = new LogEntryType(6, 'Log Upload', 'slm-log-log-upload');
+    static FILE_UPLOAD = new LogEntryType(7, 'File Upload', 'slm-log-file-upload');
 
     constructor(val, label, css) {
         this.val = val;

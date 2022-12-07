@@ -298,6 +298,14 @@ class UserSerializer(serializers.ModelSerializer):
 class SiteFileUploadSerializer(serializers.ModelSerializer):
 
     site = serializers.CharField(source='site.name', allow_null=True)
+    site_status = serializers.IntegerField(
+        source='site.status',
+        read_only=True
+    )
+    site_flags = serializers.IntegerField(
+        source='site.num_flags',
+        read_only=True
+    )
     user = EmbeddedUserSerializer(many=False)
 
     class Meta:
@@ -305,6 +313,8 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'site',
+            'site_status',
+            'site_flags',
             'name',
             'user',
             'status',

@@ -79,9 +79,8 @@ Add new section capability is not functional.
             <div class="section_header mb-4 pb-3 border-bottom">
               <span class="slm-section-header">{{ section_name }}</span>
             </div>
-        {% endif %}
-      <!-- Section 0 Content -->
-      {% if multi %}
+        <!-- Section 0 Content -->
+        {% if multi %}
           <div id="add-{{ section_id }}" class="d-grid gap-2 mb-2 d-flex justify-content-between">
               <button type='submit' name='add' class="btn btn-success">
                 {% translate "Add Section" %}
@@ -152,5 +151,61 @@ Add new section capability is not functional.
           </div>
           {% endwith %}
       {% endif %}
+    {% else %}
+    <div class="row">
+        <div class="col-6">
+            {% block station_info_block %}
+            {% endblock station_info_block %}
+        </div>
+        <div class="col-6">
+            {% block station_info_block2 %}
+            <img class="slm-station-location" src=""/>
+            {% endblock station_info_block2 %}
+        </div>
+    </div>
+    <div class="row my-5">
+        {% block station_images %}
+        {% if station_images %}
+        <div class="col-12">
+            <h2>{% trans "Images" %}</h2>
+            <hr/>
+            {% for img_row in station_images|split_rows:3 %}
+                <div class="row">
+                    {% for img in img_row %}
+                    <div class="col-4">
+                        <a href="{{img.file.url}}" download>
+                            <img class="img-fluid" src="{{img.file.url}}"/>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endblock %}
+    </div>
+    <div class="row my-5">
+        {% block station_attachments %}
+        {% if station_attachments %}
+        <div class="col-12">
+            <h2>{% trans "Attachments" %}</h2>
+            <hr/>
+            {% for attachment_row in station_attachments|split_rows:3 %}
+                <div class="row">
+                    {% for attachment in attachment_row %}
+                    <div class="col-4 d-flex justify-content-center" style="text-align: center">
+                        <a href="{{attachment.file.url}}" download>
+                            <i class="slm-attachment {{attachment.mimetype|file_icon}}" style="font-size: 120px;"></i>
+                            <p>{{attachment.name}}</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endblock %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

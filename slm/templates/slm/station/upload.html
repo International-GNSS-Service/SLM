@@ -50,8 +50,10 @@ Template for Download page.
                 <h5>{{ file.user.name }}</h5>
                 <h5>{{ file.timestamp }}</h5>
                 <div id="file-actions" class="d-flex justify-content-end">
+                    {% if can_publish %}
                     <button name="unpublish" onclick="publishFile(false);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.PUBLISHED %}display: none{% endif %}">{% trans 'Unpublish' %}</button>
                     <button name="publish" onclick="publishFile(true);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.UNPUBLISHED %}display: none{% endif %}">{% trans 'Publish' %}</button>
+                    {% endif %}
                     <button name="delete" onclick="deleteFile();" type="button" class="btn btn-danger">{% trans 'Delete' %}</button>
                 </div>
               </div>
@@ -145,6 +147,27 @@ Template for Download page.
                   },
                   init: function () {
                     this.on("complete", function (file) {
+                        if (file.xhr.status < 300) {
+                            let response = JSON.parse(file.xhr.responseText);
+                            let siteNavBtn = $(`button#select-{{ station }}`);
+                            let errBadge = siteNavBtn.find('span.slm-error-badge');
+                            siteNavBtn.removeClass(
+                                slm.SiteLogStatus.get(
+                                    siteNavBtn.data('slmStatus')
+                                ).css
+                            );
+                            siteNavBtn.data('slmStatus', response.site_status);
+                            siteNavBtn.addClass(
+                                slm.SiteLogStatus.get(response.site_status).css
+                            );
+                            siteNavBtn.data('slmFlags', response.site_flags);
+                            errBadge.html(response.site_flags);
+                            if (response.site_flags) {
+                                errBadge.show();
+                            } else {
+                                errBadge.hide();
+                            }
+                        }
                         initFileList($("#slm-file-list"));
                     });
                 }

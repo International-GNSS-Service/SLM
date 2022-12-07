@@ -9,6 +9,7 @@ from slm.models import (
 import logging
 from django.utils.translation import gettext as _
 from django.db import transaction
+from tqdm import tqdm
 
 
 class Command(BaseCommand):
@@ -62,5 +63,14 @@ class Command(BaseCommand):
                 )
 
             # build from current data
-            for site in Site.objects.public():
-                SiteIndex.objects.add_index(site=site)
+            with tqdm(
+                total=Site.objects.public().count(),
+                desc='Indexing',
+                unit='sites',
+                postfix={'site': ''}
+            ) as pbar:
+                for site in Site.objects.public():
+                    pbar.set_postfix({'site': site.name})
+                    SiteIndex.objects.add_index(site=site)
+                    pbar.update(n=1)
+

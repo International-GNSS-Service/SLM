@@ -228,7 +228,8 @@
 6.1  Standard Type            : EXTERNAL RUBIDIUM
        Input Frequency        : 5 
        Effective Dates        : 1993-01-01/1993-10-11
-       Notes                  : 
+       Notes                  : This is a multiline freq
+                              : standard note.
 
 6.2  Standard Type            : EXTERNAL H-MASER
        Input Frequency        : 5 

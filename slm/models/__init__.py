@@ -32,7 +32,6 @@ from slm.models.sitelog import (
     SiteReceiver,
     SiteFrequencyStandard,
     SiteLocation,
-    SiteLogStatus,
     SiteHumiditySensor,
     SiteForm,
     SiteIdentification,

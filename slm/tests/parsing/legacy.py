@@ -18,7 +18,6 @@ class TestLegacyParser(TestCase):
     def test_AAA200USA(self):
 
         parsed = SiteLogParser(self.AAA200USA)
-        print()
         for _, finding in parsed.findings.items():
             print(finding)
 
@@ -26,10 +25,12 @@ class TestLegacyParser(TestCase):
         from pprint import pprint
         pprint(parsed.sections)
 
-        bound_log = SiteLogBinder(parsed)
-        for section_heading, section_data in bound_log.binding.items():
+        SiteLogBinder(parsed)
+        for section_heading, section in parsed.sections.items():
             print(f'################## {section_heading} ##################')
-            pprint(section_data)
+            print(section_heading)
+            for name, parameter in section.binding.items():
+                print(f'{name} = {parameter}')
 
     def test_name_match(self):
 

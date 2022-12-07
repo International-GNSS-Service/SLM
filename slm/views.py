@@ -26,7 +26,8 @@ from slm.models import (
     UserProfile,
     Agency,
     Network,
-    SiteFileUpload
+    SiteFileUpload,
+    SiteLocation
 )
 from slm.defines import (
     SiteLogStatus,
@@ -128,11 +129,18 @@ class StationContextView(SLMView):
         context = super().get_context_data(**kwargs)
         self.station = kwargs.get('station', None)
         self.sites = Site.objects.editable_by(self.request.user)
-        self.site = Site.objects.filter(name=self.station).first()
+        self.site = Site.objects.filter(name__iexact=self.station).editable_by(
+            self.request.user
+        ).first()
         if self.site:
             self.agencies = [
                 agency.name for agency in self.site.agencies.all()
             ]
+            location = SiteLocation.objects.filter(site=self.site).head()
+            context['station_position'] = (
+                location.latitude / 10000,
+                location.longitude / 10000
+            )
 
         max_alert = Alert.objects.for_user(
             self.request.user
@@ -264,25 +272,21 @@ class EditView(StationContextView):
             }
 
         """
-        try:
-            site = Site.objects.editable_by(self.request.user).get(
-                name__iexact=kwargs.get('station')
-            )
-        except Site.DoesNotExist:
+        context = super().get_context_data(**kwargs)
+        if not self.site:
             raise Http404(
                 f'Station {kwargs.get("station", "")} does not exist!'
             )
-
-        root_status = (
-            SiteLogStatus.PUBLISHED if site.status == SiteLogStatus.UPDATED
-            else site.status
-        )
-
-        context = super().get_context_data(**kwargs)
         context.update({
             'section_id': kwargs.get('section', None),
             'sections': {},
-            'forms': []
+            'forms': [],
+            'station_images': SiteFileUpload.objects.filter(
+                site=self.site
+            ).public().filter(file_type=SLMFileType.SITE_IMAGE),
+            'station_attachments': SiteFileUpload.objects.filter(
+                site=self.site
+            ).public().filter(file_type=SLMFileType.ATTACHMENT)
         })
 
         section = self.FORMS.get(kwargs.get('section', None), None)

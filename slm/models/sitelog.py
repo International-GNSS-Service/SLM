@@ -157,7 +157,9 @@ class SLMValidator:
 
     @property
     def field(self):
-        return self.section._meta.get_field(self.field_name)
+        if self.section:  # todo whyyy?
+            return self.section._meta.get_field(self.field_name)
+        return None
 
 
 class FieldPreferred(SLMValidator):
@@ -187,7 +189,7 @@ class EnumValidator(FieldPreferred):
     def __call__(self, value):
         if isinstance(value, str):
             value = value.strip()
-        if value not in {None, ''}:
+        if value not in {None, ''} and self.field:
             try:
                 self.field.enum(value)
             except ValueError:

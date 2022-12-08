@@ -11,3 +11,6 @@ class CollocationStatus(TextChoices):
 
     PERMANENT = 'P', 'PERMANENT'
     HOURLY    = 'M', 'MOBILE'
+
+    def __str__(self):
+        return self.label

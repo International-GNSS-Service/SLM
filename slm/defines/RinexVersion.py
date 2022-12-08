@@ -28,3 +28,6 @@ class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
             f'{field_name}__in': [
                 rv.value for rv in RinexVersion if rv.major == self.major
             ]})
+
+    def __str__(self):
+        return self.label

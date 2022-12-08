@@ -39,7 +39,8 @@ from slm.models import (
     SiteMoreInformation,
     UserProfile,
     Agency,
-    SatelliteSystem
+    SatelliteSystem,
+    SiteFileUpload
 )
 from django.urls import reverse
 from django.db import transaction
@@ -48,6 +49,7 @@ from django.core.validators import MinValueValidator
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
 from django.utils.functional import cached_property
+from slm.defines import SLMFileType
 
 
 class UserAdminCreationForm(forms.ModelForm):
@@ -55,8 +57,10 @@ class UserAdminCreationForm(forms.ModelForm):
     # fields. Requires repeated password.
 
     password = forms.CharField(widget=forms.PasswordInput)
-    password_2 = forms.CharField(label='Confirm Password',
-                                 widget=forms.PasswordInput)
+    password_2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput
+    )
 
     class Meta:
         model = get_user_model()
@@ -482,3 +486,24 @@ class UserProfileForm(forms.ModelForm):
             'postal_code'
         ]
 
+
+class SiteFileForm(forms.ModelForm):
+
+    name = forms.SlugField(
+        max_length=255,
+        help_text=_('The name of the file.')
+    )
+
+    def __init__(self, *args, instance=None, **kwargs):
+        super().__init__(*args, instance=instance, **kwargs)
+        if instance and instance.file_type != SLMFileType.SITE_IMAGE:
+            self.fields['direction'].widget = forms.HiddenInput()
+            self.fields['direction'].disabled = True
+
+    class Meta:
+        model = SiteFileUpload
+        fields = [
+            'name',
+            'description',
+            'direction'
+        ]

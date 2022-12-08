@@ -1133,10 +1133,8 @@ class SiteFileUploadViewSet(
             raise PermissionDenied(
                 f'Must be a moderator to publish site files.'
             )
-        if (
-            SiteFileUploadStatus(
-                serializer.validated_data.get('status', None)
-            ) not in {
+        if serializer.validated_data.get('status', None) and (
+            SiteFileUploadStatus(serializer.validated_data['status']) not in {
                 SiteFileUploadStatus.PUBLISHED,
                 SiteFileUploadStatus.UNPUBLISHED
             }

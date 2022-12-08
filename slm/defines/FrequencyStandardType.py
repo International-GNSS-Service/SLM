@@ -14,3 +14,6 @@ class FrequencyStandardType(TextChoices, s('geodesy_ml', case_fold=True)):
     EXTERNAL_CESIUM   = 'C',  'EXTERNAL CESIUM',   'CESIUM'
     EXTERNAL_RUBIDIUM = 'R',  'EXTERNAL RUBIDIUM', 'RUBIDIUM'
     EXTERNAL_QUARTZ   = 'Q',  'EXTERNAL QUARTZ',   'QUARTZ'
+
+    def __str__(self):
+        return self.label

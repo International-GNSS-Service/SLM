@@ -18,3 +18,6 @@ class Instrumentation(IntegerChoices):
     VLBI    = 6, _('VLBI')
     TIME    = 7, _('TIME')
     ETC     = 8, _('etc')
+
+    def __str__(self):
+        return self.label

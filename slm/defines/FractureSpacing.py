@@ -13,3 +13,6 @@ class FractureSpacing(TextChoices):
     MORE_THAN_11_LESS_THAN_50_CM   = '11',  '11-50 cm'
     MORE_THAN_51_LESS_THAN_200_CM  = '51',  '51-200 cm'
     OVER_200_CM                    = '200', 'over 200 cm'
+
+    def __str__(self):
+        return self.label

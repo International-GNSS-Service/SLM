@@ -30,3 +30,6 @@ class TectonicPlates(TextChoices):
     NUBIA          = 'NU', 'Nubia'
     SOMALIA        = 'SO', 'Somalia'
     MARIANA        = 'MA', 'Mariana'
+
+    def __str__(self):
+        return self.label

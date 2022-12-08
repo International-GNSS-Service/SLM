@@ -170,11 +170,12 @@ Add new section capability is not functional.
             <h2>{% trans "Images" %}</h2>
             <hr/>
             {% for img_row in station_images|split_rows:3 %}
-                <div class="row">
+                <div class="row my-2">
                     {% for img in img_row %}
-                    <div class="col-4">
+                    <div class="col-4 my-2">
                         <a href="{{img.file.url}}" download>
                             <img class="img-fluid" src="{{img.file.url}}"/>
+                            <div class="d-flex justify-content-between"><span>{{img.name}} {% if img.direction %}</span><span>({{img.direction.label}}){% endif %}</span></div>
                         </a>
                     </div>
                     {% endfor %}
@@ -191,7 +192,7 @@ Add new section capability is not functional.
             <h2>{% trans "Attachments" %}</h2>
             <hr/>
             {% for attachment_row in station_attachments|split_rows:3 %}
-                <div class="row">
+                <div class="row my-2">
                     {% for attachment in attachment_row %}
                     <div class="col-4 d-flex justify-content-center" style="text-align: center">
                         <a href="{{attachment.file.url}}" download>

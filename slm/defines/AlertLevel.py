@@ -13,3 +13,6 @@ class AlertLevel(IntegerChoices, s('bootstrap', case_fold=True)):
     INFO    = 0, _('INFO'), 'info'
     WARNING = 1, _('WARNING'), 'warning'
     ERROR   = 2, _('ERROR'), 'danger'
+
+    def __str__(self):
+        return self.label

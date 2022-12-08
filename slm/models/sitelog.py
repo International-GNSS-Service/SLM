@@ -155,6 +155,10 @@ class SLMValidator:
             return self.section._meta.get_field(field).verbose_name
         return None
 
+    @property
+    def field(self):
+        return self.section._meta.get_field(self.field_name)
+
 
 class FieldPreferred(SLMValidator):
 
@@ -174,6 +178,21 @@ class FieldRequiredToPublish(FieldPreferred):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, severity=FlagSeverity.BLOCK_PUBLISH, **kwargs)
+
+
+class EnumValidator(FieldPreferred):
+
+    statement = _('Value not in Enumeration.')
+
+    def __call__(self, value):
+        if isinstance(value, str):
+            value = value.strip()
+        if value not in {None, ''}:
+            try:
+                self.field.enum(value)
+            except ValueError:
+                self.throw_error(self.statement)
+        self.clear()
 
 
 class FourIDValidator(SLMValidator, RegexValidator):
@@ -1494,7 +1513,8 @@ class SiteIdentification(SiteSection):
         help_text=_(
             'If known, describe the fracture spacing of the bedrock. '
             'Format: (1-10 cm/11-50 cm/51-200 cm/over 200 cm)'
-        )
+        ),
+        validators=[EnumValidator()]
     )
 
     fault_zones = models.CharField(
@@ -1597,7 +1617,8 @@ class SiteLocation(SiteSection):
         blank=False,
         null=True,
         verbose_name=_('Country or Region'),
-        help_text=_('Enter the country/region the site is located in')
+        help_text=_('Enter the country/region the site is located in'),
+        validators=[EnumValidator()]
     )
 
     tectonic = EnumField(
@@ -1610,7 +1631,8 @@ class SiteLocation(SiteSection):
         verbose_name=_('Tectonic Plate'),
         help_text=_(
             'Select the primary tectonic plate that the GNSS site occupies'
-        )
+        ),
+        validators=[EnumValidator()]
     )
 
     x = models.FloatField(
@@ -1933,7 +1955,7 @@ class SiteAntenna(SiteSubSection):
             ' your antenna does not appear. Format: (BPA/BCR/XXX from '
             'antenna.gra; see instr.)'
         ),
-        validators=[ARPValidator()]
+        validators=[ARPValidator(), EnumValidator()]
     )
 
     marker_up = models.FloatField(
@@ -2296,7 +2318,8 @@ class SiteFrequencyStandard(SiteSubSection):
             'Select whether the frequency standard is INTERNAL or EXTERNAL '
             'and describe the oscillator type. '
             'Format: (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)'
-        )
+        ),
+        validators=[EnumValidator()]
     )
 
     input_frequency = models.FloatField(
@@ -2409,7 +2432,8 @@ class SiteCollocation(SiteSubSection):
         null=True,
         default=None,
         verbose_name=_('Status'),
-        help_text=_('Select appropriate status')
+        help_text=_('Select appropriate status'),
+        validators=[EnumValidator()]
     )
 
     notes = models.TextField(
@@ -2645,7 +2669,8 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
         help_text=_(
             'Enter the aspiration type if known. '
             'Format: (UNASPIRATED/NATURAL/FAN/etc)'
-        )
+        ),
+        validators=[EnumValidator()]
     )
 
 
@@ -2780,7 +2805,8 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
         help_text=_(
             'Enter the aspiration type if known. '
             'Format: (UNASPIRATED/NATURAL/FAN/etc)'
-        )
+        ),
+        validators=[EnumValidator()]
     )
 
 

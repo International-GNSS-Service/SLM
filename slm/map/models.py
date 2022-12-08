@@ -61,7 +61,7 @@ class MapSettings(SingletonModel):
         MapBoxStyle,
         null=False,
         blank=False,
-        default=MapBoxStyle.STREETS,
+        default=MapBoxStyle.LIGHT,
         help_text=_(
             _('The map tile styling to use for static map images.')
         )

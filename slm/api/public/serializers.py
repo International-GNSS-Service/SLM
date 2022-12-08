@@ -95,6 +95,7 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
             'timestamp',
             'download',
             'mimetype',
-            'description'
+            'description',
+            'direction'
         ]
         read_only_fields = fields

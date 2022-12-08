@@ -13,3 +13,6 @@ class FlagSeverity(IntegerChoices):
     BLOCK_SAVE =    0, _('Block Save')
     BLOCK_PUBLISH = 1, _('Block Publish')
     NOTIFY =        2, _('Notify')
+
+    def __str__(self):
+        return self.label

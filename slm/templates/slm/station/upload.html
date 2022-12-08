@@ -37,7 +37,7 @@ Template for Download page.
       <!-- Title -->
       <div class="d-flex flex-column justify-content-left align-items-left mt-4">
         <div class="mb-4 pb-3 border-bottom">
-            <h2>{% if file %}<a href="{{ file.file.url }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> {{ file.name }}</a>{% else %}{% trans "Upload" %}{% endif %}</h2>
+            <h2 id="slm-file-header">{% if file %}<a href="{{ file.file.url }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> <span class="slm-file-name">{{ file.name }}</span></a>{% else %}{% trans "Upload" %}{% endif %}</h2>
         </div>
       </div>
 
@@ -58,9 +58,7 @@ Template for Download page.
                 </div>
               </div>
 
-              {% if file.file_type == SLMFileType.SITE_IMAGE %}
-                  {% include 'slm/station/uploads/image.html' %}
-              {% elif file.file_type == SLMFileType.SITE_LOG %}
+              {% if file.file_type == SLMFileType.SITE_LOG %}
                   {% if file.log_format == SiteLogFormat.LEGACY %}
                     {% include 'slm/station/uploads/legacy.html' %}
                   {% elif file.log_format == SiteLogFormat.GEODESY_ML %}
@@ -69,7 +67,14 @@ Template for Download page.
                     {% include 'slm/station/uploads/json.html' %}
                   {% endif %}
               {% else %}
-                  {% include 'slm/station/uploads/unknown.html' %}
+                  {% if file.file_type == SLMFileType.SITE_IMAGE %}
+                  {% include 'slm/station/uploads/image.html' %}
+                  {% elif file.file_type == SLMFileType.ATTACHMENT %}
+                  {% include 'slm/station/uploads/attachment.html' %}
+                  {% endif %}
+                  {% if form %}
+
+                  {% endif %}
               {% endif %}
 
               <script>
@@ -78,6 +83,7 @@ Template for Download page.
                 const unpublishBtn = fileActions.find('button[name="unpublish"]');
                 const publishBtn = fileActions.find('button[name="publish"]');
                 const deleteBtn = fileActions.find('button[name="delete"]');
+                const updateBtn = fileActions.find('button[name="update"]');
 
                 const deleteFile = function() {
                     slm.deleteFile("{{ station }}", {{ file.id }}).done(
@@ -114,6 +120,29 @@ Template for Download page.
                             btn.removeClass(oldStatus.css);
                             btn.addClass(newStatus.css);
                             btn.data('slmFileStatus', newStatus.val);
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
+                const updateFile = function() {
+                    $.ajax({
+                        url: slm.urls.reverse(
+                            'slm_edit_api:files-detail',
+                            {'site': '{{ station }}', 'pk': {{file.id}}}
+                        ),
+                        method: 'PATCH',
+                        data: $('form#slm-file-form').serialize()
+                    }).done(
+                        function(data, status, jqXHR) {
+                            $('h2#slm-file-header span.slm-file-name').html(data['name']);
+                            $('button#select-file-{{file.id}} span.slm-file-name').html(data['name']);
+                            updateBtn.blur();
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {

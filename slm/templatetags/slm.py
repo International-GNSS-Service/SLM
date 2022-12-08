@@ -124,6 +124,13 @@ def precision(alt, precision):
     return ''
 
 
+@register.filter(name='precision_full')
+def precision_full(alt, precision):
+    if alt not in {None, ''}:
+        return f'{alt:.{precision}f}'
+    return ''
+
+
 @register.filter(name='pos')
 def pos(number):
     if float(number) > 0:
@@ -261,7 +268,7 @@ def split_rows(iterable, row_length):
     row = []
     for idx, item in enumerate(iterable):
         row.append(item)
-        if idx and (idx % row_length) == 0:
+        if idx+1 % row_length == 0:
             rows.append(row)
             row = []
     if row:

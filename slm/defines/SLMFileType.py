@@ -12,3 +12,5 @@ class SLMFileType(IntegerChoices):
     def icon(mimetype):
         return f'bi bi-filetype-{mimetype.split("/")[-1]}'
 
+    def __str__(self):
+        return self.label

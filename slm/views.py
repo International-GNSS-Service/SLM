@@ -73,7 +73,8 @@ from slm.forms import (
     SiteMoreInformationForm,
     UserProfileForm,
     UserForm,
-    NewSiteForm
+    NewSiteForm,
+    SiteFileForm
 )
 from slm import signals as slm_signals
 
@@ -431,6 +432,12 @@ class UploadView(StationContextView):
             context['file'] = file
             if file.context:
                 context.update(file.context)
+
+            if file.file_type in {
+                SLMFileType.SITE_IMAGE,
+                SLMFileType.ATTACHMENT
+            }:
+                context['form'] = SiteFileForm(instance=file)
         context['num_files'] = SiteFileUpload.objects.filter(
             site=self.site
         ).count()

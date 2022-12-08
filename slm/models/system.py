@@ -11,7 +11,8 @@ from slm.defines import (
     SLMFileType,
     SiteLogFormat,
     LogEntryType,
-    SiteFileUploadStatus
+    SiteFileUploadStatus,
+    CardinalDirection
 )
 from slm.models.sitelog import (
     SiteSubSection,
@@ -22,6 +23,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from slm.models import compat
 import os
+from pathlib import Path
 
 
 class AgencyManager(models.Manager):
@@ -491,11 +493,10 @@ class SiteFileUpload(SiteFile):
     SUB_DIRECTORY = 'uploads'
 
     name = models.CharField(
-        blank=True,
-        default='',
+        blank=False,
         db_index=True,
         max_length=255,
-        help_text=_('The name of the file when it was uploaded.')
+        help_text=_('The name of the file.')
     )
 
     status = EnumField(
@@ -533,6 +534,17 @@ class SiteFileUpload(SiteFile):
         blank=True,
         default='',
         help_text=_('A description of what this file is (optional).')
+    )
+
+    direction = EnumField(
+        CardinalDirection,
+        blank=True,
+        default=None,
+        null=True,
+        help_text=_(
+            'For images taken at the site, this is the cardinal direction the '
+            'camera was pointing towards.'
+        )
     )
 
     objects = SiteFileUploadManager.from_queryset(SiteFileUploadQuerySet)()

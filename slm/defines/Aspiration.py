@@ -12,3 +12,6 @@ class Aspiration(TextChoices):
     UNASPIRATED = 'U',  'UNASPIRATED'
     NATURAL     = 'N',  'NATURAL'
     FAN         = 'F',  'FAN'
+
+    def __str__(self):
+        return self.label

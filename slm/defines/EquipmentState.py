@@ -12,3 +12,6 @@ class EquipmentState(IntegerChoices):
 
     ACTIVE = 100, _('Active')
     LEGACY = 101, _('Legacy')
+
+    def __str__(self):
+        return self.label

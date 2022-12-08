@@ -17,3 +17,4 @@ from slm.defines.SiteLogFormat import SiteLogFormat
 from slm.defines.Aspiration import Aspiration
 from slm.defines.FrequencyStandardType import FrequencyStandardType
 from slm.defines.SiteFileUploadStatus import SiteFileUploadStatus
+from slm.defines.CardinalDirection import CardinalDirection

@@ -189,7 +189,7 @@ class SLMFileType {
     
     static SITE_LOG = new SLMFileType(0, 'Site Log');
     static SITE_IMAGE = new SLMFileType(1, 'Site Image');
-    static UNKNOWN = new SLMFileType(2, 'Unknown');
+    static ATTACHMENT = new SLMFileType(2, 'Attachment');
 
     constructor(val, label) {
         this.val = val;
@@ -207,7 +207,7 @@ class SLMFileType {
             case 1:
                 return SLMFileType.SITE_IMAGE;
             case 2:
-                return SLMFileType.UNKNOWN;
+                return SLMFileType.ATTACHMENT;
         }
     }
 }

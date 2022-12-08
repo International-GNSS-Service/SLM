@@ -47,7 +47,7 @@ Template for stations list.
             type="submit"
             role="tab"
             data-slm-file-status={{ file.status.value }}
-            aria-selected="true"><i class="{{ file.mimetype|file_icon }}"></i><span>{{ file.name }}</span></button>
+            aria-selected="true"><i class="{{ file.mimetype|file_icon }}"></i><span class="slm-file-name">{{ file.name }}</span></button>
         {% endif %}
         <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
             <div class="slm-loader"></div>
@@ -177,7 +177,7 @@ Template for stations list.
                     type="submit"
                     role="tab"
                     data-slm-file-status=${status.val}
-                    aria-selected="${selected}"><i class="${slm.fileIcon(file.mimetype)}"></i><span>${file.name}</span></button>`
+                    aria-selected="${selected}"><i class="${slm.fileIcon(file.mimetype)}"></i><span class="slm-file-name">${file.name}</span></button>`
             ).insertBefore(pos);
         }
     }

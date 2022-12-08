@@ -22,3 +22,6 @@ class LogEntryType(IntegerChoices):
     def css(self):
         return f'slm-log-' \
                f'{self.label.lower().replace("_", "-").replace(" ", "-")}'
+
+    def __str__(self):
+        return self.label

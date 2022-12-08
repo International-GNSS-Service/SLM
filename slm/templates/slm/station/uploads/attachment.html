@@ -1,19 +1,10 @@
-{% load i18n widget_tweaks %}
-
-<div class="m-2">
-<img src="{{ file.file.url }}" class="img-fluid mt-5" />
-</div>
-
 <div class="row m-2">
   <div class="col-12">
   <form id="slm-file-form">
       {% csrf_token %}
       <div class="row my-2">
-          <div class="col-6">
+          <div class="col-12">
           {% render_field form.name class="form-control" title=form.name.help_text placeholder=form.name.help_text %}
-          </div>
-          <div class="col-6">
-          {% render_field form.direction class="form-control" title=form.direction.help_text  %}
           </div>
       </div>
       <div class="row my-2">

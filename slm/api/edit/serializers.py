@@ -322,9 +322,10 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
             'file_type',
             'log_format',
             'mimetype',
-            'description'
+            'description',
+            'direction'
         ]
         read_only_fields = [
             field for field in fields
-            if field not in {'status', 'description'}
+            if field not in {'status', 'name', 'description', 'direction'}
         ]

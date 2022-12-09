@@ -77,7 +77,7 @@ Template for Download page.
                   {% endif %}
               {% endif %}
 
-              <script>
+            <script>
 
                 const fileActions = $('#file-actions');
                 const unpublishBtn = fileActions.find('button[name="unpublish"]');
@@ -157,11 +157,14 @@ Template for Download page.
                     );
                 }
 
-              </script>
-          {% else %}
-          <div id="sitefile-upload" class="dropzone">
-              <div class="dz-message" data-dz-message><h5>{% translate "Click or drag files to upload an updated site log, site images or miscellaneous files." %}</h5></div>
-          </div>
+            </script>
+            {% else %}
+            <div id="sitefile-upload" class="dropzone">
+                <div class="dz-message" data-dz-message>
+                    <p><i class="bi bi-cloud-arrow-up"></i></p>
+                    <p class="fs-5 fw-bold">{% translate "Click to upload or drag and drop files to upload an updated site log, site images or miscellaneous files." %}</p>
+                </div>
+            </div>
 
             <script>
 

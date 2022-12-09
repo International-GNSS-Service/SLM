@@ -39,7 +39,7 @@
             ).insertBefore(position);
         }
         let div = $("#slm-alert-scroll");
-        if (data.length === 0 && div.data('slmPage') === div.data('slmPageSize') ) { 
+        if (data.length === 0 && div.data('slmPage') === 0 ) { 
             $(`<h3 class="text-center text-secondary">No Alerts</h3>`
             ).insertBefore(position);
         }

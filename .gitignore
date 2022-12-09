@@ -157,3 +157,4 @@ slm/static/slm/js/urls.js
 poetry.lock
 slm/tests/tmp
 slm/logs
+test.db

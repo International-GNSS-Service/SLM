@@ -289,12 +289,18 @@ class EditView(StationContextView):
             'section_id': kwargs.get('section', None),
             'sections': {},
             'forms': [],
-            'station_images': SiteFileUpload.objects.filter(
-                site=self.site
-            ).public().filter(file_type=SLMFileType.SITE_IMAGE),
-            'station_attachments': SiteFileUpload.objects.filter(
-                site=self.site
-            ).public().filter(file_type=SLMFileType.ATTACHMENT)
+            'station_images': self.site.sitefileuploads.available_to(
+                self.request.user
+            ).filter(
+                status=SiteFileUploadStatus.PUBLISHED,
+                file_type=SLMFileType.SITE_IMAGE
+            ),
+            'station_attachments': self.site.sitefileuploads.available_to(
+                self.request.user
+            ).filter(
+                status=SiteFileUploadStatus.PUBLISHED,
+                file_type=SLMFileType.ATTACHMENT
+            )
         })
 
         section = self.FORMS.get(kwargs.get('section', None), None)
@@ -689,7 +695,7 @@ class AlertsView(SLMView):
     template_name = 'slm/alerts.html'
 
 
-def download_site_attachment(request, site=None, pk=None):
+def download_site_attachment(request, site=None, pk=None, thumbnail=False):
     """
     A function view for downloading files that have been uploaded to
     a site. This allows unathenticated downloads of public files and
@@ -707,8 +713,12 @@ def download_site_attachment(request, site=None, pk=None):
         upload = SiteFileUpload.objects.available_to(
             request.user
         ).get(site__name=site, pk=pk)
+        file = upload.file
+        if thumbnail and upload.has_thumbnail:
+            file = upload.thumbnail
+
         return FileResponse(
-            upload.file.open('rb'),
+            file.open('rb'),
             filename=upload.name,  # note this might not match the name on disk
             as_attachment=True
         )

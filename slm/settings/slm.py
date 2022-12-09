@@ -27,6 +27,7 @@ SLM_LEGACY_PLACEHOLDERS = True
 # the maximum file upload size in Mega Bytes
 SLM_MAX_UPLOAD_SIZE_MB = 100
 
+# a map of file icons (css) from mimetype subtypes
 SLM_FILE_ICONS = {
     'zip': 'bi bi-file-zip',
     'x-tar': 'bi bi-file-zip',
@@ -45,3 +46,7 @@ SLM_FILE_ICONS = {
         'bi bi-filetype-doc',
     'msword': 'bi bi-filetype-doc'
 }
+
+# generated image thumbnail size in pixels - this is a tuple of maximum width
+# and height - the aspect ratio will be preserved
+SLM_THUMBNAIL_SIZE = (250, 250)

@@ -189,5 +189,11 @@ urlpatterns = [
         'files/<station:site>/<int:pk>',
         download_site_attachment,
         name='download_attachment'
+    ),
+    path(
+        'files/<station:site>/<int:pk>/thumbnail',
+        download_site_attachment,
+        name='download_attachment_thumbnail',
+        kwargs={'thumbnail': True}
     )
 ]

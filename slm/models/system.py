@@ -23,7 +23,11 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from slm.models import compat
+from logging import getLogger
 import os
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 
 class AgencyManager(models.Manager):
@@ -372,20 +376,35 @@ class Radome(Equipment):
 def site_upload_path(instance, filename):
     """
      file will be saved to:
-        MEDIA_ROOT/uploads/<9-char site name>/year/month/day/filename
         MEDIA_ROOT/uploads/<9-char site name>/filename
+
+    :param instance: The SiteFile instance
+    :param filename: The name of the file
+    :return: The path where the site file should reside.
     """
     prefix = ''
     if instance.SUB_DIRECTORY:
         prefix = f'{instance.SUB_DIRECTORY}/'
-    #return f'{prefix}{instance.site.name}/{instance.timestamp.year}/' \
-    #       f'{instance.timestamp.month}/{instance.timestamp.day}/{filename}'
     return f'{prefix}{instance.site.name}/{filename}'
+
+
+def site_thumbnail_path(instance, filename):
+    """
+    Return the path for the thumbnail image for the given filename.
+
+    :param instance: The SiteFile instance
+    :param filename: The name of the file
+    :return: The path where the thumbnail image should reside.
+    """
+    parts = str(site_upload_path(instance, filename)).split('/')
+    return '/'.join([*parts[0:-1], 'thumbnails', parts[-1]])
 
 
 class SiteFile(models.Model):
 
     SUB_DIRECTORY = 'misc'
+
+    logger = getLogger('slm.models.system.SiteFile')
 
     site = models.ForeignKey(
         'slm.Site',
@@ -405,6 +424,14 @@ class SiteFile(models.Model):
         upload_to=site_upload_path,
         null=False,
         help_text=_('A pointer to the uploaded file on disk.')
+    )
+
+    thumbnail = models.ImageField(
+        upload_to=site_thumbnail_path,
+        null=True,
+        default=None,
+        blank=True,
+        help_text=_('A pointer to the generated thumbnail file on disk.')
     )
 
     mimetype = models.CharField(
@@ -440,6 +467,7 @@ class SiteFile(models.Model):
                 self.file,
                 self.mimetype
             )
+        self.generate_thumbnail()
         return super().save(*args, **kwargs)
 
     @classmethod
@@ -460,10 +488,59 @@ class SiteFile(models.Model):
             pass
         elif mimetype == SiteLogFormat.JSON.mimetype:
             pass
-        elif mimetype.split('/')[0] == 'image':
+        elif mimetype.split('/')[0] == 'image' and 'svg' not in mimetype:
             return SLMFileType.SITE_IMAGE, None
 
         return file_type, log_format
+
+    def generate_thumbnail(self, regenerate=False):
+        """
+        Generate a thumbnail image for this file if it is an image.
+
+        :param regenerate: If true, delete and regenerate the existing image.
+        :return:
+        """
+        if (
+            self.file_type == SLMFileType.SITE_IMAGE and
+            (regenerate or not self.has_thumbnail) and self.file.path
+        ):
+            try:
+                image = Image.open(self.file.open('rb')).copy().convert('RGB')
+                image.thumbnail(
+                    getattr(settings, 'SLM_THUMBNAIL_SIZE', (250, 250)),
+                    Image.ANTIALIAS
+                )
+                buffer = BytesIO()
+                image.save(buffer, 'JPEG')
+                buffer.seek(0)
+                if self.has_thumbnail:
+                    try:
+                        os.remove(self.thumbnail.path)
+                    except OSError:
+                        pass
+                self.thumbnail.save(
+                    getattr(
+                        self,
+                        'name',
+                        '.'.join([
+                            *os.path.basename(self.file.path).split('.')[0:-1],
+                            'jpeg']
+                        )
+                    ),
+                    ContentFile(buffer.read()),
+                    save=False,
+                )
+                buffer.close()
+            except Exception:
+                self.logger.exception('Error creating thumbnail for %s', self)
+
+    @property
+    def has_thumbnail(self):
+        return (
+            self.thumbnail and
+            self.thumbnail.path and
+            os.path.exists(self.thumbnail.path)
+        )
 
     def __str__(self):
         if hasattr(self, 'name'):
@@ -482,7 +559,7 @@ class SiteFileUploadManager(models.Manager):
 class SiteFileUploadQuerySet(models.QuerySet):
 
     @staticmethod
-    def public_q():
+    def public_q(public_sites_only=True):
         """
         Return a Q object holding the public definition. Which is any file
         that belongs to a public site that is in the PUBLISHED state.
@@ -492,17 +569,17 @@ class SiteFileUploadQuerySet(models.QuerySet):
         from slm.models.sitelog import Site
         return (
                 Q(status=SiteFileUploadStatus.PUBLISHED) &
-                Q(site__in=Site.objects.public())
+                Q(site__in=Site.objects.public()) if public_sites_only else Q()
         )
 
-    def public(self):
+    def public(self, public_sites_only=True):
         """
         Fetch the files that are public. This is any file that belongs to a
         public site that is in the PUBLISHED state.
 
         :return: A queryset containing the public files
         """
-        return self.filter(self.public_q())
+        return self.filter(self.public_q(public_sites_only))
 
     def available_to(self, user):
         """
@@ -516,7 +593,7 @@ class SiteFileUploadQuerySet(models.QuerySet):
         from slm.models.sitelog import Site
         if not user.is_authenticated:
             return self.public()
-        return self.filter(self.public_q() | (
+        return self.filter(self.public_q(public_sites_only=False) | (
             Q(site__in=Site.objects.editable_by(user))
         ))
 

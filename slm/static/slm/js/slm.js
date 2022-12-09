@@ -715,3 +715,17 @@ slm.publishFile = function(station, fileId, publish) {
         }
     });
 }
+
+slm.updateFileBadges = function(delta) {
+    let filesBadge = $('span.slm-files-badge');
+    filesBadge.data(
+        'slmFiles',
+        Math.max(0, filesBadge.data('slmFiles') + delta)
+    );
+    filesBadge.html(filesBadge.data('slmFiles'));
+    if (filesBadge.data('slmFiles') === 0) {
+        filesBadge.hide();
+    } else {
+        filesBadge.show();
+    }
+}

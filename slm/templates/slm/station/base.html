@@ -1,5 +1,5 @@
 {% extends "slm/base.html" %}
-{% load compress %}
+{% load compress i18n %}
 
 
 {% block page_content %}
@@ -31,22 +31,22 @@
                             {% with station_name=site.fourid %}
                                 {% with url_name=request.resolver_match.url_name %}
                                 <li class="nav-item {% if url_name == 'alerts' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:alerts' station=station %}{% else %}{% url 'slm:alerts' %}{% endif %}" class="nav-link"><i class="bi bi-bell{% if station_alert_level %}-fill text-{{ station_alert_level.bootstrap }}{% endif %}"></i> Alerts</a>
+                                    <a href="{% if station %}{% url 'slm:alerts' station=station %}{% else %}{% url 'slm:alerts' %}{% endif %}" class="nav-link"><i class="bi bi-bell{% if station_alert_level %}-fill text-{{ station_alert_level.bootstrap }}{% endif %}"></i> {% trans "Alerts" %}</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'edit' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:edit' station=station %}{% else %}{% url 'slm:edit' %}{% endif %}" class="nav-link"><i class="bi bi-pencil-square"></i> Edit</a>
+                                    <a href="{% if station %}{% url 'slm:edit' station=station %}{% else %}{% url 'slm:edit' %}{% endif %}" class="nav-link"><i class="bi bi-pencil-square"></i> {% trans "Edit" %}</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'upload' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:upload' station=station %}{% else %}{% url 'slm:upload' %}{% endif %}" class="nav-link"><i class="bi bi-upload"></i> Upload</a>
+                                    <a href="{% if station %}{% url 'slm:upload' station=station %}{% else %}{% url 'slm:upload' %}{% endif %}" class="nav-link"><i class="bi bi-upload"></i> {% trans "Upload" %} <span class="badge rounded-pill bg-warning slm-files-badge" data-slm-files={{attn_files}} {% if not attn_files %}style="display: none"{% endif %}>{{attn_files}}</span></a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'download' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:download' station=station %}{% else %}{% url 'slm:download' %}{% endif %}" class="nav-link"><i class="bi bi-download"></i> Download</a>
+                                    <a href="{% if station %}{% url 'slm:download' station=station %}{% else %}{% url 'slm:download' %}{% endif %}" class="nav-link"><i class="bi bi-download"></i> {% trans "Download" %}</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'review' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:review' station=station %}{% else %}{% url 'slm:review' %}{% endif %}" class="nav-link"><i class="bi bi-file-check"></i> Review & Submit</a>
+                                    <a href="{% if station %}{% url 'slm:review' station=station %}{% else %}{% url 'slm:review' %}{% endif %}" class="nav-link"><i class="bi bi-file-check"></i> {% trans "Review & Submit" %}</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'log' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:log' station=station %}{% else %}{% url 'slm:log' %}{% endif %}" class="nav-link"><i class="bi bi-journal-text"></i> Activity Log</a>
+                                    <a href="{% if station %}{% url 'slm:log' station=station %}{% else %}{% url 'slm:log' %}{% endif %}" class="nav-link"><i class="bi bi-journal-text"></i> {% trans "Activity Log" %}</a>
                                 </li>
                                 {% endwith %}
                             {% endwith %}

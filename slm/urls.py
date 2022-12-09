@@ -9,15 +9,16 @@ from slm.views import (
     UploadView,
     NewSiteView,
     AlertsView,
+    StationAlertsView,
     SLMView,
-    UserActivityLogView
+    UserActivityLogView,
+    download_site_attachment
 )
 from django.urls import path, register_converter
 from datetime import datetime
 from slm.api.edit import views as edit_views
 from slm.api.public import views as public_views
 from django.conf import settings
-from django.views.static import serve
 
 
 api = {
@@ -140,7 +141,11 @@ urlpatterns = [
     path('newsite/', NewSiteView.as_view(), name='new_site'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('alerts/', AlertsView.as_view(), name='alerts'),
-    path('alerts/<station:station>', AlertsView.as_view(), name='alerts'),
+    path(
+        'alerts/<station:station>',
+        StationAlertsView.as_view(),
+        name='alerts'
+    ),
     path('upload/<station:station>', UploadView.as_view(), name='upload'),
     path(
         'upload/<station:station>/<int:file>',
@@ -174,12 +179,15 @@ urlpatterns = [
         name='about'
     ),
     path('help/', SLMView.as_view(template_name='slm/help.html'), name='help'),
-    path('alerts/', AlertsView.as_view(), name='alerts'),
     path('activity/', UserActivityLogView.as_view(), name='user_activity'),
     path(
         'activity/<int:log_user>',
         UserActivityLogView.as_view(),
         name='user_activity'
     ),
-    path(r'media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT})
+    path(
+        'files/<station:site>/<int:pk>',
+        download_site_attachment,
+        name='download_attachment'
+    )
 ]

@@ -5,6 +5,8 @@ from datetime import datetime, timezone, date
 from html import unescape
 from enum import Enum
 from django.conf import settings
+import os
+
 
 register = template.Library()
 
@@ -212,9 +214,9 @@ def file_icon(file):
 
 @register.filter(name='file_lines')
 def file_lines(file):
-    if file:
+    if file and os.path.exists(file.file.path):
         return file.file.open().read().decode().split('\n')
-    return ''
+    return ['']
 
 
 @register.filter(name='finding_class')
@@ -274,3 +276,10 @@ def split_rows(iterable, row_length):
     if row:
         rows.append(row)
     return rows
+
+
+@register.filter(name='absolute_uri')
+def absolute_uri(request, path):
+    if request is not None:
+        return request.build_absolute_uri(path)
+    return "todo"

@@ -12,7 +12,6 @@ from slm.models.system import (
     Manufacturer,
     SiteFile,
     SiteFileUpload,
-    RenderedSiteLog,
     LogEntry
 )
 from slm.models.user import (

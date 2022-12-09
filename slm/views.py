@@ -77,6 +77,10 @@ from slm.forms import (
     SiteFileForm
 )
 from slm import signals as slm_signals
+from django.http import (
+    HttpResponseNotFound,
+    FileResponse
+)
 
 User = get_user_model()
 
@@ -142,6 +146,9 @@ class StationContextView(SLMView):
                 location.latitude / 10000,
                 location.longitude / 10000
             )
+            context['attn_files'] = self.site.sitefileuploads.available_to(
+                self.request.user
+            ).filter(status=SiteFileUploadStatus.UNPUBLISHED).count()
 
         max_alert = Alert.objects.for_user(
             self.request.user
@@ -415,7 +422,7 @@ class EditView(StationContextView):
         return context
 
 
-class AlertsView(StationContextView):
+class StationAlertsView(StationContextView):
     template_name = 'slm/station/alerts.html'
 
 
@@ -680,3 +687,32 @@ class StationReviewView(StationContextView):
 
 class AlertsView(SLMView):
     template_name = 'slm/alerts.html'
+
+
+def download_site_attachment(request, site=None, pk=None):
+    """
+    A function view for downloading files that have been uploaded to
+    a site. This allows unathenticated downloads of public files and
+    authenticated download of any file available to the authenticated user.
+
+    :param request: Django request object
+    :param site: The 9-character site name the file is attached to
+    :param pk: The unique ID of the file.
+    :return: Either a 404 or a FileResponse object containing the file.
+    """
+    if site is None or pk is None:
+        return HttpResponseNotFound()
+
+    try:
+        upload = SiteFileUpload.objects.available_to(
+            request.user
+        ).get(site__name=site, pk=pk)
+        return FileResponse(
+            upload.file.open('rb'),
+            filename=upload.name,  # note this might not match the name on disk
+            as_attachment=True
+        )
+    except SiteFileUpload.DoesNotExist:
+        return HttpResponseNotFound(
+            f'File {pk} for station {site} was not found.'
+        )

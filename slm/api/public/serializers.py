@@ -5,6 +5,7 @@ from slm.models import (
     Network,
     SiteFileUpload
 )
+from django.contrib.sites.models import Site as DjangoSite
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -83,8 +84,8 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
 
     def get_download(self, obj):
         if 'request' in self.context:
-            return self.context['request'].build_absolute_uri(obj.file.url)
-        return obj.file.url
+            return self.context['request'].build_absolute_uri(obj.link)
+        return f'{DjangoSite.objects.get_current()}/{obj.link.lstrip("/")}'
 
     class Meta:
         model = SiteFileUpload

@@ -173,7 +173,7 @@ Add new section capability is not functional.
                 <div class="row my-2">
                     {% for img in img_row %}
                     <div class="col-4 my-2">
-                        <a href="{{img.file.url}}" download>
+                        <a href="{{img.link}}" download>
                             <img class="img-fluid" src="{{img.file.url}}"/>
                             <div class="d-flex justify-content-between"><span>{{img.name}} {% if img.direction %}</span><span>({{img.direction.label}}){% endif %}</span></div>
                         </a>
@@ -195,7 +195,7 @@ Add new section capability is not functional.
                 <div class="row my-2">
                     {% for attachment in attachment_row %}
                     <div class="col-4 d-flex justify-content-center" style="text-align: center">
-                        <a href="{{attachment.file.url}}" download>
+                        <a href="{{attachment.link}}" download>
                             <i class="slm-attachment {{attachment.mimetype|file_icon}}" style="font-size: 120px;"></i>
                             <p>{{attachment.name}}</p>
                         </a>

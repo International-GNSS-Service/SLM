@@ -21,9 +21,9 @@ from slm.models.sitelog import (
 )
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse
 from slm.models import compat
 import os
-from pathlib import Path
 
 
 class AgencyManager(models.Manager):
@@ -391,7 +391,8 @@ class SiteFile(models.Model):
         'slm.Site',
         on_delete=models.CASCADE,
         null=False,
-        help_text=_('The site this file is attached to.')
+        help_text=_('The site this file is attached to.'),
+        related_name="%(class)ss"
     )
 
     timestamp = models.DateTimeField(
@@ -480,15 +481,57 @@ class SiteFileUploadManager(models.Manager):
 
 class SiteFileUploadQuerySet(models.QuerySet):
 
-    def public(self):
+    @staticmethod
+    def public_q():
+        """
+        Return a Q object holding the public definition. Which is any file
+        that belongs to a public site that is in the PUBLISHED state.
+
+        :return: Q object holding the definition of "public"
+        """
         from slm.models.sitelog import Site
-        return self.filter(
-            status=SiteFileUploadStatus.PUBLISHED,
-            site__in=Site.objects.public()
+        return (
+                Q(status=SiteFileUploadStatus.PUBLISHED) &
+                Q(site__in=Site.objects.public())
         )
+
+    def public(self):
+        """
+        Fetch the files that are public. This is any file that belongs to a
+        public site that is in the PUBLISHED state.
+
+        :return: A queryset containing the public files
+        """
+        return self.filter(self.public_q())
+
+    def available_to(self, user):
+        """
+        Fetch the files that are available to the given user. This is any
+        public file or any file that is attached to a site a user has edit
+        permissions to.
+
+        :param user: The user (may be unauthenticated)
+        :return: A queryset containing available files
+        """
+        from slm.models.sitelog import Site
+        if not user.is_authenticated:
+            return self.public()
+        return self.filter(self.public_q() | (
+            Q(site__in=Site.objects.editable_by(user))
+        ))
 
 
 class SiteFileUpload(SiteFile):
+    """
+    SiteFileUploads can be any file that was uploaded to a given site.
+    This includes, images and attachments as well as legacy site logs,
+    GeodesyML files or json files. Access to the files for download publicly
+    and by authenticated users is controlled in the manager/queryset above.
+
+    Only images and attachments are made available for download publicly.
+    Uploaded log files are ephemeral - for downloads of rendered log files
+    from disk see ArchivedSiteLog.
+    """
 
     SUB_DIRECTORY = 'uploads'
 
@@ -549,13 +592,15 @@ class SiteFileUpload(SiteFile):
 
     objects = SiteFileUploadManager.from_queryset(SiteFileUploadQuerySet)()
 
+    @property
+    def link(self):
+        return reverse(
+            'slm:download_attachment',
+            kwargs={'site': self.site.name, 'pk': self.pk}
+        )
+
     class Meta:
         ordering = ('-timestamp',)
-
-
-class RenderedSiteLog(SiteFile):
-
-    SUB_DIRECTORY = 'logs'
 
 
 class LogEntryManager(models.Manager):

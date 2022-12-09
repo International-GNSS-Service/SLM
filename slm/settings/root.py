@@ -137,12 +137,13 @@ include('auth.py')
 include('rest.py')
 include('slm.py')
 include('debug.py')
+include('uploads.py')
+#include('security.py')
+
 
 set_default('SITE_ID', 1)
 
-MEDIA_URL = '/media/'
 set_default('STATIC_ROOT', SITE_DIR / 'static')
-set_default('MEDIA_ROOT', SITE_DIR / 'media')
 
 COMPRESS_OFFLINE = True
 COMPRESS_ROOT = STATIC_ROOT

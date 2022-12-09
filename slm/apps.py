@@ -50,3 +50,21 @@ class SLMConfig(AppConfig):
                     previous_status=instance._slm_pre_status,
                     new_status=instance.status
                 )
+
+        from django.conf import settings
+        import os
+        import stat
+        for path in [settings.MEDIA_ROOT, settings.SITE_DIR / 'media']:
+
+            for root, dirs, files in os.walk(path):
+                for filename in files:
+                    try:
+                        os.chmod(os.path.join(root, filename), stat.S_IRWXG)
+                    except OSError:
+                        pass
+                for dirname in dirs:
+                    try:
+                        os.chmod(os.path.join(root, dirname), stat.S_IRWXG)
+                    except OSError:
+                        pass
+

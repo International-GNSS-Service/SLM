@@ -37,7 +37,7 @@ Template for Download page.
       <!-- Title -->
       <div class="d-flex flex-column justify-content-left align-items-left mt-4">
         <div class="mb-4 pb-3 border-bottom">
-            <h2 id="slm-file-header">{% if file %}<a href="{{ file.file.url }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> <span class="slm-file-name">{{ file.name }}</span></a>{% else %}{% trans "Upload" %}{% endif %}</h2>
+            <h2 id="slm-file-header">{% if file %}<a href="{{ file.link }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> <span class="slm-file-name">{{ file.name }}</span></a>{% else %}{% trans "Upload" %}{% endif %}</h2>
         </div>
       </div>
 
@@ -94,6 +94,9 @@ Template for Download page.
                                     kwargs: {'station': "{{ station }}"}
                                 }
                             );
+                            {% if file.status == SiteFileUploadStatus.UNPUBLISHED %}
+                                slm.updateFileBadges(-1);
+                            {% endif %}
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {
@@ -120,6 +123,7 @@ Template for Download page.
                             btn.removeClass(oldStatus.css);
                             btn.addClass(newStatus.css);
                             btn.data('slmFileStatus', newStatus.val);
+                            slm.updateFileBadges(publish ? -1 : 1);
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {
@@ -180,21 +184,25 @@ Template for Download page.
                             let response = JSON.parse(file.xhr.responseText);
                             let siteNavBtn = $(`button#select-{{ station }}`);
                             let errBadge = siteNavBtn.find('span.slm-error-badge');
+                            let siteStatus = slm.SiteLogStatus.get(response.site_status);
+                            let fileStatus = slm.SiteFileUploadStatus.get(response.status);
                             siteNavBtn.removeClass(
                                 slm.SiteLogStatus.get(
                                     siteNavBtn.data('slmStatus')
                                 ).css
                             );
-                            siteNavBtn.data('slmStatus', response.site_status);
-                            siteNavBtn.addClass(
-                                slm.SiteLogStatus.get(response.site_status).css
-                            );
+                            siteNavBtn.data('slmStatus', siteStatus.val);
+                            siteNavBtn.addClass(siteStatus.css);
                             siteNavBtn.data('slmFlags', response.site_flags);
                             errBadge.html(response.site_flags);
                             if (response.site_flags) {
                                 errBadge.show();
                             } else {
                                 errBadge.hide();
+                            }
+                            
+                            if (fileStatus === slm.SiteFileUploadStatus.UNPUBLISHED) {
+                                slm.updateFileBadges(1);
                             }
                         }
                         initFileList($("#slm-file-list"));

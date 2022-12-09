@@ -1042,7 +1042,9 @@ class SiteFileUploadViewSet(
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return SiteFileUpload.objects.filter(site=self.site)
+        return SiteFileUpload.objects.available_to(
+            self.request.user
+        ).filter(site=self.site)
 
     def create(self, request, *args, **kwargs):
         with transaction.atomic():

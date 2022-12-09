@@ -13,6 +13,7 @@ from slm.models import (
 from slm import signals as slm_signals
 from django.core.exceptions import PermissionDenied
 from django.utils.timezone import now
+from django.contrib.sites.models import Site as DjangoSite
 import os
 
 
@@ -308,6 +309,13 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
     )
     user = EmbeddedUserSerializer(many=False)
 
+    download = serializers.SerializerMethodField()
+
+    def get_download(self, obj):
+        if 'request' in self.context:
+            return self.context['request'].build_absolute_uri(obj.link)
+        return f'{DjangoSite.objects.get_current()}/{obj.link.lstrip("/")}'
+
     class Meta:
         model = SiteFileUpload
         fields = [
@@ -323,7 +331,8 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
             'log_format',
             'mimetype',
             'description',
-            'direction'
+            'direction',
+            'download'
         ]
         read_only_fields = [
             field for field in fields

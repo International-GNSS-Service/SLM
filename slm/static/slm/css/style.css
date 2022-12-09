@@ -395,6 +395,10 @@ button.slm-subsection {
     background-color: #BF8C0D;
 }
 
+.slm-files-badge {
+    background-color: #BF8C0D;
+}
+
 span.slm-section-header {
     font-size: calc(1.4rem + .3vw);
 }

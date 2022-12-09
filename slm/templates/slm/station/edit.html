@@ -174,7 +174,7 @@ Add new section capability is not functional.
                     {% for img in img_row %}
                     <div class="col-4 my-2">
                         <a href="{{img.link}}" download>
-                            <img class="img-fluid" src="{% url 'slm:download_attachment_thumbnail' site=station pk=img.pk %}"/>
+                            <img class="img-fluid justify-self-center" src="{% url 'slm:download_attachment_thumbnail' site=station pk=img.pk %}"/>
                             <div class="d-flex justify-content-between"><span>{{img.name}} {% if img.direction %}</span><span>({{img.direction.label}}){% endif %}</span></div>
                         </a>
                     </div>

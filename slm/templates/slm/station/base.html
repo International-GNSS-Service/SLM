@@ -37,7 +37,7 @@
                                     <a href="{% if station %}{% url 'slm:edit' station=station %}{% else %}{% url 'slm:edit' %}{% endif %}" class="nav-link"><i class="bi bi-pencil-square"></i> {% trans "Edit" %}</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'upload' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:upload' station=station %}{% else %}{% url 'slm:upload' %}{% endif %}" class="nav-link"><i class="bi bi-upload"></i> {% trans "Upload" %} <span class="badge rounded-pill bg-warning slm-files-badge" data-slm-files={{attn_files}} {% if not attn_files %}style="display: none"{% endif %}>{{attn_files}}</span></a>
+                                    <a href="{% if station %}{% url 'slm:upload' station=station %}{% else %}{% url 'slm:upload' %}{% endif %}" class="nav-link"><i class="bi bi-upload"></i> {% trans "Upload" %} <span class="badge rounded-pill slm-files-badge" data-slm-files={{attn_files}} {% if not attn_files %}style="display: none"{% endif %}>{{attn_files}}</span></a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'download' %}active{% endif %}">
                                     <a href="{% if station %}{% url 'slm:download' station=station %}{% else %}{% url 'slm:download' %}{% endif %}" class="nav-link"><i class="bi bi-download"></i> {% trans "Download" %}</a>

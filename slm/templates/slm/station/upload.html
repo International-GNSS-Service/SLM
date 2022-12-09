@@ -46,10 +46,12 @@ Template for Download page.
 
           {% if file %}
             <!-- action bar -->
-              <div class="d-flex justify-content-between align-items-center">
-                <p class="fs-5"><strong>Uploaded by:</strong> {{ file.user.name }}</p>
-                <p class="fs-4"><strong>Date Uploaded:</strong> {{ file.timestamp }}</p>
-                <div id="file-actions" class="d-flex justify-content-end">
+              <div class="d-flex justify-content-between">
+                  <div class="d-flex flex-column">
+                    {% if file.user %}<p class="fs-5"><strong>{% trans "Uploaded by:" %}</strong> {{ file.user.name }}</p>{% endif %}
+                    <p class="fs-5"><strong>{% trans "Date Uploaded:" %}</strong> {{ file.timestamp.date }}</p>
+                  </div>
+                <div id="file-actions" class="d-flex justify-content-end align-items-center">
                     {% if can_publish %}
                     <button name="unpublish" onclick="publishFile(false);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.PUBLISHED %}display: none{% endif %}">{% trans 'Unpublish' %}</button>
                     <button name="publish" onclick="publishFile(true);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.UNPUBLISHED %}display: none{% endif %}">{% trans 'Publish' %}</button>

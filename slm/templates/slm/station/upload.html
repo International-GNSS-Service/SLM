@@ -47,8 +47,8 @@ Template for Download page.
           {% if file %}
             <!-- action bar -->
               <div class="d-flex justify-content-between align-items-center">
-                <h5>{{ file.user.name }}</h5>
-                <h5>{{ file.timestamp }}</h5>
+                <p class="fs-5"><strong>Uploaded by:</strong> {{ file.user.name }}</p>
+                <p class="fs-4"><strong>Date Uploaded:</strong> {{ file.timestamp }}</p>
                 <div id="file-actions" class="d-flex justify-content-end">
                     {% if can_publish %}
                     <button name="unpublish" onclick="publishFile(false);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.PUBLISHED %}display: none{% endif %}">{% trans 'Unpublish' %}</button>

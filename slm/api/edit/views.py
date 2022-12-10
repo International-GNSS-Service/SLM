@@ -1,96 +1,77 @@
-from slm.api.permissions import (
-    CanEditSite,
-    IsUserOrAdmin,
-    UpdateAdminOnly,
-    CanDeleteAlert,
-    CanRequestReview,
-    CanRejectReview
-)
-from slm import signals as slm_signals
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q
-from slm.api.views import BaseSiteLogDownloadViewSet
-from slm.legacy.parser import Error
-from rest_framework import (
-    mixins,
-    status,
-    serializers
-)
-from slm.defines import (
-    SiteLogFormat,
-    SLMFileType,
-    SiteFileUploadStatus
-)
-from rest_framework.serializers import ModelSerializer
-from rest_framework.filters import OrderingFilter
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-    FilterSet
-)
-from rest_framework.viewsets import ViewSet
-from django.core.exceptions import ValidationError
-from rest_framework.parsers import (
-    FileUploadParser,
-    MultiPartParser,
-    FormParser,
-    JSONParser
-)
-from django.http import QueryDict
-from django.db import models
-from django.db import transaction
+from logging import getLogger
+
 import django_filters
-from rest_framework.response import Response
-from slm.api.edit.serializers import (
-    StationSerializer,
-    UserSerializer,
-    LogEntrySerializer,
-    AlertSerializer,
-    ReviewRequestSerializer,
-    SiteFileUploadSerializer
-)
-from django.http.response import HttpResponseForbidden, HttpResponseNotFound
+from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import models, transaction
+from django.db.models import Q
+from django.http.response import HttpResponseForbidden, HttpResponseNotFound
+from django.utils.timezone import now
+from django.utils.translation import gettext as _
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from rest_framework import mixins, renderers, serializers, status, viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from slm.models import (
-    Site,
-    SiteSection,
-    SiteSubSection,
-    SiteForm,
-    SiteIdentification,
-    SiteLocation,
-    SiteReceiver,
-    SiteAntenna,
-    SiteSurveyedLocalTies,
-    SiteFrequencyStandard,
-    SiteCollocation,
-    SiteHumiditySensor,
-    SitePressureSensor,
-    SiteTemperatureSensor,
-    SiteWaterVaporRadiometer,
-    SiteOtherInstrumentation,
-    SiteRadioInterferences,
-    SiteMultiPathSources,
-    SiteSignalObstructions,
-    SiteLocalEpisodicEffects,
-    SiteOperationalContact,
-    SiteResponsibleAgency,
-    SiteMoreInformation,
-    LogEntry,
-    Alert,
-    ReviewRequest,
-    SiteFileUpload
+from rest_framework.filters import OrderingFilter
+from rest_framework.parsers import (
+    FileUploadParser,
+    FormParser,
+    JSONParser,
+    MultiPartParser,
+)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
+from slm import signals as slm_signals
+from slm.api.edit.serializers import (
+    AlertSerializer,
+    LogEntrySerializer,
+    ReviewRequestSerializer,
+    SiteFileUploadSerializer,
+    StationSerializer,
+    UserSerializer,
 )
 from slm.api.pagination import DataTablesPagination
-from django.contrib.auth import get_user_model
-from django.utils.timezone import now
-from rest_framework import (
-    viewsets,
-    renderers
+from slm.api.permissions import (
+    CanDeleteAlert,
+    CanEditSite,
+    CanRejectReview,
+    CanRequestReview,
+    IsUserOrAdmin,
+    UpdateAdminOnly,
 )
-from ipware import get_client_ip
-from django.utils.translation import gettext as _
-from logging import getLogger
+from slm.api.views import BaseSiteLogDownloadViewSet
+from slm.defines import SiteFileUploadStatus, SiteLogFormat, SLMFileType
+from slm.legacy.parser import Error
+from slm.models import (
+    Alert,
+    LogEntry,
+    ReviewRequest,
+    Site,
+    SiteAntenna,
+    SiteCollocation,
+    SiteFileUpload,
+    SiteForm,
+    SiteFrequencyStandard,
+    SiteHumiditySensor,
+    SiteIdentification,
+    SiteLocalEpisodicEffects,
+    SiteLocation,
+    SiteMoreInformation,
+    SiteMultiPathSources,
+    SiteOperationalContact,
+    SiteOtherInstrumentation,
+    SitePressureSensor,
+    SiteRadioInterferences,
+    SiteReceiver,
+    SiteResponsibleAgency,
+    SiteSection,
+    SiteSignalObstructions,
+    SiteSubSection,
+    SiteSurveyedLocalTies,
+    SiteTemperatureSensor,
+    SiteWaterVaporRadiometer,
+)
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -1066,10 +1047,7 @@ class SiteFileUploadViewSet(
             )
 
             if upload.file_type is SLMFileType.SITE_LOG:
-                from slm.legacy import (
-                    SiteLogParser,
-                    SiteLogBinder
-                )
+                from slm.legacy import SiteLogBinder, SiteLogParser
                 if upload.log_format is SiteLogFormat.LEGACY:
                     with upload.file.open() as uplf:
                         content = uplf.read()

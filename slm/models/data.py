@@ -1,9 +1,6 @@
 from django.db import models
-from slm.defines import (
-    RinexVersion,
-    DataRate
-)
 from django_enum import EnumField
+from slm.defines import DataRate, RinexVersion
 
 
 class DataAvailability(models.Model):

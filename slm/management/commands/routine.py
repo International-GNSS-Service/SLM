@@ -33,12 +33,10 @@ size 1 to 4:
 Specify help text for a routine in settings.SLM_ROUTINE_<NAME> =
 'This routine does stuff...'
 """
-from django.core.management import (
-    call_command,
-    BaseCommand
-)
 import logging
+
 from django.conf import settings
+from django.core.management import BaseCommand, call_command
 
 
 def get_parser():

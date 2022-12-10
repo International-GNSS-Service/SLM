@@ -1,11 +1,6 @@
-from rest_framework import serializers
-from slm.models import (
-    SiteIndex,
-    Agency,
-    Network,
-    SiteFileUpload
-)
 from django.contrib.sites.models import Site as DjangoSite
+from rest_framework import serializers
+from slm.models import Agency, Network, SiteFileUpload, SiteIndex
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):

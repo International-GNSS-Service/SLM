@@ -1,33 +1,30 @@
-from django.db import models
+import os
+from io import BytesIO
+from logging import getLogger
+
 from django.conf import settings
-from django.utils.translation import gettext as _
-from slm.defines import AlertLevel
-from django_enum import EnumField
-from django.db.models import Q
-from slm.defines import (
-    AntennaReferencePoint,
-    AntennaFeatures,
-    EquipmentState,
-    SLMFileType,
-    SiteLogFormat,
-    LogEntryType,
-    SiteFileUploadStatus,
-    CardinalDirection
-)
-from slm.models.sitelog import (
-    SiteSubSection,
-    SiteSection,
-    DefaultToStrEncoder
-)
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
-from slm.models import compat
-from logging import getLogger
-import os
-from PIL import Image
-from io import BytesIO
 from django.core.files.base import ContentFile
+from django.db import models
+from django.db.models import Q
+from django.urls import reverse
+from django.utils.translation import gettext as _
+from django_enum import EnumField
+from PIL import Image
+from slm.defines import (
+    AlertLevel,
+    AntennaFeatures,
+    AntennaReferencePoint,
+    CardinalDirection,
+    EquipmentState,
+    LogEntryType,
+    SiteFileUploadStatus,
+    SiteLogFormat,
+    SLMFileType,
+)
+from slm.models import compat
+from slm.models.sitelog import DefaultToStrEncoder, SiteSection, SiteSubSection
 
 
 class AgencyManager(models.Manager):

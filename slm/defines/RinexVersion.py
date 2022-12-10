@@ -1,6 +1,7 @@
-from django_enum import IntegerChoices
-from enum_properties import s, p
 from datetime import date
+
+from django_enum import IntegerChoices
+from enum_properties import p, s
 
 
 class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):

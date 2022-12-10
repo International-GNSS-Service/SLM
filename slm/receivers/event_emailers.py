@@ -1,16 +1,16 @@
 """
 Signal handlers for signals that result in emails.
 """
-from django.dispatch import receiver
-from slm import signals as slm_signals
-from django.core.mail import send_mail
-from django.template.loader import get_template
-from django.contrib.sites.models import Site as DjangoSite
-from django.utils.translation import gettext as _
-from smtplib import SMTPException
-from django.conf import settings
 import logging
+from smtplib import SMTPException
 
+from django.conf import settings
+from django.contrib.sites.models import Site as DjangoSite
+from django.core.mail import send_mail
+from django.dispatch import receiver
+from django.template.loader import get_template
+from django.utils.translation import gettext as _
+from slm import signals as slm_signals
 
 logger = logging.getLogger(__name__)
 

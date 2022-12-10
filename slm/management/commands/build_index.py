@@ -1,14 +1,12 @@
 """
 Update the data availability information for each station.
 """
-from django.core.management import BaseCommand
-from slm.models import (
-    Site,
-    SiteIndex
-)
 import logging
-from django.utils.translation import gettext as _
+
+from django.core.management import BaseCommand
 from django.db import transaction
+from django.utils.translation import gettext as _
+from slm.models import Site, SiteIndex
 from tqdm import tqdm
 
 

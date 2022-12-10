@@ -1,5 +1,6 @@
-import importlib_resources
 import inspect
+
+import importlib_resources
 
 
 def set_default(var_name, default, set_if_none=True):

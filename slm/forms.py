@@ -12,48 +12,43 @@ https://docs.djangoproject.com/en/3.2/ref/models/fields/
 """
 
 from django import forms
-from slm.utils import to_snake_case
-from django.core.exceptions import FieldDoesNotExist
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
-from slm.models import (
-    Site,
-    SiteForm,
-    SiteIdentification,
-    SiteLocation,
-    SiteReceiver,
-    SiteAntenna,
-    SiteSurveyedLocalTies,
-    SiteFrequencyStandard,
-    SiteCollocation,
-    SiteHumiditySensor,
-    SitePressureSensor,
-    SiteTemperatureSensor,
-    SiteWaterVaporRadiometer,
-    SiteOtherInstrumentation,
-    SiteRadioInterferences,
-    SiteMultiPathSources,
-    SiteSignalObstructions,
-    SiteLocalEpisodicEffects,
-    SiteOperationalContact,
-    SiteResponsibleAgency,
-    SiteMoreInformation,
-    UserProfile,
-    Agency,
-    SatelliteSystem,
-    SiteFileUpload
-)
-from slm.api.edit.serializers import (
-    UserProfileSerializer,
-    UserSerializer
-)
-from django.urls import reverse
+from django.core.exceptions import FieldDoesNotExist
+from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.db.models import Max
-from django.core.validators import MinValueValidator
-from django.utils.translation import gettext as _
-from django.contrib.auth import get_user_model
 from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
+from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
 from slm.defines import SLMFileType
+from slm.models import (
+    Agency,
+    SatelliteSystem,
+    Site,
+    SiteAntenna,
+    SiteCollocation,
+    SiteFileUpload,
+    SiteForm,
+    SiteFrequencyStandard,
+    SiteHumiditySensor,
+    SiteIdentification,
+    SiteLocalEpisodicEffects,
+    SiteLocation,
+    SiteMoreInformation,
+    SiteMultiPathSources,
+    SiteOperationalContact,
+    SiteOtherInstrumentation,
+    SitePressureSensor,
+    SiteRadioInterferences,
+    SiteReceiver,
+    SiteResponsibleAgency,
+    SiteSignalObstructions,
+    SiteSurveyedLocalTies,
+    SiteTemperatureSensor,
+    SiteWaterVaporRadiometer,
+)
+from slm.utils import to_snake_case
 
 
 class UserAdminCreationForm(forms.ModelForm):

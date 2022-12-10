@@ -1,8 +1,7 @@
 """
 SLM Specific Configuration parameters go here.
 """
-from slm.defines import SiteLogStatus, SiteFileUploadStatus
-
+from slm.defines import SiteFileUploadStatus, SiteLogStatus
 
 SLM_STATUS_COLORS = {
     SiteLogStatus.DORMANT: '#3D4543',

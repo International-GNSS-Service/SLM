@@ -1,6 +1,7 @@
 from unittest import TestCase
-from slm.defines import SiteLogStatus
+
 from django.conf import settings
+from slm.defines import SiteLogStatus
 
 
 class TestSiteLogStatus(TestCase):

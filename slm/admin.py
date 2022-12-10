@@ -18,15 +18,15 @@ More info:
 https://docs.djangoproject.com/en/3.2/ref/contrib/admin/
 """
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import *
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
-from slm.forms import UserAdminCreationForm, UserAdminChangeForm
-from slm.models import Agency, Site, SatelliteSystem
 from django.utils.translation import gettext as _
 from slm.authentication import initiate_password_resets
+from slm.forms import UserAdminChangeForm, UserAdminCreationForm
+from slm.models import Agency, SatelliteSystem, Site
 
+from .models import *
 
 User = get_user_model() # accesses custom user model
 

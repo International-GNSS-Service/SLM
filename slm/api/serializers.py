@@ -1,15 +1,11 @@
-from rest_framework import serializers
-from slm.models import (
-    Site,
-    SiteAntenna
-)
-from slm.defines import (
-    SiteLogFormat
-)
-from django.utils.functional import cached_property
 import json
+
 from django.template.loader import get_template
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from rest_framework import serializers
+from slm.defines import SiteLogFormat
+from slm.models import Site, SiteAntenna
 
 
 class _Heading:

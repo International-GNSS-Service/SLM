@@ -1,6 +1,6 @@
-from django_enum import IntegerChoices
-from enum_properties import s, p
 from django.utils.translation import gettext as _
+from django_enum import IntegerChoices
+from enum_properties import p, s
 from slm.defines import SLMFileType
 
 

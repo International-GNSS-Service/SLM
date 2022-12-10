@@ -1,6 +1,6 @@
-from slm.settings import set_default
 import importlib
 
+from slm.settings import set_default
 
 set_default('SLM_ROUTINES', {})
 

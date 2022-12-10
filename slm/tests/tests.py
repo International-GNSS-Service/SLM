@@ -12,22 +12,16 @@ More info:
 https://docs.djangoproject.com/en/3.2/topics/testing/overview/
 """
 
-from django.test import TestCase
-from slm.models import (
-    Site,
-    Agency,
-    Network
-)
-from slm.defines import (
-    SiteLogStatus
-)
-from slm.api.edit import views as edit_views
-from slm import signals as slm_signals
-from django.contrib.auth import get_user_model
 import inspect
+
+from django.contrib.auth import get_user_model
 from django.dispatch import Signal
-from django.test import Client
+from django.test import Client, TestCase
 from django.urls import reverse
+from slm import signals as slm_signals
+from slm.api.edit import views as edit_views
+from slm.defines import SiteLogStatus
+from slm.models import Agency, Network, Site
 from slm.tests.defines.ISOCountry import TestISOCountry  # dont remove
 from slm.tests.defines.SiteLogStatus import TestSiteLogStatus  # dont remove
 from slm.tests.parsing.legacy import TestLegacyParser  # dont remove

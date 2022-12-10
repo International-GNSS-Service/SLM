@@ -1,16 +1,16 @@
-from django.dispatch import receiver
-from slm import signals as slm_signals
-from ipware import get_client_ip
 import logging
 
+from django.dispatch import receiver
+from ipware import get_client_ip
+from slm import signals as slm_signals
 
 logger = logging.getLogger(__name__)
 
 
 @receiver(slm_signals.site_published)
 def log_publish(sender, site, user, timestamp, request, section, **kwargs):
-    from slm.models import LogEntry
     from slm.defines import LogEntryType
+    from slm.models import LogEntry
 
     LogEntry.objects.create(
         type=LogEntryType.PUBLISH,
@@ -24,8 +24,8 @@ def log_publish(sender, site, user, timestamp, request, section, **kwargs):
 
 @receiver(slm_signals.site_proposed)
 def log_propose(sender, site, user, timestamp, request, agencies, **kwargs):
-    from slm.models import LogEntry
     from slm.defines import LogEntryType
+    from slm.models import LogEntry
 
     LogEntry.objects.create(
         type=LogEntryType.NEW_SITE,
@@ -48,8 +48,8 @@ def log_edit(
         fields,
         **kwargs
 ):
-    from slm.models import LogEntry
     from slm.defines import LogEntryType
+    from slm.models import LogEntry
 
     LogEntry.objects.create(
         type=LogEntryType.UPDATE,
@@ -63,8 +63,8 @@ def log_edit(
 
 @receiver(slm_signals.section_added)
 def log_add(sender, site, user, timestamp, request, section, **kwargs):
-    from slm.models import LogEntry
     from slm.defines import LogEntryType
+    from slm.models import LogEntry
 
     LogEntry.objects.create(
         type=LogEntryType.ADD,
@@ -78,8 +78,8 @@ def log_add(sender, site, user, timestamp, request, section, **kwargs):
 
 @receiver(slm_signals.section_deleted)
 def log_delete(sender, site, user, timestamp, request, section, **kwargs):
-    from slm.models import LogEntry
     from slm.defines import LogEntryType
+    from slm.models import LogEntry
 
     LogEntry.objects.create(
         type=LogEntryType.DELETE,
@@ -93,8 +93,8 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
 
 @receiver(slm_signals.site_file_uploaded)
 def log_file_upload(sender, site, user, timestamp, request, upload, **kwargs):
-    from slm.models import LogEntry
     from slm.defines import LogEntryType
+    from slm.models import LogEntry
 
     LogEntry.objects.create(
         type=(

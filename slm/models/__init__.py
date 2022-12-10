@@ -1,55 +1,49 @@
-from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
+from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured
+from django.db import models
+from slm.models.data import DataAvailability
+from slm.models.index import ArchivedSiteLog, SiteIndex
+from slm.models.sitelog import (
+    Site,
+    SiteAntenna,
+    SiteCollocation,
+    SiteForm,
+    SiteFrequencyStandard,
+    SiteHumiditySensor,
+    SiteIdentification,
+    SiteLocalEpisodicEffects,
+    SiteLocation,
+    SiteMoreInformation,
+    SiteMultiPathSources,
+    SiteOperationalContact,
+    SiteOtherInstrumentation,
+    SitePressureSensor,
+    SiteRadioInterferences,
+    SiteReceiver,
+    SiteResponsibleAgency,
+    SiteSection,
+    SiteSignalObstructions,
+    SiteSubSection,
+    SiteSurveyedLocalTies,
+    SiteTemperatureSensor,
+    SiteWaterVaporRadiometer,
+)
 from slm.models.system import (
     Agency,
     Alert,
+    Antenna,
+    LogEntry,
+    Manufacturer,
     Network,
+    Radome,
+    Receiver,
     ReviewRequest,
     SatelliteSystem,
-    Antenna,
-    Receiver,
-    Radome,
-    Manufacturer,
     SiteFile,
     SiteFileUpload,
-    LogEntry
 )
-from slm.models.user import (
-    User,
-    UserProfile
-)
-from slm.models.index import (
-    SiteIndex,
-    ArchivedSiteLog
-)
-from slm.models.data import DataAvailability
-from slm.models.sitelog import (
-    Site,
-    SiteSection,
-    SiteSubSection,
-    SiteAntenna,
-    SiteReceiver,
-    SiteFrequencyStandard,
-    SiteLocation,
-    SiteHumiditySensor,
-    SiteForm,
-    SiteIdentification,
-    SiteCollocation,
-    SiteMoreInformation,
-    SitePressureSensor,
-    SiteResponsibleAgency,
-    SiteTemperatureSensor,
-    SiteRadioInterferences,
-    SiteSignalObstructions,
-    SiteOperationalContact,
-    SiteMultiPathSources,
-    SiteOtherInstrumentation,
-    SiteLocalEpisodicEffects,
-    SiteWaterVaporRadiometer,
-    SiteSurveyedLocalTies
-)
-from django.db import models
-from django.core.cache import cache
+from slm.models.user import User, UserProfile
 
 _site_record = None
 

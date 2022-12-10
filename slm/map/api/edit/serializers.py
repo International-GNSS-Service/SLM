@@ -1,5 +1,5 @@
-from slm.api.edit import serializers as slm_serializers
 from rest_framework import serializers
+from slm.api.edit import serializers as slm_serializers
 
 
 class StationSerializer(slm_serializers.StationSerializer):

@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from pathlib import Path
-from slm.settings import set_default, is_defined
-from split_settings.tools import include
 import os
+from pathlib import Path
+
+from slm.settings import is_defined, set_default
+from split_settings.tools import include
 
 set_default('DEBUG', False)
 

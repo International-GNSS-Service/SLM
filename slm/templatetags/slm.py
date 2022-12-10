@@ -1,12 +1,12 @@
-from django import template
-from slm.utils import to_snake_case
-from django.utils.translation import gettext as _
-from datetime import datetime, timezone, date
-from html import unescape
-from enum import Enum
-from django.conf import settings
 import os
+from datetime import date, datetime, timezone
+from enum import Enum
+from html import unescape
 
+from django import template
+from django.conf import settings
+from django.utils.translation import gettext as _
+from slm.utils import to_snake_case
 
 register = template.Library()
 

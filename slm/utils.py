@@ -1,9 +1,10 @@
 import importlib
-import sys
 import inspect
-from rest_framework.serializers import Serializer
-from pprint import pformat
+import sys
 from logging import Filter
+from pprint import pformat
+
+from rest_framework.serializers import Serializer
 
 
 def get_url():

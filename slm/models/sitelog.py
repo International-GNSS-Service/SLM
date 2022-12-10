@@ -1,56 +1,51 @@
-from django.db import models
-from slm.defines import (
-    SiteLogStatus,
-    AntennaReferencePoint,
-    ISOCountry,
-    CollocationStatus,
-    TectonicPlates,
-    FractureSpacing,
-    Aspiration,
-    FrequencyStandardType,
-    SiteLogFormat
-)
-from django_enum import EnumField
-from django.db.models.functions import Greatest
-from django.utils.functional import cached_property
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db.models import (
-    F,
-    Q,
-    Max,
-    Case,
-    Value,
-    When
-)
-from django.db.models.functions import (
-    Cast,
-    Substr,
-    LPad,
-    Lower,
-    Concat,
-    ExtractDay,
-    ExtractYear,
-    ExtractMonth
-)
-from slm.models import compat
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from slm.utils import date_to_str
 import datetime
 import threading
 from collections import namedtuple
-from slm.defines import FlagSeverity
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.db.models import Case, F, Max, Q, Value, When
+from django.db.models.functions import (
+    Cast,
+    Concat,
+    ExtractDay,
+    ExtractMonth,
+    ExtractYear,
+    Greatest,
+    Lower,
+    LPad,
+    Substr,
+)
+from django.utils.functional import cached_property
+from django_enum import EnumField
+from slm.defines import (
+    AntennaReferencePoint,
+    Aspiration,
+    CollocationStatus,
+    FlagSeverity,
+    FractureSpacing,
+    FrequencyStandardType,
+    ISOCountry,
+    SiteLogStatus,
+    TectonicPlates,
+)
+from slm.models import compat
+from slm.utils import date_to_str
+
 # we can't use actual nulls for times because it breaks things like
 # Greatest on MYSQL
 NULL_TIME = datetime.datetime.utcfromtimestamp(0)
 
-from django.core.validators import RegexValidator, BaseValidator
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext as _
-from django.utils.deconstruct import deconstructible
 import json
+
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db.models import ExpressionWrapper
+from django.utils.deconstruct import deconstructible
 from django.utils.timezone import now
+from django.utils.translation import gettext as _
 from slm import signals as slm_signals
 
 

@@ -11,76 +11,66 @@ MORE INFO:
 https://docs.djangoproject.com/en/3.2/topics/http/views/
 """
 
-from django.shortcuts import render
-from django.urls import reverse
-from django.contrib.auth import authenticate, login
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from slm.models import (
-    Alert,
-    Site,
-    SiteSubSection,
-    LogEntry,
-    UserProfile,
-    Agency,
-    Network,
-    SiteFileUpload,
-    SiteLocation
-)
-from slm.defines import (
-    SiteLogStatus,
-    LogEntryType,
-    SLMFileType,
-    SiteLogFormat,
-    SiteFileUploadStatus
-)
-from django.shortcuts import redirect
 from datetime import datetime
-from slm.utils import to_bool
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from slm.api.serializers import SiteLogSerializer
-from django.http import Http404
-from django.views.generic import TemplateView
-from django.urls import reverse_lazy
-from slm.defines import AlertLevel
+from django.db.models import Max, Q
 from django.db.models.fields import NOT_PROVIDED
-from django.db.models import (
-    Max,
-    Q
+from django.http import FileResponse, Http404, HttpResponseNotFound
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView
+from slm import signals as slm_signals
+from slm.api.serializers import SiteLogSerializer
+from slm.defines import (
+    AlertLevel,
+    LogEntryType,
+    SiteFileUploadStatus,
+    SiteLogFormat,
+    SiteLogStatus,
+    SLMFileType,
 )
 from slm.forms import (
-    SiteFormForm,
-    SiteIdentificationForm,
-    SiteLocationForm,
-    SiteReceiverForm,
+    NewSiteForm,
     SiteAntennaForm,
-    SiteSurveyedLocalTiesForm,
-    SiteFrequencyStandardForm,
     SiteCollocationForm,
+    SiteFileForm,
+    SiteFormForm,
+    SiteFrequencyStandardForm,
     SiteHumiditySensorForm,
+    SiteIdentificationForm,
+    SiteLocalEpisodicEffectsForm,
+    SiteLocationForm,
+    SiteMoreInformationForm,
+    SiteMultiPathSourcesForm,
+    SiteOperationalContactForm,
+    SiteOtherInstrumentationForm,
     SitePressureSensorForm,
+    SiteRadioInterferencesForm,
+    SiteReceiverForm,
+    SiteResponsibleAgencyForm,
+    SiteSignalObstructionsForm,
+    SiteSurveyedLocalTiesForm,
     SiteTemperatureSensorForm,
     SiteWaterVaporRadiometerForm,
-    SiteOtherInstrumentationForm,
-    SiteRadioInterferencesForm,
-    SiteMultiPathSourcesForm,
-    SiteSignalObstructionsForm,
-    SiteLocalEpisodicEffectsForm,
-    SiteOperationalContactForm,
-    SiteResponsibleAgencyForm,
-    SiteMoreInformationForm,
-    UserProfileForm,
     UserForm,
-    NewSiteForm,
-    SiteFileForm
+    UserProfileForm,
 )
-from slm import signals as slm_signals
-from django.http import (
-    HttpResponseNotFound,
-    FileResponse
+from slm.models import (
+    Agency,
+    Alert,
+    LogEntry,
+    Network,
+    Site,
+    SiteFileUpload,
+    SiteLocation,
+    SiteSubSection,
 )
+from slm.utils import to_bool
 
 User = get_user_model()
 

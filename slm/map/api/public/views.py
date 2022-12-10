@@ -1,16 +1,12 @@
+from django.db.models import OuterRef, Q, Subquery
+from rest_framework import status
+from rest_framework.response import Response
 from slm.api.public import views as slm_views
-from django.db.models import (
-    Subquery,
-    OuterRef,
-    Q
-)
-from slm.models import SiteLocation
 from slm.map.api.public.serializers import (
     StationListSerializer,
-    StationMapSerializer
+    StationMapSerializer,
 )
-from rest_framework.response import Response
-from rest_framework import status
+from slm.models import SiteLocation
 
 
 class StationListViewSet(slm_views.StationListViewSet):

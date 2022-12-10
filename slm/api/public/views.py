@@ -1,25 +1,18 @@
 # stations view
-from django.db.models import Q
-from rest_framework import mixins
-from rest_framework.filters import OrderingFilter
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-    FilterSet
-)
+import json
+
 import django_filters
+from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from rest_framework import mixins, renderers, viewsets
+from rest_framework.filters import OrderingFilter
+from slm.api.pagination import DataTablesPagination
 from slm.api.public.serializers import (
+    SiteFileUploadSerializer,
     StationListSerializer,
-    SiteFileUploadSerializer
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
-from slm.models import (
-    Site,
-    SiteIndex,
-    SiteFileUpload
-)
-from slm.api.pagination import DataTablesPagination
-from rest_framework import viewsets, renderers
-import json
+from slm.models import Site, SiteFileUpload, SiteIndex
 
 
 class PassThroughRenderer(renderers.BaseRenderer):

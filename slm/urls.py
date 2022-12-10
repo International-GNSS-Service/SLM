@@ -1,25 +1,23 @@
-from django.views.generic import TemplateView
-from slm.views import (
-    UserProfileView,
-    IndexView,
-    EditView,
-    DownloadView,
-    StationReviewView,
-    LogView,
-    UploadView,
-    NewSiteView,
-    AlertsView,
-    StationAlertsView,
-    SLMView,
-    UserActivityLogView,
-    download_site_attachment
-)
-from django.urls import path, register_converter
 from datetime import datetime
+
+from django.urls import path, register_converter
 from slm.api.edit import views as edit_views
 from slm.api.public import views as public_views
-from django.conf import settings
-
+from slm.views import (
+    AlertsView,
+    DownloadView,
+    EditView,
+    IndexView,
+    LogView,
+    NewSiteView,
+    SLMView,
+    StationAlertsView,
+    StationReviewView,
+    UploadView,
+    UserActivityLogView,
+    UserProfileView,
+    download_site_attachment,
+)
 
 api = {
     'edit': {

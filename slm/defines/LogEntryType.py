@@ -1,6 +1,6 @@
+from django.utils.translation import gettext as _
 from django_enum import IntegerChoices
 from enum_properties import s
-from django.utils.translation import gettext as _
 
 
 class LogEntryType(IntegerChoices):

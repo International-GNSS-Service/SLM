@@ -1,7 +1,7 @@
 import os
-from slm.settings import set_default
 from pathlib import Path
 
+from slm.settings import set_default
 
 set_default('SLM_SECRETS_DIR', Path(SITE_DIR) / 'secrets')
 

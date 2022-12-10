@@ -1,20 +1,18 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site as DjangoSite
+from django.utils.timezone import now
+from rest_framework import serializers
+from slm import signals as slm_signals
 from slm.models import (
-    Site,
-    UserProfile,
     Agency,
-    LogEntry,
     Alert,
+    LogEntry,
     Network,
     ReviewRequest,
-    SiteFileUpload
+    Site,
+    SiteFileUpload,
+    UserProfile,
 )
-from slm import signals as slm_signals
-from django.core.exceptions import PermissionDenied
-from django.utils.timezone import now
-from django.contrib.sites.models import Site as DjangoSite
-import os
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):

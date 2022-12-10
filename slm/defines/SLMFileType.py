@@ -1,5 +1,5 @@
-from django_enum import IntegerChoices
 from django.utils.translation import gettext as _
+from django_enum import IntegerChoices
 
 
 class SLMFileType(IntegerChoices):

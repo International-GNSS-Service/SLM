@@ -1,38 +1,24 @@
-from slm.legacy.parser import (
-    SiteLogParser,
-    Error,
-    Warn,
-    ParsedSection,
-    ParsedParameter,
-    normalize
-)
-from typing import (
-    Union,
-    List,
-    Optional,
-    Dict,
-    Tuple,
-    Callable
-)
-from dateutil.parser import parse as parse_date
-from datetime import date, datetime
 from functools import partial
-from slm.defines import (
-    ISOCountry,
-    FrequencyStandardType,
-    CollocationStatus,
-    Aspiration,
-    FractureSpacing,
-    TectonicPlates,
-    AntennaReferencePoint
-)
-from slm.models import (
-    Receiver,
-    Antenna,
-    Radome,
-    SatelliteSystem
-)
+from typing import Callable, Dict, List, Tuple, Union
 
+from dateutil.parser import parse as parse_date
+from slm.defines import (
+    AntennaReferencePoint,
+    Aspiration,
+    CollocationStatus,
+    FractureSpacing,
+    FrequencyStandardType,
+    ISOCountry,
+    TectonicPlates,
+)
+from slm.legacy.parser import (
+    Error,
+    ParsedSection,
+    SiteLogParser,
+    Warn,
+    normalize,
+)
+from slm.models import Antenna, Radome, Receiver, SatelliteSystem
 
 NUMERIC_CHARACTERS = {'.', '+', '-'}
 

@@ -28,18 +28,15 @@ https://docs.djangoproject.com/en/3.2/topics/http/urls/
 To access admin site you will need an admin/superuser login.  See documentation
 guide.
 """
+from copy import deepcopy
+from importlib import import_module
+
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.urls import (
-    path,
-    include
-)
-from slm.utils import SerializerRegistry
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from django.conf import settings
-from importlib import import_module
-from copy import deepcopy
-
+from slm.utils import SerializerRegistry
 
 APIS = {}
 

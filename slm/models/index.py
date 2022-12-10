@@ -33,27 +33,27 @@ user model, use a function that returns the configured model type:
     get_record_model()
 
 """
+from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models import Q, OuterRef, Subquery, F
+from django.db.models import F, OuterRef, Q, Subquery
+from django.db.models.functions import Now
 from django.utils.timezone import now
-from slm.models.data import DataAvailability
-from slm.models.system import (
-    SiteFile,
-    Antenna,
-    Receiver,
-    Radome,
-    SatelliteSystem
-)
+from django_enum import EnumField
 from slm.defines import (
     FrequencyStandardType,
     ISOCountry,
     RinexVersion,
     SiteLogFormat,
-    SLMFileType
+    SLMFileType,
 )
-from django_enum import EnumField
-from django.db.models.functions import Now
-from django.core.files.base import ContentFile
+from slm.models.data import DataAvailability
+from slm.models.system import (
+    Antenna,
+    Radome,
+    Receiver,
+    SatelliteSystem,
+    SiteFile,
+)
 
 
 class SiteIndexManager(models.Manager):

@@ -3,12 +3,12 @@ def get_enum_context():
     # translation infrastructure which cannot be invoked before settings have
     # been fully realized.
     from slm.defines import (
-        LogEntryType,
-        SiteLogStatus,
         AlertLevel,
+        LogEntryType,
         SiteFileUploadStatus,
         SiteLogFormat,
-        SLMFileType
+        SiteLogStatus,
+        SLMFileType,
     )
     return {
         'LogEntryType': LogEntryType,

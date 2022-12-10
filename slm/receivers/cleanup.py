@@ -1,14 +1,12 @@
 """ Signal handlers that cleanup filesystem artifacts """
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
-from slm.models import (
-    SiteFileUpload,
-    ArchivedSiteLog
-)
-from django.db import transaction
-from django.conf import settings
 import os
 from pathlib import Path
+
+from django.conf import settings
+from django.db import transaction
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from slm.models import ArchivedSiteLog, SiteFileUpload
 
 
 def cleanup(file_path):

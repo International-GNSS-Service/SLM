@@ -1,6 +1,6 @@
 from django.apps import AppConfig
-from django.dispatch import receiver
 from django.db.models.signals import post_init, post_save
+from django.dispatch import receiver
 
 
 class SLMConfig(AppConfig):
@@ -14,13 +14,14 @@ class SLMConfig(AppConfig):
 
         # don't remove these includes - they ensure signals are connected
         from slm import signals as slm_signals
+        from slm.models import Site
         from slm.receivers import (
             event_emailers,  # register signal receivers that send emails
-            event_loggers,  # register signal receivers that log events
-            index,
-            cleanup
         )
-        from slm.models import Site
+        from slm.receivers import (
+            event_loggers,  # register signal receivers that log events
+        )
+        from slm.receivers import cleanup, index
 
         @receiver(post_init, sender=Site)
         def site_init(sender, instance, **kwargs):

@@ -15,15 +15,8 @@ only on syntax.
     be pulled out of the SLM source tree and used in other contexts.
 """
 import re
-from typing import (
-    Union,
-    List,
-    Optional,
-    Dict,
-    Tuple
-)
 from datetime import date, datetime
-
+from typing import Dict, List, Optional, Tuple, Union
 
 SPECIAL_CHARACTERS = '().,-_[]{}<>+%'
 

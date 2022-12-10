@@ -1,15 +1,9 @@
-from slm.models import SingletonModel
-from slm.map.defines import (
-    MapBoxStyle,
-    MapBoxProjection
-)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext as _
-from django.core.validators import (
-    MinValueValidator,
-    MaxValueValidator
-)
 from django_enum import EnumField
+from slm.map.defines import MapBoxProjection, MapBoxStyle
+from slm.models import SingletonModel
 
 
 class MapSettings(SingletonModel):

@@ -1,12 +1,7 @@
 from django.views.generic import TemplateView
-from slm.map.models import MapSettings
-from slm.models import (
-    Site,
-    SiteLocation,
-    Agency,
-    Network
-)
 from slm.defines import SiteLogStatus
+from slm.map.models import MapSettings
+from slm.models import Agency, Network, Site, SiteLocation
 from slm.views import SLMView
 
 

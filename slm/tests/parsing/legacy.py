@@ -1,8 +1,8 @@
-from unittest import TestCase
-from slm.legacy.parser import SiteLogParser, Error
-from slm.legacy.binding import SiteLogBinder
 from pathlib import Path
+from unittest import TestCase
 
+from slm.legacy.binding import SiteLogBinder
+from slm.legacy.parser import Error, SiteLogParser
 
 file_dir = Path(__file__).parent / 'files'
 

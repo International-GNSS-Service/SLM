@@ -1,6 +1,6 @@
 import os
-from slm.settings import set_default
 
+from slm.settings import set_default
 
 DEFAULT_LOG_LEVEL = 'INFO'
 if DEBUG:

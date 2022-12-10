@@ -1,16 +1,13 @@
-from slm.utils import to_bool
-from rest_framework import mixins
+import json
+
+from django.http import HttpResponse
+from django.utils.translation import gettext as _
+from django_filters import filters
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from rest_framework import mixins, renderers, viewsets
 from slm.api.serializers import SiteLogSerializer
 from slm.models import Site
-from django.http import HttpResponse
-from rest_framework import viewsets, renderers
-from django_filters import filters
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-    FilterSet
-)
-from django.utils.translation import gettext as _
-import json
+from slm.utils import to_bool
 
 
 class LegacyRenderer(renderers.BaseRenderer):

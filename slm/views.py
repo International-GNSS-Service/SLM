@@ -142,10 +142,11 @@ class StationContextView(SLMView):
                 agency.name for agency in self.site.agencies.all()
             ]
             location = SiteLocation.objects.filter(site=self.site).head()
-            context['station_position'] = (
-                location.latitude / 10000,
-                location.longitude / 10000
-            )
+            if location:
+                context['station_position'] = (
+                    location.latitude / 10000,
+                    location.longitude / 10000
+                )
             context['attn_files'] = self.site.sitefileuploads.available_to(
                 self.request.user
             ).filter(status=SiteFileUploadStatus.UNPUBLISHED).count()

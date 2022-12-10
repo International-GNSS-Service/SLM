@@ -4,11 +4,14 @@ from rest_framework import serializers
 
 class StationSerializer(slm_serializers.StationSerializer):
 
-    latitude = serializers.FloatField()
-    longitude = serializers.FloatField()
+    latitude = serializers.FloatField(read_only=True)
+    longitude = serializers.FloatField(read_only=True)
 
     class Meta(slm_serializers.StationSerializer.Meta):
-        fields = slm_serializers.StationSerializer.Meta.fields + ['latitude', 'longitude']
+        fields = slm_serializers.StationSerializer.Meta.fields + [
+            'latitude',
+            'longitude'
+        ]
 
 
 class StationMapSerializer(serializers.Serializer):

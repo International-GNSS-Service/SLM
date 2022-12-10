@@ -140,6 +140,7 @@ include('slm.py')
 include('debug.py')
 include('uploads.py')
 #include('security.py')
+include('validation.py')
 
 
 set_default('SITE_ID', 1)

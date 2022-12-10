@@ -1,6 +1,4 @@
-import datetime
-import threading
-from collections import namedtuple
+import json
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -24,7 +22,6 @@ from slm.defines import (
     AntennaReferencePoint,
     Aspiration,
     CollocationStatus,
-    FlagSeverity,
     FractureSpacing,
     FrequencyStandardType,
     ISOCountry,
@@ -33,20 +30,17 @@ from slm.defines import (
 )
 from slm.models import compat
 from slm.utils import date_to_str
-
-# we can't use actual nulls for times because it breaks things like
-# Greatest on MYSQL
-NULL_TIME = datetime.datetime.utcfromtimestamp(0)
-
-import json
-
-from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.db.models import ExpressionWrapper
-from django.utils.deconstruct import deconstructible
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from slm import signals as slm_signals
+from slm.validators import (
+    SLMValidator,
+    NULL_TIME,
+    get_validators
+)
 
 
 def bool_condition(*args, **kwargs):
@@ -63,220 +57,6 @@ class DefaultToStrEncoder(json.JSONEncoder):
 
     def default(self, obj):
         return str(obj)
-
-
-userName = threading.local()
-
-Flag = namedtuple('Flag', 'message manual severity')
-
-
-@deconstructible
-class SLMValidator:
-
-    # validators are instantiated once per class so we have to make sure
-    # concurrent requests don't mess with each other's validators by using
-    # separate storage for each thread
-    binding = None
-    severity = FlagSeverity.NOTIFY
-
-    def __init__(self, *args, **kwargs):
-        self.severity = kwargs.pop('severity', self.severity)
-        self.binding = threading.local()
-        self.section = None
-        self.field_name = kwargs.pop('field_name', None)
-        super().__init__(*args, **kwargs)
-
-    def __eq__(self, other):
-        return (
-            self.__class__ is other.__class__ and
-            self.severity == other.severity and
-            super().__eq__(other)
-        )
-
-    def __call__(self, callable):
-        try:
-            callable()
-        except ValidationError as ve:
-            if self.severity == FlagSeverity.BLOCK_SAVE:
-                self.clear()
-                raise ve
-            if self.section:
-                self.throw_flag(ve.message, self.section, self.field_name)
-
-    def throw_error(self, message, section=None, field_name=None):
-        if self.severity == FlagSeverity.BLOCK_SAVE:
-            self.clear()
-            raise ValidationError(_(message))
-        self.throw_flag(message, section=section, field_name=field_name)
-
-    def throw_flag(self, message, section=None, field_name=None):
-        section = section or self.section
-        if section:
-            if not section._flags:
-                section._flags = {}
-            section._flags[field_name or self.field_name] = message
-            section.save()
-
-    def bind_instance(self, section, field_name=None):
-        self.section = section
-        self.field_name = field_name
-
-    def clear(self):
-        # we must clear this information between invocations
-        self.binding.section = None
-
-    @property
-    def section(self):
-        if not hasattr(self.binding, 'section'):
-            self.binding.section = None
-        return self.binding.section
-
-    @section.setter
-    def section(self, section):
-        self.binding.section = section
-
-    @property
-    def field_name(self):
-        if not hasattr(self.binding, 'field_name'):
-            self.binding.field_name = None
-        return self.binding.field_name
-
-    @field_name.setter
-    def field_name(self, field_name):
-        self.binding.field_name = field_name
-
-    def verbose_name(self, field):
-        if self.section:
-            return self.section._meta.get_field(field).verbose_name
-        return None
-
-    @property
-    def field(self):
-        if self.section:  # todo whyyy?
-            return self.section._meta.get_field(self.field_name)
-        return None
-
-
-class FieldPreferred(SLMValidator):
-
-    statement = 'This field is recommended'
-
-    def __call__(self, value):
-        if isinstance(value, str):
-            value = value.strip()
-        if self.section and not value or value == NULL_TIME:
-            self.throw_error(f'{_(self.statement)}.')
-        self.clear()
-
-
-class FieldRequiredToPublish(FieldPreferred):
-
-    statement = 'This field is required to publish'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, severity=FlagSeverity.BLOCK_PUBLISH, **kwargs)
-
-
-class EnumValidator(FieldPreferred):
-
-    statement = _('Value not in Enumeration.')
-
-    def __call__(self, value):
-        if isinstance(value, str):
-            value = value.strip()
-        if value not in {None, ''} and self.field:
-            try:
-                self.field.enum(value)
-            except ValueError:
-                self.throw_error(self.statement)
-        self.clear()
-
-
-class FourIDValidator(SLMValidator, RegexValidator):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, regex='[A-Z0-9]{4}', **kwargs)
-
-    def __call__(self, value):
-        super().__call__(lambda: RegexValidator.__call__(self, value))
-        if self.section and not self.section.site.name.startswith(value):
-            self.throw_error(
-                f'{self.verbose_name(self.field_name)} '
-                f'{_("must be the prefix of the 9 character site name")}.'
-            )
-        self.clear()
-
-
-class ARPValidator(SLMValidator):
-
-    def __call__(self, value):
-        if self.section:
-            at_arp = getattr(
-                getattr(self.section, 'antenna_type', None),
-                'reference_point',
-                None
-            )
-            if at_arp != value:
-                self.throw_error(
-                    f'{getattr(value, "name", None)} '
-                    f'{_("must does not match the antenna reference point: ")}'
-                    f'{getattr(at_arp, "name", None)}.'
-                )
-        self.clear()
-
-
-class TimeRangeValidator(SLMValidator):
-
-    start_field = None
-    end_field = None
-
-    def __init__(self, *args, severity=FlagSeverity.BLOCK_SAVE, **kwargs):
-        self.start_field = kwargs.pop('start_field', None)
-        self.end_field = kwargs.pop('end_field', None)
-        assert(not (self.start_field and self.end_field))
-        super().__init__(*args, severity=severity, **kwargs)
-
-    def __eq__(self, other):
-        return (
-                self.start_field == other.start_field and
-                self.end_field == self.end_field and
-                super().__eq__(other)
-        )
-
-    def __call__(self, value):
-        # todo make this a context handler
-        if self.section:
-            if self.start_field:
-                start = getattr(self.section, self.start_field, None)
-                if start is not None and start != NULL_TIME and value:
-                    if start >= value:
-                        self.throw_error(
-                            f'{self.verbose_name(self.field_name)} '
-                            f'{_("must be greater than")} '
-                            f'{self.verbose_name(self.start_field)}'
-                        )
-            if self.end_field:
-                end = getattr(self.section, self.end_field, None)
-                if end is not None and end != NULL_TIME:
-                    if (
-                        value is None
-                        or value == NULL_TIME
-                        and end is not None
-                        and end != NULL_TIME
-                    ):
-                        self.throw_error(
-                            f'{_("Cannot define")} '
-                            f'{self.verbose_name(self.end_field)} '
-                            f'{_("without defining")} '
-                            f'{self.verbose_name(self.field_name)}.'
-                        )
-                    elif end <= value:
-                        self.throw_error(
-                            f'{self.verbose_name(self.field_name)} '
-                            f'{_("must be less than")} '
-                            f'{self.verbose_name(self.end_field)}'
-                        )
-        self.clear()
 
 
 class SiteManager(models.Manager):
@@ -961,18 +741,24 @@ class SiteSection(models.Model):
         return self.site.can_edit(user)
 
     def clean(self):
-        for field in self._meta.fields:
-            for validator in field.validators:
-                if isinstance(validator, FieldPreferred):
-                    validator.bind_instance(self, field.name)
-                    validator(getattr(self, field.name, None))
+        """
+        Run configured validation routines. Routines are configured in
+        the SLM_DATA_VALIDATORS setting. This setting maps model fields to
+        validation logic. We run through those routines here and depending
+        on severity we either add flags or throw an error.
 
-    def clean_fields(self, exclude=None):
+        :except ValidationError: If a save-blocking validation error has
+            occurred.
+        """
+        errors = {}
         for field in self._meta.fields:
-            for validator in field.validators:
-                if isinstance(validator, SLMValidator):
-                    validator.bind_instance(self, field.name)
-        super().clean_fields(exclude=exclude)
+            for validator in get_validators(self._meta.label, field.name):
+                try:
+                    validator(self, field, getattr(self, field.name, None))
+                except ValidationError as val_err:
+                    errors[field.name] = val_err.error_list
+        if errors:
+            raise ValidationError(errors)
 
     @property
     def num_flags(self):
@@ -1510,8 +1296,7 @@ class SiteIdentification(SiteSection):
         help_text=_(
             'If known, describe the fracture spacing of the bedrock. '
             'Format: (1-10 cm/11-50 cm/51-200 cm/over 200 cm)'
-        ),
-        validators=[EnumValidator()]
+        )
     )
 
     fault_zones = models.CharField(
@@ -1614,8 +1399,7 @@ class SiteLocation(SiteSection):
         blank=False,
         null=True,
         verbose_name=_('Country or Region'),
-        help_text=_('Enter the country/region the site is located in'),
-        validators=[EnumValidator()]
+        help_text=_('Enter the country/region the site is located in')
     )
 
     tectonic = EnumField(
@@ -1628,8 +1412,7 @@ class SiteLocation(SiteSection):
         verbose_name=_('Tectonic Plate'),
         help_text=_(
             'Select the primary tectonic plate that the GNSS site occupies'
-        ),
-        validators=[EnumValidator()]
+        )
     )
 
     x = models.FloatField(
@@ -1823,11 +1606,7 @@ class SiteReceiver(SiteSubSection):
         help_text=_(
             'Enter the date and time the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
-        ),
-        validators=[
-            FieldRequiredToPublish(),
-            TimeRangeValidator(end_field='removed')
-        ]
+        )
     )
 
     removed = models.DateTimeField(
@@ -1839,8 +1618,7 @@ class SiteReceiver(SiteSubSection):
             'Enter the date and time the receiver was removed. It is important'
             ' that the date removed is entered BEFORE the addition of a new '
             'receiver. Format: (CCYY-MM-DDThh:mmZ)'
-        ),
-        validators=[TimeRangeValidator(start_field='installed')]
+        )
     )
 
     # this field is a string in GeodesyML - therefore leaving it as character
@@ -1951,8 +1729,7 @@ class SiteAntenna(SiteSubSection):
             'equivalent to ARP for your antenna. Contact the Central Bureau if'
             ' your antenna does not appear. Format: (BPA/BCR/XXX from '
             'antenna.gra; see instr.)'
-        ),
-        validators=[ARPValidator(), EnumValidator()]
+        )
     )
 
     marker_up = models.FloatField(
@@ -2048,8 +1825,7 @@ class SiteAntenna(SiteSubSection):
         help_text=_(
             'Enter the date the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
-        ),
-        validators=[TimeRangeValidator(end_field='removed')]
+        )
     )
 
     removed = models.DateTimeField(
@@ -2061,8 +1837,7 @@ class SiteAntenna(SiteSubSection):
             'Enter the date the receiver was removed. It is important that '
             'the date removed is entered before the addition of a new '
             'receiver. Format: (CCYY-MM-DDThh:mmZ)'
-        ),
-        validators=[TimeRangeValidator(start_field='installed')]
+        )
     )
 
     additional_information = models.TextField(
@@ -2315,8 +2090,7 @@ class SiteFrequencyStandard(SiteSubSection):
             'Select whether the frequency standard is INTERNAL or EXTERNAL '
             'and describe the oscillator type. '
             'Format: (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)'
-        ),
-        validators=[EnumValidator()]
+        )
     )
 
     input_frequency = models.FloatField(
@@ -2343,8 +2117,7 @@ class SiteFrequencyStandard(SiteSubSection):
         help_text=_(
             'Enter the effective start date for the frequency standard. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(end_field='effective_end')]
+        )
     )
 
     effective_end = models.DateField(
@@ -2354,8 +2127,7 @@ class SiteFrequencyStandard(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the frequency standard. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(start_field='effective_start')]
+        )
     )
 
     def effective_dates(self):
@@ -2429,8 +2201,7 @@ class SiteCollocation(SiteSubSection):
         null=True,
         default=None,
         verbose_name=_('Status'),
-        help_text=_('Select appropriate status'),
-        validators=[EnumValidator()]
+        help_text=_('Select appropriate status')
     )
 
     notes = models.TextField(
@@ -2451,8 +2222,7 @@ class SiteCollocation(SiteSubSection):
         help_text=_(
             'Enter the effective start date of the collocated instrument. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(end_field='effective_end')]
+        )
     )
     effective_end = models.DateField(
         max_length=50,
@@ -2461,8 +2231,7 @@ class SiteCollocation(SiteSubSection):
         help_text=_(
             'Enter the effective end date of the collocated instrument. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(start_field='effective_start')]
+        )
     )
 
     def effective_dates(self):
@@ -2561,8 +2330,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
         help_text=_(
             'Enter the effective start date for the sensor. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(end_field='effective_end')]
+        )
     )
     effective_end = models.DateField(
         null=True,
@@ -2571,8 +2339,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the sensor. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(start_field='effective_start')]
+        )
     )
 
     notes = models.TextField(
@@ -2666,8 +2433,7 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
         help_text=_(
             'Enter the aspiration type if known. '
             'Format: (UNASPIRATED/NATURAL/FAN/etc)'
-        ),
-        validators=[EnumValidator()]
+        )
     )
 
 
@@ -2802,8 +2568,7 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
         help_text=_(
             'Enter the aspiration type if known. '
             'Format: (UNASPIRATED/NATURAL/FAN/etc)'
-        ),
-        validators=[EnumValidator()]
+        )
     )
 
 
@@ -2928,10 +2693,7 @@ class Condition(SiteSubSection):
         help_text=_(
             'Enter the effective start date for the condition. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[
-            TimeRangeValidator(end_field='effective_end')
-        ]
+        )
     )
 
     effective_end = models.DateField(
@@ -2941,8 +2703,7 @@ class Condition(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the condition. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(start_field='effective_start')]
+        )
     )
 
     additional_information = models.TextField(
@@ -3139,10 +2900,7 @@ class SiteLocalEpisodicEffects(SiteSubSection):
         help_text=_(
             'Enter the effective start date for the local episodic effect. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[
-            TimeRangeValidator(end_field='effective_end')
-        ]
+        )
     )
 
     effective_end = models.DateField(
@@ -3152,8 +2910,7 @@ class SiteLocalEpisodicEffects(SiteSubSection):
         help_text=_(
             'Enter the effective end date for the local episodic effect. '
             'Format: (CCYY-MM-DD)'
-        ),
-        validators=[TimeRangeValidator(start_field='effective_start')]
+        )
     )
 
     def date(self):

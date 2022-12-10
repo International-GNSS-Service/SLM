@@ -41,9 +41,23 @@ class Command(BaseCommand):
     }
 
     def add_arguments(self, parser):
-        pass
+
+        parser.add_argument(
+            '--bypass-blocks',
+            dest='bypass',
+            action='store_true',
+            default=False,
+            help=_(
+                'Bypass any save blocking that validation triggers. Flags '
+                'will be stored and the edits will be allowed.'
+            )
+        )
 
     def handle(self, *args, **options):
+
+        if options['bypass']:
+            from slm.validators import set_bypass
+            set_bypass(True)
 
         with transaction.atomic():
 

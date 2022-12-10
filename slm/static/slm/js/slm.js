@@ -729,3 +729,12 @@ slm.updateFileBadges = function(delta) {
         filesBadge.show();
     }
 }
+
+slm.formToObject = function(form) {
+    let formData = new FormData(form.get(0));
+    let data = {};
+    formData.forEach(function(value, key) {
+        data[key] = value;
+    });
+    return data;
+}

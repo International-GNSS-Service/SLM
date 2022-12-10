@@ -334,11 +334,11 @@ class UserProfileViewSet(
     mixins.UpdateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    mixins.CreateModelMixin,
     viewsets.GenericViewSet
 ):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsUserOrAdmin,)
+    parser_classes = (FormParser, JSONParser)
 
     def get_queryset(self):
         return get_user_model().objects.filter(
@@ -349,12 +349,6 @@ class UserProfileViewSet(
         resp = super(UserProfileViewSet, self).list(request, **kwargs)
         resp.data = resp.data[0]
         return resp
-
-    def create(self, request, *args, **kwargs):
-        kwargs[
-            self.lookup_url_kwarg or self.lookup_field
-        ] = self.request.user.pk
-        self.update(request, *args, **kwargs)
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

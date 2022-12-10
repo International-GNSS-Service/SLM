@@ -200,77 +200,42 @@ class AlertSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
 
-    agency = serializers.CharField(
-        source='agency.name',
-        allow_null=True,
-        required=False
-    )
+    class Meta:
+        model = UserProfile
+        fields = [
+            'html_emails',
+            'phone1',
+            'phone2',
+            'address1',
+            'address2',
+            'address3',
+            'city',
+            'state_province',
+            'country',
+            'postal_code',
+            'registration_agency'
+        ]
 
-    # profile fields
-    phone1 = serializers.CharField(
-        source='profile.phone1',
-        allow_null=True
-    )
-    phone2 = serializers.CharField(
-        source='profile.phone2',
-        allow_null=True
-    )
-    address1 = serializers.CharField(
-        source='profile.address1',
-        allow_null=True
-    )
-    address2 = serializers.CharField(
-        source='profile.address2',
-        allow_null=True
-    )
-    address3 = serializers.CharField(
-        source='profile.address3',
-        allow_null=True
-    )
-    city = serializers.CharField(
-        source='profile.city',
-        allow_null=True
-    )
-    state_province = serializers.CharField(
-        source='profile.state_province',
-        allow_null=True
-    )
-    country = serializers.CharField(
-        source='profile.country',
-        allow_null=True
-    )
-    postal_code = serializers.CharField(
-        source='profile.postal_code',
-        allow_null=True
-    )
-    registration_agency = serializers.CharField(
-        source='profile.registration_agency',
-        allow_null=True
-    )
-    html_emails = serializers.BooleanField(
-        source='profile.html_emails',
-        allow_null=True
-    )
+
+class UserSerializer(UserProfileSerializer):
+
+    agency = serializers.CharField(source='agency.name', read_only=True)
+
+    profile = UserProfileSerializer(many=False)
 
     def update(self, instance, validated_data):
 
         if not hasattr(instance, 'profile') or instance.profile is None:
-            UserProfile.objects.create(
-                **{'user': instance, **validated_data.get('profile')}
+            UserProfile.objects.create(user=instance)
+
+        if 'profile' in validated_data:
+            self.fields.get('profile').update(
+                instance=instance.profile,
+                validated_data=validated_data.pop('profile')
             )
-        else:
-            for field, value in validated_data.get('profile', {}).items():
-                setattr(instance.profile, field, value)
-            instance.profile.save()
-
-        for field, val in validated_data.items():
-            if field != 'profile':
-                setattr(instance, field, val)
-
-        instance.save()
-        return instance
+        return super().update(instance=instance, validated_data=validated_data)
 
     class Meta:
         model = get_user_model()
@@ -281,19 +246,9 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'date_joined',
             'agency',
-            'phone1',
-            'phone2',
-            'address1',
-            'address2',
-            'address3',
-            'city',
-            'state_province',
-            'country',
-            'postal_code',
-            'registration_agency',
-            'html_emails'
+            'profile'
         ]
-        read_only_fields = ('id', 'agency', 'date_joined')
+        read_only_fields = ['id', 'agency', 'date_joined']
 
 
 class SiteFileUploadSerializer(serializers.ModelSerializer):

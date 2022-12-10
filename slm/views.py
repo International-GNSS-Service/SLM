@@ -384,7 +384,6 @@ class EditView(StationContextView):
                             'status', inst.mod_status
                         ).merge(inst.mod_status)
 
-
                 if section is form:
                     # if this is the edit section we add an empty form as the
                     # first form in the context, the template knows to render
@@ -535,7 +534,6 @@ class DownloadView(StationContextView):
 
 class UserProfileView(SLMView):
     template_name = 'slm/profile.html'
-    success_url = reverse_lazy('profile')
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
@@ -543,38 +541,6 @@ class UserProfileView(SLMView):
             'user_form': UserForm(instance=request.user),
             'profile_form': UserProfileForm(instance=request.user.profile)
         })
-
-    @method_decorator(login_required)
-    def post(self, request, *args, **kwargs):
-        user_form = UserForm(
-            {
-                field: request.POST[field]
-                for field in UserForm._meta.fields
-                if field in request.POST
-            },
-            instance=request.user
-        )
-        if not request.user.profile:
-            request.user.profile = UserProfile.objects.create()
-
-        profile_form = UserProfileForm(
-            {
-                field: request.POST[field]
-                for field in UserProfileForm._meta.fields
-                if field in request.POST
-            },
-            instance=request.user.profile
-        )
-
-        if user_form.is_bound and user_form.is_valid():
-            user_form.save()
-
-        if profile_form.is_bound and profile_form.is_valid():
-            profile_form.save()
-
-        return self.render_to_response(
-            {'user_form': user_form, 'profile_form': profile_form}
-        )
 
 
 class LogView(StationContextView):

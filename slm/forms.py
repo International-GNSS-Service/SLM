@@ -42,6 +42,10 @@ from slm.models import (
     SatelliteSystem,
     SiteFileUpload
 )
+from slm.api.edit.serializers import (
+    UserProfileSerializer,
+    UserSerializer
+)
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Max
@@ -452,7 +456,6 @@ class SiteMoreInformationForm(SectionForm):
 
 class UserForm(forms.ModelForm):
 
-    # todo this might be a security hole - restrict queryset to user's stations
     agency = forms.ModelChoiceField(
         queryset=Agency.objects.all(),
         required=False,
@@ -460,31 +463,16 @@ class UserForm(forms.ModelForm):
     )
 
     class Meta:
-        model = get_user_model()
-        fields = [
-            'first_name',
-            'last_name',
-            'email',
-            'agency'
-        ]
+        model = UserSerializer.Meta.model
+        fields = UserSerializer.Meta.fields
+        exclude = ('date_joined', 'profile')
 
 
 class UserProfileForm(forms.ModelForm):
 
     class Meta:
-        model = UserProfile
-        fields = [
-            'html_emails',
-            'phone1',
-            'phone2',
-            'address1',
-            'address2',
-            'address3',
-            'city',
-            'state_province',
-            'country',
-            'postal_code'
-        ]
+        model = UserProfileSerializer.Meta.model
+        fields = UserProfileSerializer.Meta.fields
 
 
 class SiteFileForm(forms.ModelForm):

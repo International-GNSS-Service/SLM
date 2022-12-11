@@ -44,7 +44,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 include = [
-    "LICENSE",
+    "LICENSE"
 ]
 packages = [
     { include = "slm" }
@@ -75,6 +75,7 @@ tqdm = "^4.64.1"
 geojson = "^2.5.0"
 Pillow = "^9.3.0"
 polyline = "^1.4.0"
+lxml = "^4.9.1"
 
 [tool.poetry.group.dev.dependencies]
 django-extensions = "^3.1.5"

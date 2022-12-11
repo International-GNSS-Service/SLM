@@ -8,30 +8,12 @@ Think of this record as a Materialized View that's defined in code to make
 it RDBMS independent.
 
 Denormalization introduces the potential for data inconsistency. If updates are
-published and a corresponding SiteRecord is not created, search results will be
+published and a corresponding SiteIndex is not created, search results will be
 incorrect. This will not however break editing or site log serialization. In
 the context of the rest of the software - this table should be treated as
 a read-only index.
 
-Extensions:
-
-Extending software may want to include or change search fields. To do this a
-new SiteRecord model should be created that extends from AbstractSiteRecord.
-In settings the SLM_SITE_RECORD setting should be updated to:
-'<app_label>.<model_class>'. For instance, the default is:
-
-.. code-block:
-
-    SLM_SITE_RECORD = 'slm.DefaultSiteRecord'
-
-SiteRecord is never used directly in software, like with Django's swappable
-user model, use a function that returns the configured model type:
-
-.. code-block:
-
-    from slm.models import get_record_model
-    get_record_model()
-
+Extensions... todo
 """
 from django.core.files.base import ContentFile
 from django.db import models
@@ -45,6 +27,7 @@ from slm.defines import (
     RinexVersion,
     SiteLogFormat,
     SLMFileType,
+    GeodesyMLVersion
 )
 from slm.models.data import DataAvailability
 from slm.models.system import (
@@ -207,9 +190,15 @@ class SiteIndex(models.Model):
 
 
 class ArchivedSiteLogManager(models.Manager):
+    """
+    This manager is responsible for mediating access to serialized site logs.
+    Most frequently it will be fetching logs that match the given criteria from
+    disk, but it might also generate a log from the edit stack if an archived
+    file does not exist.
+    """
 
     def from_site(self, site, log_format=SiteLogFormat.LEGACY, epoch=None):
-        index = SiteIndex.objects.filter(site=site).at_epoch(
+        index = self.model.objects.filter(site=site).at_epoch(
             epoch=epoch
         ).first()
         if index:
@@ -259,3 +248,31 @@ class ArchivedSiteLog(SiteFile):
 
     class Meta:
         unique_together = ('index', 'log_format')
+
+
+class GeodesyMLUpload(models.Model):
+    """
+    We track the last validated GeodesyML document that was uploaded for each
+    site. Serialization of new GeodesyML documents from the data model replace
+    fields in this xml and leave elements unrepresented in the SLM data model
+    untouched. This way we can keep GeodesyML elements that that are not (yet)
+    part of the SLM data model.
+    """
+
+    site = models.ForeignKey(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        null=False
+    )
+
+    xml = models.TextField(null=False, blank=False)
+
+    version = EnumField(GeodesyMLVersion, null=False, blank=False)
+
+    timestamp = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'[{self.site.name}] {self.timestamp}'
+
+    class Meta:
+        unique_together = ('site', 'version')

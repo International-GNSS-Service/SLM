@@ -1,0 +1,427 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Scripps Orbit and Permanent Array Center (SOPAC), Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4"  xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2">
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <include schemaLocation="geodeticEquipment.xsd"/>
+    <include schemaLocation="fieldMeasurement.xsd"/>
+    <include schemaLocation="measurement.xsd"/>
+    <include schemaLocation="commonTypes.xsd"/>
+    <annotation>
+        <documentation>
+            <p>Derived from SOPAC IGS Site Log XML Schema 2011</p>
+            <ul>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/antenna.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/baseEquipmentLib.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/collocationInformation.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/frequencyStandard.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/humiditySensor.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/otherInstrumentation.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/pressureSensor.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/receiver.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/surveyedLocalTies.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/temperatureSensor.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/equipment/2004/waterVaporSensor.xsd</li>
+            </ul>
+            <p>Modifications from original</p>
+            <ul>
+                <li>Made part of eGeodesy namespace</li>
+                <li>Combined all equipment definitions into one file</li>
+                <li>Made all sensor types inherit from geo:SensorWithCodeType and geo:SensorType</li>
+                <li>Replaced the use of enumerations with GML code lists (the original enumeration values are still present)</li>
+                <li>Changed type of single date elements to gml:TimePosititionType</li>
+                <li>Changed date range elements references to gml:validTime</li>
+                <li>Changed types of numerical quantities from string to decimal</li>
+                <li>Added change tracking elements to all equipment types</li>
+                <li>Adopted GML conventions of global element definitions and property references</li>
+            </ul>
+        </documentation>
+    </annotation>
+    <!-- restriction of geo:Instrument to require the type field.  -->
+    <complexType name="SensorWithCodeType">
+        <complexContent>
+            <restriction base="geo:SensorType">
+                <sequence>
+                    <sequence>
+                        <group ref="gml:StandardObjectProperties"/>
+                    </sequence>
+                    <sequence>
+                        <element name="type" type="gml:CodeType"/>
+                    </sequence>
+                </sequence>
+            </restriction>
+        </complexContent>
+    </complexType>
+    <!-- used by Temperature, Humidity, Water Vapor, and Pressure Sensors  -->
+    <complexType name="BaseSensorEquipmentType">
+        <complexContent>
+            <extension base="geo:SensorWithCodeType">
+                <sequence>
+                    <group ref="geo:RemarksGroup"/>
+                    <element name="manufacturer" type="string"/>
+                    <element name="serialNumber" type="string"/>
+                    <element name="heightDiffToAntenna" type="double"/>
+                    <element name="calibrationDate" type="gml:TimePositionType"/>
+                    <element ref="gml:validTime"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!-- used by gnss Antenna -->
+    <simpleType name="antennaReferencePointType">
+        <restriction base="string">
+            <enumeration value="BPA"/>
+            <enumeration value="BCR"/>
+            <enumeration value="BGP"/>
+            <enumeration value="TPA"/>
+            <enumeration value="TCR"/>
+            <enumeration value="TGR"/>
+        </restriction>
+    </simpleType>
+    <!-- TODO: use gco code list values -->
+    <element name="antennaReferencePoint" type="gml:CodeType"/>
+    <!-- used by gnss Receiver -->
+    <simpleType name="satelliteSystemTypeOfType">
+        <restriction base="string">
+            <enumeration value="n/a"/>
+            <enumeration value="GPS"/>
+            <enumeration value="GLONASS"/>
+            <enumeration value="GPS+GLONASS"/>
+        </restriction>
+    </simpleType>
+    <!-- used by collocation information-->
+    <simpleType name="instrumentationTypeOfType">
+        <restriction base="string">
+            <enumeration value="Absolute Gravimeter"/>
+            <enumeration value="Circumzenithal VUGTK"/>
+            <enumeration value="DORIS"/>
+            <enumeration value="DORIS/SLR"/>
+            <enumeration value="DORIS/SLR/VLBI"/>
+            <enumeration value="Earth Tide Gravimeter"/>
+            <enumeration value="GLONASS receiver"/>
+            <enumeration value="WLRS"/>
+            <enumeration value="PRARE"/>
+            <enumeration value="DORIS/SLR/VLBI"/>
+            <enumeration value="Earth Tide Gravimeter"/>
+            <enumeration value="GLONASS receiver"/>
+            <enumeration value="WLRS"/>
+            <enumeration value="PRARE"/>
+            <enumeration value="Radio Telescope"/>
+            <enumeration value="SATREF"/>
+            <enumeration value="Siesmometer"/>
+            <enumeration value="SLP"/>
+            <enumeration value="Satellite Laser Ranging"/>
+            <enumeration value="SLR/VLBI"/>
+            <enumeration value="Very Large Baseline Interferometry"/>
+            <enumeration value="Superconducting Gravimeter"/>
+            <enumeration value="Transportable Integrated Geodetic Observatory"/>
+            <enumeration value="Tidal Gravimeter"/>
+            <enumeration value="Very Broad Band Seismograph"/>
+            <enumeration value="Campaign Mode GPS"/>
+            <enumeration value="Continuously Operating GPS"/>
+            <enumeration value="Transit"/>
+            <enumeration value="Not Available/unknown"/>
+            <enumeration value=""/>
+        </restriction>
+    </simpleType>
+    <simpleType name="statusType">
+        <restriction base="string">
+            <enumeration value="n/a"/>
+            <enumeration value="ACTIVE"/>
+            <enumeration value="MOBILE"/>
+            <enumeration value="PERMANENT"/>
+            <enumeration value="REMOVED"/>
+            <enumeration value=""/>
+        </restriction>
+    </simpleType>
+    <!-- used by frequency standard -->
+    <simpleType name="standardTypeOfType">
+        <restriction base="string">
+            <enumeration value="none"/>
+            <enumeration value="H-MASER"/>
+            <enumeration value="CESIUM"/>
+            <enumeration value="QUARTZ"/>
+            <enumeration value="INTERNAL"/>
+            <enumeration value="RUBIDIUM"/>
+            <enumeration value=""/>
+        </restriction>
+    </simpleType>
+    <complexType name="GnssAntennaType">
+        <complexContent>
+            <extension base="geo:AbstractGNSSAntennaType">
+                <sequence>
+                    <!-- TODO: use gco code list values -->
+                    <element name="antennaReferencePoint" type="gml:CodeType"/>
+                    <element name="marker-arpUpEcc." type="double" nillable="true"/>
+                    <element name="marker-arpNorthEcc." type="double" nillable="true"/>
+                    <element name="marker-arpEastEcc." type="double" nillable="true"/>
+                    <element name="alignmentFromTrueNorth" type="double" nillable="true"/>
+                    <element name="antennaRadomeType" type="geo:igsRadomeModelCodeType"/>
+                    <element name="radomeSerialNumber" type="string"/>
+                    <element name="antennaCableType" type="string"/>
+                    <element name="antennaCableLength" type="double" nillable="true"/>
+                    <element name="dateInstalled" type="gml:TimePositionType"/>
+                    <element name="dateRemoved" type="gml:TimePositionType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="CollocationInformationType">
+        <complexContent>
+            <extension base="gml:AbstractGMLType">
+                <sequence>
+                    <!-- TODO: use gco code list values -->
+                    <element name="instrumentationType" type="gml:CodeType"/>
+                    <element name="status" type="gml:CodeType"/>
+                    <element ref="gml:validTime"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="FrequencyStandardType">
+        <complexContent>
+            <extension base="gml:AbstractGMLType">
+                <sequence>
+                    <!-- TODO: use gco -->
+                    <element name="standardType" type="gml:CodeType"/>
+                    <element minOccurs="0" name="inputFrequency" type="double"/>
+                    <element ref="gml:validTime"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="HumiditySensorType">
+        <complexContent>
+            <extension base="geo:BaseSensorEquipmentType">
+                <sequence>
+                    <element name="dataSamplingInterval" type="double"/>
+                    <element name="accuracy-percentRelativeHumidity" type="double"/>
+                    <element name="aspiration" type="string"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="OtherInstrumentationType">
+        <complexContent>
+            <extension base="geo:InstrumentType">
+                <sequence>
+                    <element name="instrumentation" type="string"/>
+                    <element ref="gml:validTime"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="PressureSensorType">
+        <complexContent>
+            <extension base="geo:BaseSensorEquipmentType">
+                <sequence>
+                    <element name="dataSamplingInterval" type="double"/>
+                    <element name="accuracy-hPa" type="double"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="GnssReceiverType">
+        <complexContent>
+            <extension base="geo:AbstractGNSSReceiverType">
+                <sequence>
+                    <!-- TODO: use gco -->
+                    <element maxOccurs="unbounded" name="satelliteSystem" type="gml:CodeType"/>
+                    <element name="firmwareVersion" type="string"/>
+                    <element name="elevationCutoffSetting" type="double" nillable="true"/>
+                    <element name="dateInstalled" type="gml:TimePositionType"/>
+                    <element name="dateRemoved" type="gml:TimePositionType"/>
+                    <element name="temperatureStabilization" type="double" nillable="true"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="SurveyedLocalTieType">
+        <complexContent>
+            <extension base="gml:AbstractFeatureType">
+                <sequence>
+                    <element name="tiedMarkerName" type="string"/>
+                    <element name="tiedMarkerUsage" type="string"/>
+                    <element name="tiedMarkerCDPNumber" type="string"/>
+                    <element name="tiedMarkerDOMESNumber" type="string"/>
+                    <element name="differentialComponentsGNSSMarkerToTiedMonumentITRS">
+                        <complexType>
+                            <sequence>
+                                <element name="dx" type="double"/>
+                                <element name="dy" type="double"/>
+                                <element name="dz" type="double"/>
+                            </sequence>
+                        </complexType>
+                    </element>
+                    <element name="localSiteTiesAccuracy" type="double" nillable="true"/>
+                    <element name="surveyMethod" type="string"/>
+                    <element name="dateMeasured" type="gml:TimePositionType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!-- Alternative to surveyedLocalTieType -->
+    <complexType name="TieMeasurementType">
+        <complexContent>
+            <extension base="geo:AbstractMeasurementType">
+                <sequence>
+                    <element maxOccurs="unbounded" name="Tie" type="geo:MeasurementLineType"/>
+                    <element maxOccurs="unbounded" minOccurs="0" name="tiePairQuality" type="geo:MeasurementLineCovarianceType"/>
+                </sequence>
+                <attributeGroup ref="geo:RequiredSRSReferenceGroup"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="TemperatureSensorType">
+        <complexContent>
+            <extension base="geo:BaseSensorEquipmentType">
+                <sequence>
+                    <element name="dataSamplingInterval" type="double"/>
+                    <element name="accuracy-degreesCelcius" type="double"/>
+                    <element name="aspiration" type="string"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="WaterVaporSensorType">
+        <complexContent>
+            <extension base="geo:BaseSensorEquipmentType">
+                <sequence>
+                    <element name="distanceToAntenna" type="double"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  Global elements for each equipment type -->
+    <element name="GnssRadome" substitutionGroup="geo:Instrument" type="geo:GnssRadomeType"/>
+    <element name="GnssReceiver" substitutionGroup="geo:Instrument" type="geo:GnssReceiverType"/>
+    <element name="GnssAntenna" substitutionGroup="geo:Instrument" type="geo:GnssAntennaType"/>
+    <element name="HumiditySensor" substitutionGroup="geo:Sensor" type="geo:HumiditySensorType"/>
+    <element name="PressureSensor" substitutionGroup="geo:Sensor" type="geo:PressureSensorType"/>
+    <element name="TemperatureSensor" substitutionGroup="geo:Sensor" type="geo:TemperatureSensorType"/>
+    <element name="WaterVaporSensor" substitutionGroup="geo:Sensor" type="geo:WaterVaporSensorType"/>
+    <element name="OtherInstrumentation" substitutionGroup="geo:Instrument" type="geo:OtherInstrumentationType"/>
+    <element name="TieMeasurement" substitutionGroup="geo:AbstractMeasurement" type="geo:TieMeasurementType"/>
+    <element name="SurveyedLocalTie" substitutionGroup="gml:AbstractFeature" type="geo:SurveyedLocalTieType"/>
+    <element name="FrequencyStandard" substitutionGroup="gml:AbstractGML" type="geo:FrequencyStandardType"/>
+    <element name="CollocationInformation" substitutionGroup="gml:AbstractGML" type="geo:CollocationInformationType"/>
+    <!--  Property types for each equipment type -->
+    <complexType name="gnssReceiverPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:GnssReceiver"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="gnssAntennaPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:GnssAntenna"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="humiditySensorPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:HumiditySensor"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="pressureSensorPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:PressureSensor"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="temperatureSensorPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:TemperatureSensor"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="waterVaporSensorPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:WaterVaporSensor"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="otherInstrumentationPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:OtherInstrumentation"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="gnssRadomePropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:GnssRadome"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="surveyedLocalTiePropertyType">
+        <sequence>
+            <choice minOccurs="0">
+                <element ref="geo:SurveyedLocalTie"/>
+                <element ref="geo:TieMeasurement"/>
+            </choice>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="frequencyStandardPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:FrequencyStandard"/>
+                <group ref="geo:RemarksGroup"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="collocationInformationPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:CollocationInformation"/>
+
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+</schema>

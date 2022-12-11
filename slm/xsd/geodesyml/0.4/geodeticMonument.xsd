@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Scripps Orbit and Permanent Array Center (SOPAC), Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2">
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <include schemaLocation="observationSystem.xsd"/>
+    <simpleType name="geodeticMonumentTypeOfType">
+        <restriction base="string">
+            <enumeration value="pillar"/>
+            <enumeration value="brass plate"/>
+            <enumeration value="steel mast"/>
+            <enumeration value="shallow rod / braced antenna mount"/>
+            <enumeration value="removeable tripod / concrete pad"/>
+            <enumeration value="Wyatt/Agnew drilled-braced"/>
+            <enumeration value="Wyatt/Agnew driven braced"/>
+            <enumeration value="rock-pin/metal-tripod"/>
+            <enumeration value="rock-pin"/>
+            <enumeration value="glued-rod"/>
+            <enumeration value="wall"/>
+        </restriction>
+    </simpleType>
+    <simpleType name="geodeticMonumentFoundationTypeOfType">
+        <restriction base="string">
+            <enumeration value="roof"/>
+            <enumeration value="concrete block"/>
+            <enumeration value="steel rods"/>
+        </restriction>
+    </simpleType>
+    <!--  -->
+    <element name="geodeticMonument" substitutionGroup="gml:AbstractFeature" type="geo:baseGeodeticMonumentType"/>
+    <!--  -->
+    <complexType name="geodeticMonumentPropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:geodeticMonument"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType abstract="false" block="#all" name="baseGeodeticMonumentType">
+        <annotation>
+            <documentation>
+         Base geodetic monument class.  Can be extended..
+         Cannot be substituted and is instantiable.
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="gml:AbstractFeatureType">
+                <sequence>
+                    <!-- Monument Type -->
+                    <!-- TODO: use gco -->
+                    <element minOccurs="0" name="type" type="gml:CodeType"/>
+                    <!-- Common Name -->
+                    <element minOccurs="0" name="commonName" type="string"/>
+                    <!-- Common Character Identifier -->
+                    <element name="characterIdentifier">
+                        <simpleType>
+                            <restriction base="string">
+                                <length value="4"/>
+                            </restriction>
+                        </simpleType>
+                    </element>
+                    <!-- Inscription -->
+                    <element minOccurs="0" name="inscription" type="string"/>
+                    <!-- IERS Domes Number -->
+                    <element minOccurs="0" name="iersDomesNumber" type="string"/>
+                    <!-- CDP Number -->
+                    <element minOccurs="0" name="cdpNumber" type="string"/>
+                    <!-- NGS PID -->
+                    <element minOccurs="0" name="ngsPID">
+                        <simpleType>
+                            <restriction base="string">
+                                <length value="6"/>
+                            </restriction>
+                        </simpleType>
+                    </element>
+                    <!-- Verbal Location -->
+                    <element minOccurs="0" name="verbalLocation" type="string"/>
+                    <!-- Geodetic Position -->
+                    <element name="geodeticPosition" type="geo:PositionPropertyType"/>
+                    <!--
+                    <element name="geodeticPosition">
+                        <complexType>
+                            <sequence>
+                                <element name="longitude">
+                                    <simpleType>
+                                        <restriction base="decimal">
+                                            <totalDigits value="11"/>
+                                            <fractionDigits value="8"/>
+                                        </restriction>
+                                    </simpleType>
+                                </element>
+                                <element name="latitude">
+                                    <simpleType>
+                                        <restriction base="decimal">
+                                            <totalDigits value="10"/>
+                                            <fractionDigits value="8"/>
+                                        </restriction>
+                                    </simpleType>
+                                </element>
+                                <element name="elevation">
+                                    <simpleType>
+                                        <restriction base="decimal">
+                                            <totalDigits value="9"/>
+                                            <fractionDigits value="4"/>
+                                        </restriction>
+                                    </simpleType>
+                                </element>
+                            </sequence>
+                        </complexType>
+                    </element>
+                    -->
+                    <!-- City (nearest) -->
+                    <element minOccurs="0" name="nearestCity" type="string"/>
+                    <!-- State, Province, Region, Territory -->
+                    <element minOccurs="0" name="territory" type="string"/>
+                    <!-- Country -->
+                    <element name="country" type="string"/>
+                    <!-- Height (of the monument, in meters) -->
+                    <element minOccurs="0" name="monumentHeight">
+                        <simpleType>
+                            <restriction base="decimal">
+                                <totalDigits value="6"/>
+                                <fractionDigits value="4"/>
+                            </restriction>
+                        </simpleType>
+                    </element>
+                    <!-- Foundation -->
+                    <!-- TODO: use gco -->
+                    <element minOccurs="0" name="monumentFoundation" type="gml:CodeType"/>
+                    <!-- Foundation Depth -->
+                    <element minOccurs="0" name="monumentFoundationDepth">
+                        <simpleType>
+                            <restriction base="decimal">
+                                <totalDigits value="6"/>
+                                <fractionDigits value="4"/>
+                            </restriction>
+                        </simpleType>
+                    </element>
+                    <!-- Geologic Characteristics -->
+                    <element minOccurs="0" name="geologicCharacteristics" type="string"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+</schema>

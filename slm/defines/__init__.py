@@ -18,3 +18,4 @@ from slm.defines.SiteLogFormat import SiteLogFormat
 from slm.defines.SiteLogStatus import SiteLogStatus
 from slm.defines.SLMFileType import SLMFileType
 from slm.defines.TectonicPlates import TectonicPlates
+from slm.defines.GeodesyMLVersion import GeodesyMLVersion

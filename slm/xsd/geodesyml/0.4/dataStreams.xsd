@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Scripps Orbit and Permanent Array Center (SOPAC), Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4"  xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2">
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <annotation>
+        <documentation>
+            <p>Derived from SOPAC IGS Site Log XML Schema 2011 (http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/dataStreams/2011/dataStreams.xsd)</p>
+            <p>Modifications from original</p>
+            <ul>
+                <li>Made part of eGeodesy namespace</li>
+                <li>Replaced schema enumerations with GML code lists</li>
+                <li>Added global dataStreams element and dataStreamPropertyType as per GML property-by-reference convention</li>
+            </ul>
+        </documentation>
+    </annotation>
+    <include schemaLocation="contact.xsd">
+        <annotation>
+            <documentation>
+       Import components from the "contact.xsd" schema which resides in
+       the "http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/contact/2004" namespace.
+     </documentation>
+        </annotation>
+    </include>
+    <simpleType name="ipv4AddressType">
+        <annotation>
+            <documentation>
+      An IP Version 4 address.
+    </documentation>
+        </annotation>
+        <restriction base="string">
+            <pattern value="\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}"/>
+        </restriction>
+    </simpleType>
+    <simpleType name="ipv6AddressType">
+        <annotation>
+            <documentation>
+      An IP Version 6 address.
+    </documentation>
+        </annotation>
+        <restriction base="string">
+            <pattern value="([A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}"/>
+        </restriction>
+    </simpleType>
+    <simpleType name="ipAddressType">
+        <union memberTypes="geo:ipv4AddressType geo:ipv6AddressType"/>
+    </simpleType>
+    <simpleType name="dataFormatType">
+        <restriction base="token">
+            <enumeration value="RTCM_2"/>
+            <enumeration value="RTCM_2.2"/>
+            <enumeration value="RTCM_2.3"/>
+            <enumeration value="RTCM_3.0"/>
+            <enumeration value="RTCM_3.1"/>
+            <enumeration value="RYO"/>
+            <enumeration value="RYO_1.0"/>
+            <enumeration value="RYO_2.0"/>
+            <enumeration value="CMR"/>
+            <enumeration value="CMR+"/>
+            <enumeration value="RAW"/>
+        </restriction>
+    </simpleType>
+    <complexType name="ntripMountType">
+        <sequence>
+            <element minOccurs="0" name="mountPoint" type="token"/>
+            <element minOccurs="0" name="sourceID" type="string"/>
+            <element minOccurs="0" name="countryCode" type="token"/>
+            <element minOccurs="0" name="network" type="token"/>
+            <element minOccurs="0" name="allowConnections" type="boolean"/>
+            <element minOccurs="0" name="requireAuthentication" type="boolean"/>
+            <element minOccurs="0" name="encryption" type="boolean"/>
+            <element minOccurs="0" name="feesApply" type="boolean"/>
+            <element minOccurs="0" name="bitrate" type="double"/>
+            <element minOccurs="0" name="carrierPhase" type="token"/>
+            <element minOccurs="0" name="navSystem" type="token"/>
+            <element minOccurs="0" name="nmea" type="string"/>
+            <element minOccurs="0" name="solution" type="string"/>
+        </sequence>
+    </complexType>
+    <complexType name="ntripMountsType">
+        <sequence>
+            <element maxOccurs="unbounded" name="ntripMount" type="geo:ntripMountType"/>
+        </sequence>
+    </complexType>
+    <complexType name="baseDataStreamType">
+        <sequence>
+            <choice>
+                <element name="hostname" type="string"/>
+                <element name="ipAddress" type="geo:ipAddressType"/>
+            </choice>
+            <element name="port" type="positiveInteger"/>
+            <element name="sampInterval" type="double"/>
+            <!-- TODO: use gco code list values -->
+            <element name="dataFormat" type="gml:CodeType"/>
+            <element minOccurs="0" name="ntripMounts" type="geo:ntripMountsType"/>
+            <element minOccurs="0" name="startDate" type="date"/>
+        </sequence>
+    </complexType>
+    <complexType name="siteStreamType">
+        <sequence>
+            <element minOccurs="0" name="agency" type="geo:agencyPropertyType"/>
+            <element minOccurs="0" name="dataStream" type="geo:baseDataStreamType"/>
+        </sequence>
+    </complexType>
+    <complexType name="publishedStreamType">
+        <sequence>
+            <element minOccurs="0" name="agency" type="geo:agencyPropertyType"/>
+            <element maxOccurs="unbounded" minOccurs="0" name="dataStream" type="geo:baseDataStreamType"/>
+        </sequence>
+    </complexType>
+    <complexType name="dataStreamType">
+        <sequence>
+            <element minOccurs="0" name="siteStream" type="geo:siteStreamType"/>
+            <element minOccurs="0" name="publishedStream" type="geo:publishedStreamType"/>
+            <element minOccurs="0" name="notes" type="string"/>
+        </sequence>
+    </complexType>
+    <!--  Global dataStreams element -->
+    <element name="dataStream" type="geo:dataStreamType"/>
+    <!-- Property type -->
+    <complexType name="dataStreamPropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:dataStream"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+</schema>

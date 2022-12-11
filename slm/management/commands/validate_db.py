@@ -11,53 +11,34 @@ from tqdm import tqdm
 
 
 class Command(BaseCommand):
+
     help = _(
-        'Validate and update status of head state of all existing site logs.'
+        'Validate and update status of head state of all existing site logs. '
+        'This might be necessary to run if the validation configuration is '
+        'updated.'
     )
 
     logger = logging.getLogger(__name__ + '.Command')
 
     SECTIONS = {
-        'siteform_set',
-        'siteidentification_set',
-        'sitelocation_set',
-        'sitereceiver_set',
-        'siteantenna_set',
-        'sitesurveyedlocalties_set',
-        'sitefrequencystandard_set',
-        'sitecollocation_set',
-        'sitehumiditysensor_set',
-        'sitepressuresensor_set',
-        'sitetemperaturesensor_set',
-        'sitewatervaporradiometer_set',
-        'siteotherinstrumentation_set',
-        'siteradiointerferences_set',
-        'sitemultipathsources_set',
-        'sitelocalepisodiceffects_set',
-        'sitesignalobstructions_set',
-        'siteoperationalcontact_set',
-        'siteresponsibleagency_set',
-        'sitemoreinformation_set'
+        *Site.section_accessors(),
+        *Site.subsection_accessors(),
     }
 
     def add_arguments(self, parser):
 
         parser.add_argument(
-            '--bypass-blocks',
-            dest='bypass',
+            '--clear',
+            dest='clear',
             action='store_true',
             default=False,
-            help=_(
-                'Bypass any save blocking that validation triggers. Flags '
-                'will be stored and the edits will be allowed.'
-            )
+            help=_('Clear existing validation flags.')
         )
 
     def handle(self, *args, **options):
 
-        if options['bypass']:
-            from slm.validators import set_bypass
-            set_bypass(True)
+        from slm.validators import set_bypass
+        set_bypass(True)
 
         with transaction.atomic():
 
@@ -74,6 +55,8 @@ class Command(BaseCommand):
                         if not hasattr(head, '__iter__'):
                             head = [head]
                         for obj in head:
+                            if options['clear']:
+                                obj._flags = {}
                             obj.clean()
                             obj.save()
 

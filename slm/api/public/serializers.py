@@ -27,9 +27,18 @@ class StationListSerializer(serializers.ModelSerializer):
     last_publish = serializers.CharField(source='site.last_publish')
     agencies = EmbeddedAgencySerializer(source='site.agencies', many=True)
     networks = EmbeddedNetworkSerializer(source='site.networks', many=True)
-    antenna_type = serializers.CharField(source='antenna.model')
-    radome_type = serializers.CharField(source='radome.model')
-    receiver_type = serializers.CharField(source='receiver.model')
+    antenna_type = serializers.CharField(
+        source='antenna.model',
+        allow_null=True
+    )
+    radome_type = serializers.CharField(
+        source='radome.model',
+        allow_null=True
+    )
+    receiver_type = serializers.CharField(
+        source='receiver.model',
+        allow_null=True
+    )
     registered = serializers.DateTimeField(source='site.created')
     last_rinex2 = serializers.DateTimeField()
     last_rinex3 = serializers.DateTimeField()

@@ -3,10 +3,11 @@ Update the data availability information for each station.
 """
 import logging
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 from django.utils.translation import gettext as _
-from slm.defines import GeodesyMLVersion
-from lxml import etree
+from slm.defines import SiteLogFormat, GeodesyMLVersion
+from slm.api.serializers import SiteLogSerializer
+from slm.models import Site
 
 
 class Command(BaseCommand):
@@ -39,4 +40,17 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        pass
+
+        try:
+            print(
+                SiteLogSerializer(
+                    instance=Site.objects.get(name__iexact=options['site'][0])
+                ).format(
+                    SiteLogFormat.GEODESY_ML,
+                    version=options['version']
+                )
+            )
+        except Site.DoesNotExist as sdne:
+            raise CommandError(
+                f'Site {options["site"]} was not found!'
+            ) from sdne

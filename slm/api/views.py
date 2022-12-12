@@ -8,6 +8,7 @@ from rest_framework import mixins, renderers, viewsets
 from slm.api.serializers import SiteLogSerializer
 from slm.models import Site
 from slm.utils import to_bool
+from slm.defines import SiteLogFormat
 
 
 class LegacyRenderer(renderers.BaseRenderer):
@@ -61,7 +62,7 @@ class BaseSiteLogDownloadViewSet(
 
     lookup_field = 'name'
     lookup_url_kwarg = 'site'
-    renderer_classes = (LegacyRenderer,)
+    renderer_classes = (LegacyRenderer, GMLRenderer)
 
     class DownloadFilter(FilterSet):
 
@@ -105,29 +106,25 @@ class BaseSiteLogDownloadViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         site = self.get_object()
-        response = HttpResponse(
-            getattr(
-                self.get_serializer(
-                    instance=site,
-                    epoch=self.request.GET.get('epoch', None),
-                    published=to_bool(
-                        self.request.GET.get('published', True)
-                    ) or None
-                ),
-                kwargs.get('format', 'text')
-            )  # todo can renderer just handle this?
+        format = {
+            'text': SiteLogFormat.LEGACY,
+            'xml': SiteLogFormat.GEODESY_ML,
+            'json': SiteLogFormat.JSON
+        }.get(kwargs.get('format', 'text'), SiteLogFormat.LEGACY)
+        serializer = self.get_serializer(
+            instance=site,
+            epoch=self.request.GET.get('epoch', None),
+            published=to_bool(
+                self.request.GET.get('published', True)
+            ) or None
         )
-        ext = {
-            'text': 'log',
-            'xml': 'xml',
-            'json': 'json'
-        }.get(kwargs.get('format', 'text'), 'log')
+        response = HttpResponse(serializer.format(log_format=format))
 
         if (
             to_bool(kwargs.get('download', True)) and
             response.status_code < 400
         ):
             response['Content-Disposition'] = (
-                f'attachment; filename={site.filename}.{ext}'
+                f'attachment; filename={site.filename}.{format.ext}'
             )
         return response

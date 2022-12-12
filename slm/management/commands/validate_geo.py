@@ -53,6 +53,6 @@ class Command(BaseCommand):
 
         if not result:
             for error in geo.schema.error_log:
-                print(error.message)
+                print(f'[{error.line}] {error.message}')
         else:
             print(f'{options["GeodesyML"][0]} is valid!')

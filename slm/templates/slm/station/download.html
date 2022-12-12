@@ -35,7 +35,7 @@ Template for Download page.
           <div class="h-100 p-5 my-3 bg-light border rounded-3 text-center">
             <i class="bi bi-filetype-xml slm-published" style="font-size:60px;"></i>
             <h2 class="mb-3">{% trans "GeodesyML (.xml)" %}</h2>
-            <p class="mb-4">{% trans "This is still under development. Machine-readable format of the data and metadata of a GNSS station" %}</p>
+            <p class="mb-4">{% trans "Machine-readable XML format of the data and metadata of a GNSS station" %}</p>
             <a class="btn btn-primary {% if not station %}disabled{% endif %}" {% if station %}href="{% url 'slm_edit_api:download-detail' site=station format='xml' %}"{% endif %}>Download</a>
           </div>
         </div>
@@ -44,7 +44,7 @@ Template for Download page.
             <i class="bi bi-filetype-json slm-published" style="font-size:60px;"></i>
             <h2 class="mb-3">{% trans "JSON (.json)" %}</h2>
             <p class="mb-4">{% trans "This is still under development. JavaScript Object Notation format of the data and metadata of a GNSS station" %}</p>
-            <a class="btn btn-primary {% if not station %}disabled{% endif %}" {% if station %}href="{% url 'slm_edit_api:download-detail' site=station format='json' %}?published=False"{% endif %}>Download</a>
+            <a class="btn btn-primary disabled {% if not station %}disabled{% endif %}" {% if station %}href="{% url 'slm_edit_api:download-detail' site=station format='json' %}?published=False"{% endif %}>Download</a>
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@ Template for Download page.
             <i class="bi bi-filetype-xml slm-modified" style="font-size:60px;"></i>
             <h2 class="mb-3">{% trans "GeodesyML (.xml)" %}</h2>
             <h3 class="mb-3 fs-4">{% trans "MODIFIED/UNPUBLISHED" %}</h3>
-            <p class="mb-4">{% trans "This is still under development. Machine-readable format of the data and metadata of a GNSS station" %}</p>
+            <p class="mb-4">{% trans "Machine-readable XML format of the data and metadata of a GNSS station" %}</p>
             <a class="btn btn-primary {% if not station %}disabled{% endif %}" {% if station %}href="{% url 'slm_edit_api:download-detail' site=station format='xml' %}?published=False"{% endif %}>Download</a>
           </div>
         </div>
@@ -74,7 +74,7 @@ Template for Download page.
             <h2 class="mb-3">{% trans "JSON (.json)" %}</h2>
             <h3 class="mb-3 fs-4">{% trans "MODIFIED/UNPUBLISHED" %}</h3>
             <p class="mb-4">{% trans "This is still under development. JavaScript Object Notation format of the data and metadata of a GNSS station" %}</p>
-            <a class="btn btn-primary {% if not station %}disabled{% endif %}" {% if station %}href="{% url 'slm_edit_api:download-detail' site=station format='json' %}?published=False"{% endif %}>Download</a>
+            <a class="btn btn-primary disabled {% if not station %}disabled{% endif %}" {% if station %}href="{% url 'slm_edit_api:download-detail' site=station format='json' %}?published=False"{% endif %}>Download</a>
           </div>
         </div>
       </div>

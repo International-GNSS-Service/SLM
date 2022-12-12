@@ -948,6 +948,8 @@ class SiteSubSection(SiteSection):
 
     is_deleted = models.BooleanField(default=False, null=False, blank=True)
 
+    inserted = models.DateTimeField(default=now)
+
     objects = SiteSubSectionManager.from_queryset(SiteSubSectionQuerySet)()
 
     @property

@@ -198,7 +198,7 @@ class ArchivedSiteLogManager(models.Manager):
     """
 
     def from_site(self, site, log_format=SiteLogFormat.LEGACY, epoch=None):
-        index = self.model.objects.filter(site=site).at_epoch(
+        index = SiteIndex.objects.filter(site=site).at_epoch(
             epoch=epoch
         ).first()
         if index:

@@ -86,6 +86,15 @@ def iso_utc(datetime_field):
     return ''
 
 
+@register.filter(name='iso_utc_full')
+def iso_utc_full(datetime_field):
+    if datetime_field:
+        return datetime_field.astimezone(
+            timezone.utc
+        ).strftime('%Y-%m-%dT%H:%M:%SZ')
+    return ''
+
+
 @register.filter(name='multi_line')
 def multi_line(text):
     if text:
@@ -119,10 +128,17 @@ def iso6709(lat_lng, padding):
     return ''
 
 
+@register.filter(name='epsg7912')
+def epsg7912(lat_lng, prec=10):
+    if lat_lng:
+        return precision(lat_lng/10000, prec)
+    return ''
+
+
 @register.filter(name='precision')
-def precision(alt, precision):
-    if alt not in {None, ''}:
-        return f'{alt:.{precision}f}'.rstrip('0').rstrip('.')
+def precision(number, precision):
+    if number not in {None, ''}:
+        return f'{number:.{precision}f}'.rstrip('0').rstrip('.')
     return ''
 
 
@@ -186,6 +202,14 @@ def antenna_radome(antenna):
     if hasattr(antenna, 'radome_type'):
         radome = antenna.radome_type.model
     return f'{antenna.antenna_type.model}{" " * spacing}{radome}'
+
+
+@register.filter(name='antenna_codelist')
+def antenna_radome(antenna):
+    radome = 'NONE'
+    if hasattr(antenna, 'radome_type'):
+        radome = antenna.radome_type.model
+    return f'{antenna.antenna_type.model} {radome}'
 
 
 @register.filter(name='rpad_space')
@@ -283,3 +307,13 @@ def absolute_uri(request, path):
     if request is not None:
         return request.build_absolute_uri(path)
     return "todo"
+
+
+@register.filter(name='contact')
+def contact(agency, ctype):
+    return {
+        field: getattr(agency, f'{ctype}_{field}')
+        for field in [
+            'name', 'phone1', 'phone2', 'fax', 'email'
+        ] if getattr(agency, f'{ctype}_{field}')
+    }

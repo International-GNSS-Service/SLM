@@ -13,7 +13,9 @@ The Site Log Manager (SLM) is a web platform that aims to provide:
 8. Authenticated RESTful api for updating site log data.
 9. Full access to the historical record.
 10. Visualizations of networks and site information.
-11. A no-fork extensible architecture that allows organizations to modify out-of-the box
+11. Configurable data validation that goes above and beyond schema validation.
+12. Image and file attachments to sites.    
+13. A no-fork extensible architecture that allows organizations to modify out-of-the box
 behavior with plugins.
 
 This code base has reached beta-maturity but is still undergoing rapid development. Check back soon 

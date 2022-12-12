@@ -837,7 +837,8 @@ class SiteSection(models.Model):
                 'custom_graphic',
                 'editor',
                 'deleted',
-                '_flags'
+                '_flags',
+                'inserted'
             }
         ]
 

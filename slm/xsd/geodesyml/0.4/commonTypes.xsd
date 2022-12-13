@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gco="http://www.isotc211.org/2005/gco" >
+    <annotation>
+        <documentation></documentation>
+    </annotation>
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <import namespace="http://www.isotc211.org/2005/gco" schemaLocation="http://schemas.opengis.net/iso/19139/20070417/gco/gco.xsd"/>
+    <include schemaLocation="document.xsd"/>
+    <!--  -->
+    <group name="RemarksGroup">
+        <annotation>
+            <documentation>A convenience group. This allows an application schema developer to include remarks and associated documents in a standard fashion.</documentation>
+        </annotation>
+        <sequence>
+            <element minOccurs="0" name="notes" type="string"/>
+            <element maxOccurs="unbounded" minOccurs="0" name="associatedDocument" type="geo:DocumentPropertyType"/>
+            <element minOccurs="0" name="extension" type="anyType"/>
+        </sequence>
+    </group>
+    <!-- Change tracking group -->
+    <group name="ChangeTracking">
+        <annotation>
+            <documentation>A convenience group to log changes made to each meta-data block.</documentation>
+        </annotation>
+        <sequence>
+            <sequence>
+                <element name="dateInserted" type="gml:TimePositionType"/>
+                <element minOccurs="0" name="dateDeleted" type="gml:TimePositionType"/>
+                <element minOccurs="0" name="deletedReason" type="string"/>
+            </sequence>
+        </sequence>
+    </group>
+    <!--  -->
+    <attributeGroup name="RequiredSRSReferenceGroup">
+        <annotation>
+            <documentation>The attribute group SRSReferenceGroup is a required reference to the CRS used by this geometry, with optional additional information to simplify the processing of the coordinates when a more complete definition of the CRS is not needed.
+                In general the attribute srsName points to a CRS instance of gml:AbstractCoordinateReferenceSystem. For well-known references it is not required that the CRS description exists at the location the URI points to. 
+                If no srsName attribute is given, the CRS shall be specified as part of the larger context this geometry element is part of.</documentation>
+        </annotation>
+        <attribute name="srsName" type="anyURI" use="required"/>
+        <attribute name="srsDimension" type="positiveInteger"/>
+        <attributeGroup ref="gml:SRSInformationGroup"/>
+    </attributeGroup>
+    <!--  -->
+    <group name="TimeSliceProperties">
+        <annotation>
+            <documentation/>
+        </annotation>
+        <sequence>
+            <element ref="gml:validTime"/>
+            <element minOccurs="0" ref="gml:dataSource"/>
+        </sequence>
+    </group>
+    <!--  -->
+    <complexType name="DynamicFeatureType">
+        <complexContent>
+            <restriction base="gml:DynamicFeatureType">
+                <sequence>
+                    <sequence>
+                        <group ref="gml:StandardObjectProperties"/>
+                    </sequence>
+                    <sequence>
+                        <element minOccurs="0" ref="gml:boundedBy"/>
+                        <element minOccurs="0" ref="gml:location"/>
+                    </sequence>
+                    <sequence>
+                        <element minOccurs="0" ref="gml:validTime"/>
+                        <element minOccurs="0" ref="gml:dataSource"/>
+                        <element minOccurs="0" ref="gml:dataSourceReference"/>
+                    </sequence>
+                </sequence>
+            </restriction>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="DynamicFeature" substitutionGroup="gml:AbstractFeature" type="geo:DynamicFeatureType">
+        <annotation>
+            <documentation>Restriction of the gml:DynamicFeatureType. Removes gml:history and relies upon the extending type to implement a history element that restricts child types to those allowed by the class model.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="InstrumentPropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:Instrument"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractTimeSlice" substitutionGroup="gml:AbstractFeature" type="geo:AbstractTimeSliceType">
+        <annotation>
+            <documentation>Mimics the gml:AbstractTimeSlice element but extends gml:AbstractFeatureType instead of gml:AbstractGMLType. The purpose of making this distinction is to ensure better access to a wider variety of WFS solutions that use the gml:AbstractFeature/gml:Location element for visualisation. 
+            </documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="AbstractTimeSliceType">
+        <complexContent>
+            <extension base="gml:AbstractFeatureType">
+                <sequence>
+                    <group ref="geo:TimeSliceProperties"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="Instrument" substitutionGroup="gml:AbstractGML" type="geo:InstrumentType"/>
+    <!--  -->
+    <complexType name="InstrumentType">
+        <complexContent>
+            <extension base="gml:AbstractGMLType">
+                <sequence>
+                    <element minOccurs="0" name="type" type="gml:CodeType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType final="#all" name="countryCodeType">
+        <annotation>
+            <documentation xml:lang="en">
+                Three-letter country code (ISO ISO 3166-1 alpha-3, https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3)
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="gco:CodeListValue_Type"/>
+        </complexContent>
+    </complexType>
+</schema>

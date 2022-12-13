@@ -1,0 +1,614 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:om="http://www.opengis.net/om/2.0">
+    <annotation>
+        <documentation></documentation>
+    </annotation>
+    <!--  -->
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <import namespace="http://www.opengis.net/om/2.0" schemaLocation="http://schemas.opengis.net/om/2.0/observation.xsd"/>
+    <import namespace="http://www.isotc211.org/2005/gmd" schemaLocation="http://schemas.opengis.net/iso/19139/20070417/gmd/gmd.xsd"/>
+    <!--  -->
+    <include schemaLocation="commonTypes.xsd"/>
+    <include schemaLocation="quality.xsd"/>
+    <include schemaLocation="observationSystem.xsd"/>
+    <include schemaLocation="measurement.xsd"/>
+    <!--  -->
+    <complexType name="AbstractSourcePropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractSource"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractSource" substitutionGroup="gml:AbstractFeature" type="geo:AbstractSourceType"/>
+    <!--  -->
+    <complexType abstract="true" name="AbstractSourceType">
+        <annotation>
+            <documentation>Encapsulates operands and results related to the event of running an operation. It is intended that this complex type is extended to include a reference to the particular operation type to be recorded.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="gml:AbstractFeatureType">
+                <sequence>
+                    <element ref="gml:validTime">
+                        <annotation>
+                            <documentation>The valid time range or instant for this encapsulation.</documentation>
+                        </annotation>
+                    </element>
+                    <element minOccurs="0" name="runDate" type="gml:TimePositionType">
+                        <annotation>
+                            <documentation>Date and time this operation was run.</documentation>
+                        </annotation>
+                    </element>
+                    <element minOccurs="0" name="runBy" type="gmd:CI_ResponsibleParty_PropertyType"/>
+                    <element minOccurs="0" name="operands">
+                        <complexType>
+                            <sequence maxOccurs="unbounded">
+                                <element ref="geo:AbstractOperand"/>
+                            </sequence>
+                        </complexType>
+                    </element>
+                    <element minOccurs="0" name="results">
+                        <complexType>
+                            <sequence maxOccurs="unbounded">
+                                <element ref="geo:AbstractResult"/>
+                            </sequence>
+                        </complexType>
+                    </element>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="AbstractPositionSourcePropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractPositionSource"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractPositionSource" substitutionGroup="geo:AbstractSource" type="geo:AbstractPositionSourceType">
+        <annotation>
+            <documentation>Version 0.2.2: Define an abstract type to encapsulate the inputs and outputs of an "instance" of a coordinate operation. This instance is recorded to maintain the traceable lineage of a Position value.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="AbstractPositionSourceType">
+        <annotation>
+            <documentation>Encapsulates</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractSourceType">
+                <sequence>
+                    <element name="operation" type="gml:CoordinateOperationPropertyType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!-- -->
+    <element abstract="true" name="AbstractPositionEstimator" substitutionGroup="gml:AbstractCoordinateOperation" type="geo:AbstractPositionEstimatorType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of estimators. Extends AbstractCoordinateOperation. gml:targetCRS and gml:sourceCRS have been removed.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="AbstractPositionEstimatorType">
+        <complexContent>
+            <restriction base="gml:AbstractCoordinateOperationType">
+                <sequence>
+                    <sequence>
+                        <element maxOccurs="unbounded" minOccurs="0" ref="gml:metaDataProperty"/>
+                        <element minOccurs="0" ref="gml:description"/>
+                        <element minOccurs="0" ref="gml:descriptionReference"/>
+                        <element ref="gml:identifier"/>
+                        <element maxOccurs="unbounded" minOccurs="0" ref="gml:name"/>
+                    </sequence>
+                    <sequence>
+                        <element minOccurs="0" ref="gml:remarks"/>
+                    </sequence>
+                    <sequence>
+                        <element minOccurs="0" ref="gml:domainOfValidity"/>
+                        <element maxOccurs="unbounded" ref="gml:scope"/>
+                        <element minOccurs="0" ref="gml:operationVersion"/>
+                        <element maxOccurs="unbounded" minOccurs="0" ref="gml:coordinateOperationAccuracy"/>
+                    </sequence>
+                </sequence>
+            </restriction>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="PositionSource" substitutionGroup="geo:AbstractPositionSource" type="geo:PositionSourceType"/>
+    <!--  -->
+    <complexType name="PositionSourceType">
+        <annotation>
+            <documentation>A position source encapsulates any position estimation operation with source and destination references to operands, resultant parameters and configuration options.
+                To encapsulate a geodetic adjustment, the least squares estimation operation would be the referenced along with operand positions and measurements.
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractPositionSourceType">
+                <sequence>
+                    <element minOccurs="0" name="EstimationType" type="gml:CodeType">
+                        <annotation>
+                            <documentation>For clarity and identification purposes, some vendors may choose to denote the type of position estimation using a code supplied by a third party dictionary. A typical entry might be one of an enumeration of "Geodetic Adjustment", "National Adjustment" and "Campaign Adjustment" or could refer to a SINEX solution produced by Bernese "Daily Bernese SINEX" or "Weekly Bernese SINEX". This type is flexible enough to refer to both the business purpose for the estimation as well as infer the technique used in the estimation process.</documentation>
+                        </annotation>
+                    </element>
+                    <element minOccurs="0" name="version" type="string"/>
+                    <element minOccurs="0" name="epoch" type="gml:TimePositionType"/>
+                    <element minOccurs="0" ref="geo:Status"/>
+                    <element maxOccurs="unbounded" minOccurs="0" name="configureValue" type="geo:ValueType">
+                        <annotation>
+                            <documentation>In a geodetic adjustment a typical configureValue codeSpace would be the confidence interval for the t-test or f-test, or the computed degrees of freedom, number of measurements or positions, or estimator type.</documentation>
+                        </annotation>
+                    </element>
+                </sequence>
+                <attributeGroup ref="gml:SRSReferenceGroup"/>
+            </extension>
+            <!--<attributeGroup ref="geo:SpatialReferenceGroup"/>-->
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="PositionEstimatorProcess" substitutionGroup="geo:AbstractPositionEstimator" type="geo:PositionEstimatorProcessType">
+        <annotation>
+            <documentation>Contains process steps that identify processes used for the generation of position parameters.
+                For geodetic adjustments this could involve a preprocessing step for generation of apriori coordinates, adjustment phases, outlier detection and removal and any other relevant procedures that impart a significant result on parameters.
+                For the generation of a SINEX file via GNSS processing software such as Bernese this type can be used to describe configuration steps.
+            </documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="PositionEstimatorProcessType">
+        <complexContent>
+            <extension base="geo:AbstractPositionEstimatorType">
+                <sequence>
+                    <element maxOccurs="unbounded" name="processStep">
+                        <complexType>
+                            <sequence>
+                                <element name="description" type="string"/>
+                                <element minOccurs="0" name="processReference" type="gml:ReferenceType"/>
+                                <element maxOccurs="unbounded" minOccurs="0" name="processValue" type="geo:ValueType"/>
+                                <group ref="geo:RemarksGroup"/>
+                            </sequence>
+                        </complexType>
+                    </element>
+                </sequence>
+                <attribute name="dimension" type="geo:PositionDimensionEnumeration"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractOperand"/>
+    <!--  -->
+    <element abstract="true" name="AbstractResult"/>
+    <!--  -->
+    <element name="operand" substitutionGroup="geo:AbstractOperand" type="geo:AnyOperandType"/>
+    <!--  -->
+    <complexType name="AnyOperandType">
+        <sequence>
+            <element minOccurs="0" name="type" type="gml:CodeType"/>
+            <element minOccurs="0" name="value" type="anyType"/>
+            <group ref="geo:RemarksGroup"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="result" substitutionGroup="geo:AbstractResult" type="geo:AnyResultType"/>
+    <!--  -->
+    <complexType name="AnyResultType">
+        <sequence>
+            <element minOccurs="0" name="type" type="gml:CodeType"/>
+            <element minOccurs="0" name="value" type="anyType"/>
+            <group ref="geo:RemarksGroup"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="adjustmentPosition" substitutionGroup="geo:AbstractOperand" type="geo:adjustmentPositionType">
+        <annotation>
+            <documentation>Position for nodes within adjustment.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="adjustmentPositionType">
+        <annotation>
+            <documentation>A reference to the Position record and a description of parameters to constrain.</documentation>
+        </annotation>
+        <sequence>
+            <element name="usesPosition" type="geo:PositionPropertyType"/>
+            <element minOccurs="0" ref="geo:AbstractQuality">
+                <annotation>
+                    <documentation>This quality element acts as a datum constraint and is typically a VCV or PU constraint of this position to the datum of the estimation/adjustment. This element would be used in conjunction with the constraint attribute set to "Constrained".</documentation>
+                </annotation>
+            </element>
+            <group ref="geo:RemarksGroup"/>
+        </sequence>
+        <attribute name="constraint" type="geo:NodeConstraintEnumeration"/>
+    </complexType>
+    <!--  -->
+    <element name="adjustmentMeasurement" substitutionGroup="geo:AbstractOperand" type="geo:adjustmentMeasurementType">
+        <annotation>
+            <documentation>Measurements within adjustment.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="adjustmentMeasurementType">
+        <sequence>
+            <element name="usesMeasurement" type="geo:AbstractMeasurementPropertyType"/>
+            <element maxOccurs="unbounded" minOccurs="0" name="aprioriScalar" type="geo:ValueType"/>
+            <group ref="geo:RemarksGroup"/>
+        </sequence>
+        <attribute default="true" name="include" type="boolean"/>
+    </complexType>
+    <!--  -->
+    <element name="adjustmentValue" substitutionGroup="geo:AbstractResult" type="geo:ValueType">
+        <annotation>
+            <documentation>Used for returning information about the adjustment.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <element name="adjustedPosition" substitutionGroup="geo:AbstractResult" type="geo:adjustedPositionType">
+        <annotation>
+            <documentation>Position returned from an adjustment. This element may be redundant since this link will be identified in a PositionType:source element.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="adjustedPositionType">
+        <sequence>
+            <element name="usesPosition" type="geo:PositionPropertyType"/>
+            <group ref="geo:RemarksGroup"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="adjustedPositionQuality" substitutionGroup="geo:AbstractResult" type="geo:adjustedPositionQualityType">
+        <annotation>
+            <documentation>Covariances between adjusted positions determined as part of adjustment.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="adjustedPositionQualityType">
+        <sequence>
+            <element name="atPosition" type="gml:ReferenceType"/>
+            <element name="toPosition" type="gml:ReferenceType"/>
+            <element name="value" type="geo:ValueType"/>
+            <group ref="geo:RemarksGroup"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="adjustedMeasurement" substitutionGroup="geo:AbstractResult" type="geo:adjustedMeasurementType">
+        <annotation>
+            <documentation>Additional values returned from an adjustment for measurement line.  For example may be residuals or statistics.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="adjustedMeasurementType">
+        <sequence>
+            <choice>
+                <element name="atLine" type="gml:ReferenceType"/>
+                <element name="atPoint" type="gml:ReferenceType"/>
+            </choice>
+            <element maxOccurs="unbounded" name="adjustmentValue" type="geo:ValueType"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="Transformation" substitutionGroup="geo:AbstractPositionSource" type="geo:TransformationType"/>
+    <!--  -->
+    <complexType name="TransformationType">
+        <annotation>
+            <documentation>A Transformation encapsulates the coordinate operation with source and destination references to operand and result data.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractPositionSourceType">
+                <sequence>
+                    <element minOccurs="0" name="version" type="string"/>
+                    <element minOccurs="0" name="epoch" type="gml:TimePositionType"/>
+                    <element name="status" type="gml:CodeType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+                <attributeGroup ref="gml:SRSReferenceGroup">
+                    <annotation>
+                        <documentation>The transformation source and destination CRS are required elements in the GML transformation coordinate operation. The ability to note the srsName and dimension of the results here is optional.</documentation>
+                    </annotation>
+                </attributeGroup>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="transformationPosition" substitutionGroup="geo:AbstractOperand" type="geo:transformationPositionType">
+        <annotation>
+            <documentation>The operand to a transformation on a position.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="transformationPositionType">
+        <sequence>
+            <element ref="geo:Position"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="transformationMeasurement" substitutionGroup="geo:AbstractOperand" type="geo:transformationMeasurementType">
+        <annotation>
+            <documentation>The operand to a transformation on a datum-defined measurement.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="transformationMeasurementType">
+        <sequence>
+            <element ref="geo:AbstractMeasurement"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="transformedPosition" substitutionGroup="geo:AbstractResult" type="geo:transformedPositionType">
+        <annotation>
+            <documentation>The result of a transformation on a position.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="transformedPositionType">
+        <sequence>
+            <element ref="geo:Position"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <element name="transformedMeasurement" substitutionGroup="geo:AbstractResult" type="geo:transformedMeasurementType">
+        <annotation>
+            <documentation>The result of a transformation on a datum-defined measurement.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="transformedMeasurementType">
+        <sequence>
+            <element ref="geo:AbstractMeasurement"/>
+        </sequence>
+    </complexType>
+    <!--  -->
+    <simpleType name="NodeConstraintEnumeration">
+        <restriction base="string">
+            <enumeration value="Free"/>
+            <enumeration value="Constrained"/>
+            <enumeration value="Constrained Vertical"/>
+            <enumeration value="Constrained Horizontal"/>
+        </restriction>
+    </simpleType>
+    <!--  -->
+    <simpleType name="PositionDimensionEnumeration">
+        <restriction base="string">
+            <enumeration value="1"/>
+            <enumeration value="2"/>
+            <enumeration value="3"/>
+            <enumeration value="4"/>
+        </restriction>
+    </simpleType>
+    <!--  -->
+    <complexType name="AbstractMeasurementSourcePropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractMeasurementSource"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractMeasurementSource" substitutionGroup="geo:AbstractSource" type="geo:AbstractMeasurementSourceType">
+        <annotation>
+            <documentation>Version 0.2.2: Encapsulates measurement operation and the operands/results that define the operation event.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="AbstractMeasurementSourceType">
+        <annotation>
+            <documentation>Encapsulates measurement operation and the operands/results that define the operation event.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractSourceType">
+                <sequence>
+                    <element name="operation" type="geo:MeasurementOperationPropertyType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!-- -->
+    <element abstract="true" name="AbstractMeasurementEstimator" substitutionGroup="geo:AbstractMeasurementOperation" type="geo:AbstractMeasurementEstimatorType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of estimators.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="AbstractMeasurementEstimatorType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractMeasurementOperation for the purpose of the definition of estimators. Extends AbstractMeasurementOperation.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractMeasurementOperationType">
+                <sequence/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractMeasurementOperation" substitutionGroup="gml:Definition" type="geo:AbstractMeasurementOperationType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of estimators.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="AbstractMeasurementOperationType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of estimators.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="gml:IdentifiedObjectType">
+                <sequence>
+                    <element minOccurs="0" ref="geo:ReductionMethod"/>
+                    <element minOccurs="0" name="procedure" type="om:OM_ProcessPropertyType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="MeasurementOperationPropertyType">
+        <annotation>
+            <documentation>geo:MeasurementOperationPropertyType is a property type for association roles to a measurement operation, either referencing or containing the definition of that measurement operation.</documentation>
+        </annotation>
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractMeasurementOperation"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element name="GNSSBaselineReduction" substitutionGroup="geo:AbstractMeasurementSource" type="geo:GNSSBaselineReductionType"/>
+    <!--  -->
+    <complexType name="GNSSBaselineReductionType">
+        <annotation>
+            <documentation>A GNSS baseline reduction source encapsulates the baseline reductuin operation with operand and result properties and configuration values.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractMeasurementSourceType">
+                <sequence>
+                    <element minOccurs="0" name="version" type="string"/>
+                    <element name="status" type="gml:CodeType"/>
+                    <element maxOccurs="unbounded" minOccurs="0" name="configureValue" type="geo:ValueType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+                <attributeGroup ref="geo:RequiredSRSReferenceGroup"/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="ReductionMethod" type="string"/>
+    <!--  -->
+    <complexType name="AbstractDefinitionSourcePropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractDefinitionSource"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractDefinitionSource" substitutionGroup="geo:AbstractSource" type="geo:AbstractDefinitionSourceType">
+        <annotation>
+            <documentation>Version 0.2.2: Define an abstract type to encapsulate the inputs and outputs of an "instance" of a coordinate operation. This instance is recorded to maintain the traceable lineage of a Position value.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="AbstractDefinitionSourceType">
+        <annotation>
+            <documentation>Encapsulates a reference to the operation definition used to produce resultant parameters that are gazetted in the gml:IdentifiedObject.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractSourceType">
+                <sequence>
+                    <element ref="geo:AbstractDefinitionOperation"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!-- -->
+    <element abstract="true" name="AbstractDefinitionEstimator" substitutionGroup="geo:AbstractDefinitionOperation" type="geo:AbstractDefinitionEstimatorType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of definition estimators. Usually defines a collocation or inversion.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="AbstractDefinitionEstimatorType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractMeasurementOperation for the purpose of the definition of estimators. Extends AbstractMeasurementOperation.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractDefinitionOperationType">
+                <sequence/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractDefinitionOperation" substitutionGroup="gml:Definition" type="geo:AbstractDefinitionOperationType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of definitons.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="AbstractDefinitionOperationType">
+        <annotation>
+            <documentation>Version 0.2.2: Mirrors the hierarchy of gml:AbstractCoordinateOperation for the purpose of the definition of estimators.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="gml:IdentifiedObjectType">
+                <sequence/>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="DefinitionOperationPropertyType">
+        <annotation>
+            <documentation>geo:DefinitionOperationPropertyType is a property type for association roles to a Definition operation, either referencing or containing the definition of that Definition operation.</documentation>
+        </annotation>
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractDefinitionOperation"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="ReferenceFrameSource" substitutionGroup="geo:AbstractDefinitionSource" type="geo:ReferenceFrameSourceType"/>
+    <!--  -->
+    <complexType name="ReferenceFrameSourceType">
+        <annotation>
+            <documentation>A Reference Frame Source encapsulates the inversion operation with position operands and a 14 parameter transform as a result.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractDefinitionSourceType">
+                <attributeGroup ref="gml:SRSReferenceGroup"/>
+            </extension>
+            <!--<attributeGroup ref="geo:SpatialReferenceGroup"/>-->
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="InterpolatedValueSourcePropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:InterpolatedValueSource"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element name="InterpolatedValueSource" substitutionGroup="geo:AbstractSource" type="geo:InterpolatedValueSourceType">
+        <annotation>
+            <documentation>Version 0.2.2: Define an abstract type to encapsulate the operands, results and process of the operation event that produced an interpolated value.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="InterpolatedValueSourceType">
+        <annotation>
+            <documentation>Encapsulates the definition used to compute the interpolation, the gridded data operand and a result reference.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractSourceType">
+                <sequence>
+                    <element name="definition" type="gml:DictionaryEntryType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="ObservationQualitySourcePropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:ObservationQualitySource"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element name="ObservationQualitySource" substitutionGroup="geo:AbstractSource" type="geo:ObservationQualitySourceType">
+        <annotation>
+            <documentation>Version 0.2.2: Define an abstract type to encapsulate the operands, results and process of the operation event that produced observation quality meta-data.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="ObservationQualitySourceType">
+        <annotation>
+            <documentation>Encapsulates the definition used to compute the interpolation, the gridded data operand and a result reference.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractSourceType">
+                <sequence>
+                    <element name="definition" type="gml:DictionaryEntryType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+</schema>

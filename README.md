@@ -1,17 +1,30 @@
-# SLM
-SiteLog Manager
+# Site Log Manager (SLM)
 
-This repository houses the code base that powers the SLM website 
-https://slm.igs.org.
+The Site Log Manager (SLM) is a web platform that aims to provide:
+
+1. Moderated GNSS Site meta data (site log) management.
+2. Support for multiple organizations and networks to be managed in an access controlled way.
+3. Full legacy site log format support.
+4. Full GeodesyML support.
+5. JSON renderings of meta data.
+6. Point-and-click graphical editing of site log data.
+7. Public RESTful api for searching site log data.
+8. Authenticated RESTful api for updating site log data.
+9. Full access to the historical record.
+10. Visualizations of networks and site information.
+11. Configurable data validation that goes above and beyond schema validation.
+12. Image and file attachments to sites.    
+13. A no-fork extensible architecture that allows organizations to modify out-of-the box
+behavior with plugins.
+
+This code base has reached beta-maturity but is still undergoing rapid development. Check back soon 
+for new documentation and updates.
+
 
 ## Table of Contents
 1. [Design](#Design)
    1. [Stack](#Stack)
    2. [Organization](#Organization)
-2. [DevOps](#DevOps)
-   1. [Local Development](#Local-Development)
-      1. [Environment & Setup](#Environment--Setup)
-   3. [Dependency Management](#Dependency-Management)
 
 ## Design
 
@@ -24,7 +37,7 @@ helpful to understand [how reusable Django apps work](https://docs.djangoproject
 
 ### Stack
  
-Django can be served behind many http servers. The current production environment uses [Apache](https://httpd.apache.org/)
+Django can be served behind many http servers. A common production environment uses [Apache](https://httpd.apache.org/)
 managing Django as a [WSGI](https://modwsgi.readthedocs.io/en/develop/index.html) daemon, but
 another common setup involves proxying a [gunicorn](https://gunicorn.org/) instance behind [nginx](https://www.nginx.com).
 In addition to Django, other critical components of the software stack are listed in the table below. Not all Python
@@ -58,4 +71,3 @@ dependencies are listed because many are incidental.
    | ---------------------------------------------| ----------------- | ------------------------------------------------------------|
    | [PostgreSQL](https://www.postgresql.org/)    | 9.6               | [PgAdmin](https://www.pgadmin.org/)                         |
    | [MySQL](https://www.mysql.com/)              | 5.7               | [MySQL Workbench](https://www.mysql.com/products/workbench/)|
-   | [MariaDB](https://mariadb.org/)              | 10.2.7            |                                                             |

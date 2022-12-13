@@ -9,7 +9,7 @@ Template for stations list.
     
     <div class="pt-3 px-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center"> 
-            <h5 class="text-center mb-0"><b>{{ num_sites }}</b> Stations</h5>
+            <h5 class="text-center mb-0"><b><span id="slm-num-stations">{{ num_sites }}</span></b> Stations</h5>
             <a id="filter-stations" class="btn btn-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#filter" data-backdrop="false">
                 Filter <i class="bi bi-filter"></i>
             </a>
@@ -45,7 +45,9 @@ Template for stations list.
             data-bs-toggle="pill"
             type="submit"
             role="tab"
-            aria-selected="true"><span>{{ station }}</span> {% if site.num_flags %}<span class="badge rounded-pill bg-danger">{{site.num_flags}}</span>{% endif %}</button>
+            data-slm-flags={{ site.num_flags }}
+            data-slm-status={{ site.status.value }}
+            aria-selected="true"><span>{{ station }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not site.num_flags %}style="display: none"{% endif %}>{{site.num_flags}}</span></button>
         {% endif %}
         <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
             <div class="slm-loader"></div>
@@ -62,11 +64,17 @@ Template for stations list.
 {% compress js inline %}
 <script>
     let keyupTimeoutID = 0;
-    function drawStations(position, data) {
-        console.log(data);
+    function drawStations(position, data, filtered, total) {
+
+        if (filtered !== null) {
+            $('#slm-num-stations').html(filtered);
+        }
+
         function getBadge(station) {
             if (station.hasOwnProperty('num_flags') && station.num_flags) {
-                return `<span class="badge rounded-pill bg-danger">${station.num_flags}</span>`;
+                return `<span class="badge rounded-pill bg-danger slm-error-badge">${station.num_flags}</span>`;
+            } else {
+                return `<span class="badge rounded-pill bg-danger slm-error-badge" style="display: none">${station.num_flags}</span>`;
             }
             return '';
         }
@@ -96,6 +104,8 @@ Template for stations list.
                     data-bs-toggle="pill"
                     type="submit"
                     role="tab"
+                    data-slm-flags=${station.num_flags}
+                    data-slm-status=${status.val}
                     aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)}</button>`
                 ).insertBefore(pos);
         }
@@ -142,13 +152,13 @@ Template for stations list.
         filterInput.click(function() {
             stationList.find('button').remove();
             let query = stationList.data('slmQuery') || {};
-            console.log(query["status"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
-                return this.value;
-            }).get().join(","));
-            query["network"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
+            query["status"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
                 return this.value;
             }).get().join(",");
-            query["agency"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
+            query["network"] = $("#slm-network-filter input[name=filterToggle]:checked").map(function () {
+                return this.value;
+            }).get().join(",");
+            query["agency"] = $("#slm-agency-filter input[name=filterToggle]:checked").map(function () {
                 return this.value;
             }).get().join(",");
             stationList.data('slmPage', 0);

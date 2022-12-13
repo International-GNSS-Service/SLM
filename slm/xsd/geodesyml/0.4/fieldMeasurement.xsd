@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4"  xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2">
+    <annotation>
+        <documentation></documentation>
+    </annotation>
+    <!--  -->
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <import namespace="http://www.isotc211.org/2005/gmd" schemaLocation="http://schemas.opengis.net/iso/19139/20070417/gmd/gmd.xsd"/>
+    <include schemaLocation="commonTypes.xsd"/>
+    <include schemaLocation="observationSystem.xsd"/>
+    <include schemaLocation="project.xsd"/>
+    <!--  -->
+    <complexType name="SetupPropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:Setup"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element name="Setup" substitutionGroup="geo:DynamicFeature" type="geo:SetupType"/>
+    <!--  -->
+    <complexType name="SetupType">
+        <complexContent>
+            <extension base="geo:DynamicFeatureType">
+                <sequence>
+                    <element minOccurs="0" name="atSite" type="geo:SitePropertyType"/>
+                    <element minOccurs="0" name="history">
+                        <complexType>
+                            <sequence>
+                                <element maxOccurs="unbounded" ref="geo:SetupInstance"/>
+                            </sequence>
+                        </complexType>
+                    </element>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="SetupInstance" substitutionGroup="geo:AbstractTimeSlice" type="geo:SetupInstanceType"/>
+    <!--  -->
+    <complexType name="SetupInstanceType">
+        <annotation>
+            <documentation>A geo:AbstractTimeSliceType extension to contain the value object for a setup instance. The date of setup is defined as the gml:validTime element inherited from geo:AbstractTimeSliceType.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractTimeSliceType">
+                <sequence>
+                    <element minOccurs="0" name="fromProject" type="geo:ProjectPropertyType"/>
+                    <element minOccurs="0" name="setupHeight" type="geo:ValueType"/>
+                    <element minOccurs="0" name="observedBy" type="gmd:CI_ResponsibleParty_PropertyType"/>
+                    <element maxOccurs="unbounded" minOccurs="0" name="usesInstrument" type="geo:InstrumentPropertyType"/>
+                    <element maxOccurs="unbounded" minOccurs="0" name="usesSensor" type="geo:SensorPropertyType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="SensorPropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:Sensor"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element name="Sensor" substitutionGroup="gml:AbstractGML" type="geo:SensorType"/>
+    <!--  -->
+    <complexType name="SensorType">
+        <complexContent>
+            <extension base="gml:AbstractGMLType">
+                <sequence>
+                    <element minOccurs="0" name="type" type="gml:CodeType"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <complexType name="ObservationQualityPropertyType">
+        <sequence minOccurs="0">
+            <element ref="geo:AbstractObservationQuality"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <element abstract="true" name="AbstractObservationQuality" substitutionGroup="gml:AbstractFeature" type="geo:AbstractObservationQualityType">
+        <annotation>
+            <documentation>Abstract class to contain observation-specific environment quality. For example, GNSS node quality.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType abstract="true" name="AbstractObservationQualityType">
+        <complexContent>
+            <extension base="geo:DynamicFeatureType">
+                <sequence>
+                    <element name="atSite" type="geo:SitePropertyType"/>
+                    <element minOccurs="0" name="source" type="geo:ObservationQualitySourcePropertyType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="GNSSObservationQuality" substitutionGroup="geo:AbstractObservationQuality" type="geo:GNSSObservationQualityType">
+        <annotation>
+            <documentation>Abstract class to contain observation-specific environment quality. For example, GNSS node quality.</documentation>
+        </annotation>
+    </element>
+    <!--  -->
+    <complexType name="GNSSObservationQualityType">
+        <complexContent>
+            <extension base="geo:AbstractObservationQualityType">
+                <sequence>
+                    <element minOccurs="0" name="history">
+                        <complexType>
+                            <sequence>
+                                <element maxOccurs="unbounded" ref="geo:GNSSObservationQualityInstance"/>
+                            </sequence>
+                        </complexType>
+                    </element>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  -->
+    <element name="GNSSObservationQualityInstance" substitutionGroup="geo:AbstractTimeSlice" type="geo:GNSSObservationQualityInstanceType"/>
+    <!--  -->
+    <complexType name="GNSSObservationQualityInstanceType">
+        <annotation>
+            <documentation>A set of Site quality metrics computed daily to evaluate a Site's fitness or level of suitability in downstream GNSS analysis.</documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractTimeSliceType">
+                <sequence>
+                    <element name="FirstObservedEpoch" type="gml:TimePositionType">
+                        <annotation>
+                            <documentation>The function of this element and the next may overlap with the ValidTime TimePeriod element inherited by this complexType from AbstractTimeSliceType.</documentation>
+                        </annotation>
+                    </element>
+                    <element name="LastObservedEpoch" type="gml:TimePositionType"/>
+                    <element name="PossibleEpochs" type="integer"/>
+                    <element name="ObservedEpochs" type="integer"/>
+                    <element name="EpochPercent" type="double"/>
+                    <element name="averageMultipathL1" type="geo:ValueType"/>
+                    <element name="AverageMutlipathL2" type="geo:ValueType"/>
+                    <element name="PossibleObservations" type="integer"/>
+                    <element name="CompleteObservations" type="integer"/>
+                    <element name="DeletedObservations" type="integer"/>
+                    <element name="MaskedObservations" type="integer"/>
+                    <element name="ObservationRate" type="geo:ValueType"/>
+                    <element name="ObservationSlipRatio" type="geo:ValueType"/>
+                    <element name="ObservationsMissingL1" type="integer"/>
+                    <element name="ObservationsMissingL2" type="integer"/>
+                    <element name="ObservationsMissingP1orC1" type="integer"/>
+                    <element name="ObservatinosMissingP2orC2" type="integer"/>
+                    <element name="ReceiverTrackingCapability" type="integer"/>
+                    <element name="TotalSatellites" type="integer"/>
+                    <element name="MeanS1" type="geo:ValueType"/>
+                    <element name="Means1" type="geo:ValueType"/>
+                    <element minOccurs="0" name="source" type="geo:ObservationQualitySourcePropertyType"/>
+                    <group ref="geo:RemarksGroup"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+</schema>

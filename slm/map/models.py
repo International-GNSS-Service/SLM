@@ -1,15 +1,9 @@
-from slm.models import SingletonModel
-from slm.map.defines import (
-    MapBoxStyle,
-    MapBoxProjection
-)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext as _
-from django.core.validators import (
-    MinValueValidator,
-    MaxValueValidator
-)
 from django_enum import EnumField
+from slm.map.defines import MapBoxProjection, MapBoxStyle
+from slm.models import SingletonModel
 
 
 class MapSettings(SingletonModel):
@@ -32,29 +26,39 @@ class MapSettings(SingletonModel):
     map_style = EnumField(
         MapBoxStyle,
         null=False,
-        blank=True,
+        blank=False,
         default=MapBoxStyle.LIGHT,
         help_text=_(
-            _('The map tile styling to use.')
+            _('The map tile styling to use on the interactive map page.')
         )
     )
 
     map_projection = EnumField(
         MapBoxProjection,
         null=False,
-        blank=True,
+        blank=False,
         default=MapBoxProjection.GLOBE,
         help_text=_(
-            _('The map projection to use.')
+            _('The map projection to use on the interactive map page.')
         )
     )
 
     zoom = models.FloatField(
-        default=0.00001,
+        default=2,
         null=False,
         blank=True,
         help_text=_('The default zoom level (0-22).'),
         validators=[MinValueValidator(0), MaxValueValidator(22)]
+    )
+
+    static_map_style = EnumField(
+        MapBoxStyle,
+        null=False,
+        blank=False,
+        default=MapBoxStyle.LIGHT,
+        help_text=_(
+            _('The map tile styling to use for static map images.')
+        )
     )
 
     def __str__(self):

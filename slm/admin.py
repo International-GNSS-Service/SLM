@@ -1,4 +1,4 @@
-'''
+"""
 Handles admin site for Django project.
 
 
@@ -16,17 +16,17 @@ group (same command with unregister).
 
 More info:
 https://docs.djangoproject.com/en/3.2/ref/contrib/admin/
-'''
+"""
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import *
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
-from slm.forms import UserAdminCreationForm, UserAdminChangeForm
-from slm.models import Agency, Site
 from django.utils.translation import gettext as _
 from slm.authentication import initiate_password_resets
+from slm.forms import UserAdminChangeForm, UserAdminCreationForm
+from slm.models import Agency, SatelliteSystem, Site
 
+from .models import *
 
 User = get_user_model() # accesses custom user model
 
@@ -100,6 +100,38 @@ class AlertAdmin(admin.ModelAdmin):
     pass
 
 
+class SatelliteSystemAdmin(admin.ModelAdmin):
+    pass
+
+
+class AntennaAdmin(admin.ModelAdmin):
+    pass
+
+
+class ReceiverAdmin(admin.ModelAdmin):
+    pass
+
+
+class RadomeAdmin(admin.ModelAdmin):
+    pass
+
+
+class ManufacturerAdmin(admin.ModelAdmin):
+    pass
+
+
+class SiteFileUploadAdmin(admin.ModelAdmin):
+
+    search_fields = ['site__name']
+    list_filter = ['file_type', 'log_format']
+
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Agency, AgencyAdmin)
 admin.site.register(Alert, AlertAdmin)
+admin.site.register(SatelliteSystem, SatelliteSystemAdmin)
+admin.site.register(Antenna, AntennaAdmin)
+admin.site.register(Receiver, ReceiverAdmin)
+admin.site.register(Radome, RadomeAdmin)
+admin.site.register(Manufacturer, ManufacturerAdmin)
+admin.site.register(SiteFileUpload, SiteFileUploadAdmin)

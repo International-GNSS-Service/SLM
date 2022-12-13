@@ -1,14 +1,17 @@
-from slm.api.edit import serializers as slm_serializers
 from rest_framework import serializers
+from slm.api.edit import serializers as slm_serializers
 
 
-class StationListSerializer(slm_serializers.StationListSerializer):
+class StationSerializer(slm_serializers.StationSerializer):
 
-    latitude = serializers.FloatField()
-    longitude = serializers.FloatField()
+    latitude = serializers.FloatField(read_only=True)
+    longitude = serializers.FloatField(read_only=True)
 
-    class Meta(slm_serializers.StationListSerializer.Meta):
-        fields = slm_serializers.StationListSerializer.Meta.fields + ['latitude', 'longitude']
+    class Meta(slm_serializers.StationSerializer.Meta):
+        fields = slm_serializers.StationSerializer.Meta.fields + [
+            'latitude',
+            'longitude'
+        ]
 
 
 class StationMapSerializer(serializers.Serializer):

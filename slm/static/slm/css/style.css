@@ -177,6 +177,14 @@ a, a:hover {
     border-left-color: #913D88;
 }
 
+.slm-log-log-upload {
+    border-left-color: dodgerblue;
+}
+
+.slm-log-file-upload {
+    border-left-color: darkblue;
+}
+
 span.badge.slm-log-add,
 span.badge.slm-log-update {
     background-color: #BF8C0D;
@@ -194,6 +202,21 @@ span.badge.slm-log-delete {
     background-color: #CD2026;
     color: white;
 }
+span.badge.slm-log-log-upload {
+    background-color: dodgerblue;
+    color: white;
+}
+span.badge.slm-log-file-upload {
+    background-color: darkblue;
+    color: white;
+}
+
+img.slm-station-location {
+  width: 100%;
+  height: 100%;
+  background: url(http://goo.gl/vyAs27) no-repeat scroll 0 0;
+}
+
 
 /*------- Background CSS -------*/
 .login-bg {
@@ -236,11 +259,13 @@ span.badge.slm-log-delete {
     padding: 7px;
 }
 
-#slm-station-list {
+#slm-station-list,
+#slm-file-list {
     justify-content: flex-start;
     align-items: flex-start;
 }
-#slm-station-list button {
+#slm-station-list button,
+#slm-file-list button {
     height: fit-content;
     width: 100%;
     text-align: left;
@@ -249,8 +274,21 @@ span.badge.slm-log-delete {
     font-size: large;
     margin-top: 3px;
 }
+#slm-file-list button > i {
+    font-size: 20px;
+    margin-right: 5px;
+}
+
+#slm-file-list button {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 #slm-station-list button.active,
-#slm-station-list button:hover {
+#slm-station-list button:hover,
+#slm-file-list button.active,
+#slm-file-list button:hover {
     background-color: #175A7D;
     color: ghostwhite;
 }
@@ -260,10 +298,14 @@ span.badge.slm-log-delete {
     position: sticky;
     top: 0;
 }
+#slm-file-container {}
 #slm-form-menu {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
+}
+#file-actions > button {
+    margin-right: 5px;
 }
 
 .is-invalid.slm-form-unpublished {
@@ -353,6 +395,10 @@ button.slm-subsection {
     background-color: #BF8C0D;
 }
 
+.slm-files-badge {
+    background-color: #BF8C0D;
+}
+
 span.slm-section-header {
     font-size: calc(1.4rem + .3vw);
 }
@@ -413,6 +459,43 @@ button.nav-link.slm-status-dormant  {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-empty,
+button.nav-link.slm-status-empty  {
+    border-left: 10px solid #d3d3d3;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+button.slm-upload-unpublished,
+button.nav-link.slm-upload-unpublished {
+    border-left: 10px solid #BF8C0D;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-published,
+button.nav-link.slm-upload-published {
+    border-left: 10px solid #008000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-invalid,
+button.nav-link.slm-upload-invalid {
+    border-left: 10px solid #8b0000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-warnings,
+button.nav-link.slm-upload-warnings  {
+    border-left: 10px solid darkorange;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-upload-valid,
+button.nav-link.slm-upload-valid  {
+    border-left: 10px solid #008000;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
 
 .accordion,
 .accordion-item,
@@ -461,4 +544,28 @@ header.slm-agency {
 
 .slm-agency a {
     color: #fff;
+}
+
+/* Adds border to empty icon in legend */
+.bi-square-fill::before {
+    border: 1px solid #000;
+    border-radius: 4px;
+}
+
+/* Upload widget custom CSS */
+i.bi.bi-cloud-arrow-up {
+    font-size: 60px;
+    color: #9D9D9D;
+}
+.dropzone {
+    border: none !important;
+    border-radius: 16px;
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%239D9D9DFF' stroke-width='4' stroke-dasharray='21%2c 16' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e") !important;
+}
+.dropzone .dz-message {
+    text-align: center;
+    margin: 10% 5% !important;
+}
+.dz-message:hover {
+    color: #175A7D !important;
 }

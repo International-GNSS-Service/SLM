@@ -56,7 +56,7 @@ cover/
 *.pot
 
 # Django stuff:
-*.log
+logs/**
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -155,4 +155,6 @@ sites/test/static
 doc/build
 slm/static/slm/js/urls.js
 poetry.lock
-
+slm/tests/tmp
+slm/logs
+test.db

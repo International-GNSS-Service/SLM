@@ -11,9 +11,10 @@ def main():
     #   a management command vs serving
     if len(sys.argv) > 1:
         subcommand = sys.argv[1]
-        if subcommand != 'runserver':
-            os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
+        os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
     ##################################################
+
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'slm.tests.settings')
 
     try:
         from django.core.management import execute_from_command_line

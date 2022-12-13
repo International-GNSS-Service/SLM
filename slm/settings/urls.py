@@ -28,17 +28,15 @@ https://docs.djangoproject.com/en/3.2/topics/http/urls/
 To access admin site you will need an admin/superuser login.  See documentation
 guide.
 """
-from django.contrib import admin
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.urls import (
-    path,
-    include
-)
-from slm.utils import SerializerRegistry
-from rest_framework.routers import DefaultRouter
-from django.conf import settings
+from copy import deepcopy
 from importlib import import_module
 
+from django.conf import settings
+from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+from slm.utils import SerializerRegistry
 
 APIS = {}
 
@@ -74,17 +72,36 @@ def bring_in_urls(urlpatterns):
                             routers[api] = ReregisterableRouter()
                         router = routers[api]
                         if 'serializer_module' in config:
-                            SerializerRegistry().add_modules(api, config['serializer_module'], overwrite=True)
+                            SerializerRegistry().add_modules(
+                                api,
+                                config['serializer_module'],
+                                overwrite=True
+                            )
                         else:
-                            warnings.warn(f'Expected `serializer_module` in {url_module.__name__}[api]')
+                            warnings.warn(
+                                f'Expected `serializer_module` in '
+                                f'{url_module.__name__}[api]'
+                            )
                         if 'endpoints' in config:
                             for endpoint in config['endpoints']:
-                                router.register(endpoint[0], endpoint[1], base_name=endpoint[0])
+                                router.register(
+                                    endpoint[0],
+                                    endpoint[1],
+                                    base_name=(
+                                        endpoint[0] if len(endpoint) < 3
+                                        else endpoint[2]
+                                    )
+                                )
                         else:
-                            warnings.warn(f'Expected `endpoints` in {url_module.__name__}[api]')
+                            warnings.warn(
+                                f'Expected `endpoints` in '
+                                f'{url_module.__name__}[api]'
+                            )
 
                 if app != 'slm':
-                    urlpatterns.append(path('', include(f'{app}.urls', namespace=app)))
+                    urlpatterns.append(
+                        path('', include(f'{app}.urls', namespace=app))
+                    )
 
                 app_add_ons = getattr(url_module, 'add_ons', [])
                 for add_on in app_add_ons:
@@ -92,7 +109,10 @@ def bring_in_urls(urlpatterns):
 
     for api, router in routers.items():
         # todo how to nest under slm?
-        pattern = path(f'api/{api}/', include((router.urls, 'slm'), namespace=f'slm_{api}_api'))
+        pattern = path(
+            f'api/{api}/',
+            include((router.urls, 'slm'), namespace=f'slm_{api}_api')
+        )
         urlpatterns.append(pattern)
         APIS.setdefault(f'{api}_api', []).append(pattern)
 

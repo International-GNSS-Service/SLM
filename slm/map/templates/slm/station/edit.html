@@ -1,0 +1,10 @@
+
+{% extends "slm/station/edit.html" %}
+{% load slm_map %}
+
+
+{% block station_info_block2 %}
+{% if station_position %}
+<img class="slm-station-location" src="{{station_position|map_position_img}}"/>
+{% endif %}
+{% endblock station_info_block2 %}

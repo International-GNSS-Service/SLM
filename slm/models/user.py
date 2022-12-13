@@ -1,13 +1,14 @@
-from django.contrib.auth.models import UserManager as DjangoUserManager
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
-from django.utils import timezone
-from django.db import models
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import UserManager as DjangoUserManager
+from django.db import models
 from django.utils.translation import gettext as _
 
 
 class UserManager(DjangoUserManager):
+
+    use_in_migrations = False
 
     def _create_user(self, email, password, **extra_fields):
         """
@@ -31,6 +32,14 @@ class UserManager(DjangoUserManager):
         extra_fields['is_staff'] = True
         extra_fields['is_superuser'] = True
         return self._create_user(email, password, **extra_fields)
+
+
+class UserQueryset(models.QuerySet):
+
+    def emails_ok(self, html=None):
+        if html is None:
+            return self.filter(silence_emails=False)
+        return self.filter(silence_emails=False, profile__html_emails=html)
 
 
 class UserProfile(models.Model):
@@ -112,6 +121,7 @@ class UserProfile(models.Model):
     # preferences
     html_emails = models.BooleanField(
         default=True,
+        blank=True,
         verbose_name=_('HTML Emails'),
         help_text=_('Receive HTML in email communications.')
     )
@@ -171,26 +181,34 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=None
     )
 
+    silence_emails = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        help_text=_(
+            'If set to true this user will not be sent any emails by the '
+            'system. Note: this does not apply to account related emails '
+            '(i.e. password resets).'
+        )
+    )
+
     def is_moderator(self, station):
-        # stub for per-station moderation authority
-        return self.is_superuser
+        return station.is_moderator(self)
 
     @property
     def name(self):
         if self.first_name or self.last_name:
             return f'{self.first_name} {self.last_name}'
+        elif self.email:
+            return self.email
         return None
-
-    #@property
-    #def is_admin(self):
-    #    return self.is_superuser
 
     def __str__(self):
         if self.name:
             return f'{self.email} | {self.name}'
         return self.email
 
-    objects = UserManager()
+    objects = UserManager.from_queryset(UserQueryset)()
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'

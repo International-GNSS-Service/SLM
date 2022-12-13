@@ -67,6 +67,6 @@ For instance to run all tests in TestDjangoEnums, and then just the
 test_properties_and_symmetry test you would do:
 
 ```console
-    poetry run pytest slm/tests/tests.py::TestSiteLogParsing
-    poetry run pytest slm/tests/tests.py::TestSiteLogParsing::test_legacy
+    poetry run pytest slm/tests/tests.py::TestLegacyParser
+    poetry run pytest slm/tests/tests.py::TestLegacyParser::test_AAA200USA
 ```

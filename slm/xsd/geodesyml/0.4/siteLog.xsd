@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Scripps Orbit and Permanent Array Center (SOPAC), Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmd="http://www.isotc211.org/2005/gmd"
+    elementFormDefault="qualified" attributeFormDefault="unqualified"
+    xml:lang="en">
+    <annotation>
+        <documentation>
+            <p>Derived from SOPAC IGS Site Log XML Schema 2011 (http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/2011/igsSiteLog.xsd)</p>
+            <p>Modifications from original</p>
+            <ul>
+                <li>Made part of eGeodesy namespace</li>
+                <li>Changed SiteLogType to extend geo:AbstractSiteLogType, which extends gml:AbstractFeatureType</li>
+                <li>Adopted GML property-by-reference convention</li>
+                <li>Removed contactAgency and responsibleAgence and added siteOwner, siteContact, siteMetadataCustodian, siteDataCenter, and siteDataSource</li>
+            </ul>
+        </documentation>
+    </annotation>
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <import namespace="http://www.isotc211.org/2005/gmd" schemaLocation="http://schemas.opengis.net/iso/19139/20070417/gmd/gmd.xsd"/>
+    <include schemaLocation="monumentInfo.xsd">
+        <annotation>
+            <documentation></documentation>
+        </annotation>
+    </include>
+    <include schemaLocation="equipment.xsd"/>
+    <include schemaLocation="localInterferences.xsd"/>
+    <include schemaLocation="contact.xsd"/>
+    <include schemaLocation="dataStreams.xsd"/>
+    <include schemaLocation="observationSystem.xsd"/>
+    <complexType name="SiteLogType">
+        <annotation>
+            <documentation>
+                This derived complexType combines all relevant site metadata schemas to build a complete igs site log schema.
+            </documentation>
+        </annotation>
+        <complexContent>
+            <extension base="geo:AbstractSiteLogType">
+                <sequence>
+                    <element name="formInformation" type="geo:formInformationType"/>
+                    <element name="siteIdentification" type="geo:siteIdentificationType"/>
+                    <element name="siteLocation" type="geo:siteLocationType"/>
+                    <element name="gnssReceiver" type="geo:gnssReceiverPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="gnssAntenna" type="geo:gnssAntennaPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="surveyedLocalTie" type="geo:surveyedLocalTiePropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="frequencyStandard" type="geo:frequencyStandardPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="collocationInformation" type="geo:collocationInformationPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="humiditySensor" type="geo:humiditySensorPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="pressureSensor" type="geo:pressureSensorPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="temperatureSensor" type="geo:temperatureSensorPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="waterVaporSensor" type="geo:waterVaporSensorPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="otherInstrumentation" type="geo:otherInstrumentationPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="radioInterference" type="geo:radioInterferencePropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="multipathSource" type="geo:multipathSourcePropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="signalObstruction" type="geo:signalObstructionPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="localEpisodicEffect" type="geo:localEpisodicEffectPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="siteOwner" type="geo:agencyPropertyType" minOccurs="0" maxOccurs="1"/>
+                    <element name="siteContact" type="geo:agencyPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="siteMetadataCustodian" type="geo:agencyPropertyType" minOccurs="1" maxOccurs="1"/>
+                    <element name="siteDataCenter" type="geo:agencyPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="siteDataSource" type="geo:agencyPropertyType" minOccurs="0" maxOccurs="1"/>
+                    <element name="moreInformation" type="geo:moreInformationType" minOccurs="0"/>
+                    <element name="dataStream" type="geo:dataStreamPropertyType" minOccurs="0"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <element name="siteLog" type="geo:SiteLogType" substitutionGroup="geo:AbstractSiteLog"/>
+</schema>

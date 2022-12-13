@@ -1,0 +1,20 @@
+{% load i18n widget_tweaks %}
+
+<div class="row m-2">
+  <div class="col-12">
+  <form id="slm-file-form">
+      {% csrf_token %}
+      <div class="row my-2">
+          <div class="col-12">
+          {% render_field form.name class="form-control" title=form.name.help_text placeholder=form.name.help_text %}
+          </div>
+      </div>
+      <div class="row my-2">
+          <div class="col-12">
+            {% render_field form.description rows="3" class="form-control" title=form.description.help_text placeholder=form.description.help_text %}
+          </div>
+      </div>
+      <button name="update" onclick="updateFile();" type="button" class="btn btn-primary">{% trans 'Update' %}</button>
+  </form>
+  </div>
+</div>

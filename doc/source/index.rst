@@ -25,6 +25,7 @@ the community are encouraged!
    configuration
    data_model
    APIs
+   signals
    extensions
    commands
    reference

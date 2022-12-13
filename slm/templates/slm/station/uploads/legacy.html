@@ -1,0 +1,58 @@
+{% load slm compress %}
+
+
+<hr/>
+
+<pre id="slm-parsed-legacy">{% for line in file|file_lines %}{% with idx=forloop.counter0 %}
+<span data-line-number={{ idx }} class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-html="true" data-bs-content="<pre>{{ findings|finding_content:idx }}</pre>"{% endif %}>{{ line }}</span>{% endwith %}{% endfor %}
+</pre>
+
+
+{% compress css inline %}
+<style>
+    pre#slm-parsed-legacy {
+        background-color: ghostwhite;
+    }
+    pre#slm-parsed-legacy span.slm-parse-error {
+        background-color: #dc3545;
+    }
+    pre#slm-parsed-legacy span.slm-parse-error:hover {
+        width: 100%;
+        background-color: darkred;
+        color: white;
+        cursor: pointer;
+    }
+    pre#slm-parsed-legacy span.slm-parse-warning {
+        background-color: orange;
+    }
+    pre#slm-parsed-legacy span.slm-parse-warning:hover {
+        width: 100%;
+        background-color: darkorange;
+        color: white;
+        cursor: pointer;
+    }
+    pre#slm-parsed-legacy span.slm-parse-ignore {
+        background-color: lightgrey;
+    }
+    pre#slm-parsed-legacy span.slm-parse-ignore:hover {
+        width: 100%;
+        background-color: darkgray;
+        color: white;
+        cursor: pointer;
+    }
+}
+
+</style>
+{% endcompress css %}
+
+{{findings | json_script:"slm-parse-findings"}}
+
+{% compress js inline %}
+<script type="text/javascript">
+
+    const findings = JSON.parse(
+        document.getElementById('slm-parse-findings').textContent
+    );
+
+</script>
+{% endcompress js %}

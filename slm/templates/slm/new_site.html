@@ -31,7 +31,7 @@ Template for upload page.
             {% for field in form %}
                 <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
                   <div class="col-3">
-                      <label class="form-label">{{ field.label }}</label>
+                      <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
                   </div>
                   <div class="col-6">
                       {% if field.errors %}

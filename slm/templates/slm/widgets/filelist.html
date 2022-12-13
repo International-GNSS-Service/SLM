@@ -1,0 +1,247 @@
+<!--
+
+Template for stations list.
+
+-->
+<!-- Select Station -->
+{% load slm %}
+
+<div id="slm-file-container" class="p-2">
+    
+    <div class="pt-3 px-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center"> 
+            <h5 class="text-center mb-0"><b><span id="slm-num-files">{{ num_files }}</span></b> Files</h5>
+            <a id="filter-files" class="btn btn-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#file-filter" data-backdrop="false">
+                Filter <i class="bi bi-filter"></i>
+            </a>
+        </div>
+
+        <!-- Search bar -->
+        <form class="d-flex my-2 w-100">
+            <input
+                class="form-control"
+                type="search"
+                placeholder="Search"
+                aria-label="Search"
+                id="file-search"
+            >
+        </form>
+    </div>
+
+    <hr/>
+
+    <!-- List of files -->
+    <div
+        id='slm-file-list'
+        class="list-group overflow-auto vh-100"
+        data-slm-page=0
+        data-slm-page-size={{page_size|default:30}}
+    >
+        {% if file %}
+        <button
+            class="btn mono active {{ file.status.css }}"
+            id="select-file-{{ file.id }}"
+            name="file"
+            value="{{ file.id }}"
+            data-bs-toggle="pill"
+            type="submit"
+            role="tab"
+            data-slm-file-status={{ file.status.value }}
+            aria-selected="true"><i class="{{ file.mimetype|file_icon }}"></i><span class="slm-file-name">{{ file.name }}</span></button>
+        {% endif %}
+        <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
+            <div class="slm-loader"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="file-filter" tabindex="-1" aria-labelledby="filter-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="file-filter-label">Filter File List</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div id="file-filter-options" class="row px-3 pb-3">
+                        <div class="col-6">
+                            <fieldset id="slm-file-filter-status">
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">File Status:</span></legend>
+                                {% for status in SiteFileUploadStatus %}
+                                <div class="form-check">
+                                    <input id="slm-file-status-{{status.value}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{status.value}}">
+                                    <label class="form-check-label d-flex" for="slm-file-status-{{status.value}}">
+                                        <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
+                                        <p class="mb-1">{{status.label}}</p>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                        </div>
+                        <div class="col-6">
+                            <fieldset id="slm-file-filter-type">
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">File Type:</span></legend>
+                                {% for type in SLMFileType %}
+                                <div class="form-check">
+                                    <input id="slm-file-type-{{type.value}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{type.value}}">
+                                    <label class="form-check-label d-flex" for="slm-file-type-{{type.value}}">
+                                        <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
+                                        <p class="mb-1">{{type.label}}</p>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                            <fieldset id="slm-file-filter-log" disabled>
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">Log Format:</span></legend>
+                                {% for type in SiteLogFormat %}
+                                <div class="form-check">
+                                    <input id="slm-file-log-{{type.value}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{type.value}}">
+                                    <label class="form-check-label d-flex" for="slm-file-log-{{type.value}}">
+                                        <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
+                                        <p class="mb-1">{{type.label}}</p>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                <button id="clear-file-filter" type="button" class="btn btn-outline-danger">Clear Filters</button>
+                <button id="apply-file-filter" type="button" class="btn btn-success" data-bs-dismiss="modal">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% load compress %}
+
+{% compress js inline %}
+<script>
+
+    $('input#slm-file-type-{{SLMFileType.SITE_LOG.value}}').change(function() {
+        if ($(this).is(':checked')) {
+            $('fieldset#slm-file-filter-log').prop('disabled', false);
+        } else {
+            $('fieldset#slm-file-filter-log').prop('disabled', true);
+            $("fieldset#slm-file-filter-log input[type='checkbox']:checked").prop("checked", false)
+        }
+    });
+
+    let fileKeyupTimeoutID = 0;
+    function drawFiles(position, data, filtered, total) {
+
+        if (filtered !== null) {
+            $('#slm-num-files').html(filtered);
+        }
+
+        for (const file of data) {
+            //if (file.name === '{{ file }}') continue;
+            let active = '';
+            let selected = 'false';
+            const editLink = slm.urls.reverse(
+                'slm:upload',
+                {
+                    kwargs: {
+                        station: '{{ station }}',
+                        file: file.id
+                    }
+                }
+            );
+            const status = slm.SiteFileUploadStatus.get(file.status);
+            let pos = position;
+            {% if file %}
+            if (file.id === {{ file.id }}) {
+                if (
+                    position.parent().children(
+                        `#select-file-${ file.id }`
+                    ).length)
+                { continue; }
+                active = 'active';
+                selected = 'true';
+                pos = position.parent().children().first();
+            }
+            {% endif %}
+            $(
+                `<button onclick="window.location.href='${editLink}'"
+                    class="btn mono ${active} ${status.css}"
+                    id="select-file-${file.id}"
+                    name="file"
+                    value="${file.id}"
+                    data-bs-toggle="pill"
+                    type="submit"
+                    role="tab"
+                    data-slm-file-status=${status.val}
+                    aria-selected="${selected}"><i class="${slm.fileIcon(file.mimetype)}"></i><span class="slm-file-name">${file.name}</span></button>`
+            ).insertBefore(pos);
+        }
+    }
+
+    const initFileList = function(fileList) {
+        fileList.find('button').remove();
+        fileList.data('slmPage', 0);
+        slm.initInfiniteScroll(
+            fileList,
+            fileList,
+            $('#slm-file-list .slm-loader'),
+            "slm_edit_api:files-list",
+            {'site': '{{ station }}'},
+            {},
+            drawFiles
+        );
+    }
+
+    $(document).ready(function() {
+        const fileList = $("#slm-file-list");
+        const searchInput = $('#file-search');
+        const filterInput = $("#apply-file-filter");
+
+        searchInput.keypress(function (event) {
+            if (event.key === "Enter") {
+                searchInput.blur();
+                return false;
+            }
+        });
+        searchInput.on('input', function() {
+            clearTimeout(fileKeyupTimeoutID);
+            fileKeyupTimeoutID = setTimeout(function() {
+                let query = fileList.data('slmQuery') || {};
+                if (searchInput.val()) {
+                    query.name = searchInput.val();
+                } else {
+                    if (query.hasOwnProperty('name')) {
+                        delete query.name;
+                    }
+                }
+                fileList.data('slmQuery', query);
+                initFileList(fileList);
+            }, 500);
+        });
+        filterInput.click(function() {
+            let query = fileList.data('slmQuery') || {};
+            query["status"] = $("#slm-file-filter-status input[name=filterToggle]:checked").map(function () {
+                return this.value;
+            }).get().join(",");
+            query["file_type"] = $("#slm-file-filter-type input[name=filterToggle]:checked").map(function () {
+                return this.value;
+            }).get().join(",");
+            query["log_format"] = $("#slm-file-filter-log input[name=filterToggle]:checked").map(function () {
+                return this.value;
+            }).get().join(",");
+            fileList.data('slmQuery', query);
+            initFileList(fileList);
+        });
+        initFileList(fileList);
+    });
+
+    function uncheckAll() {
+        $("input[type='checkbox']:checked").prop("checked", false)
+    }
+    $('#clear-file-filter').on('click', uncheckAll)
+</script>
+{% endcompress %}

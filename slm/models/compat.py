@@ -1,7 +1,8 @@
+import json
+
+from django.core.exceptions import ValidationError
 from django.db.models import TextField
 from django.db.models.query_utils import DeferredAttribute
-from django.core.exceptions import ValidationError
-import json
 
 
 class JSONCompatDeferredAttribute(DeferredAttribute):

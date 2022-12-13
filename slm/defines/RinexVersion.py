@@ -1,14 +1,17 @@
-from django_enum import IntegerChoices
-from enum_properties import s, p
 from datetime import date
+
+from django_enum import IntegerChoices
+from enum_properties import p, s
 
 
 class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
 
     # Minor version not known
-    v2    = 2,   'RINEX 2',    2, '2', date(year=1993, month=4, day=1)
-    v3    = 3,   'RINEX 3',    3, '3', date(year=2007, month=11, day=28)
-    v4    = 4,   'RINEX 4',    4, '4', date(year=2021, month=12, day=1)
+
+    #      Name    Label     Major Text           Published
+    v2    = 2,   'RINEX 2',    2,  '2', date(year=1993, month=4, day=1)
+    v3    = 3,   'RINEX 3',    3,  '3', date(year=2007, month=11, day=28)
+    v4    = 4,   'RINEX 4',    4,  '4', date(year=2021, month=12, day=1)
     ###############################################################
 
     v2_11 = 211, 'RINEX 2.11', 2, '2.11', date(year=2012, month=6, day=26)
@@ -26,3 +29,6 @@ class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
             f'{field_name}__in': [
                 rv.value for rv in RinexVersion if rv.major == self.major
             ]})
+
+    def __str__(self):
+        return self.label

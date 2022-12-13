@@ -1,0 +1,348 @@
+     {{site.name}} Site Information Form (site log)
+     International GNSS Service
+     See Instructions at:
+       https://files.igs.org/pub/station/general/sitelog_instr.txt
+{% autoescape off %}
+0.   Form
+
+     Prepared by (full name)  : {{ form.prepared_by }}
+     Date Prepared            : {% if form %}{{ form.date_prepared|simple_utc }}{% else %}(CCYY-MM-DD){% endif %}
+     Report Type              : {% if form %}{{ form.report_type }}{% else %}(NEW/UPDATE){% endif %}
+     If Update:
+      Previous Site Log       : {% if form %}{{ form.previous_log }}{% else %}(ssss_ccyymmdd.log){% endif %}
+      Modified/Added Sections : {% if form %}{{ form.modified_section|multi_line}}{% else %}(n.n,n.n,...){% endif %}
+
+
+1.   Site Identification of the GNSS Monument
+
+     Site Name                : {{ identification.site_name }}
+     Four Character ID        : {% if identification %}{{ identification.four_character_id}}{% else %}(A4){% endif %}
+     Monument Inscription     : {{ identification.monument_inscription }}
+     IERS DOMES Number        : {% if identification %}{{ identification.iers_domes_number }}{% else %}(A9){% endif %}
+     CDP Number               : {% if identification %}{{ identification.cdp_number }}{% else %}(A4){% endif %}
+     Monument Description     : {% if identification %}{{ identification.monument_description }}{% else %}(PILLAR/BRASS PLATE/STEEL MAST/etc){% endif %}
+       Height of the Monument : {% if identification %}{{ identification.monument_height|none2empty:" m" }}{% else %}(m){% endif %}
+       Monument Foundation    : {% if identification %}{{ identification.monument_foundation }}{% else %}(STEEL RODS, CONCRETE BLOCK, ROOF, etc){% endif %}
+       Foundation Depth       : {% if identification %}{{ identification.foundation_depth|none2empty:" m" }}{% else %}(m){% endif %}
+     Marker Description       : {% if identification %}{{ identification.marker_description }}{% else %}(CHISELLED CROSS/DIVOT/BRASS NAIL/etc){% endif %}
+     Date Installed           : {% if identification %}{{ identification.date_installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Geologic Characteristic  : {% if identification %}{{ identification.geologic_characteristic }}{% else %}(BEDROCK/CLAY/CONGLOMERATE/GRAVEL/SAND/etc){% endif %}
+       Bedrock Type           : {% if identification %}{{ identification.bedrock_type }}{% else %}(IGNEOUS/METAMORPHIC/SEDIMENTARY){% endif %}
+       Bedrock Condition      : {% if identification %}{{ identification.bedrock_condition }}{% else %}(FRESH/JOINTED/WEATHERED){% endif %}
+       Fracture Spacing       : {% if identification %}{{ identification.fracture_spacing|enum_str|lower }}{% else %}(1-10 cm/11-50 cm/51-200 cm/over 200 cm){% endif %}
+       Fault zones nearby     : {% if identification %}{{ identification.fault_zones }}{% else %}(YES/NO/Name of the zone){% endif %}
+         Distance/activity    : {% if identification %}{{ identification.distance|multi_line }}{% else %}(multiple lines){% endif %}
+     Additional Information   : {% if identification %}{{ identification.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
+
+
+2.   Site Location Information
+
+     City or Town             : {{ location.city }}
+     State or Province        : {{ location.state }}
+     Country                  : {{ location.country|enum_str }}
+     Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
+     Approximate Position (ITRF)
+       X coordinate (m)       : {{ location.x|precision:4 }}
+       Y coordinate (m)       : {{ location.y|precision:4 }}
+       Z coordinate (m)       : {{ location.z|precision:4 }}
+       Latitude (N is +)      : {% if location %}{{ location.latitude|iso6709:6 }}{% else %}(+/-DDMMSS.SS){% endif %}
+       Longitude (E is +)     : {% if location %}{{ location.longitude|iso6709:7 }}{% else %}(+/-DDDMMSS.SS){% endif %}
+       Elevation (m,ellips.)  : {% if location %}{{ location.elevation|precision:4 }}{% else %}(F7.1){% endif %}
+     Additional Information   : {% if location %}{{ location.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
+
+
+3.   GNSS Receiver Information
+{% for rcvr in receiver %}
+3.{{ forloop.counter|rpad_space:3 }}Receiver Type            : {{ rcvr.receiver_type.model }}
+     Satellite System         : {{ rcvr.satellite_system|satellite_str }}
+     Serial Number            : {{ rcvr.serial_number }}
+     Firmware Version         : {{ rcvr.firmware }}
+     Elevation Cutoff Setting : {% if rcvr.elevation_cutoff is not None %}{{ rcvr.elevation_cutoff|precision:1 }} deg{% endif %}
+     Date Installed           : {% if rcvr.installed %}{{ rcvr.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Date Removed             : {% if rcvr.removed %}{{ rcvr.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Temperature Stabiliz.    : {{ rcvr.temp|format_temp_stab:rcvr.temp_stab }}
+     Additional Information   : {{ rcvr.additional_info|multi_line }}
+{% endfor %}
+{% if not receiver or include_templates %}3.x  Receiver Type            : (A20, from rcvr_ant.tab; see instructions)
+     Satellite System         : (GPS+GLO+GAL+BDS+QZSS+SBAS)
+     Serial Number            : (A20, but note the first A5 is used in SINEX)
+     Firmware Version         : (A11)
+     Elevation Cutoff Setting : (deg)
+     Date Installed           : (CCYY-MM-DDThh:mmZ)
+     Date Removed             : (CCYY-MM-DDThh:mmZ)
+     Temperature Stabiliz.    : (none or tolerance in degrees C)
+     Additional Information   : (multiple lines){% endif %}
+
+
+4.   GNSS Antenna Information
+{% for ant in antenna %}
+4.{{ forloop.counter|rpad_space:3 }}Antenna Type             : {{ ant|antenna_radome }}
+     Serial Number            : {{ ant.serial_number }}
+     Antenna Reference Point  : {{ ant.reference_point.name }}
+     Marker->ARP Up Ecc. (m)  : {{ ant.marker_up|precision_full:4 }}
+     Marker->ARP North Ecc(m) : {{ ant.marker_north|precision_full:4 }}
+     Marker->ARP East Ecc(m)  : {{ ant.marker_east|precision_full:4 }}
+     Alignment from True N    : {% if ant.alignment is not None %}{{ ant.alignment|precision:1|pos }} deg{% endif %}
+     Antenna Radome Type      : {{ ant.radome_type.model }}
+     Radome Serial Number     : {{ ant.radome_serial_number }}
+     Antenna Cable Type       : {{ ant.cable_type }}
+     Antenna Cable Length     : {% if ant.cable_length is not None %}{{ ant.cable_length|precision:4 }} m{% endif %}
+     Date Installed           : {% if ant.installed %}{{ ant.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Date Removed             : {% if ant.removed %}{{ ant.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Additional Information   : {{ ant.additional_information|multi_line }}
+{% endfor %}
+{% if not antenna or include_templates %}4.x  Antenna Type             : (A20, from rcvr_ant.tab; see instructions)
+     Serial Number            : (A*, but note the first A5 is used in SINEX)
+     Antenna Reference Point  : (BPA/BCR/XXX from "antenna.gra"; see instr.)
+     Marker->ARP Up Ecc. (m)  : (F8.4)
+     Marker->ARP North Ecc(m) : (F8.4)
+     Marker->ARP East Ecc(m)  : (F8.4)
+     Alignment from True N    : (deg; + is clockwise/east)
+     Antenna Radome Type      : (A4 from rcvr_ant.tab; see instructions)
+     Radome Serial Number     :
+     Antenna Cable Type       : (vendor & type number)
+     Antenna Cable Length     : (m)
+     Date Installed           : (CCYY-MM-DDThh:mmZ)
+     Date Removed             : (CCYY-MM-DDThh:mmZ)
+     Additional Information   : (multiple lines){% endif %}
+
+
+5.   Surveyed Local Ties
+{% for tie in surveyedlocalties %}
+5.{{ forloop.counter|rpad_space:3 }}Tied Marker Name         : {{ tie.name }}
+     Tied Marker Usage        : {{ tie.usage }}
+     Tied Marker CDP Number   : {{ tie.cdp_number }}
+     Tied Marker DOMES Number : {{ tie.domes_number }}
+     Differential Components from GNSS Marker to the tied monument (ITRS)
+       dx (m)                 : {% if tie.dx is not None %}{{ tie.dx }} m{% endif %}
+       dy (m)                 : {% if tie.dy is not None %}{{ tie.dy }} m{% endif %}
+       dz (m)                 : {% if tie.dz is not None %}{{ tie.dz }} m{% endif %}
+     Accuracy (mm)            : {% if tie.accuracy is not None %}{{ tie.accuracy|precision:0 }} mm{% endif %}
+     Survey method            : {{ tie.survey_method }}
+     Date Measured            : {% if tie.measured %}{{ tie.measured|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
+     Additional Information   : {{ tie.additional_information|multi_line }}
+{% endfor %}
+{% if not surveyedlocalties or include_templates %}5.x  Tied Marker Name         :
+     Tied Marker Usage        : (SLR/VLBI/LOCAL CONTROL/FOOTPRINT/etc)
+     Tied Marker CDP Number   : (A4)
+     Tied Marker DOMES Number : (A9)
+     Differential Components from GNSS Marker to the tied monument (ITRS)
+       dx (m)                 : (m)
+       dy (m)                 : (m)
+       dz (m)                 : (m)
+     Accuracy (mm)            : (mm)
+     Survey method            : (GPS CAMPAIGN/TRILATERATION/TRIANGULATION/etc)
+     Date Measured            : (CCYY-MM-DDThh:mmZ)
+     Additional Information   : (multiple lines){% endif %}
+
+
+6.   Frequency Standard
+{% for standard in frequencystandard %}
+6.{{ forloop.counter|rpad_space:3 }}Standard Type            : {{ standard.standard_type|enum_str|upper }}
+       Input Frequency        : {% if standard.input_frequency is not None %}{{ standard.input_frequency }} MHz{% endif %}
+       Effective Dates        : {% if standard.effective_start %}{{standard.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if standard.effective_end %}{{standard.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Notes                  : {{ standard.notes|multi_line }}
+{% endfor %}
+{% if not frequencystandard or include_templates %}6.x  Standard Type            : (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)
+       Input Frequency        : (if external)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines){% endif %}
+
+
+7.   Collocation Information
+{% for colloc in collocation %}
+7.{{ forloop.counter|rpad_space:3 }}Instrumentation Type     : {{ colloc.instrument_type}}
+       Status                 : {{ colloc.status|enum_str|upper }}
+       Effective Dates        : {% if colloc.effective_start %}{{colloc.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if colloc.effective_end %}{{colloc.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Notes                  : {{ colloc.notes|multi_line }}
+{% endfor %}
+{% if not collocation or include_templates %}7.x  Instrumentation Type     : (GPS/GLONASS/DORIS/PRARE/SLR/VLBI/TIME/etc)
+       Status                 : (PERMANENT/MOBILE)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines){% endif %}
+
+
+8.   Meteorological Instrumentation
+{% for sensor in humiditysensor %}
+8.1.{{ forloop.counter }} Humidity Sensor Model   : {{ sensor.model }}
+       Manufacturer           : {{ sensor.manufacturer }}
+       Serial Number          : {{ sensor.serial_number }}
+       Data Sampling Interval : {% if sensor.sampling_interval is not None %}{{ sensor.sampling_interval}} sec{% endif %}
+       Accuracy (% rel h)     : {% if sensor.accuracy is not None %}{{ sensor.accuracy|precision:1 }}{% endif %}
+       Aspiration             : {{ sensor.aspiration|enum_str|upper }}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
+       Calibration date       : {{ sensor.calibration|simple_utc }}
+       Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Notes                  : {{ sensor.notes|multi_line }}
+{% endfor %}
+{% if not humiditysensor or include_templates %}8.1.x Humidity Sensor Model   :
+       Manufacturer           :
+       Serial Number          :
+       Data Sampling Interval : (sec)
+       Accuracy (% rel h)     : (% rel h)
+       Aspiration             : (UNASPIRATED/NATURAL/FAN/etc)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines){% endif %}
+{% for sensor in pressuresensor %}
+8.2.{{ forloop.counter }} Pressure Sensor Model   : {{ sensor.model }}
+       Manufacturer           : {{ sensor.manufacturer }}
+       Serial Number          : {{ sensor.serial_number }}
+       Data Sampling Interval : {% if sensor.sampling_interval is not None %}{{ sensor.sampling_interval}} sec{% endif %}
+       Accuracy               : {% if sensor.accuracy is not None %}{{ sensor.accuracy|precision:2 }} hPa{% endif %}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
+       Calibration date       : {{ sensor.calibration|simple_utc }}
+       Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Notes                  : {{ sensor.notes|multi_line }}
+{% endfor %}
+{% if not pressuresensor or include_templates %}8.2.x Pressure Sensor Model   :
+       Manufacturer           :
+       Serial Number          :
+       Data Sampling Interval : (sec)
+       Accuracy               : (hPa)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines){% endif %}
+{% for sensor in temperaturesensor %}
+8.3.{{ forloop.counter }} Temp. Sensor Model      : {{ sensor.model }}
+       Manufacturer           : {{ sensor.manufacturer }}
+       Serial Number          : {{ sensor.serial_number }}
+       Data Sampling Interval : {% if sensor.sampling_interval is not None %}{{ sensor.sampling_interval}} sec{% endif %}
+       Accuracy               : {% if sensor.accuracy is not None %}{{ sensor.accuracy|precision:1 }} deg C{% endif %}
+       Aspiration             : {{ sensor.aspiration|enum_str|upper }}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
+       Calibration date       : {{ sensor.calibration|simple_utc }}
+       Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Notes                  : {{ sensor.notes|multi_line }}
+{% endfor %}
+{% if not temperaturesensor or include_templates %}8.3.x Temp. Sensor Model      :
+       Manufacturer           :
+       Serial Number          :
+       Data Sampling Interval : (sec)
+       Accuracy               : (deg C)
+       Aspiration             : (UNASPIRATED/NATURAL/FAN/etc)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines){% endif %}
+{% for sensor in watervaporradiometer %}
+8.4.{{ forloop.counter }} Water Vapor Radiometer  : {{ sensor.model }}
+       Manufacturer           : {{ sensor.manufacturer }}
+       Serial Number          : {{ sensor.serial_number }}
+       Distance to Antenna    : {% if sensor.distance_to_antenna is not None %}{{sensor.distance_to_antenna}} m{% endif %}
+       Height Diff to Ant     : {% if sensor.height_diff is not None %}{{ sensor.height_diff }} m{% endif %}
+       Calibration date       : {{ sensor.calibration|simple_utc }}
+       Effective Dates        : {% if sensor.effective_start %}{{sensor.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if sensor.effective_end %}{{sensor.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Notes                  : {{ sensor.notes|multi_line }}
+{% endfor %}
+{% if not watervaporradiometer or include_templates %}8.4.x Water Vapor Radiometer  :
+       Manufacturer           :
+       Serial Number          :
+       Distance to Antenna    : (m)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines){% endif %}
+{% for instrument in otherinstrumentation %}
+8.5.{{ forloop.counter }} Other Instrumentation   : {{ instrument.instrumentation|multi_line }}
+{% endfor %}
+{% if not otherinstrumentation or include_templates %}8.5.x Other Instrumentation   : (multiple lines){% endif %}
+
+
+9.  Local Ongoing Conditions Possibly Affecting Computed Position
+{% for condition in radiointerferences %}
+9.1.{{ forloop.counter }} Radio Interferences     : {{ condition.interferences }}
+       Observed Degradations  : {{ condition.degradations }}
+       Effective Dates        : {% if condition.effective_start %}{{condition.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if condition.effective_end %}{{condition.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Additional Information : {{ condition.additional_information|multi_line }}
+{% endfor %}
+{% if not radiointerferences or include_templates %}9.1.x Radio Interferences     : (TV/CELL PHONE ANTENNA/RADAR/etc)
+       Observed Degradations  : (SN RATIO/DATA GAPS/etc)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Additional Information : (multiple lines){% endif %}
+{% for condition in multipathsources %}
+9.2.{{ forloop.counter }} Multipath Sources       : {{ condition.sources}}
+       Effective Dates        : {% if condition.effective_start %}{{condition.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if condition.effective_end %}{{condition.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Additional Information : {{ condition.additional_information|multi_line }}
+{% endfor %}
+{% if not multipathsources or include_templates %}9.2.x Multipath Sources       : (METAL ROOF/DOME/VLBI ANTENNA/etc)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Additional Information : (multiple lines){% endif %}
+{% for condition in signalobstructions %}
+9.3.{{ forloop.counter }} Signal Obstructions     : {{ condition.obstructions }}
+       Effective Dates        : {% if condition.effective_start %}{{condition.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if condition.effective_end %}{{condition.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+       Additional Information : {{ condition.additional_information|multi_line }}
+{% endfor %}
+{% if not signalobstructions or include_templates %}9.3.x Signal Obstructions     : (TREES/BUILDINGS/etc)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Additional Information : (multiple lines){% endif %}
+
+
+10.  Local Episodic Effects Possibly Affecting Data Quality
+{% for effect in localepisodiceffects %}
+10.{{ forloop.counter }} Date                     : {% if effect.effective_start %}{{effect.effective_start|simple_utc}}{% else %}CCYY-MM-DD{% endif %}/{% if effect.effective_end %}{{effect.effective_end|simple_utc}}{% else %}CCYY-MM-DD{% endif %}
+     Event                    : {{ effect.event|multi_line }}
+{% endfor %}
+{% if not localepisodiceffects or include_templates %}10.x Date                     : (CCYY-MM-DD/CCYY-MM-DD)
+     Event                    : (TREE CLEARING/CONSTRUCTION/etc){% endif %}
+
+
+11.   On-Site, Point of Contact Agency Information
+
+     Agency                   : {% if operationalcontact.agency %}{{ operationalcontact.agency|multi_line }}{% else %}(multiple lines){% endif %}
+     Preferred Abbreviation   : {% if operationalcontact.preferred_abbreviation %}{{ operationalcontact.preferred_abbreviation }}{% else %}(A10){% endif %}
+     Mailing Address          : {% if operationalcontact.mailing_address %}{{ operationalcontact.mailing_address|multi_line }}{% else %}(multiple lines){% endif %}
+     Primary Contact
+       Contact Name           : {{ operationalcontact.primary_name }}
+       Telephone (primary)    : {{ operationalcontact.primary_phone1 }}
+       Telephone (secondary)  : {{ operationalcontact.primary_phone2 }}
+       Fax                    : {{ operationalcontact.primary_fax }}
+       E-mail                 : {{ operationalcontact.primary_email }}
+     Secondary Contact
+       Contact Name           : {{ operationalcontact.secondary_name }}
+       Telephone (primary)    : {{ operationalcontact.secondary_phone1 }}
+       Telephone (secondary)  : {{ operationalcontact.secondary_phone2 }}
+       Fax                    : {{ operationalcontact.secondary_fax }}
+       E-mail                 : {{ operationalcontact.secondary_email }}
+     Additional Information   : {{ operationalcontact.additional_information|multi_line }}
+
+
+12.  Responsible Agency (if different from 11.)
+
+     Agency                   : {% if responsibleagency.agency %}{{ responsibleagency.agency|multi_line }}{% else %}(multiple lines){% endif %}
+     Preferred Abbreviation   : {% if responsibleagency.preferred_abbreviation %}{{ responsibleagency.preferred_abbreviation }}{% else %}(A10){% endif %}
+     Mailing Address          : {% if responsibleagency.mailing_address %}{{ responsibleagency.mailing_address|multi_line }}{% else %}(multiple lines){% endif %}
+     Primary Contact
+       Contact Name           : {{ responsibleagency.primary_name }}
+       Telephone (primary)    : {{ responsibleagency.primary_phone1 }}
+       Telephone (secondary)  : {{ responsibleagency.primary_phone2 }}
+       Fax                    : {{ responsibleagency.primary_fax }}
+       E-mail                 : {{ responsibleagency.primary_email }}
+     Secondary Contact
+       Contact Name           : {{ responsibleagency.secondary_name }}
+       Telephone (primary)    : {{ responsibleagency.secondary_phone1 }}
+       Telephone (secondary)  : {{ responsibleagency.secondary_phone2 }}
+       Fax                    : {{ responsibleagency.secondary_fax }}
+       E-mail                 : {{ responsibleagency.secondary_email }}
+     Additional Information   : {{ responsibleagency.additional_information|multi_line }}
+
+
+13.  More Information
+
+     Primary Data Center      : {{ moreinformation.primary }}
+     Secondary Data Center    : {{ moreinformation.secondary }}
+     URL for More Information : {{ moreinformation.more_info }}
+     Hardcopy on File
+       Site Map               : {{ moreinformation.sitemap }}
+       Site Diagram           : {{ moreinformation.site_diagram }}
+       Horizon Mask           : {{ moreinformation.horizon_mask }}
+       Monument Description   : {{ moreinformation.monument_description }}
+       Site Pictures          : {{ moreinformation.site_picture }}
+     Additional Information   : {{ moreinformation.additional_information|multi_line }}
+     Antenna Graphics with Dimensions
+
+{% if graphic %}{{ graphic }}{% else %}     (insert text graphic from file antenna.gra){% endif %}
+
+{% endautoescape %}

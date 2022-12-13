@@ -1,13 +1,9 @@
 TODO
-- Fix Ashley Bug
+- NOT ADMIN MODE
 - network_QC layout
 - Data Availability scripts
 - Blank site log output
 
-Tomorrow
-- Image/File Attachments
-- EnumFields
-- Validation Refactor
 
 
 - Moderation Table import & validation integration
@@ -15,16 +11,11 @@ Tomorrow
 * SCSS integration
 * Sekizai integration
 * Event/Email Streams
-* Image/File Attachments
-* Site Log upload
 * GeodesyML support
 * JSON support
 * Publish/Edit configurable permissions refactor
-* Validation refactor
-* Enum fields based on GeodesyML
 * Unit tests
 * Documentation
 * Linting
-* Fix performance issues
 ** Data Model Refactor - normalize log entries??
 ** Vue.js integration

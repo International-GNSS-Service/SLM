@@ -10,15 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from pathlib import Path
-from slm.settings import set_default, is_defined
-from split_settings.tools import include
 import os
+from pathlib import Path
+
+from slm.settings import is_defined, set_default
+from split_settings.tools import include
 
 set_default('DEBUG', False)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 set_default('BASE_DIR', Path(__file__).resolve().parent.parent)
+set_default('SITE_DIR', BASE_DIR)
 set_default('DJANGO_DEBUG_TOOLBAR', False)
 
 # manage.py will set this to true if django has been loaded to run a management command
@@ -34,6 +36,7 @@ if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
 
 # django.contrib.___ gives us useful tools for authentication, etc.
 INSTALLED_APPS = [
+    'slm.map',
     'slm',
     'rest_framework',
     'render_static',
@@ -50,19 +53,6 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
 ]
-
-STATIC_TEMPLATES = {
-    'templates': {
-        'slm/js/urls.js': {
-            'context': {
-                'exclude': ['admin']
-            }
-        },
-        'slm/js/env.js': {
-            'context': {}
-        }
-    }
-}
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -96,6 +86,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages'
             ],
+            'builtins': ['slm.templatetags.slm']
         },
     },
 ]
@@ -127,26 +118,34 @@ AUTH_PASSWORD_VALIDATORS = [
 # Following two statements added to assist with handling of static files
 STATIC_URL = '/static/'
 
-set_default('SITE_NAME', ALLOWED_HOSTS[0] if ALLOWED_HOSTS else 'localhost')
+set_default(
+    'SITE_NAME',
+    ALLOWED_HOSTS[0] if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS
+    else 'localhost'
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+include('secrets.py')
 include('logging.py')
 include('internationalization.py')
+include('static_templates.py')
 include('routines.py')
 include('auth.py')
 include('rest.py')
 include('slm.py')
 include('debug.py')
+include('uploads.py')
+#include('security.py')
+include('validation.py')
+
 
 set_default('SITE_ID', 1)
 
-MEDIA_URL = '/media/'
 set_default('STATIC_ROOT', SITE_DIR / 'static')
-set_default('MEDIA_ROOT', SITE_DIR / 'media')
 
 COMPRESS_OFFLINE = True
 COMPRESS_ROOT = STATIC_ROOT

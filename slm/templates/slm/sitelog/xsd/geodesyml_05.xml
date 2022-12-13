@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<geo:GeodesyML gml:id="{{ site.name }}" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.5" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <geo:siteLog gml:id="{{ identifier }}">
+        <geo:formInformation>
+            <geo:FormInformation gml:id="form-info">
+                <geo:preparedBy>{{ form.prepared_by }}</geo:preparedBy>
+                <geo:datePrepared>{{ form.date_prepared|simple_utc }}</geo:datePrepared>
+                <geo:reportType>{{ form.report_type }}</geo:reportType>
+            </geo:FormInformation>
+        </geo:formInformation>
+        <geo:siteIdentification>
+            <geo:SiteIdentification gml:id="site-identification">
+                <geo:siteName>{{ identification.site_name }}</geo:siteName>
+                <geo:fourCharacterID>{{ identification.four_character_id}}</geo:fourCharacterID>
+                {% if identification.monument_inscription %}<geo:monumentInscription>{{ identification.monument_inscription }}</geo:monumentInscription>{% endif %}
+                <geo:iersDOMESNumber>{{ identification.iers_domes_number }}</geo:iersDOMESNumber>
+                <geo:cdpNumber>{{ identification.cdp_number }}</geo:cdpNumber>
+                {% if identification.monument_description %}<geo:monumentDescription codeSpace="urn:ga-gov-au:monument-description-type">{{ identification.monument_description }}</geo:monumentDescription>{% endif %}
+                {% if identification.monument_height is not None %}<geo:heightOfTheMonument>{{ identification.monument_height|none2empty }}</geo:heightOfTheMonument>{% endif %}
+                {% if identification.monument_foundation %}<geo:monumentFoundation>{{ identification.monument_foundation }}</geo:monumentFoundation>{% endif %}
+                {% if identification.foundation_depth is not None %}<geo:foundationDepth>{{ identification.foundation_depth|none2empty }}</geo:foundationDepth>{% endif %}
+                {% if identification.marker_description %}<geo:markerDescription>{{ identification.marker_description }}</geo:markerDescription>{% endif %}
+                {% if identification.date_installed %}<geo:dateInstalled>{{ identification.date_installed|iso_utc_full }}</geo:dateInstalled>{% endif %}
+                {% if identification.geologic_characteristic %}<geo:geologicCharacteristic codeSpace="urn:ga-gov-au:geologic-characteristic-type">{{ identification.geologic_characteristic }}</geo:geologicCharacteristic>{% endif %}
+                {% if identification.bedrock_type %}<geo:bedrockType>{{ identification.bedrock_type }}</geo:bedrockType>{% endif %}
+                {% if identification.bedrock_condition %}<geo:bedrockCondition>{{ identification.bedrock_condition }}</geo:bedrockCondition>{% endif %}
+                {% if identification.fracture_spacing %}<geo:fractureSpacing>{{ identification.fracture_spacing|enum_str|lower }}</geo:fractureSpacing>{% endif %}
+                {% if identification.fault_zones %}<geo:faultZonesNearby codeSpace="urn:ga-gov-au:fault-zones-type">{{ identification.fault_zones }}</geo:faultZonesNearby>{% endif %}
+                {% if identification.distance %}<geo:distance-Activity>{{ identification.distance }}</geo:distance-Activity>{% endif %}
+                {% if identification.additional_information %}<geo:notes>{{ identification.additional_information }}</geo:notes>{% endif %}
+            </geo:SiteIdentification>
+        </geo:siteIdentification>
+        <geo:siteLocation>
+            <geo:SiteLocation gml:id="site-location">
+                <geo:city>{{ location.city }}</geo:city>
+                <geo:state>{{ location.state }}</geo:state>
+                <geo:countryCodeISO codeList="http://xml.gov.au/icsm/geodesyml/codelists/country-codes-codelist.xml#GeodesyML_CountryCode" codeListValue="AUS" codeSpace="urn:xml-gov-au:icsm:egeodesy:0.5">{{ location.country|enum_str }}</geo:countryCodeISO>
+                <geo:tectonicPlate codeSpace="urn:ga-gov-au:plate-type">{{ location.tectonic|enum_str|upper }}</geo:tectonicPlate>
+                <geo:approximatePositionITRF>
+                    <geo:cartesianPosition>
+                        <gml:Point gml:id="itrf_cartesian">
+                            <gml:pos srsName="EPSG:7789">{{ location.x|precision:4 }} {{ location.y|precision:4 }} {{ location.z|precision:4 }}</gml:pos>
+                        </gml:Point>
+                    </geo:cartesianPosition>
+                    <geo:geodeticPosition>
+                        <gml:Point gml:id="itrf_geodetic">
+                            <gml:pos srsName="EPSG:7912">{{ location.latitude|epsg7912:10 }} {{ location.longitude|epsg7912:10 }} {{ location.elevation|precision:4 }}</gml:pos>
+                        </gml:Point>
+                    </geo:geodeticPosition>
+                </geo:approximatePositionITRF>
+                <geo:notes></geo:notes>
+            </geo:SiteLocation>
+        </geo:siteLocation>
+        {% for rcvr in receiver %}
+        <geo:gnssReceiver>
+            <geo:GnssReceiver gml:id="gnss-receiver-{{ forloop.counter }}">
+                <geo:manufacturerSerialNumber>{{ rcvr.serial_number }}</geo:manufacturerSerialNumber>
+                <geo:igsModelCode codeList="http://xml.gov.au/icsm/geodesyml/codelists/antenna-receiver-codelists.xml#GeodesyML_GNSSReceiverTypeCode" codeListValue="{{ rcvr.receiver_type.model }}" codeSpace="urn:xml-gov-au:icsm:egeodesy:0.5">{{ rcvr.receiver_type.model }}</geo:igsModelCode>
+                <geo:satelliteSystem>{{ rcvr.satellite_system|satellite_str }}</geo:satelliteSystem>
+                <geo:firmwareVersion>{{ rcvr.firmware }}</geo:firmwareVersion>
+                <geo:elevationCutoffSetting {% if rcvr.elevation_cutoff is None %}xsi:nil="true"{% endif %}>{{ rcvr.elevation_cutoff|precision:1 }}</geo:elevationCutoffSetting>
+                <geo:dateInstalled>{{ rcvr.installed|iso_utc_full }}</geo:dateInstalled>
+                <geo:dateRemoved>{{ rcvr.removed|iso_utc_full }}</geo:dateRemoved>
+                <geo:temperatureStabilization {% if rcvr.temp_stab is None %}xsi:nil="true"{% endif %}>{% if rcvr.temp_stab is not None %}{{ rcvr.temp_stab|none2empty }}{% endif %}</geo:temperatureStabilization>
+            </geo:GnssReceiver>
+            <geo:dateInserted>{{ rcvr.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:gnssReceiver>
+        {% endfor %}
+        {% for ant in antenna %}
+        <geo:gnssAntenna>
+            <geo:GnssAntenna gml:id="gnss-antenna-{{ forloop.counter }}">
+                <geo:manufacturerSerialNumber>{{ ant.serial_number }}</geo:manufacturerSerialNumber>
+                <geo:igsModelCode codeList="http://xml.gov.au/icsm/geodesyml/codelists/antenna-receiver-codelists.xml#GeodesyML_GNSSAntennaTypeCode" codeListValue="{{ ant|antenna_codelist }}" codeSpace="urn:xml-gov-au:icsm:egeodesy:0.5">{{ ant|antenna_radome }}</geo:igsModelCode>
+                <geo:antennaReferencePoint codeSpace="urn:ga-gov-au:antenna-reference-point-type">{{ ant.reference_point.name }}</geo:antennaReferencePoint>
+                <geo:marker-arpUpEcc. {% if ant.marker_up is None %}xsi:nil="true"{% endif %}>{{ ant.marker_up|precision_full:4 }}</geo:marker-arpUpEcc.>
+                <geo:marker-arpNorthEcc. {% if ant.marker_north is None %}xsi:nil="true"{% endif %}>{{ ant.marker_north|precision_full:4 }}</geo:marker-arpNorthEcc.>
+                <geo:marker-arpEastEcc. {% if ant.marker_east is None %}xsi:nil="true"{% endif %}>{{ ant.marker_east|precision_full:4 }}</geo:marker-arpEastEcc.>
+                <geo:alignmentFromTrueNorth {% if ant.alignment is None %}xsi:nil="true"{% endif %}>{{ ant.alignment|precision:1|pos }}</geo:alignmentFromTrueNorth>
+                <geo:antennaRadomeType codeSpace="urn:igs-org:gnss-radome-model-code">{{ ant.radome_type.model }}</geo:antennaRadomeType>
+                <geo:radomeSerialNumber>{{ ant.radome_serial_number }}</geo:radomeSerialNumber>
+                <geo:antennaCableType>{{ ant.cable_type }}</geo:antennaCableType>
+                <geo:antennaCableLength {% if ant.cable_length is None %}xsi:nil="true"{% endif %}>{{ ant.cable_length|precision:4 }}</geo:antennaCableLength>
+                <geo:dateInstalled>{{ ant.installed|iso_utc_full }}</geo:dateInstalled>
+                <geo:dateRemoved>{{ ant.removed|iso_utc_full }}</geo:dateRemoved>
+            </geo:GnssAntenna>
+            <geo:dateInserted>{{ ant.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:gnssAntenna>
+        {% endfor %}
+        {% for tie in surveyedlocalties %}
+        <geo:surveyedLocalTie>
+            <geo:SurveyedLocalTie gml:id="local-tie-{{ forloop.counter }}">
+                <geo:tiedMarkerName>{{ tie.name }}</geo:tiedMarkerName>
+                <geo:tiedMarkerUsage>{{ tie.usage }}</geo:tiedMarkerUsage>
+                <geo:tiedMarkerCDPNumber>{{ tie.cdp_number }}</geo:tiedMarkerCDPNumber>
+                <geo:tiedMarkerDOMESNumber>{{ tie.domes_number }}</geo:tiedMarkerDOMESNumber>
+                {% if tie.dx is None or tie.dy is None or tie.dz is None %}
+                <geo:differentialComponentsGNSSMarkerToTiedMonumentITRS xsi:nil="true"/>
+                {% else %}
+                <geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
+                    <geo:dx>{{ tie.dx }}</geo:dx>
+                    <geo:dy>{{ tie.dy }}</geo:dy>
+                    <geo:dz>{{ tie.dz }}</geo:dz>
+                </geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
+                {% endif %}
+                <geo:localSiteTiesAccuracy{% if tie.accuracy is None %} xsi:nil="true"{% endif %}>{{ tie.accuracy|precision:1 }}</geo:localSiteTiesAccuracy>
+                <geo:surveyMethod>{{ tie.survey_method }}</geo:surveyMethod>
+                <geo:dateMeasured>{{ tie.measured|iso_utc_full }}</geo:dateMeasured>
+                <geo:notes>{{ tie.additional_information }}</geo:notes>
+            </geo:SurveyedLocalTie>
+            <geo:dateInserted>{{ tie.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:surveyedLocalTie>
+        {% endfor %}
+        {% for standard in frequencystandard %}
+        <geo:frequencyStandard>
+            <geo:FrequencyStandard gml:id="frequency-standard-{{ forloop.counter }}">
+                <geo:standardType codeSpace="urn:ga-gov-au:frequency-standard-type">{{ standard.standard_type|enum_str|upper }}</geo:standardType>
+                {% if standard.input_frequency is not None %}<geo:inputFrequency>{{ standard.input_frequency }}</geo:inputFrequency>{% endif %}
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="frequency-standard-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{standard.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{standard.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:notes>{{ standard.notes }}</geo:notes>
+            </geo:FrequencyStandard>
+            <geo:dateInserted>{{ standard.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:frequencyStandard>
+        {% endfor %}
+        {% for colloc in collocation %}
+        <geo:collocationInformation>
+            <geo:CollocationInformation gml:id="collocation-information-{{ forloop.counter }}">
+                <geo:instrumentationType codeSpace="urn:ga-gov-au:collocation-information-type">{{ colloc.instrument_type}}</geo:instrumentationType>
+                <geo:status codeSpace="urn:ga-gov-au:collocation-information-type">{{ colloc.status|enum_str|upper }}</geo:status>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="collocation-information-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{colloc.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{colloc.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:notes>{{ colloc.notes }}</geo:notes>
+            </geo:CollocationInformation>
+            <geo:dateInserted>{{ colloc.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:collocationInformation>
+        {% endfor %}
+        {% for sensor in humiditysensor %}
+        <geo:humiditySensor>
+            <geo:HumiditySensor gml:id="humidity-sensor-{{ forloop.counter }}">
+                <geo:type codeSpace="urn:ga-gov-au:humidity-sensor-type">{{ sensor.model }}</geo:type>
+                <geo:notes>{{ sensor.notes }}</geo:notes>
+                <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
+                <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
+                <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="humidity-sensor-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{sensor.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
+                <geo:accuracy-percentRelativeHumidity>{{ sensor.accuracy|precision:1 }}</geo:accuracy-percentRelativeHumidity>
+                <geo:aspiration>{{ sensor.aspiration|enum_str|upper }}</geo:aspiration>
+            </geo:HumiditySensor>
+            <geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:humiditySensor>
+        {% endfor %}
+        {% for sensor in pressuresensor %}
+        <geo:pressureSensor>
+            <geo:PressureSensor gml:id="pressure-sensor-{{ forloop.counter }}">
+                <geo:type codeSpace="urn:ga-gov-au:pressure-sensor-type">{{ sensor.model }}</geo:type>
+                <geo:notes>{{ sensor.notes }}</geo:notes>
+                <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
+                <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
+                <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="pressure-sensor-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{sensor.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
+                <geo:accuracy-hPa>{{ sensor.accuracy|precision:2 }}</geo:accuracy-hPa>
+            </geo:PressureSensor>
+            <geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:pressureSensor>
+        {% endfor %}
+        {% for sensor in temperaturesensor %}
+        <geo:temperatureSensor>
+            <geo:TemperatureSensor gml:id="temperature-sensor-{{ forloop.counter }}">
+                <geo:type codeSpace="urn:ga-gov-au:temperature-sensor-type">{{ sensor.model }}</geo:type>
+                <geo:notes>{{ sensor.notes }}</geo:notes>
+                <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
+                <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
+                <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="temperature-sensor-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{sensor.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
+                <geo:accuracy-degreesCelcius>{{ sensor.accuracy|precision:1 }}</geo:accuracy-degreesCelcius>
+                <geo:aspiration>{{ sensor.aspiration|enum_str|upper }}</geo:aspiration>
+            </geo:TemperatureSensor>
+            <geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:temperatureSensor>
+        {% endfor %}
+        {% for sensor in watervaporradiometer %}
+        <geo:waterVaporSensor>
+            <geo:WaterVaporSensor gml:id="water-vapor-sensor-{{ forloop.counter }}">
+                <geo:type codeSpace="urn:ga-gov-au:water-vapor-sensor-type">{{ sensor.model }}</geo:type>
+                <geo:notes>{{ sensor.notes }}</geo:notes>
+                <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
+                <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
+                <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="water-vapor-sensor-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{sensor.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:distanceToAntenna>{{ sensor.distance_to_antenna|none2empty }}</geo:distanceToAntenna>
+            </geo:WaterVaporSensor>
+            <geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:waterVaporSensor>
+        {% endfor %}
+        {% for instrument in otherinstrumentation %}
+        <geo:otherInstrumentation>
+            <geo:OtherInstrumentation gml:id="other-instrumentation-{{ forloop.counter }}">
+                <geo:instrumentation>{{ instrument.instrumentation }}</geo:instrumentation>
+                <gml:validTime/>
+            </geo:OtherInstrumentation>
+            <geo:dateInserted>{{ instrument.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:otherInstrumentation>
+        {% endfor %}
+        {% for condition in radiointerferences %}
+        <geo:radioInterference>
+            <geo:RadioInterference gml:id="radio-interference-{{ forloop.counter }}">
+                <geo:possibleProblemSource>{{ condition.interferences }}</geo:possibleProblemSource>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="radio-interference-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{condition.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{condition.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:notes>{{ condition.additional_information }}</geo:notes>
+                <geo:observedDegradation>{{ condition.degradations }}</geo:observedDegradation>
+            </geo:RadioInterference>
+            <geo:dateInserted>{{ condition.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:radioInterference>
+        {% endfor %}
+        {% for condition in multipathsources %}
+        <geo:multipathSource>
+            <geo:MultipathSource gml:id="multipath-source-{{ forloop.counter }}">
+                <geo:possibleProblemSource>{{ condition.interferences }}</geo:possibleProblemSource>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="multipath-source-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{condition.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{condition.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:notes>{{ condition.additional_information }}</geo:notes>
+            </geo:MultipathSource>
+            <geo:dateInserted>{{ condition.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:multipathSource>
+        {% endfor %}
+        {% for condition in signalobstructions %}
+        <geo:signalObstruction>
+            <geo:SignalObstruction gml:id="signal-obstruction-{{ forloop.counter }}">
+                <geo:possibleProblemSource>{{ condition.interferences }}</geo:possibleProblemSource>
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="signal-obstruction-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{condition.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{condition.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:notes>{{ condition.additional_information }}</geo:notes>
+            </geo:SignalObstruction>
+            <geo:dateInserted>{{ condition.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:signalObstruction>
+        {% endfor %}
+        {% for effect in localepisodiceffects %}
+        <geo:localEpisodicEffect>
+            <geo:LocalEpisodicEffect gml:id="local-episodic-effect-{{ forloop.counter }}">
+                <gml:validTime>
+                    <gml:TimePeriod gml:id="local-episodic-effect-{{ forloop.counter }}-time-period-1">
+                        <gml:beginPosition>{{effect.effective_start|simple_utc}}</gml:beginPosition>
+                        <gml:endPosition>{{effect.effective_end|simple_utc}}</gml:endPosition>
+                    </gml:TimePeriod>
+                </gml:validTime>
+                <geo:event>{{ effect.event }}</geo:event>
+            </geo:LocalEpisodicEffect>
+            <geo:dateInserted>{{ effect.inserted|iso_utc_full }}</geo:dateInserted>
+        </geo:localEpisodicEffect>
+        {% endfor %}
+        {% if responsibleagency|contact:"primary" %}
+        <geo:siteOwner gml:id="site-owner">
+            {% include "slm/sitelog/xsd/contact_05.xml" with agency=responsibleagency contact=responsibleagency|contact:"primary" role_code="pointOfContact" %}
+        </geo:siteOwner>
+        {% endif %}
+        {% if responsibleagency|contact:"secondary" %}
+        <geo:siteContact gml:id="site-contact-1">
+            {% include "slm/sitelog/xsd/contact_05.xml" with agency=responsibleagency contact=responsibleagency|contact:"secondary" role_code="pointOfContact" %}
+        </geo:siteContact>
+        {% endif %}
+        {% if operationalcontact|contact:"secondary" %}
+        <geo:siteContact gml:id="site-contact-2">
+            {% include "slm/sitelog/xsd/contact_05.xml" with agency=operationalcontact contact=operationalcontact|contact:"secondary" role_code="pointOfContact" %}
+        </geo:siteContact>
+        {% endif %}
+        <geo:siteMetadataCustodian gml:id="site-metadata-custodian">
+            {% include "slm/sitelog/xsd/contact_05.xml" with agency=operationalcontact contact=operationalcontact|contact:"primary" role_code="pointOfContact" %}
+        </geo:siteMetadataCustodian>
+        {% if moreinformation %}
+        <geo:moreInformation>
+            <geo:MoreInformation gml:id="more-information">
+                <geo:dataCenter>{{ moreinformation.primary }}</geo:dataCenter>
+                <geo:dataCenter>{{ moreinformation.secondary }}</geo:dataCenter>
+                <geo:urlForMoreInformation>{{ moreinformation.more_info }}</geo:urlForMoreInformation>
+                <geo:siteMap>{{ moreinformation.sitemap }}</geo:siteMap>
+                <geo:siteDiagram>{{ moreinformation.site_diagram }}</geo:siteDiagram>
+                <geo:horizonMask>{{ moreinformation.horizon_mask }}</geo:horizonMask>
+                <geo:monumentDescription>{{ moreinformation.monument_description }}</geo:monumentDescription>
+                <geo:sitePictures>{{ moreinformation.site_picture }}</geo:sitePictures>
+                <geo:notes>{{ moreinformation.additional_information }}</geo:notes>
+                <geo:antennaGraphicsWithDimensions/>
+                {% if graphic %}
+                <geo:insertTextGraphicFromAntenna>
+{{graphic}}
+                </geo:insertTextGraphicFromAntenna>
+                {% else %}
+                <geo:insertTextGraphicFromAntenna/>
+                {% endif %}
+                <geo:DOI codeSpace="urn:ga-gov-au:self.moreInformation-type">TODO</geo:DOI>
+            </geo:MoreInformation>
+        </geo:moreInformation>
+        {% endif %}
+    </geo:siteLog>
+</geo:GeodesyML>

@@ -1,49 +1,53 @@
+import json
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from slm.defines import (
-    SiteLogStatus,
-    LogEntryType,
-    AntennaReferencePoint,
-    AntennaFeatures
-)
-from django_enum import EnumField
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-from django.db.models.functions import Greatest
-from django.utils.functional import cached_property
-from django.db.models import (
-    F,
-    Q,
-    Max,
-    Case,
-    Value,
-    When
-)
+from django.db.models import Case, F, Max, Q, Value, When
 from django.db.models.functions import (
     Cast,
-    Substr,
-    LPad,
-    Lower,
     Concat,
     ExtractDay,
+    ExtractMonth,
     ExtractYear,
-    ExtractMonth
+    Greatest,
+    Lower,
+    LPad,
+    Substr,
+)
+from django.utils.functional import cached_property
+from django_enum import EnumField
+from slm.defines import (
+    AntennaReferencePoint,
+    Aspiration,
+    CollocationStatus,
+    FractureSpacing,
+    FrequencyStandardType,
+    ISOCountry,
+    SiteLogStatus,
+    TectonicPlates,
 )
 from slm.models import compat
-from django.contrib.auth import get_user_model
 from slm.utils import date_to_str
-import datetime
-import threading
-from collections import namedtuple
-from slm.defines import FlagSeverity
-# we can't use actual nulls for times because it breaks things like
-# Greatest on MYSQL
-NULL_TIME = datetime.datetime.utcfromtimestamp(0)
-
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
+from django.db.models import ExpressionWrapper
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from django.utils.deconstruct import deconstructible
-import json
+from slm import signals as slm_signals
+from slm.validators import (
+    SLMValidator,
+    NULL_TIME,
+    get_validators
+)
+
+
+def bool_condition(*args, **kwargs):
+    return ExpressionWrapper(
+        Q(*args, **kwargs),
+        output_field=models.BooleanField()
+    )
 
 
 class DefaultToStrEncoder(json.JSONEncoder):
@@ -53,174 +57,6 @@ class DefaultToStrEncoder(json.JSONEncoder):
 
     def default(self, obj):
         return str(obj)
-
-
-userName = threading.local()
-
-Flag = namedtuple('Flag', 'message manual severity')
-
-
-@deconstructible
-class SLMValidator:
-
-    # validators are instantiated once per class so we have to make sure
-    # concurrent requests don't mess with each other's validators by using
-    # separate storage for each thread
-    binding = None
-    severity = FlagSeverity.NOTIFY
-
-    def __init__(self, *args, **kwargs):
-        self.severity = kwargs.pop('severity', self.severity)
-        self.binding = threading.local()
-        self.section = None
-        self.field_name = kwargs.pop('field_name', None)
-        super().__init__(*args, **kwargs)
-
-    def __eq__(self, other):
-        return self.severity == other.severity and super().__eq__(other)
-
-    def __call__(self, callable):
-        try:
-            callable()
-        except ValidationError as ve:
-            if self.severity == FlagSeverity.BLOCK_SAVE:
-                self.clear()
-                raise ve
-            if self.section:
-                self.throw_flag(ve.message, self.section, self.field_name)
-
-    def throw_error(self, message, section=None, field_name=None):
-        if self.severity == FlagSeverity.BLOCK_SAVE:
-            self.clear()
-            raise ValidationError(_(message))
-        self.throw_flag(message, section=section, field_name=field_name)
-
-    def throw_flag(self, message, section=None, field_name=None):
-        section = section or self.section
-        if section:
-            if not section._flags:
-                section._flags = {}
-            section._flags[field_name or self.field_name] = message
-            section.save()
-
-    def bind_instance(self, section, field_name=None):
-        self.section = section
-        self.field_name = field_name
-
-    def clear(self):
-        # we must clear this information between invocations
-        self.binding.section = None
-
-    @property
-    def section(self):
-        if not hasattr(self.binding, 'section'):
-            self.binding.section = None
-        return self.binding.section
-
-    @section.setter
-    def section(self, section):
-        self.binding.section = section
-
-    @property
-    def field_name(self):
-        if not hasattr(self.binding, 'field_name'):
-            self.binding.field_name = None
-        return self.binding.field_name
-
-    @field_name.setter
-    def field_name(self, field_name):
-        self.binding.field_name = field_name
-
-    def verbose_name(self, field):
-        if self.section:
-            return self.section._meta.get_field(field).verbose_name
-        return None
-
-
-class FieldPreferred(SLMValidator):
-
-    def __call__(self, value):
-        if self.section and value is None or value == NULL_TIME:
-            self.throw_error(
-                f'{self.verbose_name(self.field_name)} '
-                f'{_("is required to publish")}.'
-            )
-        self.clear()
-
-
-class FieldRequiredToPublish(FieldPreferred):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, severity=FlagSeverity.BLOCK_PUBLISH, **kwargs)
-
-
-class FourIDValidator(SLMValidator, RegexValidator):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, regex='[A-Z0-9]{4}', **kwargs)
-
-    def __call__(self, value):
-        super().__call__(lambda: RegexValidator.__call__(self, value))
-        if self.section and not self.section.site.name.startswith(value):
-            self.throw_error(
-                f'{self.verbose_name(self.field_name)} '
-                f'{_("must be the prefix of the 9 character site name")}.'
-            )
-        self.clear()
-
-
-class TimeRangeValidator(SLMValidator):
-
-    start_field = None
-    end_field = None
-
-    def __init__(self, *args, severity=FlagSeverity.BLOCK_SAVE, **kwargs):
-        self.start_field = kwargs.pop('start_field', None)
-        self.end_field = kwargs.pop('end_field', None)
-        assert(not (self.start_field and self.end_field))
-        super().__init__(*args, severity=severity, **kwargs)
-
-    def __eq__(self, other):
-        return (
-                self.start_field == other.start_field and
-                self.end_field == self.end_field and
-                super().__eq__(other)
-        )
-
-    def __call__(self, value):
-        # todo make this a context handler
-        if self.section:
-            if self.start_field:
-                start = getattr(self.section, self.start_field, None)
-                if start is not None and start != NULL_TIME and value:
-                    if start >= value:
-                        self.throw_error(
-                            f'{self.verbose_name(self.field_name)} '
-                            f'{_("must be greater than")} '
-                            f'{self.verbose_name(self.start_field)}'
-                        )
-            if self.end_field:
-                end = getattr(self.section, self.end_field, None)
-                if end is not None and end != NULL_TIME:
-                    if (
-                        value is None
-                        or value == NULL_TIME
-                        and end is not None
-                        and end != NULL_TIME
-                    ):
-                        self.throw_error(
-                            f'{_("Cannot define")} '
-                            f'{self.verbose_name(self.end_field)} '
-                            f'{_("without defining")} '
-                            f'{self.verbose_name(self.field_name)}.'
-                        )
-                    elif end <= value:
-                        self.throw_error(
-                            f'{self.verbose_name(self.field_name)} '
-                            f'{_("must be less than")} '
-                            f'{self.verbose_name(self.end_field)}'
-                        )
-        self.clear()
 
 
 class SiteManager(models.Manager):
@@ -315,9 +151,19 @@ class SiteQuerySet(models.QuerySet):
         :return: A queryset with all sites un-editable by the user filtered
             out.
         """
-        if user.is_superuser:
-            return self
-        return self.filter(agencies__in=[user.agency])
+        if user.is_authenticated:
+            if user.is_superuser:
+                return self
+            return self.filter(agencies__in=[user.agency])
+        return self.none()
+
+    def annotate_review_pending(self):
+        return self.annotate(
+            _review_pending=bool_condition(
+                review_request__isnull=False,
+                review_request__timestamp__gte=F('last_publish')
+            )
+        )
 
     def meta(self):
         """
@@ -478,6 +324,59 @@ class Site(models.Model):
 
     last_recalc = models.DateTimeField(null=True, blank=True, default=None)
 
+    def is_moderator(self, user):
+        if user.is_superuser:
+            return True
+        return self.moderators.filter(pk=user.pk).exists()
+
+    def get_filename(self, log_format, epoch=None):
+        if epoch is None:
+            epoch = self.last_publish
+        return f'{self.name.upper()}_{epoch.year}{epoch.month:02}' \
+               f'{epoch.day:02}.{log_format.ext}'
+
+    @cached_property
+    def moderators(self):
+        """
+        Get the users who have moderate permission for this site. Moderators
+        are also editors, but are not listed in editors
+
+        :return: A queryset containing users with moderate permission for the
+            site
+        """
+        return get_user_model().objects.filter(is_superuser=True)
+
+    @cached_property
+    def editors(self):
+        """
+        Get the users who have edit permission, but not moderate permission on
+        for this site.
+
+        :return: A queryset containing users with edit permissions for the site
+        """
+        return get_user_model().objects.filter(
+            ~Q(pk__in=self.moderators) & (
+                Q(agency__in=self.agencies.all()) | Q(pk=self.owner.pk)
+            )
+        )
+
+    @property
+    def review_pending(self):
+        """
+        Checks if a review is pending.
+
+        :return: True if a review is pending for this site.
+        """
+        if hasattr(self, '_review_pending'):
+            return self._review_pending
+
+        if hasattr(self, 'review_request') and self.review_request:
+            return (
+                self.last_publish is None or
+                self.review_request.timestamp >= self.last_publish
+            )
+        return False
+
     @classmethod
     def sections(cls):
         if hasattr(cls, 'sections_'):
@@ -555,9 +454,26 @@ class Site(models.Model):
         return cls.subsection_accessors_
 
     def can_publish(self, user):
-        return True
+        """
+        This is a future hook to use for instances where non-moderators are
+        allowed to publish a site log under certain conditions.
 
-    def update_status(self, save=True, head=True):
+        :param user:
+        :return:
+        """
+        if user:
+            return self.is_moderator(user)
+        return False
+
+    def can_edit(self, user):
+        if user and user.is_authenticated:
+            if self.is_moderator(user) or self.owner == user:
+                return True
+            if hasattr(user, 'agency'):
+                return user.agency in self.agencies.all()
+        return False
+
+    def update_status(self, save=True, head=True, user=None, timestamp=None):
         """
         Update the denormalized data that is too expensive to query on the
         fly. This includes flag count, moderation status and DateTimes.
@@ -565,12 +481,23 @@ class Site(models.Model):
         :param save:
         :param head: False if status update should be done on the most recent
             published version of the site log.
+        :param user: The user responsible for a status update check
+        :param timestamp: The time at which the status update is triggered
         :return:
         """
         if head:
             self.head()
         else:
             self.current()
+
+        if not timestamp:
+            timestamp = now()
+
+        self.last_update = timestamp
+
+        if user:
+            self.last_user = user
+
         self.num_flags = 0
         status = SiteLogStatus.PUBLISHED
         for section in self.section_fields():
@@ -590,8 +517,19 @@ class Site(models.Model):
                     continue
                 self.num_flags += len(subsection._flags or {})
                 status = status.merge(subsection.mod_status)
+
+        # if in either of these two states - status update must come from
+        # a global publish of the site log, not from this which can be
+        # triggered by a section publish
         if self.status not in {SiteLogStatus.DORMANT, SiteLogStatus.PENDING}:
+            if status == SiteLogStatus.PUBLISHED:
+                self.last_publish = timestamp
             self.status = status
+            if (
+                self.status == SiteLogStatus.PUBLISHED
+                and hasattr(self, 'review_request')
+            ):
+                self.review_request.delete()
         if save:
             self.save()
 
@@ -624,6 +562,66 @@ class Site(models.Model):
     @property
     def fourid(self):
         return self.name[:4]
+
+    def publish(self, request=None, silent=False, timestamp=None):
+        """
+        Publish the current HEAD edits on this SiteLog.
+
+        :param request: The request that triggered the publish (optional)
+        :param silent: If True, no publish signal will be sent.
+        :param timestamp: Timestamp to use for the publish, if none - will
+            be the time of this call
+        :return: The number of sections and subsections that had changes
+            that were published or 0 if no changes were at HEAD to publish.
+        """
+        if timestamp is None:
+            timestamp = now()
+
+        sections_published = 0
+        for section_name in self.section_fields():
+            current = getattr(self, f'{section_name}_set').current()
+            if current:
+                sections_published += int(
+                    current.publish(
+                        request=request,
+                        silent=True,
+                        timestamp=timestamp,
+                        update_site=False
+                    )
+                )
+
+        for subsection_name in self.subsection_fields():
+            for subsection in getattr(
+                self, f'{subsection_name}_set'
+            ).current():
+                sections_published += int(
+                    subsection.publish(
+                        request=request,
+                        silent=True,
+                        timestamp=timestamp,
+                        update_site=False
+                    )
+                )
+
+        # this might be an initial PUBLISH when we're in PENDING or DORMANT
+        if sections_published or self.status != SiteLogStatus.PUBLISHED:
+            self.status = SiteLogStatus.PUBLISHED
+            self.last_publish = timestamp
+            self.last_user = request.user if request else None
+            self.save()
+            if hasattr(self, 'review_request'):
+                self.review_request.delete()
+            if not silent:
+                slm_signals.site_published.send(
+                    sender=self,
+                    site=self,
+                    user=request.user if request else None,
+                    timestamp=timestamp,
+                    request=request,
+                    section=None
+                )
+
+        return sections_published
 
     def __str__(self):
         return self.name
@@ -671,7 +669,7 @@ class SiteSection(models.Model):
     published = models.BooleanField(default=False, db_index=True)
 
     editor = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         default=None,
@@ -687,19 +685,80 @@ class SiteSection(models.Model):
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
 
-    def clean(self):
-        for field in self._meta.fields:
-            for validator in field.validators:
-                if isinstance(validator, FieldPreferred):
-                    validator.bind_instance(self, field.name)
-                    validator(getattr(self, field.name, None))
+    def publish(
+        self,
+        request=None,
+        silent=False,
+        timestamp=None,
+        update_site=True
+    ):
+        """
+        Publish the current HEAD edits on this SiteLog.
 
-    def clean_fields(self, exclude=None):
+        :param request: The request that triggered the publish (optional)
+        :param silent: If True, no publish signal will be sent.
+        :param timestamp: Timestamp to use for the publish, if none - will
+            be the time of this call
+        :param update_site: If True, site will be updated with publish
+            information (i.e. pass False if this section is being published as
+            part of a larger site publish)
+        :return: True if a change was published, False otherwise.
+        """
+        if self.published:
+            return False
+
+        if timestamp is None:
+            timestamp = now()
+
+        self.published = True
+        self.save()
+
+        if update_site:
+            self.site.update_status(save=True, timestamp=timestamp)
+
+        if not silent:
+            slm_signals.site_published.send(
+                sender=self,
+                site=self.site,
+                user=request.user if request else None,
+                timestamp=timestamp,
+                request=request,
+                section=self
+            )
+        return True
+
+    def can_publish(self, user):
+        """
+        This is a future hook to use for instances where non-moderators are
+        allowed to publish a site log section under certain conditions.
+
+        :param user:
+        :return:
+        """
+        return self.site.is_moderator(user)
+
+    def can_edit(self, user):
+        return self.site.can_edit(user)
+
+    def clean(self):
+        """
+        Run configured validation routines. Routines are configured in
+        the SLM_DATA_VALIDATORS setting. This setting maps model fields to
+        validation logic. We run through those routines here and depending
+        on severity we either add flags or throw an error.
+
+        :except ValidationError: If a save-blocking validation error has
+            occurred.
+        """
+        errors = {}
         for field in self._meta.fields:
-            for validator in field.validators:
-                if isinstance(validator, SLMValidator):
-                    validator.bind_instance(self, field.name)
-        super().clean_fields(exclude=exclude)
+            for validator in get_validators(self._meta.label, field.name):
+                try:
+                    validator(self, field, getattr(self, field.name, None))
+                except ValidationError as val_err:
+                    errors[field.name] = val_err.error_list
+        if errors:
+            raise ValidationError(errors)
 
     @property
     def num_flags(self):
@@ -732,16 +791,22 @@ class SiteSection(models.Model):
         if published and published.id == self.id:
             return diff
 
-        def transform(value):
+        def transform(value, field_name):
             if isinstance(value, models.Model):
-                return value.pk
+                return str(value)
+            elif isinstance(
+                self._meta.get_field(field),
+                models.ManyToManyField
+            ):
+                if value:
+                    return '+'.join([str(val) for val in value.all()])
             return value
 
         for field in self.site_log_fields():
             if getattr(self, field) != getattr(published, field, None):
                 diff[field] = {
-                    'pub': transform(getattr(published, field, None)),
-                    'head': transform(getattr(self, field))
+                    'pub': transform(getattr(published, field, None), field),
+                    'head': transform(getattr(self, field), field)
                 }
         return diff
 
@@ -772,7 +837,8 @@ class SiteSection(models.Model):
                 'custom_graphic',
                 'editor',
                 'deleted',
-                '_flags'
+                '_flags',
+                'inserted'
             }
         ]
 
@@ -883,6 +949,8 @@ class SiteSubSection(SiteSection):
 
     is_deleted = models.BooleanField(default=False, null=False, blank=True)
 
+    inserted = models.DateTimeField(default=now)
+
     objects = SiteSubSectionManager.from_queryset(SiteSubSectionQuerySet)()
 
     @property
@@ -946,7 +1014,7 @@ class SiteSubSection(SiteSection):
 class SiteForm(SiteSection):
     """
     TODO - this can be reconstituted on the fly
-        (i.e. this is denomralized data - with the exception of prepared by?) - get rid of it?
+        (i.e. this is denormalized data - with the exception of prepared by?) - get rid of it?
 
     0.   Form
 
@@ -977,15 +1045,13 @@ class SiteForm(SiteSection):
 
     prepared_by = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Prepared by (full name)'),
         help_text=_('Enter the name of who prepared this site log')
     )
     date_prepared = models.DateField(
         null=True,
-        blank=True,
-        default=None,
+        blank=False,
         verbose_name=_('Date Prepared'),
         help_text=_('Enter the date the site log was prepared (CCYY-MM-DD).')
     )
@@ -1000,7 +1066,7 @@ class SiteForm(SiteSection):
     previous_log = models.CharField(
         max_length=50,
         blank=True,
-        default=None,
+        default='',
         verbose_name=_('Previous Site Log'),
         help_text=_(
             'Enter previous site log in this format: ssss_CCYYMMDD.log '
@@ -1086,24 +1152,15 @@ class SiteIdentification(SiteSection):
 
     site_name = models.CharField(
         max_length=255,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Site Name'),
         help_text=_('Enter the name of the site.')
     )
-    four_character_id = models.CharField(
-        max_length=4,
-        default='',
-        blank=True,
-        verbose_name=_('Four Character ID'),
-        help_text=_(
-            'This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 '
-            'filenames. Format: (XXXX - existing four character IGS station '
-            'name, M - Monument or marker number (0-9), R - Receiver number '
-            '(0-9), CCC - Three digit ISO 3166-1 country code)'
-        ),
-        validators=[FourIDValidator()]
-    )
+
+    @cached_property
+    def four_character_id(self):
+        return self.site.name[0:4].upper()
+
     monument_inscription = models.CharField(
         max_length=50,
         default='',
@@ -1114,8 +1171,7 @@ class SiteIdentification(SiteSection):
 
     iers_domes_number = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('IERS DOMES Number'),
         help_text=_(
             'This is strictly required. '
@@ -1137,8 +1193,7 @@ class SiteIdentification(SiteSection):
 
     date_installed = models.DateTimeField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Date Installed'),
         help_text=_(
             'Enter the original date that this site was included in the IGS. '
@@ -1162,7 +1217,7 @@ class SiteIdentification(SiteSection):
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Height of the Monument'),
+        verbose_name=_('Height of the Monument (m)'),
         help_text=_(
             'Enter the height of the monument above the ground surface in '
             'meters. Units: (m)'
@@ -1182,7 +1237,7 @@ class SiteIdentification(SiteSection):
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Foundation Depth'),
+        verbose_name=_('Foundation Depth (m)'),
         help_text=_(
             'Enter the depth of the monument foundation below the ground '
             'surface in meters. Format: (m)'
@@ -1233,9 +1288,12 @@ class SiteIdentification(SiteSection):
         )
     )
 
-    fracture_spacing = models.CharField(
+    fracture_spacing = EnumField(
+        FractureSpacing,
+        strict=False,
         max_length=50,
-        default='',
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Fracture Spacing'),
         help_text=_(
@@ -1325,8 +1383,7 @@ class SiteLocation(SiteSection):
 
     city = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('City or Town'),
         help_text=_('Enter the city or town the site is located in')
     )
@@ -1338,17 +1395,22 @@ class SiteLocation(SiteSection):
         help_text=_('Enter the state or province the site is located in')
     )
 
-    country = models.CharField(
+    country = EnumField(
+        ISOCountry,
+        strict=False,
         max_length=100,
-        default='',
-        blank=True,
-        verbose_name=_('Country'),
+        blank=False,
+        null=True,
+        verbose_name=_('Country or Region'),
         help_text=_('Enter the country/region the site is located in')
     )
 
-    tectonic = models.CharField(
+    tectonic = EnumField(
+        TectonicPlates,
+        strict=False,
         max_length=50,
-        default='',
+        null=True,
+        default=None,
         blank=True,
         verbose_name=_('Tectonic Plate'),
         help_text=_(
@@ -1358,8 +1420,7 @@ class SiteLocation(SiteSection):
 
     x = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('X Coordinate (m)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -1368,8 +1429,7 @@ class SiteLocation(SiteSection):
 
     y = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Y Coordinate (m)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -1378,8 +1438,7 @@ class SiteLocation(SiteSection):
 
     z = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Z Coordinate (m)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -1389,39 +1448,38 @@ class SiteLocation(SiteSection):
     # todo convert these to geodjango native PointField
     latitude = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Latitude (N is +)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. '
             'Format: (+/-DDMMSS.SS)'
         ),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(900000), MinValueValidator(-900000)]
     )
 
     longitude = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Longitude (E is +)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. '
-            'Format: (+/-DDMMSS.SS)'
+            'Format: (+/-DDDMMSS.SS)'
         ),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(1800000), MinValueValidator(-1800000)]
     )
 
     elevation = models.FloatField(
         null=True,
-        default=None,
-        blank=True,
         verbose_name=_('Elevation (m,ellips.)'),
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format: The '
             'elevation may be given to more decimal places than F7.1. 7.1 is '
             'a minimum for the SINEX format'
         ),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(9000), MinValueValidator(-500)]
     )
 
     additional_information = models.TextField(
@@ -1449,6 +1507,23 @@ class SiteReceiver(SiteSubSection):
          Temperature Stabiliz.    : (none or tolerance in degrees C)
          Additional Information   : (multiple lines)
     """
+    @classmethod
+    def site_log_fields(cls):
+        # satellite_system is not picked up by the super site_log_fields
+        # because its many to many - just establish this list here manually
+        # instead
+        return [
+            'receiver_type',
+            'satellite_system',
+            'serial_number',
+            'firmware',
+            'elevation_cutoff',
+            'installed',
+            'removed',
+            'temp',
+            'temp_stab',
+            'additional_info'
+        ]
 
     @classmethod
     def section_number(cls):
@@ -1464,7 +1539,7 @@ class SiteReceiver(SiteSubSection):
 
     @property
     def heading(self):
-        return self.receiver_type
+        return self.receiver_type.model
 
     @property
     def effective(self):
@@ -1474,10 +1549,9 @@ class SiteReceiver(SiteSubSection):
             return f'{date_to_str(self.installed)}'
         return ''
 
-    receiver_type = models.CharField(
-        max_length=50,
-        default='',
-        blank=True,
+    receiver_type = models.ForeignKey(
+        'slm.Receiver',
+        blank=False,
         verbose_name=_('Receiver Type'),
         help_text=_(
             'Please find your receiver in '
@@ -1486,21 +1560,20 @@ class SiteReceiver(SiteSubSection):
             'etc. exactly correct. If you do not find a listing for your '
             'receiver, please notify the IGS Central Bureau. '
             'Format: (A20, from rcvr_ant.tab; see instructions)'
-        )
+        ),
+        on_delete=models.PROTECT
     )
 
-    satellite_system = models.CharField(
-        max_length=50,
-        default='',
-        blank=True,
+    satellite_system = models.ManyToManyField(
+        'slm.SatelliteSystem',
         verbose_name=_('Satellite System'),
+        blank=False,
         help_text=_('Check all GNSS systems that apply')
     )
 
     serial_number = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Serial Number'),
         help_text=_(
             'Enter the receiver serial number. '
@@ -1510,37 +1583,34 @@ class SiteReceiver(SiteSubSection):
 
     firmware = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Firmware Version'),
         help_text=_('Enter the receiver firmware version. Format: (A11)')
     )
 
-    elevation_cutoff = models.CharField(
-        max_length=50,
-        default='',
+    elevation_cutoff = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
-        verbose_name=_('Elevation Cutoff Setting'),
+        verbose_name=_('Elevation Cutoff Setting (°)'),
         help_text=_(
             'Please respond with the tracking cutoff as set in the receiver, '
             'regardless of terrain or obstructions in the area. Format: (deg)'
-        )
+        ),
+        validators=[
+            MinValueValidator(-5),
+            MaxValueValidator(15)
+        ]
     )
 
-    # todo down-grade to date?
     installed = models.DateTimeField(
         null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Date Installed'),
         help_text=_(
             'Enter the date and time the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
-        ),
-        validators=[
-            FieldRequiredToPublish(),
-            TimeRangeValidator(end_field='removed')
-        ]
+        )
     )
 
     removed = models.DateTimeField(
@@ -1552,19 +1622,30 @@ class SiteReceiver(SiteSubSection):
             'Enter the date and time the receiver was removed. It is important'
             ' that the date removed is entered BEFORE the addition of a new '
             'receiver. Format: (CCYY-MM-DDThh:mmZ)'
-        ),
-        validators=[TimeRangeValidator(start_field='installed')]
+        )
     )
 
-    temp_stab = models.CharField(
-        max_length=50,
-        default='',
+    temp = models.FloatField(
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_('Temperature'),
+        help_text=_(
+            'If the receiver is in a temperature controlled environment, '
+            'please enter the approximate temperature of that environment. '
+            'Format: (°C)'
+        )
+    )
+    # this field is a string in GeodesyML - therefore leaving it as character
+    temp_stab = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Temperature Stabiliz.'),
         help_text=_(
             'If the receiver is in a temperature controlled environment, '
-            'please enter the approximate temperature of that environment. '
-            'Format: (none or tolerance in degrees C)'
+            'please enter the approximate temperature range of that '
+            'environment. Format: (± °C)'
         )
     )
 
@@ -1601,7 +1682,7 @@ class SiteAntenna(SiteSubSection):
 
     @property
     def heading(self):
-        return self.antenna_type.name
+        return self.antenna_type.model
 
     @property
     def effective(self):
@@ -1624,10 +1705,9 @@ class SiteAntenna(SiteSubSection):
         return None
 
     antenna_type = models.ForeignKey(
-        'slm.AntennaType',
+        'slm.Antenna',
         on_delete=models.PROTECT,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Antenna Type'),
         help_text=_(
             'Please find your antenna radome type in '
@@ -1646,8 +1726,7 @@ class SiteAntenna(SiteSubSection):
 
     serial_number = models.CharField(
         max_length=128,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Serial Number'),
         help_text=_('Only Alpha Numeric Chars and - . Symbols allowed')
     )
@@ -1655,10 +1734,9 @@ class SiteAntenna(SiteSubSection):
     # todo remove this b/c it belongs solely on antenna type?
     reference_point = EnumField(
         AntennaReferencePoint,
-        blank=True,
-        default=None,
-        null=True,
+        blank=False,
         verbose_name=_('Antenna Reference Point'),
+        null=True,
         help_text=_(
             'Locate your antenna in the file '
             'https://files.igs.org/pub/station/general/antenna.gra. Indicate '
@@ -1670,10 +1748,8 @@ class SiteAntenna(SiteSubSection):
     )
 
     marker_up = models.FloatField(
-        null=True,
-        blank=True,
-        default=None,
-        verbose_name=_('Marker->ARP Up Ecc. (m)'),
+        blank=False,
+        verbose_name=_('Marker->ARP Up Ecc (m)'),
         help_text=_(
             'Up eccentricity is the antenna height measured to an accuracy of '
             '1mm and defined as the vertical distance of the ARP from the '
@@ -1681,10 +1757,8 @@ class SiteAntenna(SiteSubSection):
         )
     )
     marker_north = models.FloatField(
-        null=True,
-        blank=True,
-        default=None,
-        verbose_name=_('Marker->ARP North Ecc(m)'),
+        blank=False,
+        verbose_name=_('Marker->ARP North Ecc (m)'),
         help_text=_(
             'North eccentricity is the offset between the ARP and marker '
             'described in section 1 measured to an accuracy of 1mm. '
@@ -1692,10 +1766,8 @@ class SiteAntenna(SiteSubSection):
         )
     )
     marker_east = models.FloatField(
-        null=True,
-        blank=True,
-        default=None,
-        verbose_name=_('Marker->ARP East Ecc(m)'),
+        blank=False,
+        verbose_name=_('Marker->ARP East Ecc (m)'),
         help_text=_(
             'East eccentricity is the offset between the ARP and marker '
             'described in section 1 measured to an accuracy of 1mm. '
@@ -1703,22 +1775,22 @@ class SiteAntenna(SiteSubSection):
         )
     )
 
-    alignment = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
-        verbose_name=_('Alignment from True N'),
+    alignment = models.FloatField(
+        blank=False,
+        null=True,
+        verbose_name=_('Alignment from True N (°)'),
         help_text=_(
-            'Enter the clockwise offset from true north in degrees. '
+            'Enter the clockwise offset from true north in degrees. The '
+            'positive direction is clockwise, so that due east would be '
+            'equivalent to a response of "+90". '
             'Format: (deg; + is clockwise/east)'
-        )
+        ),
+        validators=[MinValueValidator(-180), MaxValueValidator(180)]
     )
 
-    # TODO should this be an Enumeration - or foreign key into table
-    radome_type = models.CharField(
-        max_length=50,
-        blank=True,
-        default='',
+    radome_type = models.ForeignKey(
+        'slm.Radome',
+        blank=False,
         verbose_name=_('Antenna Radome Type'),
         help_text=_(
             'Please find your antenna radome type in '
@@ -1731,7 +1803,8 @@ class SiteAntenna(SiteSubSection):
             'zenith- and azimuth-dependent calibration values down to the '
             'horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; '
             'see instructions)'
-        )
+        ),
+        on_delete=models.PROTECT
     )
 
     radome_serial_number = models.CharField(
@@ -1762,15 +1835,14 @@ class SiteAntenna(SiteSubSection):
     )
 
     installed = models.DateTimeField(
-        null=True,
-        default=None,
-        blank=True,
+        blank=False,
         verbose_name=_('Date Installed'),
         help_text=_(
             'Enter the date the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
         )
     )
+
     removed = models.DateTimeField(
         default=None,
         blank=True,
@@ -1798,69 +1870,13 @@ class SiteAntenna(SiteSubSection):
     def graphic(self):
         if self.custom_graphic:
             return self.custom_graphic
-        return self.antenna_type.graphic.graphic
+        return self.antenna_type.graphic
 
     custom_graphic = models.TextField(
         default='',
         blank=True,
         help_text=_('Custom antenna graphic - if different than the default.')
     )
-
-
-class AntennaGraphic(models.Model):
-
-    graphic = models.TextField(blank=False, null=False)
-
-
-class AntennaType(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(default='', blank=True)
-    graphic = models.ForeignKey(
-        AntennaGraphic,
-        null=True,
-        default=None,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='antennas'
-    )
-
-    reference_point = EnumField(
-        AntennaReferencePoint,
-        blank=True,
-        default=None,
-        null=True,
-        verbose_name=_('Antenna Reference Point'),
-        help_text=_(
-            'Locate your antenna in the file '
-            'https://files.igs.org/pub/station/general/antenna.gra. Indicate '
-            'the three-letter abbreviation for the point which is indicated '
-            'equivalent to ARP for your antenna. Contact the Central Bureau if'
-            ' your antenna does not appear. Format: (BPA/BCR/XXX from '
-            'antenna.gra; see instr.)'
-        )
-    )
-
-    features = EnumField(
-        AntennaFeatures,
-        blank=True,
-        default=None,
-        null=True,
-        verbose_name=_('Antenna Features'),
-        help_text=_('NOM/RXC/XXX from "antenna.gra"; see NRP abbreviations.')
-    )
-
-    verified = models.BooleanField(
-        default=False,
-        help_text=_('Has this antenna type been verified to be accurate?')
-    )
-
-    @property
-    def full(self):
-        return f'{self.name} {self.reference_point.label} ' \
-               f'{self.features.label}'
-
-    def __str__(self):
-        return self.name
 
 
 class SiteSurveyedLocalTies(SiteSubSection):
@@ -1946,7 +1962,9 @@ class SiteSurveyedLocalTies(SiteSubSection):
         default='',
         blank=True,
         verbose_name=_('Tied Marker CDP Number'),
-        help_text=_('Enter the NASA CDP identifier if available. Format: (A4)')
+        help_text=_(
+            'Enter the NASA CDP identifier if available. Format: (A4)'
+        )
     )
     domes_number = models.CharField(
         max_length=50,
@@ -1989,9 +2007,9 @@ class SiteSurveyedLocalTies(SiteSubSection):
         )
     )
 
-    accuracy = models.CharField(
-        max_length=50,
-        default='',
+    accuracy = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Accuracy (mm)'),
         help_text=_('Enter the accuracy of the tied survey. Format: (mm).')
@@ -2076,25 +2094,25 @@ class SiteFrequencyStandard(SiteSubSection):
     def subsection_number(cls):
         return None
 
-    # todo - enumeration?
-    standard_type = models.CharField(
+    standard_type = EnumField(
+        FrequencyStandardType,
         max_length=50,
-        blank=True,
-        default='',
+        strict=False,
+        blank=False,
+        null=True,
         verbose_name=_('Standard Type'),
         help_text=_(
             'Select whether the frequency standard is INTERNAL or EXTERNAL '
             'and describe the oscillator type. '
-            'Format: (H-MASER/CESIUM/etc)'
+            'Format: (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)'
         )
     )
 
-    # todo - to numeric?
-    input_frequency = models.CharField(
-        max_length=50,
+    input_frequency = models.FloatField(
+        null=True,
         blank=True,
-        default='',
-        verbose_name=_('Input Frequency'),
+        default=None,
+        verbose_name=_('Input Frequency (MHz)'),
         help_text=_('Enter the input frequency in MHz if known.')
     )
 
@@ -2109,14 +2127,14 @@ class SiteFrequencyStandard(SiteSubSection):
     )
 
     effective_start = models.DateField(
-        blank=True,
+        blank=False,
         null=True,
-        default=None,
         help_text=_(
             'Enter the effective start date for the frequency standard. '
             'Format: (CCYY-MM-DD)'
         )
     )
+
     effective_end = models.DateField(
         blank=True,
         null=True,
@@ -2185,20 +2203,22 @@ class SiteCollocation(SiteSubSection):
 
     instrument_type = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Instrumentation Type'),
         help_text=_('Select all collocated instrument types that apply')
     )
 
-    # todo should be enum
-    status = models.CharField(
+    status = EnumField(
+        CollocationStatus,
         max_length=50,
-        default='',
-        blank=True,
+        strict=False,
+        blank=False,
+        null=True,
+        default=None,
         verbose_name=_('Status'),
         help_text=_('Select appropriate status')
     )
+
     notes = models.TextField(
         blank=True,
         default='',
@@ -2212,7 +2232,7 @@ class SiteCollocation(SiteSubSection):
     # effdate and effstart merged into this field
     effective_start = models.DateField(
         max_length=50,
-        blank=True,
+        blank=False,
         null=True,
         help_text=_(
             'Enter the effective start date of the collocated instrument. '
@@ -2281,8 +2301,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
 
     manufacturer = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Manufacturer'),
         help_text=_("Enter manufacturer's name")
     )
@@ -2295,10 +2314,9 @@ class MeteorologicalInstrumentation(SiteSubSection):
     )
 
     height_diff = models.FloatField(
-        default=None,
         null=True,
-        blank=True,
-        verbose_name=_('Height Diff to Ant'),
+        blank=False,
+        verbose_name=_('Height Diff to Ant (m)'),
         help_text=_(
             'In meters, enter the difference in height between the sensor and '
             'the GNSS antenna. Positive number indicates the sensor is above '
@@ -2322,9 +2340,8 @@ class MeteorologicalInstrumentation(SiteSubSection):
     calibration_date.field = calibration
 
     effective_start = models.DateField(
+        blank=False,
         null=True,
-        blank=True,
-        default=None,
         help_text=_(
             'Enter the effective start date for the sensor. '
             'Format: (CCYY-MM-DD)'
@@ -2345,7 +2362,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
         default='',
         verbose_name=_('Notes'),
         help_text=_(
-            'Enter any additional information relevant to the humidity sensor.'
+            'Enter any additional information relevant to the sensor.'
             ' Format: (multiple lines)'
         )
     )
@@ -2397,36 +2414,35 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Humidity Sensor Model'),
         help_text=_('Enter humidity sensor model')
     )
 
-    # todo integer?
-    sampling_interval = models.CharField(
-        default='',
+    sampling_interval = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
-        verbose_name=_('Data Sampling Interval'),
+        verbose_name=_('Data Sampling Interval (sec)'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
-    # todo enforce float?
-    accuracy = models.CharField(
-        default='',
+    accuracy = models.FloatField(
+        default=None,
         blank=True,
-        max_length=50,
-        verbose_name=_('Accuracy'),
+        null=True,
+        verbose_name=_('Accuracy (% rel h)'),
         help_text=_(
             'Enter the accuracy in % relative humidity. Format: (% rel h)'
         )
     )
 
-    # todo enum?
-    aspiration = models.CharField(
-        default='',
+    aspiration = EnumField(
+        Aspiration,
+        null=True,
+        default=None,
         blank=True,
+        strict=False,
         max_length=50,
         verbose_name=_('Aspiration'),
         help_text=_(
@@ -2472,27 +2488,24 @@ class SitePressureSensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Pressure Sensor Model'),
         help_text=_('Enter pressure sensor model')
     )
 
-    # todo integer?
-    sampling_interval = models.CharField(
-        default='',
+    sampling_interval = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Data Sampling Interval'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
-    # todo enforce float?
-    accuracy = models.CharField(
-        default='',
+    accuracy = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
-        verbose_name=_('Accuracy'),
+        verbose_name=_('Accuracy (hPa)'),
         help_text=_('Enter the accuracy in hectopascal. Format: (hPa)')
     )
 
@@ -2536,38 +2549,37 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Temp. Sensor Model'),
         help_text=_('Enter temperature sensor model')
     )
 
-    # todo integer?
-    sampling_interval = models.CharField(
-        default='',
+    sampling_interval = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
         verbose_name=_('Data Sampling Interval'),
         help_text=_('Enter the sample interval in seconds. Format: (sec)')
     )
 
-    # todo enforce float?
-    accuracy = models.CharField(
-        default='',
+    accuracy = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
-        max_length=50,
-        verbose_name=_('Accuracy'),
+        verbose_name=_('Accuracy (deg C)'),
         help_text=_(
             'Enter the accuracy in degrees Centigrade. Format: (deg C)'
         )
     )
 
-    # todo enum?
-    aspiration = models.CharField(
-        default='',
+    aspiration = EnumField(
+        Aspiration,
+        null=True,
+        default=None,
         blank=True,
+        strict=False,
         max_length=50,
-        verbose_name='Aspiration',
+        verbose_name=_('Aspiration'),
         help_text=_(
             'Enter the aspiration type if known. '
             'Format: (UNASPIRATED/NATURAL/FAN/etc)'
@@ -2609,17 +2621,16 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Water Vapor Radiometer'),
         help_text=_('Enter water vapor radiometer')
     )
 
     distance_to_antenna = models.FloatField(
         default=None,
-        blank=True,
+        blank=False,
         null=True,
-        verbose_name=_('Distance to Antenna'),
+        verbose_name=_('Distance to Antenna (m)'),
         help_text=_(
             'Enter the horizontal distance between the WVR and the GNSS '
             'antenna to the nearest meter. Format: (m)'
@@ -2656,8 +2667,7 @@ class SiteOtherInstrumentation(SiteSubSection):
         return None
 
     instrumentation = models.TextField(
-        blank=True,
-        default='',
+        blank=False,
         verbose_name=_('Other Instrumentation'),
         help_text=_(
             'Enter any other relevant information regarding meteorological '
@@ -2692,7 +2702,6 @@ class Condition(SiteSubSection):
         return 'Local Ongoing Conditions Possibly Affecting Computed Position'
 
     effective_start = models.DateField(
-        max_length=50,
         blank=True,
         null=True,
         default=None,
@@ -2703,7 +2712,6 @@ class Condition(SiteSubSection):
     )
 
     effective_end = models.DateField(
-        max_length=50,
         blank=True,
         null=True,
         default=None,
@@ -2968,21 +2976,19 @@ class AgencyPOC(SiteSection):
             'additional_information',
         ]
 
-    agency = models.CharField(
+    agency = models.TextField(
         max_length=300,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Agency'),
         help_text=_('Enter contact agency name')
     )
     preferred_abbreviation = models.CharField(
-        max_length=50,
-        default='',
-        blank=True,
+        max_length=50,  # todo A10
+        blank=False,
         verbose_name=_('Preferred Abbreviation'),
         help_text=_("Enter the contact agency's preferred abbreviation")
     )
-    mailing_address = models.CharField(
+    mailing_address = models.TextField(
         max_length=300,
         default='',
         blank=True,
@@ -2992,15 +2998,13 @@ class AgencyPOC(SiteSection):
 
     primary_name = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Contact Name'),
         help_text=_('Enter primary contact organization name')
     )
     primary_phone1 = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Telephone (primary)'),
         help_text=_('Enter primary contact primary phone number')
     )
@@ -3019,8 +3023,7 @@ class AgencyPOC(SiteSection):
         help_text=_('Enter primary contact organization fax number')
     )
     primary_email = models.EmailField(
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('E-mail'),
         help_text=_(
             'Enter primary contact organization email address. MUST be a '
@@ -3182,22 +3185,20 @@ class SiteMoreInformation(SiteSection):
 
     primary = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Primary Data Center'),
         help_text=_('Enter the name of the primary operational data center')
     )
     secondary = models.CharField(
         max_length=50,
-        default='',
-        blank=True,
+        blank=False,
         verbose_name=_('Secondary Data Center'),
         help_text=_('Enter the name of the secondary or backup data center')
     )
 
     more_info = models.URLField(
-        default=None,
-        null=True,
+        default='',
+        null=False,
         blank=True,
         verbose_name=_('URL for More Information')
     )
@@ -3253,92 +3254,3 @@ class SiteMoreInformation(SiteSection):
     #antenna_graphic.verbose_name = _('')
     #antenna_graphic.no_indent = True
 
-
-class LogEntryManager(models.Manager):
-    pass
-
-
-class LogEntryQuerySet(models.QuerySet):
-
-    def for_user(self, user):
-        if user.is_superuser:
-            return self
-        return self.filter(site__agencies__in=[user.agency])
-
-
-class LogEntry(models.Model):
-
-    user = models.ForeignKey(
-        get_user_model(),
-        on_delete=models.SET_NULL,
-        null=True,
-        default=None,
-        blank=True,
-        related_name='logentries'
-    )
-
-    timestamp = models.DateTimeField(
-        auto_now_add=True,
-        null=False,
-        blank=True,
-        db_index=True
-    )
-
-    # this is the timestamp of the data change which may be different than
-    # the timestamp on the LogEntry, for instance in the event of a publish
-    epoch = models.DateTimeField(
-        null=False,
-        blank=True,
-        db_index=True
-    )
-
-    type = EnumField(LogEntryType, null=False, blank=False)
-
-    site = models.ForeignKey(
-        Site,
-        on_delete=models.CASCADE,
-        null=True,
-        default=None,
-        blank=True
-    )
-
-    site_log_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        related_name='logentries',
-        null=True,
-        default=None,
-        blank=True
-    )
-    site_log_id = models.PositiveIntegerField(
-        null=True,
-        default=None,
-        blank=True
-    )
-    site_log_object = GenericForeignKey('site_log_type', 'site_log_id')
-
-    ip = models.GenericIPAddressField(null=True, default=None, blank=True)
-
-    objects = LogEntryManager.from_queryset(LogEntryQuerySet)()
-
-    @property
-    def target(self):
-        if self.type == LogEntryType.NEW_SITE:
-            return self.site.name
-        if self.site_log_type:
-            if issubclass(self.site_log_type.model_class(), SiteSubSection):
-                return self.site_log_type.model_class().subsection_name()
-            elif issubclass(self.site_log_type.model_class(), SiteSection):
-                return self.site_log_type.model_class().section_name()
-            return self.site_log_type.verbose_name
-        return ''
-
-    def __str__(self):
-        return f'({self.user.name or self.user.email if self.user else ""}) ' \
-               f'[{self.timestamp}]: {self.type} -> {self.target}'
-
-    class Meta:
-        indexes = [
-            models.Index(fields=["site_log_type", "site_log_id"]),
-        ]
-        ordering = ('-timestamp',)

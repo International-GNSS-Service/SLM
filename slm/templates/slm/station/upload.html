@@ -1,0 +1,225 @@
+<!--
+
+Template for Download page.
+
+-->
+
+{% extends "slm/station/base.html" %}
+{% load i18n slm %}
+
+{% block head %}
+    {{ block.super }}
+
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css"/>
+
+    <style>
+        #upload-container {}
+
+        #sitefile-upload {
+            width: 100%;
+            height: 400px;
+        }
+    </style>
+
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+
+{% endblock head %}
+
+{% block action_content %}
+<div class="row">
+    <div class="col-3">
+      {% block file_list %}
+        {% include 'slm/widgets/filelist.html' %}
+      {% endblock %}
+    </div>
+    <div class="col-9">
+    <div class="container px-5">
+      <!-- Title -->
+      <div class="d-flex flex-column justify-content-left align-items-left mt-4">
+        <div class="mb-4 pb-3 border-bottom">
+            <h2 id="slm-file-header">{% if file %}<a href="{{ file.link }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> <span class="slm-file-name">{{ file.name }}</span></a>{% else %}{% trans "Upload" %}{% endif %}</h2>
+        </div>
+      </div>
+
+      <!-- Download Options -->
+      <div id="upload-container" class="p-3">
+
+          {% if file %}
+            <!-- action bar -->
+              <div class="d-flex justify-content-between">
+                  <div class="d-flex flex-column">
+                    {% if file.user %}<p class="fs-5"><strong>{% trans "Uploaded by:" %}</strong> {{ file.user.name }}</p>{% endif %}
+                    <p class="fs-5"><strong>{% trans "Date Uploaded:" %}</strong> {{ file.timestamp.date }}</p>
+                  </div>
+                <div id="file-actions" class="d-flex justify-content-end align-items-center">
+                    {% if can_publish %}
+                    <button name="unpublish" onclick="publishFile(false);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.PUBLISHED %}display: none{% endif %}">{% trans 'Unpublish' %}</button>
+                    <button name="publish" onclick="publishFile(true);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.UNPUBLISHED %}display: none{% endif %}">{% trans 'Publish' %}</button>
+                    {% endif %}
+                    <button name="delete" onclick="deleteFile();" type="button" class="btn btn-danger">{% trans 'Delete' %}</button>
+                </div>
+              </div>
+
+              {% if file.file_type == SLMFileType.SITE_LOG %}
+                  {% if file.log_format == SiteLogFormat.LEGACY %}
+                    {% include 'slm/station/uploads/legacy.html' %}
+                  {% elif file.log_format == SiteLogFormat.GEODESY_ML %}
+                    {% include 'slm/station/uploads/geodesyml.html' %}
+                  {% elif file.log_format == SiteLogFormat.JSON %}
+                    {% include 'slm/station/uploads/json.html' %}
+                  {% endif %}
+              {% else %}
+                  {% if file.file_type == SLMFileType.SITE_IMAGE %}
+                  {% include 'slm/station/uploads/image.html' %}
+                  {% elif file.file_type == SLMFileType.ATTACHMENT %}
+                  {% include 'slm/station/uploads/attachment.html' %}
+                  {% endif %}
+                  {% if form %}
+
+                  {% endif %}
+              {% endif %}
+
+            <script>
+
+                const fileActions = $('#file-actions');
+                const unpublishBtn = fileActions.find('button[name="unpublish"]');
+                const publishBtn = fileActions.find('button[name="publish"]');
+                const deleteBtn = fileActions.find('button[name="delete"]');
+                const updateBtn = fileActions.find('button[name="update"]');
+
+                const deleteFile = function() {
+                    slm.deleteFile("{{ station }}", {{ file.id }}).done(
+                        function(data, status, jqXHR) {
+                            window.location = slm.urls.reverse(
+                                'slm:upload',
+                                {
+                                    kwargs: {'station': "{{ station }}"}
+                                }
+                            );
+                            {% if file.status == SiteFileUploadStatus.UNPUBLISHED %}
+                                slm.updateFileBadges(-1);
+                            {% endif %}
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
+                const publishFile = function(publish) {
+                    let btn = $('button#select-file-{{ file.id }}');
+                    let oldStatus = slm.SiteFileUploadStatus.get(btn.data('slmFileStatus'));
+                    slm.publishFile("{{ station }}", {{ file.id }}, publish).done(
+                        function(data, status, jqXHR) {
+                            let newStatus = slm.SiteFileUploadStatus.get(data.status);
+                            publishBtn.hide();
+                            unpublishBtn.hide();
+                            if (newStatus === slm.SiteFileUploadStatus.PUBLISHED) {
+                                unpublishBtn.show();
+                            } else if (newStatus === slm.SiteFileUploadStatus.UNPUBLISHED) {
+                                publishBtn.show();
+                            }
+                            btn.removeClass(oldStatus.css);
+                            btn.addClass(newStatus.css);
+                            btn.data('slmFileStatus', newStatus.val);
+                            slm.updateFileBadges(publish ? -1 : 1);
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
+                const updateFile = function() {
+                    $.ajax({
+                        url: slm.urls.reverse(
+                            'slm_edit_api:files-detail',
+                            {'site': '{{ station }}', 'pk': {{file.id}}}
+                        ),
+                        method: 'PATCH',
+                        data: $('form#slm-file-form').serialize()
+                    }).done(
+                        function(data, status, jqXHR) {
+                            $('h2#slm-file-header span.slm-file-name').html(data['name']);
+                            $('button#select-file-{{file.id}} span.slm-file-name').html(data['name']);
+                            updateBtn.blur();
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
+            </script>
+            {% else %}
+            <div id="sitefile-upload" class="dropzone">
+                <div class="dz-message" data-dz-message>
+                    <p><i class="bi bi-cloud-arrow-up"></i></p>
+                    <p class="fs-5 fw-bold">{% translate "Click to upload or drag and drop files to upload an updated site log, site images or miscellaneous files." %}</p>
+                </div>
+            </div>
+
+            <script>
+
+            Dropzone.autoDiscover = false;
+            // Dropzone has been added as a global variable.
+            const dropzone = new Dropzone(
+              "div#sitefile-upload",
+              {
+                  url: slm.urls.reverse(
+                      'slm_edit_api:files-list',
+                      kwargs={'site': '{{ station }}'}
+                  ),
+                  maxFilesize: {{ MAX_UPLOAD_MB }},
+                  headers:{
+                    'X-CSRFToken' : "{{ csrf_token }}"
+                  },
+                  init: function () {
+                    this.on("complete", function (file) {
+                        if (file.xhr.status < 300) {
+                            let response = JSON.parse(file.xhr.responseText);
+                            let siteNavBtn = $(`button#select-{{ station }}`);
+                            let errBadge = siteNavBtn.find('span.slm-error-badge');
+                            let siteStatus = slm.SiteLogStatus.get(response.site_status);
+                            let fileStatus = slm.SiteFileUploadStatus.get(response.status);
+                            siteNavBtn.removeClass(
+                                slm.SiteLogStatus.get(
+                                    siteNavBtn.data('slmStatus')
+                                ).css
+                            );
+                            siteNavBtn.data('slmStatus', siteStatus.val);
+                            siteNavBtn.addClass(siteStatus.css);
+                            siteNavBtn.data('slmFlags', response.site_flags);
+                            errBadge.html(response.site_flags);
+                            if (response.site_flags) {
+                                errBadge.show();
+                            } else {
+                                errBadge.hide();
+                            }
+                            
+                            if (fileStatus === slm.SiteFileUploadStatus.UNPUBLISHED) {
+                                slm.updateFileBadges(1);
+                            }
+                        }
+                        initFileList($("#slm-file-list"));
+                    });
+                }
+              }
+            );
+            </script>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+</div>
+{% endblock %}

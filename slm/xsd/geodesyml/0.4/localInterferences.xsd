@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<!--
+License: CC By 4.0 (http://creativecommons.org/licenses/by/4.0/legalcode)
+Copyright: Scripps Orbit and Permanent Array Center (SOPAC), Commonwealth Government (Geoscience Australia) 2016
+-->
+<schema elementFormDefault="qualified" targetNamespace="urn:xml-gov-au:icsm:egeodesy:0.4" version="0.4" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.4" xml:lang="en" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2">
+    <import namespace="http://www.opengis.net/gml/3.2" schemaLocation="http://schemas.opengis.net/gml/3.2.1/gml.xsd"/>
+    <include schemaLocation="commonTypes.xsd"/>
+    <annotation>
+        <documentation>
+            <p>Derived from SOPAC IGS Site Log XML Schema 2011</p>
+            <ul>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/localInterferences/2004/baseLocalInterferencesLib.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/localInterferences/2004/localEvents.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/localInterferences/2004/localInterferences.xsd</li>
+                <li>http://sopac.ucsd.edu/ns/geodesy/doc/igsSiteLog/localInterferences/2004/radioInterferences.xsd</li>
+            </ul>
+            <p>Modifications from original</p>
+            <ul>
+                <li>Made part of eGeodesy namespace</li>
+                <li>Made all interference types extend gml:AbstractFeatureType</li>
+                <li>Changed date range elements to be references to gml:validTime</li>
+                <li>Adopted GML conventions of global elements and property references</li>
+                <li>Changed pluralised elements to singular forms</li>
+            </ul>
+        </documentation>
+    </annotation>
+    <complexType name="basePossibleProblemSourceType">
+        <complexContent>
+            <extension base="gml:AbstractFeatureType">
+                <sequence>
+                    <element name="possibleProblemSource" type="string"/>
+                    <element ref="gml:validTime"/>
+                    <element name="notes" type="string"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!-- pj, 01/27/2005: a "baseLocalInterferenceType" from this schema is used as a type in multiPath, but it is not here.  add it. -->
+    <simpleType final="#all" name="baseLocalInterferenceType">
+        <restriction base="string">
+            <enumeration value="TV"/>
+            <enumeration value="CELL PHONE"/>
+            <enumeration value="ANTENNA"/>
+            <enumeration value="RADAR"/>
+            <enumeration value="METAL ROOF"/>
+            <enumeration value="DOME"/>
+            <enumeration value="VLBI ANTENNA"/>
+            <enumeration value="TREES"/>
+            <enumeration value="BUILDINGS"/>
+        </restriction>
+    </simpleType>
+    <complexType name="multipathSourceType">
+        <complexContent>
+            <extension base="geo:basePossibleProblemSourceType"/>
+        </complexContent>
+    </complexType>
+    
+    <complexType name="signalObstructionType">
+        <complexContent>
+            <extension base="geo:basePossibleProblemSourceType"/>
+        </complexContent>
+    </complexType>
+    
+    <complexType name="radioInterferenceType">
+        <complexContent>
+            <extension base="geo:basePossibleProblemSourceType">
+                <sequence>
+                    <element name="observedDegradation" type="string"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    
+    <complexType name="localEpisodicEffectType">
+        <complexContent>
+            <extension base="gml:AbstractFeatureType">
+                <sequence>
+                    <element ref="gml:validTime"/>
+                    <element name="event" type="string"/>
+                </sequence>
+            </extension>
+        </complexContent>
+    </complexType>
+    <!--  Global elements -->
+    <element name="MultipathSource" substitutionGroup="gml:AbstractFeature" type="geo:multipathSourceType"/>
+    <element name="SignalObstruction" substitutionGroup="gml:AbstractFeature" type="geo:signalObstructionType"/>
+    <element name="RadioInterference" substitutionGroup="gml:AbstractFeature" type="geo:radioInterferenceType"/>
+    <element name="LocalEpisodicEffect" substitutionGroup="gml:AbstractFeature" type="geo:localEpisodicEffectType"/>
+    <!--  Property Types -->
+    <complexType name="multipathSourcePropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:MultipathSource"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="signalObstructionPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:SignalObstruction"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="radioInterferencePropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:RadioInterference"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+    <complexType name="localEpisodicEffectPropertyType">
+        <sequence>
+            <sequence minOccurs="0">
+                <element ref="geo:LocalEpisodicEffect"/>
+            </sequence>
+            <group ref="geo:ChangeTracking"/>
+        </sequence>
+        <attributeGroup ref="gml:AssociationAttributeGroup"/>
+    </complexType>
+    <!--  -->
+</schema>

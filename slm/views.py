@@ -1,4 +1,4 @@
-'''
+"""
 Handles web requests and responses.
 
 NOTES:
@@ -9,100 +9,103 @@ ADD MORE COMMENTS
 
 MORE INFO:
 https://docs.djangoproject.com/en/3.2/topics/http/views/
-'''
+"""
 
-from django.shortcuts import render
-from django.urls import reverse
-from django.contrib.auth import authenticate, login
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
-from slm.models import (
-    Alert,
-    Site,
-    SiteSubSection,
-    LogEntry,
-    Network,
-    Agency
-)
-from slm.defines import (
-    SiteLogStatus,
-    LogEntryType
-)
-from django.shortcuts import redirect
 from datetime import datetime
-from slm.utils import to_bool
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from slm.api.serializers import SiteLogSerializer
-from django.http import Http404
-from django.views.generic import TemplateView
-from django.urls import reverse_lazy
-from slm.defines import AlertLevel
+from django.db.models import Max, Q
 from django.db.models.fields import NOT_PROVIDED
-from django.db.models import (
-    Max,
-    Q
+from django.http import FileResponse, Http404, HttpResponseNotFound
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView
+from slm import signals as slm_signals
+from slm.api.serializers import SiteLogSerializer
+from slm.defines import (
+    AlertLevel,
+    LogEntryType,
+    SiteFileUploadStatus,
+    SiteLogFormat,
+    SiteLogStatus,
+    SLMFileType,
 )
-from slm.new_forms import (
-    SiteFormForm,
-    SiteIdentificationForm,
-    SiteLocationForm,
-    SiteReceiverForm,
+from slm.forms import (
+    NewSiteForm,
     SiteAntennaForm,
-    SiteSurveyedLocalTiesForm,
-    SiteFrequencyStandardForm,
     SiteCollocationForm,
+    SiteFileForm,
+    SiteFormForm,
+    SiteFrequencyStandardForm,
     SiteHumiditySensorForm,
+    SiteIdentificationForm,
+    SiteLocalEpisodicEffectsForm,
+    SiteLocationForm,
+    SiteMoreInformationForm,
+    SiteMultiPathSourcesForm,
+    SiteOperationalContactForm,
+    SiteOtherInstrumentationForm,
     SitePressureSensorForm,
+    SiteRadioInterferencesForm,
+    SiteReceiverForm,
+    SiteResponsibleAgencyForm,
+    SiteSignalObstructionsForm,
+    SiteSurveyedLocalTiesForm,
     SiteTemperatureSensorForm,
     SiteWaterVaporRadiometerForm,
-    SiteOtherInstrumentationForm,
-    SiteRadioInterferencesForm,
-    SiteMultiPathSourcesForm,
-    SiteSignalObstructionsForm,
-    SiteLocalEpisodicEffectsForm,
-    SiteOperationalContactForm,
-    SiteResponsibleAgencyForm,
-    SiteMoreInformationForm,
-    UserProfileForm,
     UserForm,
-    NewSiteForm
+    UserProfileForm,
 )
+from slm.models import (
+    Agency,
+    Alert,
+    LogEntry,
+    Network,
+    Site,
+    SiteFileUpload,
+    SiteLocation,
+    SiteSubSection,
+)
+from slm.utils import to_bool
 
 User = get_user_model()
-
-# Create your views here.
-
-# Registration Page
-def register_user (request):
-    form_class = UserAdminCreationForm
-    form = form_class(request.POST or None)
-    if request.method == "POST":
-        if form.is_valid():
-            form.save()
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-            user = authenticate(request, email=email, password=password)
-            login(request, user)
-            return redirect ('home')
-    return render(request, 'register.html', {'form':form})
 
 
 class SLMView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        max_alert = Alert.objects.for_user(self.request.user).aggregate(Max('level'))['level__max']
+        max_alert = Alert.objects.for_user(
+            self.request.user
+        ).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
-        context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+
+        context['user'] = self.request.user
         context['SiteLogStatus'] = SiteLogStatus
-        context['networks'] = Network.objects.all()
-        context['user_agencies'] = (
-            Agency.objects.all()
-            if self.request.user.is_superuser
-            else Agency.objects.filter(pk=self.request.user.agency.pk)
+        context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+
+        context['SLM_ORG_NAME'] = getattr(
+            settings,
+            'SLM_ORG_NAME',
+            None
         )
+        context['is_moderator'] = (
+            self.request.user.is_superuser if self.request.user else None
+        )
+        context['networks'] = Network.objects.all()
+        if self.request.user.is_superuser:
+            context['user_agencies'] = Agency.objects.all()
+        elif self.request.user.agency:
+            context['user_agencies'] = Agency.objects.filter(
+                pk=self.request.user.agency.pk
+            )
+        else:
+            context['user_agencies'] = Agency.objects.none()
         return context
 
 
@@ -121,9 +124,22 @@ class StationContextView(SLMView):
         context = super().get_context_data(**kwargs)
         self.station = kwargs.get('station', None)
         self.sites = Site.objects.editable_by(self.request.user)
-        self.site = Site.objects.filter(name=self.station).first()
+        self.site = Site.objects.filter(name__iexact=self.station).editable_by(
+            self.request.user
+        ).first()
         if self.site:
-            self.agencies = [agency.name for agency in self.site.agencies.all()]
+            self.agencies = [
+                agency.name for agency in self.site.agencies.all()
+            ]
+            location = SiteLocation.objects.filter(site=self.site).head()
+            if location:
+                context['station_position'] = (
+                    location.latitude / 10000,
+                    location.longitude / 10000
+                )
+            context['attn_files'] = self.site.sitefileuploads.available_to(
+                self.request.user
+            ).filter(status=SiteFileUploadStatus.UNPUBLISHED).count()
 
         max_alert = Alert.objects.for_user(
             self.request.user
@@ -132,12 +148,19 @@ class StationContextView(SLMView):
             max_alert = None
         context.update({
             'num_sites': self.sites.count(),
-            #'sites': [site[0] for site in self.sites.values_list('name').order_by('name').distinct()],
             'station': self.station if self.station else None,
             'site': self.site if self.site else None,
             'agencies': self.agencies,
             'SiteLogStatus': SiteLogStatus,
-            'link_view': 'slm:edit' if self.request.resolver_match.view_name not in {
+            'is_moderator': self.site.is_moderator(
+                self.request.user
+            ) if self.site else None,
+            # some non-moderators may be able to publish a some changes
+            'can_publish': self.site.can_publish(
+                self.request.user
+            ) if self.site else None,
+            'link_view': 'slm:edit'
+            if self.request.resolver_match.view_name not in {
                 'slm:alerts',
                 'slm:download',
                 'slm:review',
@@ -149,7 +172,10 @@ class StationContextView(SLMView):
         if self.station:
             try:
                 self.station = Site.objects.get(name=context['station'])
-                if not self.request.user.is_superuser and self.station not in self.sites:
+                if (
+                    not self.request.user.is_superuser and
+                    self.station not in self.sites
+                ):
                     raise PermissionDenied()
             except Site.DoesNotExist:
                 raise Http404(f'Site {context["station"]} was not found!')
@@ -157,6 +183,14 @@ class StationContextView(SLMView):
 
 
 class EditView(StationContextView):
+    """
+    This is the view that creates and renders a context when a user requests
+    to edit a site log. Site log edit forms do not render a giant form for the
+    entire site log. The specific section being edited is part of the request
+    url. So the job of this view is to compile enough context to render the
+    status and error information for all sections as well as all of the
+    information required to edit the requested section.
+    """
 
     template_name = 'slm/station/edit.html'
 
@@ -168,7 +202,6 @@ class EditView(StationContextView):
             SiteLocationForm,
             SiteReceiverForm,
             SiteAntennaForm,
-            #AntennaTypeForm,
             SiteSurveyedLocalTiesForm,
             SiteFrequencyStandardForm,
             SiteCollocationForm,
@@ -188,11 +221,77 @@ class EditView(StationContextView):
     }
 
     def get_context_data(self, **kwargs):
+        """
+        Builds a context that contains the sections and their meta information
+        as well as forms bound ot the site log data at head for the section
+        being edited. The context dictionary includes all StationContextView
+        context as well as:
+
+        ..code-block::
+
+            # forms contains the information needed to render the forms in the
+            # central edit pane
+            'forms': [...],  # bound form instances to section models at head
+                             # for the section being edited. If the section
+                             # does not allow subsections it will be a list of
+                             # length 1, if it does allow subections, it will
+                             # be a list of bound subsection forms and the
+                             # first instance in the list will be an unbound
+                             # form used to add new subsections
+
+            'multi': True,   # True if the section being edited has subsections
+            'section_id': str,  # The identifier of the section being edited
+            'section_name': str,  # The display name of the section
+
+            # dictionary of sections in render-order - keys are section_names
+            # this dictionary contains the meta information needed to render
+            # the navigation
+            'sections': {
+                'Section Name': {
+                    'flags': int,  # the cumulative number of error flags on
+                                   # this section
+                    'id': str,  # section_id
+
+                     # the SiteLogStatus of the section
+                    'status':  SiteLogStatus
+
+                    'subsections': {
+                        'Subsection Name': {
+                            'active': False,  # True if subsection is selected
+                            'flags': # the number of error flags the subsection
+                            'id': str,  # section_id
+
+                            # the SiteLogStatus of the section
+                            'status': SiteLogStatus
+                        },
+                        ...
+                    },
+                },
+                ...
+            }
+
+        """
         context = super().get_context_data(**kwargs)
+        if not self.site:
+            raise Http404(
+                f'Station {kwargs.get("station", "")} does not exist!'
+            )
         context.update({
             'section_id': kwargs.get('section', None),
             'sections': {},
-            'forms': []
+            'forms': [],
+            'station_images': self.site.sitefileuploads.available_to(
+                self.request.user
+            ).filter(
+                status=SiteFileUploadStatus.PUBLISHED,
+                file_type=SLMFileType.SITE_IMAGE
+            ),
+            'station_attachments': self.site.sitefileuploads.available_to(
+                self.request.user
+            ).filter(
+                status=SiteFileUploadStatus.PUBLISHED,
+                file_type=SLMFileType.ATTACHMENT
+            )
         })
 
         section = self.FORMS.get(kwargs.get('section', None), None)
@@ -200,95 +299,161 @@ class EditView(StationContextView):
             context['section_name'] = section.section_name()
             context['multi'] = issubclass(section._meta.model, SiteSubSection)
 
+        # create the context of our form tree - the form/edit templates are
+        # responsible for rendering this structure in html
         for section_id, form in self.FORMS.items():
             if hasattr(form, 'NAV_HEADING'):
                 context['sections'].setdefault(
                     form.NAV_HEADING,
                     {
-                        'id': form.section_name().lower().replace(' ', ''),
+                        'id': form.group_name(),
                         'flags': 0,
-                        'status': SiteLogStatus.PUBLISHED,
+                        'status': SiteLogStatus.EMPTY,
                         'active': False,
                         'subsections': {}
                     }
                 )['subsections'][form.section_name()] = {
                     'id': form.section_name().lower().replace(' ', ''),
+                    'group': form.group_name(),  # todo remove
+                    'parent': form.group_name(),
                     'flags': 0,
                     'active': False,
-                    'status': SiteLogStatus.PUBLISHED
+                    'status': SiteLogStatus.EMPTY
                 }
+                if section is form:
+                    context['parent'] = form.group_name()
+
             else:
                 context['sections'][form.section_name()] = {
                     'id': form.section_name().lower().replace(' ', ''),
                     'flags': 0,
-                    'status': SiteLogStatus.PUBLISHED
+                    'status': SiteLogStatus.EMPTY
                 }
 
             if issubclass(form._meta.model, SiteSubSection):
-                set_status = True
-                for inst in reversed(form._meta.model.objects.station(self.station).head()):
-                    set_status = False
+                # for subsections we need to:
+                #   1) set nav heading meta information
+                #   2) add sections for all children
+                #   3) populate the subsections of the requested edit form
+
+                heading = context['sections'][
+                    getattr(form, 'NAV_HEADING', form.section_name())
+                ]
+                subheading = None
+                if hasattr(form, 'NAV_HEADING'):
+                    subheading = heading['subsections'][form.section_name()]
+
+                for inst in reversed(
+                    form._meta.model.objects.station(self.station).head()
+                ):
                     if inst.published and inst.is_deleted:
                         continue  # elide deleted instances if published
 
                     if section is form:
+                        # if this is our requested form for editing - populate
+                        # it with data from head
                         context['forms'].append(
                             form(
                                 instance=inst,
                                 initial={
-                                    field: getattr(inst, field) for field in form._meta.fields
+                                    field: getattr(inst, field)
+                                    for field in form._meta.fields
                                 }
                             )
                         )
-                    if hasattr(form, 'NAV_HEADING'):
-                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['flags'] = inst.num_flags if inst else 0
-                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['status'] = inst.mod_status if inst else SiteLogStatus.PENDING
-                        context['sections'][form.NAV_HEADING]['flags'] += inst.num_flags if inst else 0
-                        context['sections'][form.NAV_HEADING]['status'] = context['sections'][form.NAV_HEADING]['status'].merge(inst.mod_status if inst else SiteLogStatus.PENDING)
-                    else:
-                        context['sections'][form.section_name()]['flags'] = inst.num_flags if inst else 0
-                        context['sections'][form.section_name()]['status'] = context['sections'][form.section_name()]['status'].merge(inst.mod_status if inst else SiteLogStatus.PENDING)
 
-                if set_status:
-                    if hasattr(form, 'NAV_HEADING'):
-                        context['sections'][form.NAV_HEADING]['status'] = SiteLogStatus.PENDING if self.site.status == SiteLogStatus.PENDING else SiteLogStatus.PUBLISHED
-                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['status'] = SiteLogStatus.PENDING if self.site.status == SiteLogStatus.PENDING else SiteLogStatus.PUBLISHED
-                    else:
-                        context['sections'][form.section_name()]['status'] = SiteLogStatus.PENDING if self.site.status == SiteLogStatus.PENDING else SiteLogStatus.PUBLISHED
+                    heading['flags'] += inst.num_flags if inst else 0
+                    heading['status'] = heading.get(
+                        'status',
+                        inst.mod_status
+                    ).merge(inst.mod_status)
+                    if subheading:
+                        subheading.setdefault('flags', 0)
+                        subheading['flags'] += inst.num_flags if inst else 0
+                        subheading['status'] = subheading.get(
+                            'status', inst.mod_status
+                        ).merge(inst.mod_status)
 
                 if section is form:
-                    context['forms'].insert(0, form(initial={'site': self.station}))
-                    if hasattr(form, 'NAV_HEADING'):
-                        context['sections'][form.NAV_HEADING]['active'] |= True
-                        context['sections'][form.NAV_HEADING]['subsections'][form.section_name()]['active'] = True
-                    else:
-                        context['sections'][form.section_name()]['active'] = True
-
-
+                    # if this is the edit section we add an empty form as the
+                    # first form in the context, the template knows to render
+                    # this form as the 'add' subsection form
+                    context['forms'].insert(
+                        0, form(initial={'site': self.station})
+                    )
+                    heading['active'] = heading.get('active', True) | True
+                    if subheading:
+                        subheading['active'] = True
 
             else:
-                instance = form._meta.model.objects.station(self.station).head()
+                instance = form._meta.model.objects.station(
+                    self.station
+                ).head()  # we always edit on head
                 if section is form:
+                    # only one form is requested per edit view request - if
+                    # this section is that form we need to populate it with
+                    # data
                     context['forms'].append(
                         form(
                             instance=instance,
                             initial={
-                                field: getattr(instance, field, None) for field in form._meta.fields
+                                field: getattr(instance, field, None)
+                                for field in form._meta.fields
                             } if instance else {'site': self.station}
                         )
                     )
                     context['sections'][form.section_name()]['active'] = True
-                context['sections'][form.section_name()]['flags'] = instance.num_flags if instance else 0
-                context['sections'][form.section_name()]['status'] = instance.mod_status if instance else SiteLogStatus.PENDING
+
+                # for all sections we need to set status and number of flags
+                context['sections'][
+                    form.section_name()
+                ]['flags'] = instance.num_flags if instance else 0
+                context['sections'][
+                    form.section_name()
+                ]['status'] = (
+                    instance.mod_status if instance
+                    else SiteLogStatus.EMPTY
+                )
+
         return context
 
 
-class AlertsView(StationContextView):
+class StationAlertsView(StationContextView):
     template_name = 'slm/station/alerts.html'
 
 
-class UploadView(SLMView):
-    template_name = 'slm/upload.html'
+class UploadView(StationContextView):
+    template_name = 'slm/station/upload.html'
+
+    def get_context_data(self, file=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if file:
+            try:
+                file = SiteFileUpload.objects.get(pk=file)
+            except SiteFileUpload.DoesNotExist:
+                raise Http404(f'File {file} does not exist.')
+            context['file'] = file
+            if file.context:
+                context.update(file.context)
+
+            if file.file_type in {
+                SLMFileType.SITE_IMAGE,
+                SLMFileType.ATTACHMENT
+            }:
+                context['form'] = SiteFileForm(instance=file)
+        context['num_files'] = SiteFileUpload.objects.filter(
+            site=self.site
+        ).count()
+        context['MAX_UPLOAD_MB'] = getattr(
+            settings,
+            'SLM_MAX_UPLOAD_SIZE_MB',
+            100
+        )
+        context['SLMFileType'] = SLMFileType
+        context['SiteLogFormat'] = SiteLogFormat
+        context['SiteFileUploadStatus'] = SiteFileUploadStatus
+        context['link_view'] = 'slm:upload'
+        return context
 
 
 class NewSiteView(StationContextView):
@@ -297,20 +462,39 @@ class NewSiteView(StationContextView):
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         data = {
-            field: request.POST[field] for field in NewSiteForm._meta.fields if field in request.POST
+            field: request.POST[field]
+            for field in NewSiteForm._meta.fields if field in request.POST
         }
         if data.get('agencies', None):
-            data['agencies'] = [Agency.objects.get(pk=int(agency)) for agency in [data['agencies']]]
+            data['agencies'] = [
+                Agency.objects.get(pk=int(agency))
+                for agency in [data['agencies']]
+            ]
         data['name'] = data['name'].upper()
         if not request.user.is_superuser:
             for agency in data['agencies']:
                 if request.user.agency != agency:
-                    raise PermissionDenied('Only allowed to create new sites for your agency.')
+                    raise PermissionDenied(
+                        'Only allowed to create new sites for your agency.'
+                    )
 
         new_site = NewSiteForm(data)
         if new_site.is_bound and new_site.is_valid():
             new_site.save()
-            return redirect(to=reverse('slm:edit', kwargs={'station': new_site.instance.name}))
+            slm_signals.site_proposed.send(
+                sender=self,
+                site=new_site.instance,
+                user=request.user,
+                timestamp=new_site.instance.created,
+                request=request,
+                agencies=data['agencies']
+            )
+            return redirect(
+                to=reverse(
+                    'slm:edit',
+                    kwargs={'station': new_site.instance.name}
+                )
+            )
 
         context = super().get_context_data(**kwargs)
         context['form'] = new_site
@@ -319,10 +503,14 @@ class NewSiteView(StationContextView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = NewSiteForm(
-            initial={'agencies': Agency.objects.filter(id=self.request.user.agency.id)} if not self.request.user.is_superuser else {}
+            initial={
+                'agencies': Agency.objects.filter(
+                    id=self.request.user.agency.id
+                )} if not self.request.user.is_superuser else {}
         )
         if not self.request.user.is_superuser:
-            context['form'].fields["agencies"].queryset = Agency.objects.filter(id=self.request.user.agency.id)
+            context['form'].fields["agencies"].queryset = \
+                Agency.objects.filter(id=self.request.user.agency.id)
         return context
 
 
@@ -336,7 +524,6 @@ class DownloadView(StationContextView):
 
 class UserProfileView(SLMView):
     template_name = 'slm/profile.html'
-    success_url = reverse_lazy('profile')
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
@@ -344,25 +531,6 @@ class UserProfileView(SLMView):
             'user_form': UserForm(instance=request.user),
             'profile_form': UserProfileForm(instance=request.user.profile)
         })
-
-    @method_decorator(login_required)
-    def post(self, request, *args, **kwargs):
-        user_form = UserForm(
-            {field: request.POST[field] for field in UserForm._meta.fields if field in request.POST},
-            instance=request.user
-        )
-        if not request.user.profile:
-            request.user.profile = UserProfile.objects.create()
-
-        profile_form = UserProfileForm(
-            {field: request.POST[field] for field in UserProfileForm._meta.fields if field in request.POST},
-            instance=request.user.profile
-        )
-        if user_form.is_bound and user_form.is_valid():
-            user_form.save()
-        if profile_form.is_bound and profile_form.is_valid():
-            profile_form.save()
-        return self.render_to_response({'user_form': user_form, 'profile_form': profile_form})
 
 
 class LogView(StationContextView):
@@ -408,42 +576,69 @@ class StationReviewView(StationContextView):
             return timestamp
 
         epoch = kwargs.get('epoch', None)
-        published = True if to_bool(self.request.GET.get('pub', True)) else None
+        published = (
+            True if to_bool(self.request.GET.get('pub', True))
+            else None
+        )
         back_t = parse_time(self.request.GET.get('back', None))
         forward_t = parse_time(self.request.GET.get('forward', None))
-        log_entries = LogEntry.objects.filter(site=self.station).prefetch_related('site_log_object')
+        log_entries = LogEntry.objects.filter(
+            site=self.station
+        ).prefetch_related('site_log_object')
 
         pub_q = Q()
         if published:
             pub_q = Q(type=LogEntryType.PUBLISH)
 
-        forward_inst = SiteLogSerializer(instance=self.station, epoch=forward_t or epoch, published=None)
+        forward_inst = SiteLogSerializer(
+            instance=self.station, epoch=forward_t or epoch, published=None
+        )
         forward_text = forward_inst.text
 
         if not published and not back_t:
-            back_t = log_entries.filter(Q(epoch__lt=forward_inst.epoch)).aggregate(Max('epoch'))['epoch__max']
+            back_t = log_entries.filter(
+                Q(epoch__lt=forward_inst.epoch)
+            ).aggregate(Max('epoch'))['epoch__max']
 
-        back_inst = SiteLogSerializer(instance=self.station, epoch=back_t or epoch, published=published)
+        back_inst = SiteLogSerializer(
+            instance=self.station, epoch=back_t or epoch, published=published
+        )
         back_text = back_inst.text
 
         forward_prev = log_entries.filter(
-            Q(epoch__lt=forward_inst.epoch) & Q(epoch__gt=back_inst.epoch) & pub_q
+            Q(epoch__lt=forward_inst.epoch) &
+            Q(epoch__gt=back_inst.epoch) &
+            pub_q
         ).order_by('-timestamp').first()
-        forward_next = log_entries.filter(Q(epoch__gt=forward_inst.epoch) & pub_q).order_by('timestamp').first()
 
-        back_prev = log_entries.filter(Q(epoch__lt=back_inst.epoch) & pub_q).order_by('-timestamp').first()
+        forward_next = log_entries.filter(
+            Q(epoch__gt=forward_inst.epoch) &
+            pub_q
+        ).order_by('timestamp').first()
+
+        back_prev = log_entries.filter(
+            Q(epoch__lt=back_inst.epoch) &
+            pub_q
+        ).order_by('-timestamp').first()
+
         back_next = log_entries.filter(
-            Q(epoch__lt=forward_inst.epoch) & Q(epoch__gt=back_inst.epoch) & pub_q
+            Q(epoch__lt=forward_inst.epoch) &
+            Q(epoch__gt=back_inst.epoch) &
+            pub_q
         ).order_by('timestamp').first()
 
         context.update({
             'forward_text': forward_text,
             'back_text': back_text,
-            'unpublished_changes': not forward_inst.is_published,
-            'can_publish': self.station.can_publish(self.request.user),
-            'forward_prev': forward_prev.epoch.isoformat() if forward_prev else None,
+            'needs_publish': self.station.status in {
+                SiteLogStatus.PENDING,
+                SiteLogStatus.UPDATED
+            },
+            'forward_prev': forward_prev.epoch.isoformat()
+            if forward_prev else None,
             'forward_current': forward_inst.epoch.isoformat(),
-            'forward_next': forward_next.epoch.isoformat() if forward_next else None,
+            'forward_next': forward_next.epoch.isoformat()
+            if forward_next else None,
             'back_prev': back_prev.epoch.isoformat() if back_prev else None,
             'back_current': back_inst.epoch.isoformat(),
             'back_next': back_next.epoch.isoformat() if back_next else None,
@@ -455,3 +650,36 @@ class StationReviewView(StationContextView):
 
 class AlertsView(SLMView):
     template_name = 'slm/alerts.html'
+
+
+def download_site_attachment(request, site=None, pk=None, thumbnail=False):
+    """
+    A function view for downloading files that have been uploaded to
+    a site. This allows unathenticated downloads of public files and
+    authenticated download of any file available to the authenticated user.
+
+    :param request: Django request object
+    :param site: The 9-character site name the file is attached to
+    :param pk: The unique ID of the file.
+    :return: Either a 404 or a FileResponse object containing the file.
+    """
+    if site is None or pk is None:
+        return HttpResponseNotFound()
+
+    try:
+        upload = SiteFileUpload.objects.available_to(
+            request.user
+        ).get(site__name=site, pk=pk)
+        file = upload.file
+        if thumbnail and upload.has_thumbnail:
+            file = upload.thumbnail
+
+        return FileResponse(
+            file.open('rb'),
+            filename=upload.name,  # note this might not match the name on disk
+            as_attachment=True
+        )
+    except SiteFileUpload.DoesNotExist:
+        return HttpResponseNotFound(
+            f'File {pk} for station {site} was not found.'
+        )

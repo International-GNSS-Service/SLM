@@ -1,4 +1,4 @@
-if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
+if (typeof slm === 'undefined' || slm === null) { var slm = {}; }
 
 $(document).ready(function() {
     $(".collapse .nav-link").click(function () {
@@ -14,11 +14,86 @@ $(document).ready(function() {
     });
 });
 
+/*slm.popover = new bootstrap.Popover(
+    document.querySelector('.popover-dismiss'),
+    {
+        trigger: 'focus',
+        container: 'body'
+    }
+);*/
+
+class ErrorBadgeUpdater {
+
+    constructor(form) {
+        this.form = form;
+        this.delta = null;
+    }
+    
+    visit(node) {
+        if (this.delta === null) {
+            this.delta = Object.keys(this.form.data('slmErrorFlags')).length -
+                (node.data('slmFlags') || 0);
+        }
+        let badge = node.find('span.slm-error-badge');
+        let newNum = (node.data('slmFlags') || 0) + this.delta;
+        newNum = newNum < 0 ? 0 : newNum;
+        node.data('slmFlags', newNum);
+        if (newNum <= 0) {
+            badge.hide();
+            badge.html(0);
+        } else {
+            badge.show();
+            badge.html(newNum);
+        }
+    }
+}
+
+class StatusUpdater {
+
+    constructor(form, status) {
+        this.form = form;
+        if (!status instanceof SiteLogStatus) {
+            this.status = slm.SiteLogStatus.get(status);
+        } else {
+            this.status = status;
+        }
+    }
+
+    visit(node) {
+        /* update navigation button status classes and data */
+        let currentStatus = slm.SiteLogStatus.get(
+            node.data('slmStatus')
+        );
+        this.status = currentStatus.set(this.status);
+        node.removeClass(currentStatus.css);
+        node.addClass(this.status.css);
+        node.data('slmStatus', this.status.val);
+        slm.getNavSiblings(node).each(function(idx, sibling) {
+            this.status = this.status.merge(
+                slm.SiteLogStatus.get(
+                    $(sibling).data('slmStatus')
+                )
+            )
+        }.bind(this));
+    }
+}
+
+slm.isModerator = !slm.hasOwnProperty('isModerator') ? false : slm.isModerator;
+slm.canPublish = !slm.hasOwnProperty('canPublish') ? false : slm.canPublish;
+
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
-    const data = response.hasOwnProperty('results') ? response.results : response;
-    console.log(data);
-    if (data.published && data.is_deleted) {
+    const data = response && response.hasOwnProperty('results') ? response.results : response;
+    if (jqXHR.status === 204 || (data.published && data.is_deleted)) {
+        form.data('slmErrorFlags', {});
+        slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+        slm.visitEditNavTree(
+            form,
+            new StatusUpdater(
+                form,
+                SiteLogStatus.EMPTY
+            )
+        );
         form.closest('.accordion-item').remove();
         return;
     }
@@ -29,13 +104,18 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         form.find('.alert.slm-form-deleted').show();
         form.find('.form-control:visible').attr('disabled', '');
         form.find('.slm-flag').hide();
+    } else if (slm.isModerator){
+        form.find('.slm-flag').show();
+    } else {
+        form.find('.slm-flag').hide();
     }
+
     if (data.hasOwnProperty('_diff') && Object.keys(data._diff).length) {
         if (!data.is_deleted) {
             form.find('.alert.slm-form-unpublished').show();
         }
         for (const [field, diff] of Object.entries(data._diff)) {
-            const formField = form.find(`#id_${field}`);
+            const formField = form.find(`#id_${field}-${form.attr('id').replace('site-', '')}`);
             formField.addClass('is-invalid');
             if (data.hasOwnProperty('_flags') && !data._flags.hasOwnProperty(field)) {
                 formField.addClass('slm-form-unpublished');
@@ -52,7 +132,7 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         form.data('slmErrorFlags', data._flags);
         slm.setFormFlagUI(form);
     }
-    if (data.hasOwnProperty('published') && !data.published) {
+    if (data.hasOwnProperty('published') && !data.published && data.can_publish) {
         form.find('button[name="publish"]').show();
     }
     if (data.hasOwnProperty('is_deleted') && data.is_deleted) {
@@ -61,6 +141,15 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
     } else if (data.hasOwnProperty('is_deleted')) {
         form.find('button[name="delete"]').show();
     }
+
+    slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+    slm.visitEditNavTree(
+        form,
+        new StatusUpdater(
+            form,
+            data.published ? SiteLogStatus.PUBLISHED : SiteLogStatus.UPDATED
+        )
+    );
 }
 
 slm.handlePostErrors = function(form, jqXHR, status, text) {
@@ -72,7 +161,7 @@ slm.handlePostErrors = function(form, jqXHR, status, text) {
             }
         } else {
             for (const [key, value] of Object.entries(data)) {
-                let errorElem = form.find(`#id_${key}`);
+                let errorElem = form.find(`#id_${key}-${form.attr('id').replace('site-', '')}`);
                 errorElem.addClass('is-invalid');
                 errorElem.after(`<div class="invalid-feedback">${value}</div>`);
             }
@@ -108,12 +197,26 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
     }
     const handleSubmit = function(action) {
         slm.resetFormErrorsAndWarnings(form);
-        const data = Object.fromEntries(new FormData(form.get(0)).entries());
+        let formData = new FormData(form.get(0));
+        let data = {};
+        for (const [key, val] of formData.entries()) {
+            let element = form.find(`[name="${key}"]`).get(0);
+            if (element.hasAttribute( 'multiple' )) {
+                data[key] = formData.getAll(key);
+            } else {
+                data[key] = val;
+            }
+        }
+        //const data = Object.fromEntries(new FormData(form.get(0)).entries());
         const csrf = data.csrfmiddlewaretoken;
         delete data.csrfmiddlewaretoken;
         let request = null;
         const dataId = data.id || form.data('slmId');
         if (action === 'delete') {
+            if (!dataId) {
+                form.closest('.accordion-item').remove();
+                return;
+            }
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-detail`, {'pk': dataId}),
                 method: 'DELETE',
@@ -121,10 +224,18 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
             })
         } else if (action === 'publish') {
             let toPublish = transform(data);
-            toPublish['published'] = true;
+            toPublish['publish'] = true;
+            let options = {};
+            let endpoint = `${form_api}-list`;
+            let method = 'POST';
+            if (dataId) {
+                endpoint = `${form_api}-detail`;
+                options['pk'] = dataId;
+                method = 'PATCH';
+            }
             request = $.ajax({
-                url: form_url ? form_url : slm.urls.reverse(`${form_api}-detail`, {'pk': dataId}),
-                method: 'PATCH',
+                url: form_url ? form_url : slm.urls.reverse(endpoint, options),
+                method: method,
                 headers: {'X-CSRFToken': csrf},
                 data: toPublish
             });
@@ -133,7 +244,9 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-list`),
                 method: form.attr('data-slm-method') ? form.attr('data-slm-method') : 'POST',
                 headers: {'X-CSRFToken': csrf},
-                data: transform(data)
+                data: JSON.stringify(transform(data)),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
             });
         }
 
@@ -235,6 +348,24 @@ slm.setFormFlagUI = function(form) {
             }
         }
     );
+    slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+}
+
+slm.visitEditNavTree = function(form, visitor) {
+    /* visit navigation ancestor buttons from the top up */
+    let node = $(form).closest('.accordion-item').find('button.slm-subsection');
+    if (!node.length) {
+        node = $(`button[data-slm-section="${form.data('slmSection')}"]`);
+    }
+    while (node.data('slmParent')) {
+        visitor.visit(node);
+        node = $(`button#${node.data('slmParent')}`);
+    }
+    visitor.visit(node);
+}
+
+slm.getNavSiblings = function(editNavButton) {
+    return $(`button[data-slm-parent="${editNavButton.data('slmParent')}"`);
 }
 
 slm.isUnpublished = function(fieldset) {
@@ -317,7 +448,6 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
             data: pageQuery
         }).done(
             function(data, status, jqXHR) {
-                div.data('slmPage', div.data('slmPage') + pageQuery.length);
                 loader.hide();
                 if (data.next) {
                     scrollDiv.scroll(function() {
@@ -330,8 +460,11 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
                     position,
                     data.hasOwnProperty('results') ?
                         data.results : data.hasOwnProperty('data') ?
-                        data.data : data
+                        data.data : data,
+                    data.hasOwnProperty('recordsFiltered') ? data.recordsFiltered : null,
+                    data.hasOwnProperty('recordsTotal') ? data.recordsTotal : null
                 );
+                div.data('slmPage', div.data('slmPage') + pageQuery.length);
             }
         ).fail(
             function(data, status, jqXHR) {
@@ -532,18 +665,76 @@ slm.dataTablesAdaptor = function( data, select=null ) {
     }
 }
 
-slm.submitForReview = function(site) {
+slm.requestReview = function(site_name) {
     return $.ajax({
-        url: slm.urls.reverse(`slm_edit_api:submit-list`, {'site': site}),
-        method: 'POST',
-        headers: {'X-CSRFToken': csrf}
+        url: slm.urls.reverse('slm_edit_api:submit-list'),
+        data: {'site_name': site_name},
+        method: 'POST'
     });
 }
 
-slm.rejectSiteUpdates = function(site) {
+slm.rejectReview = function(review) {
     return $.ajax({
-        url: slm.urls.reverse(`slm_edit_api:submit-detail`, {'site': site}),
-        method: 'DELETE',
-        headers: {'X-CSRFToken': csrf}
+        url: slm.urls.reverse(
+            'slm_edit_api:submit-detail',
+            {'pk': review}
+        ),
+        method: 'DELETE'
     });
+}
+
+slm.publish = function(siteId) {
+    return $.ajax({
+        url: slm.urls.reverse('slm_edit_api:stations-detail', kwargs={'pk': siteId}),
+        data: {'publish': true},
+        method: 'PATCH'
+    });
+}
+
+slm.deleteFile = function(station, fileId) {
+    return $.ajax({
+        url: slm.urls.reverse(
+            'slm_edit_api:files-detail',
+            {'site': station, 'pk': fileId}
+        ),
+        method: 'DELETE'
+    });
+}
+
+slm.publishFile = function(station, fileId, publish) {
+    return $.ajax({
+        url: slm.urls.reverse(
+            'slm_edit_api:files-detail',
+            {'site': station, 'pk': fileId}
+        ),
+        method: 'PATCH',
+        data: {
+            'status': publish ?
+                slm.SiteFileUploadStatus.PUBLISHED.val :
+                slm.SiteFileUploadStatus.UNPUBLISHED.val
+        }
+    });
+}
+
+slm.updateFileBadges = function(delta) {
+    let filesBadge = $('span.slm-files-badge');
+    filesBadge.data(
+        'slmFiles',
+        Math.max(0, filesBadge.data('slmFiles') + delta)
+    );
+    filesBadge.html(filesBadge.data('slmFiles'));
+    if (filesBadge.data('slmFiles') === 0) {
+        filesBadge.hide();
+    } else {
+        filesBadge.show();
+    }
+}
+
+slm.formToObject = function(form) {
+    let formData = new FormData(form.get(0));
+    let data = {};
+    formData.forEach(function(value, key) {
+        data[key] = value;
+    });
+    return data;
 }

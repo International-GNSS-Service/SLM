@@ -1,16 +1,12 @@
+from django.db.models import OuterRef, Q, Subquery
+from rest_framework import status
+from rest_framework.response import Response
 from slm.api.public import views as slm_views
-from django.db.models import (
-    Subquery,
-    OuterRef,
-    Q
-)
-from slm.models import SiteLocation
 from slm.map.api.public.serializers import (
     StationListSerializer,
-    StationMapSerializer
+    StationMapSerializer,
 )
-from rest_framework.response import Response
-from rest_framework import status
+from slm.models import SiteLocation
 
 
 class StationListViewSet(slm_views.StationListViewSet):
@@ -39,8 +35,12 @@ class StationMapViewSet(StationListViewSet):
     def list(self, request, **kwargs):
         return Response({
             'type': 'FeatureCollection',
-            'features':  self.get_serializer(self.filter_queryset(self.get_queryset()), many=True).data
+            'features':  self.get_serializer(
+                self.filter_queryset(self.get_queryset()), many=True
+            ).data
         }, status=status.HTTP_200_OK)
 
     def get_queryset(self):
-        return super().get_queryset().filter(Q(latitude__isnull=False) & Q(longitude__isnull=False))
+        return super().get_queryset().filter(
+            Q(latitude__isnull=False) & Q(longitude__isnull=False)
+        )

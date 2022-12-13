@@ -1,21 +1,17 @@
+from django.db.models import OuterRef, Q, Subquery
+from rest_framework import status
+from rest_framework.response import Response
 from slm.api.edit import views as slm_views
-from django.db.models import (
-    Subquery,
-    OuterRef,
-    Q
+from slm.map.api.edit.serializers import (
+    StationMapSerializer,
+    StationSerializer,
 )
 from slm.models import SiteLocation
-from slm.map.api.edit.serializers import (
-    StationListSerializer,
-    StationMapSerializer
-)
-from rest_framework.response import Response
-from rest_framework import status
 
 
 class StationListViewSet(slm_views.StationListViewSet):
 
-    serializer_class = StationListSerializer
+    serializer_class = StationSerializer
 
     ordering_fields = slm_views.StationListViewSet.ordering_fields + ['latitude', 'longitude']
 

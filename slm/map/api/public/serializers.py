@@ -1,5 +1,5 @@
-from slm.api.public import serializers as slm_serializers
 from rest_framework import serializers
+from slm.api.public import serializers as slm_serializers
 
 
 class StationListSerializer(slm_serializers.StationListSerializer):
@@ -18,17 +18,17 @@ class StationMapSerializer(serializers.Serializer):
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    instance.longitude / 10000,
-                    instance.latitude / 10000
+                    instance.longitude,
+                    instance.latitude
                 ],
             },
             "properties": {
-                "name": instance.name,
-                "publish": instance.last_publish,
-                "status": instance.status,
+                "name": instance.site.name,
+                "publish": instance.begin,
+                'status': instance.site.status,
                 "last_data": (
                     max(0, instance.last_data.days)
                     if instance.last_data else None
-                )
+                ) or 0  # todo remove this, network map can't handle nulls
             }
         }

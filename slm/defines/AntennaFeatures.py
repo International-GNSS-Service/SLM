@@ -1,11 +1,11 @@
+from django.utils.translation import gettext as _
 from django_enum import IntegerChoices
 from enum_properties import s
-from django.utils.translation import gettext as _
 
 
 class AntennaFeatures(IntegerChoices):
 
-    __symmetric_builtins__ = [
+    _symmetric_builtins_ = [
         s('name', case_fold=True),
         s('label', case_fold=True)
     ]
@@ -26,3 +26,6 @@ class AntennaFeatures(IntegerChoices):
     PWC = 14, _("Power Port")
     RTC = 15, _("RTK Connector")
     UNK = 16, _("Unknown")
+
+    def __str__(self):
+        return self.name

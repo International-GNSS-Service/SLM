@@ -9,8 +9,7 @@
         </div>
 
         <div class="container form-group px-0">
-          <form id='profile-form' class="slm-form" data-slm-method="put" data-slm-url="{% url 'slm_edit_api:profile-detail' pk=request.user.pk %}">
-            {% csrf_token %}
+          <form id='slm-user-form'>
             {% for field in user_form %}
                 <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
                   <div class="col-3">
@@ -24,32 +23,64 @@
                   </div>
                 </div>
             {% endfor %}
+          </form>
 
             <br/>
             <br/>
+            <form id='slm-user-profile-form'>
             {% for field in profile_form %}
                 <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
                   <div class="col-3">
                       <label class="form-label">{{ field.label }}</label>
                   </div>
                   <div class="col-6">
+                      {% if field.widget_type == 'checkbox' %}
+                      {% render_field field class="form-check-input" %}
+                      {% else %}
                       {% render_field field class="form-control" %}
+                      {% endif %}
                   </div>
                   <div class="col-3 align-items-center">
                       {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}
                   </div>
                 </div>
             {% endfor %}
-
+            </form>
 
             <!-- Cancel/Save Buttons -->
-            </br>
+            <br/>
             <div id="update" class="d-grid gap-2 d-flex justify-content-between">
-              <button type='submit' name='update' class="btn btn-success">
+              <button id="profile-update-btn" type='submit' onclick="updateProfile()" name='update' class="btn btn-success">
                 {% translate "Update" %}
               </button>
             </div>
-          </form>
+
+            <script>
+                const userForm = $('form#slm-user-form');
+                const profileForm = $('form#slm-user-profile-form');
+                const updateBtn = $('#profile-update-btn');
+                const updateProfile = function() {
+                    let data = slm.formToObject(userForm);
+                    data.profile = slm.formToObject(profileForm);
+                    $.ajax({
+                        url: "{% url 'slm_edit_api:profile-detail' pk=request.user.pk %}",
+                        method: 'PATCH',
+                        data: JSON.stringify(data),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json"
+                    }).done(
+                        function(data, status, jqXHR) {
+                            updateBtn.blur();
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                            $('body').html(jqXHR.responseText);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+            </script>
         </div>
     </div>
 

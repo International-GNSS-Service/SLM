@@ -1,8 +1,7 @@
 from django.urls import path
-from slm.map.views import MapView
 from slm.map.api.edit import views as edit_views
 from slm.map.api.public import views as public_views
-
+from slm.map.views import MapView
 
 api = {
     'edit': {

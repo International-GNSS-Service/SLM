@@ -1,8 +1,6 @@
+from django.contrib.sites.models import Site as DjangoSite
 from rest_framework import serializers
-from slm.models import (
-    Site,
-    Agency,
-)
+from slm.models import Agency, Network, SiteFileUpload, SiteIndex
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -15,24 +13,33 @@ class EmbeddedAgencySerializer(serializers.ModelSerializer):
         ]
 
 
+class EmbeddedNetworkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Network
+        fields = [
+            'name'
+        ]
+
+
 class StationListSerializer(serializers.ModelSerializer):
 
-    agencies = EmbeddedAgencySerializer(many=True)
-    registered = serializers.CharField(source='created')
-    latitude = serializers.SerializerMethodField()
-    longitude = serializers.SerializerMethodField()
-    city = serializers.CharField()
-    country = serializers.CharField()
-    elevation = serializers.FloatField()
-    antenna_type = serializers.CharField()
-    radome_type = serializers.CharField()
-    receiver_type = serializers.CharField()
-    serial_number = serializers.CharField()
-    firmware = serializers.CharField()
-    frequency_standard = serializers.CharField()
-    domes_number = serializers.CharField()
-    satellite_system = serializers.CharField()
-    data_center = serializers.CharField()
+    name = serializers.CharField(source='site.name')
+    last_publish = serializers.CharField(source='site.last_publish')
+    agencies = EmbeddedAgencySerializer(source='site.agencies', many=True)
+    networks = EmbeddedNetworkSerializer(source='site.networks', many=True)
+    antenna_type = serializers.CharField(
+        source='antenna.model',
+        allow_null=True
+    )
+    radome_type = serializers.CharField(
+        source='radome.model',
+        allow_null=True
+    )
+    receiver_type = serializers.CharField(
+        source='receiver.model',
+        allow_null=True
+    )
+    registered = serializers.DateTimeField(source='site.created')
     last_rinex2 = serializers.DateTimeField()
     last_rinex3 = serializers.DateTimeField()
     last_rinex4 = serializers.DateTimeField()
@@ -44,24 +51,14 @@ class StationListSerializer(serializers.ModelSerializer):
             return max(0, obj.last_data.days)
         return None
 
-    def get_latitude(self, obj):
-        if obj.latitude is not None:
-            return obj.latitude / 10000
-        return obj.latitude
-
-    def get_longitude(self, obj):
-        if obj.longitude is not None:
-            return obj.longitude / 10000
-        return obj.longitude
-
     class Meta:
-        model = Site
+        model = SiteIndex
         fields = [
             'name',
             'agencies',
+            'networks',
             'registered',
-            'last_publish', 
-            'status',
+            'last_publish',
             'latitude',
             'longitude',
             'city',
@@ -80,5 +77,30 @@ class StationListSerializer(serializers.ModelSerializer):
             'last_rinex3',
             'last_rinex4',
             'last_data_time',
-            'last_data'
+            'last_data',
         ]
+
+
+class SiteFileUploadSerializer(serializers.ModelSerializer):
+
+    site = serializers.CharField(source='site.name', allow_null=True)
+    download = serializers.SerializerMethodField()
+
+    def get_download(self, obj):
+        if 'request' in self.context:
+            return self.context['request'].build_absolute_uri(obj.link)
+        return f'{DjangoSite.objects.get_current()}/{obj.link.lstrip("/")}'
+
+    class Meta:
+        model = SiteFileUpload
+        fields = [
+            'id',
+            'site',
+            'name',
+            'timestamp',
+            'download',
+            'mimetype',
+            'description',
+            'direction'
+        ]
+        read_only_fields = fields

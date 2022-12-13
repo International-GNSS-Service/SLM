@@ -31,14 +31,14 @@ Add new section capability is not functional.
                     aria-selected="{% if section.active %}true{% else %}false{% endif %}"
                     data-slm-status={{ section.status.value }}
                     data-slm-flags={{ section.flags }}
+                    data-slm-section="{{ section.id }}"
+                    data-slm-parent="select-{{ station }}"
                     {% if not section.subsections %}onclick="window.location='{% url "slm:edit" station=station section=section.id %}'"{% endif %}
                 >
                     {{ name }}{% if section.subsections %}<i class="bi bi-chevron-down"></i>{% endif %}
-                    {% if section.flags %}
-                      <span class="badge rounded-pill bg-danger">
+                      <span class="badge rounded-pill bg-danger slm-error-badge" {% if not section.flags %}style="display: none"{% endif %}>
                         {{ section.flags }}
                       </span>
-                    {% endif %}
                 </button>
                 {% if section.subsections %}
                 <div class="{% if not section.active %}collapse{% endif %} w-100" id="{{ section.id }}-menu">
@@ -54,14 +54,15 @@ Add new section capability is not functional.
                       aria-selected="{% if subsection.active %}true{% else %}false{% endif %}"
                       data-slm-status={{ subsection.status.value }}
                       data-slm-flags={{ subsection.flags }}
+                      data-slm-section="{{ subsection.id }}"
+                      {% if subsection.group %}data-slm-group="{{ subsection.group }}"{% endif %}
+                      data-slm-parent="{{ section.id }}-tab"
                       onclick="window.location='{% url "slm:edit" station=station section=subsection.id %}'"
                   >
                     &ensp; {{ subname }}
-                      {% if subsection.flags %}
-                      <span class="badge rounded-pill bg-danger">
+                      <span class="badge rounded-pill bg-danger slm-error-badge" {% if not subsection.flags %}style="display: none"{% endif %}>
                         {{ subsection.flags }}
                       </span>
-                      {% endif %}
                   </button>
                 {% endfor %}
                 </div>
@@ -78,9 +79,8 @@ Add new section capability is not functional.
             <div class="section_header mb-4 pb-3 border-bottom">
               <span class="slm-section-header">{{ section_name }}</span>
             </div>
-        {% endif %}
-      <!-- Section 0 Content -->
-      {% if multi %}
+        <!-- Section 0 Content -->
+        {% if multi %}
           <div id="add-{{ section_id }}" class="d-grid gap-2 mb-2 d-flex justify-content-between">
               <button type='submit' name='add' class="btn btn-success">
                 {% translate "Add Section" %}
@@ -92,8 +92,8 @@ Add new section capability is not functional.
                     {% with form_inst_id=section_id|to_id:forloop.counter %}
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
-                                    <span>{{ form.instance.heading }}{% if form.flags|length %} <span class="badge rounded-pill bg-danger">{{ form.flags|length }}</span>{% endif %}</span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
+                                <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" data-slm-flags={{ form.flags|length }} data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ form.instance.mod_status.value }} aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
+                                    <span>{{ form.instance.heading }} <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
                                 </button>
                             </h2>
                             <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordion-{{ section_id }}">
@@ -122,7 +122,7 @@ Add new section capability is not functional.
                 stack.prepend(`
                     <div class="accordion-item">
                         <h2 class="accordion-header">
-                            <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-${formId}" aria-expanded="true" aria-controls="accordion-${formId}">
+                            <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ SiteLogStatus.EMPTY.value }} data-bs-target="#accordion-${formId}" aria-expanded="true" aria-controls="accordion-${formId}">
                                 <span>{% translate "New" %} {% if subname %}{{ subname }}{% else %}{{ name }}{% endif %}</span><span class="slm-effective"></span>
                             </button>
                         </h2>
@@ -134,6 +134,7 @@ Add new section capability is not functional.
                     </div>
                 `.replace('new_form_id', formId));
                 slm.initForm($(`#site-${formId}`));
+                $(`#site-${formId} div.slm-flag`).hide();
                 $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();
                 $(`#site-${formId} a[data-bs-toggle="popover"]`).popover();
                 newIdx += 1;
@@ -150,5 +151,62 @@ Add new section capability is not functional.
           </div>
           {% endwith %}
       {% endif %}
+    {% else %}
+    <div class="row">
+        <div class="col-6">
+            {% block station_info_block %}
+            {% endblock station_info_block %}
+        </div>
+        <div class="col-6">
+            {% block station_info_block2 %}
+            <img class="slm-station-location" src=""/>
+            {% endblock station_info_block2 %}
+        </div>
+    </div>
+    <div class="row my-5">
+        {% block station_images %}
+        {% if station_images %}
+        <div class="col-12">
+            <h2>{% trans "Images" %}</h2>
+            <hr/>
+            {% for img_row in station_images|split_rows:3 %}
+                <div class="row my-2">
+                    {% for img in img_row %}
+                    <div class="col-4 my-2">
+                        <a href="{{img.link}}" download>
+                            <img class="img-fluid justify-self-center" src="{% url 'slm:download_attachment_thumbnail' site=station pk=img.pk %}"/>
+                        </a>
+                            <div><p>{{img.name}}{% if img.direction %} ({{img.direction.label}}){% endif %}</p></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endblock %}
+    </div>
+    <div class="row my-5">
+        {% block station_attachments %}
+        {% if station_attachments %}
+        <div class="col-12">
+            <h2>{% trans "Attachments" %}</h2>
+            <hr/>
+            {% for attachment_row in station_attachments|split_rows:3 %}
+                <div class="row my-2">
+                    {% for attachment in attachment_row %}
+                    <div class="col-4 d-flex justify-content-center" style="text-align: center">
+                        <a href="{{attachment.link}}" download>
+                            <i class="slm-attachment {{attachment.mimetype|file_icon}}" style="font-size: 120px;"></i>
+                            <p>{{attachment.name}}</p>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endblock %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

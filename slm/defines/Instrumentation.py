@@ -1,11 +1,11 @@
+from django.utils.translation import gettext as _
 from django_enum import IntegerChoices
 from enum_properties import s
-from django.utils.translation import gettext as _
 
 
 class Instrumentation(IntegerChoices):
 
-    __symmetric_builtins__ = [
+    _symmetric_builtins_ = [
         s('name', case_fold=True),
         s('label', case_fold=True)
     ]
@@ -18,3 +18,6 @@ class Instrumentation(IntegerChoices):
     VLBI    = 6, _('VLBI')
     TIME    = 7, _('TIME')
     ETC     = 8, _('etc')
+
+    def __str__(self):
+        return self.label

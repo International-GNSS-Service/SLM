@@ -29,7 +29,7 @@
                                     {% for network in networks %}
                                     <div class="form-check">
                                         <input id="slm-network-{{network.id}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{network.id}}">
-                                        <label class="form-check-label d-flex" for="{{network.id}}">
+                                        <label class="form-check-label d-flex" for="slm-network-{{network.id}}">
                                             <p class="mb-1">{{network.name}}</p>
                                         </label>
                                     </div>
@@ -45,7 +45,7 @@
                                 
                                     <div class="form-check">
                                         <input id="slm-agency-{{agency.id}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{agency.id}}">
-                                        <label class="form-check-label d-flex" for="{{agency.id}}">
+                                        <label class="form-check-label d-flex" for="slm-agency-{{agency.id}}">
                                             <p class="mb-1">{{agency.name}}</p>
                                         </label>
                                     </div>

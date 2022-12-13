@@ -5,22 +5,16 @@ There is an http signature IETF standard in the works, presumably a more mature 
 library will emerge at some point - when that happens this should be replaced with that one.
 """
 
-from rest_framework import authentication
-from rest_framework import exceptions
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-from django.contrib.sites.shortcuts import get_current_site
-
-from allauth.account.forms import EmailAwarePasswordResetTokenGenerator
-from allauth.utils import build_absolute_uri
 from allauth.account import app_settings
-from allauth.account.app_settings import AuthenticationMethod
 from allauth.account.adapter import get_adapter
-from allauth.account.utils import (
-    user_pk_to_url_str,
-    user_username
-)
-
+from allauth.account.app_settings import AuthenticationMethod
+from allauth.account.forms import EmailAwarePasswordResetTokenGenerator
+from allauth.account.utils import user_pk_to_url_str, user_username
+from allauth.utils import build_absolute_uri
+from django.contrib.auth import get_user_model
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
+from rest_framework import authentication, exceptions
 
 """
 Reusing failure exceptions serves several purposes:

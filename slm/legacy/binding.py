@@ -19,9 +19,18 @@ from slm.legacy.parser import (
     normalize,
 )
 from slm.models import Antenna, Radome, Receiver, SatelliteSystem
+import re
 
 NUMERIC_CHARACTERS = {'.', '+', '-'}
 
+TEMP_RANGE_REGEX = re.compile(
+    r'(\d+(?:[.]\d*)?)[\s()°degrsDEGRSCc]*(?:(?:-)|(?:to))\s*'
+    r'(\d+(?:[.]\d*)?)[\s()°degrsDEGRSCc]*'
+)
+TEMP_STAB_REGEX = re.compile(
+    r'(\d+(?:[.]\d*)?)?[\s()°degrsDEGRSCc]*(?:(?:±)|'
+    r'(?:\+/?-))?\s*(\d+(?:[.]\d*)?)?[\s()°degrsDEGRSCc]*'
+)
 
 param_registry = {}
 
@@ -169,6 +178,48 @@ def to_date(value):
                 f'format: CCYY-MM-DD'
             )
     return None
+
+
+def to_temp_stab(value):
+
+    value = value.replace('º', '') if value else value
+
+    def get_tuple():
+        temp = None
+        stab = None
+        if value:
+            range_mtch = TEMP_RANGE_REGEX.match(value)
+            if range_mtch:
+                v1 = float(range_mtch.group(1))
+                v2 = float(range_mtch.group(2))
+                return (v1 + v2) / 2, abs(v1 - v2) / 2
+
+            stab_mtch = TEMP_STAB_REGEX.match(value)
+            if stab_mtch:
+                temp = (
+                    float(stab_mtch.group(1))
+                    if stab_mtch.group(1)
+                    else None
+                )
+                stab = (
+                    float(stab_mtch.group(2))
+                    if stab_mtch.group(2)
+                    else None
+                )
+
+        if stab is None and temp is not None and temp <= 10:
+            stab = temp
+            temp = None
+
+        return temp, stab
+
+    temp, stab = get_tuple()
+    if value and temp is None and stab is None:
+        raise ValueError(
+            f'Unable to parse "{value}" into a temperature stabilization. '
+            f'format: deg C +/- deg C'
+        )
+    return temp, stab
 
 
 def to_datetime(value):
@@ -346,7 +397,10 @@ class SiteLogBinder:
                 ('Elevation Cutoff Setting', ('elevation_cutoff', to_float)),
                 ('Date Installed', ('installed', to_datetime)),
                 ('Date Removed', ('removed', to_datetime)),
-                ('Temperature Stabiliz.', ('temp_stab', to_str)),
+                ('Temperature Stabiliz.', [
+                    ('temp', lambda val: to_temp_stab(val)[0]),
+                    ('temp_stab', lambda val: to_temp_stab(val)[1])
+                ]),
                 ('Additional Information', ('additional_info', to_str))
             ]
         },

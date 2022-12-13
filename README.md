@@ -1,5 +1,4 @@
-# SLM
-Site Log Manager
+# Site Log Manager (SLM)
 
 The Site Log Manager (SLM) is a web platform that aims to provide:
 

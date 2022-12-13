@@ -61,7 +61,7 @@
                 <geo:elevationCutoffSetting {% if rcvr.elevation_cutoff is None %}xsi:nil="true"{% endif %}>{{ rcvr.elevation_cutoff|precision:1 }}</geo:elevationCutoffSetting>
                 <geo:dateInstalled>{{ rcvr.installed|iso_utc_full }}</geo:dateInstalled>
                 <geo:dateRemoved>{{ rcvr.removed|iso_utc_full }}</geo:dateRemoved>
-                <geo:temperatureStabilization {% if not rcvr.temp_stab %}xsi:nil="true"{% endif %}>{% if rcvr.temp_stab is not None %}{{ rcvr.temp_stab|none2empty }}{% endif %}</geo:temperatureStabilization>
+                <geo:temperatureStabilization {% if rcvr.temp_stab is None %}xsi:nil="true"{% endif %}>{% if rcvr.temp_stab is not None %}{{ rcvr.temp_stab|none2empty }}{% endif %}</geo:temperatureStabilization>
             </geo:GnssReceiver>
             <geo:dateInserted>{{ rcvr.inserted|iso_utc_full }}</geo:dateInserted>
         </geo:gnssReceiver>
@@ -102,7 +102,7 @@
                     <geo:dz>{{ tie.dz }}</geo:dz>
                 </geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
                 {% endif %}
-                <geo:localSiteTiesAccuracy {% if tie.accuracy is None %}xsi:nil="true"{% endif %}>{{ tie.accuracy|precision:0 }}</geo:localSiteTiesAccuracy>
+                <geo:localSiteTiesAccuracy{% if tie.accuracy is None %} xsi:nil="true"{% endif %}>{{ tie.accuracy|precision:1 }}</geo:localSiteTiesAccuracy>
                 <geo:surveyMethod>{{ tie.survey_method }}</geo:surveyMethod>
                 <geo:dateMeasured>{{ tie.measured|iso_utc_full }}</geo:dateMeasured>
                 <geo:notes>{{ tie.additional_information }}</geo:notes>
@@ -149,15 +149,15 @@
                 <geo:notes>{{ sensor.notes }}</geo:notes>
                 <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
                 <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
-                <geo:heightDiffToAntenna>{{ sensor.height_diff }}</geo:heightDiffToAntenna>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
                 <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
                 <gml:validTime>
-                    <gml:TimePeriod gml:id="humidity-sensor-1--time-period-1">
+                    <gml:TimePeriod gml:id="humidity-sensor-{{ forloop.counter }}-time-period-1">
                         <gml:beginPosition>{{sensor.effective_start|simple_utc}}</gml:beginPosition>
                         <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
                     </gml:TimePeriod>
                 </gml:validTime>
-                <geo:dataSamplingInterval>{{ sensor.sampling_interval }}</geo:dataSamplingInterval>
+                <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
                 <geo:accuracy-percentRelativeHumidity>{{ sensor.accuracy|precision:1 }}</geo:accuracy-percentRelativeHumidity>
                 <geo:aspiration>{{ sensor.aspiration|enum_str|upper }}</geo:aspiration>
             </geo:HumiditySensor>
@@ -171,7 +171,7 @@
                 <geo:notes>{{ sensor.notes }}</geo:notes>
                 <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
                 <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
-                <geo:heightDiffToAntenna>{{ sensor.height_diff }}</geo:heightDiffToAntenna>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
                 <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
                 <gml:validTime>
                     <gml:TimePeriod gml:id="pressure-sensor-{{ forloop.counter }}-time-period-1">
@@ -179,7 +179,7 @@
                         <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
                     </gml:TimePeriod>
                 </gml:validTime>
-                <geo:dataSamplingInterval>{{ sensor.sampling_interval }}</geo:dataSamplingInterval>
+                <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
                 <geo:accuracy-hPa>{{ sensor.accuracy|precision:2 }}</geo:accuracy-hPa>
             </geo:PressureSensor>
             <geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>
@@ -192,7 +192,7 @@
                 <geo:notes>{{ sensor.notes }}</geo:notes>
                 <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
                 <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
-                <geo:heightDiffToAntenna>{{ sensor.height_diff }}</geo:heightDiffToAntenna>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
                 <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
                 <gml:validTime>
                     <gml:TimePeriod gml:id="temperature-sensor-{{ forloop.counter }}-time-period-1">
@@ -200,7 +200,7 @@
                         <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
                     </gml:TimePeriod>
                 </gml:validTime>
-                <geo:dataSamplingInterval>{{ sensor.sampling_interval }}</geo:dataSamplingInterval>
+                <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
                 <geo:accuracy-degreesCelcius>{{ sensor.accuracy|precision:1 }}</geo:accuracy-degreesCelcius>
                 <geo:aspiration>{{ sensor.aspiration|enum_str|upper }}</geo:aspiration>
             </geo:TemperatureSensor>
@@ -214,7 +214,7 @@
                 <geo:notes>{{ sensor.notes }}</geo:notes>
                 <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
                 <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
-                <geo:heightDiffToAntenna>{{ sensor.height_diff }}</geo:heightDiffToAntenna>
+                <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
                 <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
                 <gml:validTime>
                     <gml:TimePeriod gml:id="water-vapor-sensor-{{ forloop.counter }}-time-period-1">
@@ -222,7 +222,7 @@
                         <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
                     </gml:TimePeriod>
                 </gml:validTime>
-                <geo:distanceToAntenna>{{sensor.distance_to_antenna}}</geo:distanceToAntenna>
+                <geo:distanceToAntenna>{{ sensor.distance_to_antenna|none2empty }}</geo:distanceToAntenna>
             </geo:WaterVaporSensor>
             <geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>
         </geo:waterVaporSensor>
@@ -286,7 +286,7 @@
         <geo:localEpisodicEffect>
             <geo:LocalEpisodicEffect gml:id="local-episodic-effect-{{ forloop.counter }}">
                 <gml:validTime>
-                    <gml:TimePeriod gml:id="signal-obstruction-{{ forloop.counter }}-time-period-1">
+                    <gml:TimePeriod gml:id="local-episodic-effect-{{ forloop.counter }}-time-period-1">
                         <gml:beginPosition>{{effect.effective_start|simple_utc}}</gml:beginPosition>
                         <gml:endPosition>{{effect.effective_end|simple_utc}}</gml:endPosition>
                     </gml:TimePeriod>

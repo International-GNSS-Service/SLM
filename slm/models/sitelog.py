@@ -1520,6 +1520,7 @@ class SiteReceiver(SiteSubSection):
             'elevation_cutoff',
             'installed',
             'removed',
+            'temp',
             'temp_stab',
             'additional_info'
         ]
@@ -1624,16 +1625,27 @@ class SiteReceiver(SiteSubSection):
         )
     )
 
+    temp = models.FloatField(
+        default=None,
+        null=True,
+        blank=True,
+        verbose_name=_('Temperature'),
+        help_text=_(
+            'If the receiver is in a temperature controlled environment, '
+            'please enter the approximate temperature of that environment. '
+            'Format: (°C)'
+        )
+    )
     # this field is a string in GeodesyML - therefore leaving it as character
-    temp_stab = models.CharField(
-        max_length=50,
-        default='',
+    temp_stab = models.FloatField(
+        default=None,
+        null=True,
         blank=True,
         verbose_name=_('Temperature Stabiliz.'),
         help_text=_(
             'If the receiver is in a temperature controlled environment, '
-            'please enter the approximate temperature of that environment. '
-            'Format: (none or tolerance in degrees C)'
+            'please enter the approximate temperature range of that '
+            'environment. Format: (± °C)'
         )
     )
 

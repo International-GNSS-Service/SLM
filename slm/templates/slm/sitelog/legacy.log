@@ -60,7 +60,7 @@
      Elevation Cutoff Setting : {% if rcvr.elevation_cutoff is not None %}{{ rcvr.elevation_cutoff|precision:1 }} deg{% endif %}
      Date Installed           : {% if rcvr.installed %}{{ rcvr.installed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
      Date Removed             : {% if rcvr.removed %}{{ rcvr.removed|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}
-     Temperature Stabiliz.    : {{ rcvr.temp_stab }}
+     Temperature Stabiliz.    : {{ rcvr.temp|format_temp_stab:rcvr.temp_stab }}
      Additional Information   : {{ rcvr.additional_info|multi_line }}
 {% endfor %}
 {% if not receiver or include_templates %}3.x  Receiver Type            : (A20, from rcvr_ant.tab; see instructions)

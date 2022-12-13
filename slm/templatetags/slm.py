@@ -151,9 +151,11 @@ def precision_full(alt, precision):
 
 @register.filter(name='pos')
 def pos(number):
-    if float(number) > 0:
-        return f'+{number}'
-    return number
+    if number not in {None, ''}:
+        if float(number) > 0:
+            return f'+{number}'
+        return number
+    return ''
 
 
 @register.filter(name='none2empty')
@@ -317,3 +319,16 @@ def contact(agency, ctype):
             'name', 'phone1', 'phone2', 'fax', 'email'
         ] if getattr(agency, f'{ctype}_{field}')
     }
+
+
+@register.filter(name="format_temp_stab")
+def format_temp_stab(temp, temp_stab):
+    temp = precision(temp, 1)
+    temp_stab = precision(temp_stab, 1)
+    if temp and temp_stab:
+        return f'{temp} +/- {temp_stab} C'
+    elif temp:
+        return f'{temp} C'
+    elif temp_stab:
+        return f'+/- {temp_stab} C'
+    return ''

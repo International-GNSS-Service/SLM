@@ -81,8 +81,9 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
 
 class SerializerRegistry(Singleton):
     """
-    This class provides a way to register and fetch serialization routines for specific model types. For example if for
-    some reason you wanted to serialize all the Boxes through the client api you could do:
+    This class provides a way to register and fetch serialization routines
+    for specific model types. For example if for some reason you wanted to
+    serialize all the Sites through the client api you could do:
 
         ..code-block::
 
@@ -90,10 +91,11 @@ class SerializerRegistry(Singleton):
             from rest_framework.renderers import JSONRenderer
 
             JSONRenderer().render(
-                SerializerRegistry().get_serializer('client', type(Box))(Box.objects.all(), many=True),
-                accepted_media_type='Accept: application/json; indent=4').decode(
-                'utf-8'
-            )
+                SerializerRegistry().get_serializer('edit', type(Site))(
+                    Site.objects.all(), many=True
+                ),
+                accepted_media_type='Accept: application/json; indent=4'
+            ).decode('utf-8')
     """
     serializer_map = {}
     proxy_map = {}

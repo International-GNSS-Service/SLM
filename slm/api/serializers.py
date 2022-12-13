@@ -5,6 +5,7 @@ from django.utils.functional import cached_property
 from rest_framework import serializers
 from slm.defines import SiteLogFormat, GeodesyMLVersion
 from slm.models import Site
+from lxml import etree
 
 
 class _Heading:
@@ -26,10 +27,13 @@ class SiteLogSerializer(serializers.BaseSerializer):
     text_tmpl = get_template('slm/sitelog/legacy.log')
 
     xml_tmpl = {
-        #GeodesyMLVersion.v0_4: get_template('slm/sitelog/xsd/geodesyml_04.xml'),
+        #GeodesyMLVersion.v0_4:
+        # get_template('slm/sitelog/xsd/geodesyml_04.xml'),
         GeodesyMLVersion.v0_5:
             get_template('slm/sitelog/xsd/geodesyml_05.xml')
     }
+
+    xml_parser = etree.XMLParser(remove_blank_text=True)
 
     def __init__(self, *args, instance, epoch=None, published=True, **kwargs):
         self.site = instance
@@ -41,13 +45,19 @@ class SiteLogSerializer(serializers.BaseSerializer):
         super().__init__(*args, instance=instance, **kwargs)
 
     def xml(self, version):
-        return str(self.xml_tmpl[version].render({
-            **self.context,
-            'identifier': self.site.get_filename(
-                log_format=SiteLogFormat.GEODESY_ML,
-                epoch=self.epoch_param
-            ).split('.')[0]
-        }))
+        return etree.tostring(
+            etree.fromstring(
+                self.xml_tmpl[version].render({
+                    **self.context,
+                    'identifier': self.site.get_filename(
+                        log_format=SiteLogFormat.GEODESY_ML,
+                        epoch=self.epoch_param
+                    ).split('.')[0]
+                }).encode(),
+                parser=self.xml_parser
+            ),
+            pretty_print=True
+        )
 
     @cached_property
     def json(self):

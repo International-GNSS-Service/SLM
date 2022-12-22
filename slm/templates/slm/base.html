@@ -67,7 +67,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
     <nav class="navbar navbar-dark bg-igs-blue border-bottom border-dark navbar-expand-xl bg-faded justify-content-between">
       <div class="container-fluid mx-4">
         <div class="d-flex align-items-center w-50">
-          <a href="{% url "slm:home" %}" class="navbar-brand"><img id="logo" class="me-4" src="{% static 'images/slm_beta_white_border.svg' %}" alt="International GNSS Service"> Site Log Manager 2.0 Beta</a>
+          <a href="{% url "slm:home" %}" class="navbar-brand"><img id="logo" class="me-4" src="{% static 'images/slm-logo.svg' %}" alt="International GNSS Service"> Site Log Manager 2.0 Beta</a>
         </div>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3" title="Navigation">
           <span class="navbar-toggler-icon"></span>
@@ -121,6 +121,17 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
   {% block login_content %}{% endblock %}
 
   {% block page_content %}{% endblock %}
+
+  <div id="footer" class="container-fluid bg-igs-blue">
+    <footer class="d-flex flex-wrap justify-content-end align-items-center py-2 border-top">
+      <div class="col-md-4 d-flex align-items-center justify-content-end pe-4">
+        <a href="/" class="mb-3 me-2 mb-md-0">
+          <a href="{% url "slm:home" %}" class="navbar-brand"><img id="footer-logo" src="{% static 'images/igs-white.svg' %}" alt="International GNSS Service"></a>
+        </a>
+        <span class="mb-3 mb-md-0 text-light">Powered by International GNSS Service</span>
+      </div>
+    </footer>
+  </div>
 
   {% compress js %}
   <script type='text/javascript'>

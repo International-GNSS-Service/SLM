@@ -25,6 +25,7 @@ from slm.models import Agency, Network, Site
 from slm.tests.defines.ISOCountry import TestISOCountry  # dont remove
 from slm.tests.defines.SiteLogStatus import TestSiteLogStatus  # dont remove
 from slm.tests.parsing.legacy import TestLegacyParser  # dont remove
+from slm.tests.parsing.xsd import TestXSDParser  # dont remove
 
 
 class ReceivedSignal:

@@ -1,7 +1,6 @@
 from functools import partial
 from typing import Callable, Dict, List, Tuple, Union
 
-from dateutil.parser import parse as parse_date
 from slm.defines import (
     AntennaReferencePoint,
     Aspiration,
@@ -11,17 +10,27 @@ from slm.defines import (
     ISOCountry,
     TectonicPlates,
 )
-from slm.legacy.parser import (
+from slm.parsing.legacy.parser import (
     Error,
     ParsedSection,
     SiteLogParser,
     Warn,
     normalize,
 )
-from slm.models import Antenna, Radome, Receiver, SatelliteSystem
 import re
-
-NUMERIC_CHARACTERS = {'.', '+', '-'}
+from slm.parsing import (
+    to_int,
+    to_enum,
+    to_float,
+    to_date,
+    to_radome,
+    to_antenna,
+    to_receiver,
+    to_datetime,
+    to_satellites,
+    to_str,
+    BaseBinder
+)
 
 TEMP_RANGE_REGEX = re.compile(
     r'(\d+(?:[.]\d*)?)[\s()°degrsDEGRSCc]*(?:(?:-)|(?:to))\s*'
@@ -47,137 +56,6 @@ class _Ignored:
 
 def ignored(value):
     return _Ignored
-
-
-def to_antenna(value):
-    antenna = value.strip()
-    parts = value.split()
-    if len(parts) > 1 and len(antenna) > 16:
-        antenna = value.rstrip(parts[-1]).strip()
-    try:
-        return Antenna.objects.get(model__iexact=antenna).pk
-    except Antenna.DoesNotExist:
-        antennas = '\n'.join(
-            [ant.model for ant in Antenna.objects.all()]
-        )
-        raise ValueError(
-            f"Unexpected antenna model {antenna}. Must be one of "
-            f"\n{antennas}"
-        )
-
-
-def to_radome(value):
-    radome = value.strip()
-    try:
-        return Radome.objects.get(model__iexact=radome).pk
-    except Radome.DoesNotExist:
-        radomes = '\n'.join(
-            [rad.model for rad in Radome.objects.all()]
-        )
-        raise ValueError(
-            f"Unexpected radome model {radome}. Must be one of "
-            f"\n{radomes}"
-        )
-
-
-def to_receiver(value):
-    receiver = value.strip()
-    try:
-        return Receiver.objects.get(model__iexact=receiver).pk
-    except Receiver.DoesNotExist:
-        receivers = '\n'.join(
-            [rec.model for rec in Receiver.objects.all()]
-        )
-        raise ValueError(
-            f"Unexpected receiver model {receiver}. Must be one of "
-            f"\n{receivers}"
-        )
-
-
-def to_satellites(value):
-    sats = []
-    bad_sats = set()
-    for sat in value.split('+'):
-        try:
-            sats.append(SatelliteSystem.objects.get(name__iexact=sat).pk)
-        except SatelliteSystem.DoesNotExist:
-            bad_sats.add(sat)
-    if bad_sats:
-        bad_sats = '  \n'.join(bad_sats)
-        good_sats = '  \n'.join(
-            [sat.name for sat in SatelliteSystem.objects.all()]
-        )
-        raise ValueError(
-            f"Expected constellation list delineated by '+' (e.g. GPS+GLO). "
-            f"Unexpected values encountered: \n{bad_sats}\n\nMust be one of "
-            f"\n{good_sats}"
-        )
-    return sats
-
-
-def to_enum(enum_cls, value, blank=None):
-    if value:
-        try:
-            return enum_cls(value).value
-        except ValueError as ve:
-            valid_list = "  \n".join(en.label for en in enum_cls)
-            raise ValueError(
-                f'Invalid value {value} must be one of:\n'
-                f'{valid_list}'
-            ) from ve
-    return blank
-
-
-def to_numeric(numeric_type, value):
-    """
-    The strategy for converting string parameter values to numerics is to chop
-    the numeric off the front of the string. If there's any more numeric
-    characters in the remainder its an error.
-    """
-    if not value:
-        return None
-
-    # just try to chop the numbers off the front of the string
-    digits = ''
-    for char in value:
-        if char.isdigit() or char in NUMERIC_CHARACTERS:
-            digits += char
-
-    if not digits:
-        raise ValueError(
-            f'Could not convert {value} to type {numeric_type.__name__}.'
-        )
-
-    # there should not be any other numbers in the string!
-    for char in value.replace(digits, ''):
-        if char.isdigit():
-            raise ValueError(
-                f'Could not convert {value} to type {numeric_type.__name__}.'
-            )
-
-    return numeric_type(digits)
-
-
-def to_float(value):
-    return to_numeric(numeric_type=float, value=value)
-
-
-def to_int(value):
-    return to_numeric(numeric_type=int, value=value)
-
-
-def to_date(value):
-    if value.strip():
-        if 'CCYY-MM-DD' in value.upper():
-            return None
-        try:
-            return parse_date(value).date()
-        except:
-            raise ValueError(
-                f'Unable to parse {value} into a date. Expected '
-                f'format: CCYY-MM-DD'
-            )
-    return None
 
 
 def to_temp_stab(value):
@@ -222,20 +100,6 @@ def to_temp_stab(value):
     return temp, stab
 
 
-def to_datetime(value):
-    if value.strip():
-        if 'CCYY-MM-DD' in value.upper():
-            return None
-        try:
-            return parse_date(value)
-        except:
-            raise ValueError(
-                f'Unable to parse {value} into a date and time. Expected '
-                f'format: CCYY-MM-DDThh:mmZ'
-            )
-    return None
-
-
 def effective_start(value):
     try:
         if value.strip():
@@ -262,15 +126,7 @@ def effective_end(value):
         ) from ve
 
 
-def to_str(value):
-    if value is None:
-        return ''
-    return value
-
-
-class SiteLogBinder:
-
-    parsed: SiteLogParser = None
+class SiteLogBinder(BaseBinder):
 
     EFFECTIVE_DATES = [
         ('Effective Dates', [
@@ -569,16 +425,8 @@ class SiteLogBinder:
         }
     }
 
-    @property
-    def lines(self) -> List[str]:
-        return self.parsed.lines
-
-    @property
-    def findings(self):
-        return self.parsed.findings
-
     def __init__(self, parsed: SiteLogParser):
-        self.parsed = parsed
+        super().__init__(parsed)
         for _, section in self.parsed.sections.items():
             if section.example or not section.contains_values:
                 continue

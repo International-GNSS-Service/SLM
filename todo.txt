@@ -19,3 +19,16 @@ TODO
 * Linting
 ** Data Model Refactor - normalize log entries??
 ** Vue.js integration
+
+
+
+Pathway to NORMALIZE the data:
+
+* published & removed timestamps on all sections.
+  * For edit head published = null
+  * Eliminates maximum subquery
+  * Eliminates subsection issues
+    * is this more efficient though than a 2-round -
+      get all unique subsection IDs, then get most recent edits less than or
+      equal to blah? - yes it does because you can't say more recent edits
+      less than or equal to blah for each subsection id

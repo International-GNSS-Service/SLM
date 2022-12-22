@@ -1,0 +1,16 @@
+<geo:{{ sensor_tag }} gml:id="{{ sensor_id }}-{{ count }}">
+    {% block section %}
+    {% if sensor.notes %}<geo:notes>{{ sensor.notes }}</geo:notes>{% endif %}
+    <geo:manufacturer>{{ sensor.manufacturer }}</geo:manufacturer>
+    <geo:serialNumber>{{ sensor.serial_number }}</geo:serialNumber>
+    <geo:heightDiffToAntenna>{{ sensor.height_diff|none2empty }}</geo:heightDiffToAntenna>
+    <geo:calibrationDate>{{ sensor.calibration|simple_utc }}</geo:calibrationDate>
+    <gml:validTime>
+        <gml:TimePeriod gml:id="{{ sensor_id }}-{{ count }}-time-period-1">
+            <gml:beginPosition>{{sensor.effective_start|simple_utc}}</gml:beginPosition>
+            <gml:endPosition>{{sensor.effective_end|simple_utc}}</gml:endPosition>
+        </gml:TimePeriod>
+    </gml:validTime>
+    {% endblock section %}
+</geo:{{ sensor_tag }}>
+<geo:dateInserted>{{ sensor.inserted|iso_utc_full }}</geo:dateInserted>

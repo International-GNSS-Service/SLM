@@ -1,0 +1,12 @@
+<geo:{{ condition_tag }} gml:id="{{ condition_id }}-{{ count }}">
+    {% block section %}
+    <gml:validTime>
+        <gml:TimePeriod gml:id="{{ condition_id }}-{{ count }}-time-period-1">
+            <gml:beginPosition>{{condition.effective_start|simple_utc}}</gml:beginPosition>
+            <gml:endPosition>{{condition.effective_end|simple_utc}}</gml:endPosition>
+        </gml:TimePeriod>
+    </gml:validTime>
+    <geo:notes>{{ condition.additional_information }}</geo:notes>
+    {% endblock section %}
+</geo:{{ condition_tag }}>
+<geo:dateInserted>{{ condition.inserted|iso_utc_full }}</geo:dateInserted>

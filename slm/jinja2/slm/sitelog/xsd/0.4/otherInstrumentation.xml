@@ -1,0 +1,5 @@
+<geo:OtherInstrumentation gml:id="other-instrumentation-{{ count }}">
+    <geo:instrumentation>{{ instrument.instrumentation }}</geo:instrumentation>
+    <gml:validTime/>
+</geo:OtherInstrumentation>
+<geo:dateInserted>{{ instrument.inserted|iso_utc_full }}</geo:dateInserted>

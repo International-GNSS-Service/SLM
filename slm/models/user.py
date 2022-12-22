@@ -129,8 +129,9 @@ class UserProfile(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Stub out a custom user model now in case we want them later - its way easier to add stuff to
-    a custom user model later rather than having to migrate off of django's native user model
+    Stub out a custom user model now in case we want them later - its way
+    easier to add stuff to a custom user model later rather than having to
+    migrate off of django's native user model
     """
     email = models.EmailField(
         verbose_name=_('Email Address'),
@@ -139,19 +140,29 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True
     )
 
-    first_name = models.CharField(max_length=255, null=True, verbose_name=_('First Name'))
-    last_name = models.CharField(max_length=255, null=True, verbose_name=_('Last Name'))
+    first_name = models.CharField(
+        max_length=255,
+        null=True,
+        verbose_name=_('First Name')
+    )
+    last_name = models.CharField(
+        max_length=255,
+        null=True,
+        verbose_name=_('Last Name')
+    )
 
     is_superuser = models.BooleanField(
         _('Superuser'),
         default=False,
         help_text=_('Designates whether the user has unlimited access.'),
+        db_index=True
     )
 
     is_staff = models.BooleanField(
         _('Staff'),
         default=True,
         help_text=_('Designates if the user is staff.'),
+        db_index=True
     )
 
     is_active = models.BooleanField(
@@ -161,8 +172,23 @@ class User(AbstractBaseUser, PermissionsMixin):
             'Designates whether this user should be treated as active. '
             'Unselect this instead of deleting accounts.'
         ),
+        db_index=True
     )
-    date_joined = models.DateTimeField(auto_now_add=True, verbose_name=_('Date Joined'))
+
+    date_joined = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Date Joined'),
+        db_index=True
+    )
+
+    last_visit = models.DateTimeField(
+        verbose_name=_('Last Visit'),
+        editable=False,
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True
+    )
 
     agency = models.ForeignKey(
         'slm.Agency',
@@ -189,7 +215,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             'If set to true this user will not be sent any emails by the '
             'system. Note: this does not apply to account related emails '
             '(i.e. password resets).'
-        )
+        ),
+        db_index=True
     )
 
     def is_moderator(self, station):

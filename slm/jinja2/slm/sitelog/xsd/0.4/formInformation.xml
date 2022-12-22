@@ -1,0 +1,5 @@
+<geo:FormInformation gml:id="form-info">
+    <geo:preparedBy>{{ form.prepared_by }}</geo:preparedBy>
+    <geo:datePrepared>{{ form.date_prepared|simple_utc }}</geo:datePrepared>
+    <geo:reportType>{{ form.report_type }}</geo:reportType>
+</geo:FormInformation>

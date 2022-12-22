@@ -1,5 +1,5 @@
 from django_enum import IntegerChoices
-from enum_properties import s
+from enum_properties import s, p
 from pathlib import Path
 from django.utils.functional import cached_property
 
@@ -28,7 +28,7 @@ class GeodesyMLVersion(
     @cached_property
     def schema(self):
         from lxml.etree import XMLSchema
-        from slm import xsd
+        from slm.parsing import xsd
         # todo - do this with importlib.resources ?
         return XMLSchema(
             file=str(
@@ -36,3 +36,8 @@ class GeodesyMLVersion(
                 / 'geodesyML.xsd'
             )
         )
+
+    @cached_property
+    def template(self):
+        from django.template.loader import get_template
+        return get_template(f'slm/sitelog/xsd/geodesyml_{self.version}.xml')

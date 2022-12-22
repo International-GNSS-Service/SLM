@@ -27,6 +27,7 @@ from slm.models import compat
 from slm.models.sitelog import DefaultToStrEncoder, SiteSection, SiteSubSection
 
 
+
 class AgencyManager(models.Manager):
     pass
 
@@ -423,6 +424,12 @@ class SiteFile(models.Model):
         help_text=_('A pointer to the uploaded file on disk.')
     )
 
+    file_size = models.PositiveIntegerField(
+        null=True,
+        default=None,
+        help_text=_('The size of the file on disk.')
+    )
+
     thumbnail = models.ImageField(
         upload_to=site_thumbnail_path,
         null=True,
@@ -465,6 +472,10 @@ class SiteFile(models.Model):
                 self.mimetype
             )
         self.generate_thumbnail()
+        try:
+            self.file_size = os.path.getsize(self.file.path)
+        except OSError:
+            self.file_size = None
         return super().save(*args, **kwargs)
 
     @classmethod
@@ -482,7 +493,9 @@ class SiteFile(models.Model):
             ):
                 return SLMFileType.SITE_LOG, SiteLogFormat.LEGACY
         elif mimetype == SiteLogFormat.GEODESY_ML.mimetype:
-            pass
+            # todo - determine if this is the right schema etc, otherwise
+            # could be an XML file attachment
+            return SLMFileType.SITE_LOG, SiteLogFormat.GEODESY_ML
         elif mimetype == SiteLogFormat.JSON.mimetype:
             pass
         elif mimetype.split('/')[0] == 'image' and 'svg' not in mimetype:
@@ -614,6 +627,16 @@ class SiteFileUpload(SiteFile):
         db_index=True,
         max_length=255,
         help_text=_('The name of the file.')
+    )
+
+    created = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        db_index=True,
+        help_text=_(
+            'The date and time the file was created.'
+        )
     )
 
     status = EnumField(

@@ -1,0 +1,12 @@
+{% set sensor_tag='PressureSensor' %}
+{% set sensor_id="pressure-sensor" %}
+{% extends "slm/sitelog/xsd/0.4/sensor.xml" %}
+{% block sensor %}
+    {{ super() }}
+        {% block section %}
+        <geo:type codeSpace="urn:ga-gov-au:pressure-sensor-type">{{ sensor.model }}</geo:type>
+        {{ super() }}
+        <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
+        <geo:accuracy-hPa>{{ sensor.accuracy|precision(2) }}</geo:accuracy-hPa>
+        {% endblock section %}
+{% endblock sensor %}

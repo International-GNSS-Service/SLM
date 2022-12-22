@@ -1,0 +1,13 @@
+{% set sensor_tag='HumiditySensor' %}
+{% set sensor_id="humidity-sensor" %}
+{% extends "slm/sitelog/xsd/0.4/sensor.xml" %}
+{% block sensor %}
+    {{ super() }}
+        {% block section %}
+        <geo:type codeSpace="urn:ga-gov-au:humidity-sensor-type">{{ sensor.model }}</geo:type>
+        {{ super() }}
+        <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
+        <geo:accuracy-percentRelativeHumidity>{{ sensor.accuracy|precision(1) }}</geo:accuracy-percentRelativeHumidity>
+        <geo:aspiration>{{ sensor.aspiration|enum_str|upper }}</geo:aspiration>
+        {% endblock section %}
+{% endblock sensor %}

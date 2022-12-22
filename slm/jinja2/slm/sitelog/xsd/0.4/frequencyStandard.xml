@@ -1,0 +1,12 @@
+<geo:FrequencyStandard gml:id="frequency-standard-{{ count }}">
+    <geo:standardType codeSpace="urn:ga-gov-au:frequency-standard-type">{{ standard.standard_type|enum_str|upper }}</geo:standardType>
+    {% if standard.input_frequency is not none %}<geo:inputFrequency>{{ standard.input_frequency }}</geo:inputFrequency>{% endif %}
+    <gml:validTime>
+        <gml:TimePeriod gml:id="frequency-standard-{{ count }}-time-period-1">
+            <gml:beginPosition>{{standard.effective_start|simple_utc}}</gml:beginPosition>
+            <gml:endPosition>{{standard.effective_end|simple_utc}}</gml:endPosition>
+        </gml:TimePeriod>
+    </gml:validTime>
+    <geo:notes>{{ standard.notes }}</geo:notes>
+</geo:FrequencyStandard>
+<geo:dateInserted>{{ standard.inserted|iso_utc_full }}</geo:dateInserted>

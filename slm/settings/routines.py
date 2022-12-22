@@ -13,7 +13,8 @@ SLM_ROUTINES.setdefault('deploy', {}).setdefault('defaults', [
     # (10, ['makemigrations', [], {}, lambda: importlib.invalidate_caches()]),
     (11, ['migrate', [], {}]),
     (20, ['renderstatic', []]),
-    (21, ['collectstatic', [], {'interactive': False, 'ignore': ['*.scss']}])
+    (21, ['collectstatic', [], {'interactive': False, 'ignore': ['*.scss']}]),
+    (22, ['set_site', [], {}])
 ])
 
 SLM_ROUTINE_DEPLOY = _(

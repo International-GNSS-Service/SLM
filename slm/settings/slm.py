@@ -2,6 +2,7 @@
 SLM Specific Configuration parameters go here.
 """
 from slm.defines import SiteFileUploadStatus, SiteLogStatus
+from slm.settings import set_default, is_defined
 
 SLM_STATUS_COLORS = {
     SiteLogStatus.DORMANT: '#3D4543',
@@ -49,3 +50,17 @@ SLM_FILE_ICONS = {
 # generated image thumbnail size in pixels - this is a tuple of maximum width
 # and height - the aspect ratio will be preserved
 SLM_THUMBNAIL_SIZE = (250, 250)
+
+# during deploy the current Site will be set to SLM_SITE_NAME, SLM_ORG_NAME
+# The name of the organization used in communications
+set_default('SLM_ORG_NAME', 'SLM')
+
+set_default(
+    'SLM_SITE_NAME',
+    ALLOWED_HOSTS[0] if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS
+    else 'localhost'
+)
+
+# set this to either http or https, this will be used to determine the protocol
+# of absolute uri links where a request object is not present
+SLM_HTTP_PROTOCOL = None

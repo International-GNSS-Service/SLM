@@ -1,0 +1,52 @@
+<gmd:CI_ResponsibleParty>
+    <gmd:individualName>
+        <gco:CharacterString>{{ contact.name }}</gco:CharacterString>
+    </gmd:individualName>
+    <gmd:organisationName>
+        <gco:CharacterString>{{ agency.agency }}</gco:CharacterString>
+    </gmd:organisationName>
+    <gmd:contactInfo>
+        <gmd:CI_Contact>
+            {% if contact.phone1 or contact.phone2 or contact.fax %}
+            <gmd:phone>
+                <gmd:CI_Telephone>
+                    {% if contact.phone1 %}
+                    <gmd:voice>
+                        <gco:CharacterString>{{ contact.phone1 }}</gco:CharacterString>
+                    </gmd:voice>
+                    {% endif %}
+                    {% if contact.phone2 %}
+                    <gmd:voice>
+                        <gco:CharacterString>{{ contact.phone2 }}</gco:CharacterString>
+                    </gmd:voice>
+                    {% endif %}
+                    {% if contact.fax %}
+                    <gmd:facsimile>
+                        <gco:CharacterString>{{ contact.fax }}</gco:CharacterString>
+                    </gmd:facsimile>
+                    {% endif %}
+                </gmd:CI_Telephone>
+            </gmd:phone>
+            {% endif %}
+            {% if agency.mailing_address or contact.email %}
+            <gmd:address>
+                <gmd:CI_Address>
+                    {% if agency.mailing_address %}
+                    <gmd:deliveryPoint>
+                        <gco:CharacterString>{{ agency.mailing_address }}</gco:CharacterString>
+                    </gmd:deliveryPoint>
+                    {% endif %}
+                    {% if contact.email %}
+                    <gmd:electronicMailAddress>
+                        <gco:CharacterString>{{ contact.email }}</gco:CharacterString>
+                    </gmd:electronicMailAddress>
+                    {% endif %}
+                </gmd:CI_Address>
+            </gmd:address>
+            {% endif %}
+        </gmd:CI_Contact>
+    </gmd:contactInfo>
+    <gmd:role>
+        <gmd:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="{{role_code}}"/>
+    </gmd:role>
+</gmd:CI_ResponsibleParty>

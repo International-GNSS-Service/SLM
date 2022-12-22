@@ -1,12 +1,13 @@
 from django.utils.translation import gettext as _
 from django_enum import IntegerChoices
+from enum_properties import s
 
 
-class SLMFileType(IntegerChoices):
+class SLMFileType(IntegerChoices, s('type')):
 
-    SITE_LOG    = 0, _('Site Log')
-    SITE_IMAGE = 1, _('Site Image')
-    ATTACHMENT = 2, _('Attachment')
+    SITE_LOG   = 0, _('Site Log'),   'log'
+    SITE_IMAGE = 1, _('Site Image'), 'image'
+    ATTACHMENT = 2, _('Attachment'), 'attachment'
 
     @staticmethod
     def icon(mimetype):

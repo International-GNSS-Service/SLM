@@ -13,6 +13,7 @@ from slm.models import (
     SiteFileUpload,
     UserProfile,
 )
+from slm.utils import build_absolute_url
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -265,9 +266,10 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
     download = serializers.SerializerMethodField()
 
     def get_download(self, obj):
-        if 'request' in self.context:
-            return self.context['request'].build_absolute_uri(obj.link)
-        return f'{DjangoSite.objects.get_current()}/{obj.link.lstrip("/")}'
+        return build_absolute_url(
+            obj.link,
+            request=self.context.get('request', None)
+        )
 
     class Meta:
         model = SiteFileUpload

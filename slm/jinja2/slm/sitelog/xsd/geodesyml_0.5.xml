@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<geo:GeodesyML gml:id="{{ identifier }}" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:geo="urn:xml-gov-au:icsm:egeodesy:0.5" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <geo:siteLog gml:id="{{ site.name }}">
+        <geo:formInformation>
+{% include "slm/sitelog/xsd/0.4/formInformation.xml" %}
+        </geo:formInformation>
+        <geo:siteIdentification>
+{% include "slm/sitelog/xsd/0.4/siteIdentification.xml" %}
+        </geo:siteIdentification>
+        <geo:siteLocation>
+{% include "slm/sitelog/xsd/0.4/siteLocation.xml" %}
+        </geo:siteLocation>
+        {% for rcvr in receiver %}
+        <geo:gnssReceiver>
+{% with rcvr=rcvr, count=loop.index %}{% include "slm/sitelog/xsd/0.4/gnssReceiver.xml" %}{% endwith %}
+        </geo:gnssReceiver>
+        {% endfor %}
+        {% for ant in antenna %}
+        <geo:gnssAntenna>
+{% with ant=ant, count=loop.index %}{% include "slm/sitelog/xsd/0.4/gnssAntenna.xml" %}{% endwith %}
+        </geo:gnssAntenna>
+        {% endfor %}
+        {% for tie in surveyedlocalties %}
+        <geo:surveyedLocalTie>
+{% with tie=tie, count=loop.index %}{% include "slm/sitelog/xsd/0.4/surveyedLocalTie.xml" %}{% endwith %}
+        </geo:surveyedLocalTie>
+        {% endfor %}
+        {% for standard in frequencystandard %}
+        <geo:frequencyStandard>
+{% with standard=standard, count=loop.index %}{% include "slm/sitelog/xsd/0.4/frequencyStandard.xml" %}{% endwith %}
+        </geo:frequencyStandard>
+        {% endfor %}
+        {% for colloc in collocation %}
+        <geo:collocationInformation>
+{% with colloc=colloc, count=loop.index %}{% include "slm/sitelog/xsd/0.4/collocationInformation.xml" %}{% endwith %}
+        </geo:collocationInformation>
+        {% endfor %}
+        {% for sensor in humiditysensor %}
+        <geo:humiditySensor>
+{% with sensor=sensor, count=loop.index %}{% include "slm/sitelog/xsd/0.4/humiditySensor.xml" %}{% endwith %}
+        </geo:humiditySensor>
+        {% endfor %}
+        {% for sensor in pressuresensor %}
+        <geo:pressureSensor>
+{% with sensor=sensor, count=loop.index %}{% include "slm/sitelog/xsd/0.4/pressureSensor.xml" %}{% endwith %}
+        </geo:pressureSensor>
+        {% endfor %}
+        {% for sensor in temperaturesensor %}
+        <geo:temperatureSensor>
+{% with sensor=sensor, count=loop.index %}{% include "slm/sitelog/xsd/0.4/temperatureSensor.xml" %}{% endwith %}
+        </geo:temperatureSensor>
+        {% endfor %}
+        {% for sensor in watervaporradiometer %}
+        <geo:waterVaporSensor>
+{% with sensor=sensor, count=loop.index %}{% include "slm/sitelog/xsd/0.4/waterVaporSensor.xml" %}{% endwith %}
+        </geo:waterVaporSensor>
+        {% endfor %}
+        {% for instrument in otherinstrumentation %}
+        <geo:otherInstrumentation>
+{% with instrument=instrument, count=loop.index %}{% include "slm/sitelog/xsd/0.4/otherInstrumentation.xml" %}{% endwith %}
+        </geo:otherInstrumentation>
+        {% endfor %}
+        {% for condition in radiointerferences %}
+        <geo:radioInterference>
+{% with condition=condition, count=loop.index %}{% include "slm/sitelog/xsd/0.4/radioInterference.xml" %}{% endwith %}
+        </geo:radioInterference>
+        {% endfor %}
+        {% for condition in multipathsources %}
+        <geo:multipathSource>
+{% with condition=condition, count=loop.index %}{% include "slm/sitelog/xsd/0.4/multipathSource.xml" %}{% endwith %}
+        </geo:multipathSource>
+        {% endfor %}
+        {% for condition in signalobstructions %}
+        <geo:signalObstruction>
+{% with condition=condition, count=loop.index %}{% include "slm/sitelog/xsd/0.4/signalObstruction.xml" %}{% endwith %}
+        </geo:signalObstruction>
+        {% endfor %}
+        {% for effect in localepisodiceffects %}
+        <geo:localEpisodicEffect>
+{% with effect=effect, count=loop.index %}{% include "slm/sitelog/xsd/0.4/localEpisodicEffect.xml" %}{% endwith %}
+        </geo:localEpisodicEffect>
+        {% endfor %}
+        {% if responsibleagency|contact("primary") %}
+        <geo:siteOwner gml:id="site-owner">
+{% with agency=responsibleagency, contact=responsibleagency|contact("primary"), role_code="pointOfContact" %}{% include "slm/sitelog/xsd/0.4/contact.xml" %}{% endwith %}
+        </geo:siteOwner>
+        {% endif %}
+        {% if responsibleagency|contact("secondary") %}
+        <geo:siteContact gml:id="site-contact-1">
+{% with agency=responsibleagency, contact=responsibleagency|contact("secondary"), role_code="pointOfContact" %}{% include "slm/sitelog/xsd/0.4/contact.xml" %}{% endwith %}
+        </geo:siteContact>
+        {% endif %}
+        {% if operationalcontact|contact("secondary") %}
+        <geo:siteContact gml:id="site-contact-2">
+{% with agency=operationalcontact, contact=operationalcontact|contact("secondary"), role_code="pointOfContact" %}{% include "slm/sitelog/xsd/0.4/contact.xml" %}{% endwith %}
+        </geo:siteContact>
+        {% endif %}
+        <geo:siteMetadataCustodian gml:id="site-metadata-custodian">
+{% with agency=operationalcontact, contact=operationalcontact|contact("primary"), role_code="pointOfContact" %}{% include "slm/sitelog/xsd/0.4/contact.xml" %}{% endwith %}
+        </geo:siteMetadataCustodian>
+        {% if moreinformation %}
+        <geo:moreInformation>
+{% with moreinformation=moreinformation %}{% include "slm/sitelog/xsd/0.4/moreInformation.xml" %}{% endwith %}
+        </geo:moreInformation>
+        {% endif %}
+        {% for file in files %}
+        <geo:associatedDocument>
+{% with file=file, count=loop.index %}{% include "slm/sitelog/xsd/0.5/document.xml" %}{% endwith %}
+        </geo:associatedDocument>
+        {% endfor %}
+    </geo:siteLog>
+</geo:GeodesyML>

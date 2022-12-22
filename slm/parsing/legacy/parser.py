@@ -17,8 +17,15 @@ only on syntax.
 import re
 from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple, Union
-
-SPECIAL_CHARACTERS = '().,-_[]{}<>+%'
+from slm.parsing import (
+    Ignored,
+    Warn,
+    Error,
+    BaseParser,
+    BaseSection,
+    BaseParameter,
+    normalize
+)
 
 
 class SubHeading:
@@ -31,68 +38,7 @@ class SubHeading:
         self.active = active
 
 
-def normalize(name):
-    """
-    Normalization is designed to remove any superficial variable name
-    mismatches. We remove all special characters and spaces and then
-    upper case the name.
-    """
-    for char in SPECIAL_CHARACTERS + ' \t':
-        name = name.replace(char, '')
-    return name.upper().strip()
-
-
-class Finding:
-    """
-    A base class for parser/binding findings.
-    """
-
-    def __init__(
-            self,
-            lineno,
-            parser,
-            message,
-            section=None,
-            parameter=None,
-            line=None
-    ):
-        self.lineno = lineno
-        self.parser = parser
-        self.message = message
-        self.section = section
-        self.parameter = parameter
-        self.line = line
-
-    @property
-    def mismatch(self):
-        return self.line.strip() != self.parser.lines[self.lineno].strip()
-
-    def __str__(self):
-        return f'({self.lineno+1: 4}) {self.parser.lines[self.lineno]}' \
-               f'{" " * (80-len(self.parser.lines[self.lineno]))}' \
-               f'[{self.level.upper()}]: {self.message}'
-
-    @property
-    def level(self):
-        return self.__class__.__name__.lower()
-
-
-class Ignored(Finding):
-
-    level = 'I'
-
-
-class Error(Finding):
-
-    level = 'E'
-
-
-class Warn(Finding):
-
-    level = 'W'
-
-
-class ParsedParameter:
+class ParsedParameter(BaseParameter):
 
     REGEX = re.compile(
         rf'\s+([\w\s/().,_<>+%-]+)\s+:\s*(.*)?'
@@ -105,15 +51,6 @@ class ParsedParameter:
         r'\([^()]+\)'
     )
 
-    name = ''
-    parser = None
-    section = None
-    line_no = None
-    line_end = None
-    values = None
-
-    binding = None
-
     @property
     def is_placeholder(self):
         return bool(
@@ -121,28 +58,19 @@ class ParsedParameter:
                 self.value.replace('\n', '')
             )
         )
-
-    @property
-    def is_empty(self):
-        return not self.value.strip()
-
-    @property
-    def num_lines(self):
-        return self.line_end - self.line_no + 1
-
-    @property
-    def lines(self):
-        return self.parser.lines[self.line_no:self.line_end]
     
     def __init__(self, line_no, match, parser, section, sub_heading=''):
-        self.line_no = line_no
-        self.line_end = line_no
-        self.parser = parser
-        self.section = section
-        self.name = f'{sub_heading if sub_heading else ""}' \
-                    f'{"::" if sub_heading else ""}' \
-                    f'{match.group(1).strip()}'
-        self.values = [match.group(2).strip()]
+        super().__init__(
+            line_no=line_no,
+            name=(
+                f'{sub_heading if sub_heading else ""}'
+                f'{"::" if sub_heading else ""}'
+                f'{match.group(1).strip()}'
+            ),
+            values=[match.group(2).strip()],
+            parser=parser,
+            section=section
+        )
         if self.is_placeholder:
             self.parser.add_finding(
                 Ignored(
@@ -153,31 +81,8 @@ class ParsedParameter:
                 )
             )
 
-    def append(self, line_no, match):
-        self.line_end = line_no
-        self.values.append(match.group(1).strip())
 
-    @property
-    def value(self):
-        return '\n'.join(self.values)
-
-    @property
-    def normalized_name(self):
-        return normalize(self.name)
-
-    def bind(self, name, value):
-        if self.binding is None:
-            self.binding = {}
-        self.binding[name] = value
-        self.section.bind(name, self, value)
-
-    def __str__(self):
-        if self.is_placeholder:
-            return f'{self.name} [PLACEHOLDER]: {self.value}'
-        return f'{self.name}: {self.value}'
-
-
-class ParsedSection:
+class ParsedSection(BaseSection):
 
     REGEX = re.compile(
         r'([0-9]+)[.](?:([0-9xX]+)[.]?)?(?:([0-9xX]+)[.]?)?\s+([\w\s().,-]+)?'
@@ -237,65 +142,20 @@ class ParsedSection:
         return None
 
     def __init__(self, line_no, match, parser):
-        self.parameters = {}
-        self.line_no = line_no
-        self.line_end = line_no
+        super().__init__(
+            line_no=line_no,
+            section_number=int(match.group(1)),
+            subsection_number=match.group(2),
+            order=match.group(3),
+            parser=parser
+        )
         self.lines = [match.group(0)]
-        self.section_number = int(match.group(1))
-        self.parser = parser
-        if match.group(3):
-            self.subsection_number = match.group(2)
-            self.order = match.group(3)
-        elif match.group(2):
-            self.subsection_number = match.group(2)
+        self.example = (
+            not isinstance(self.subsection_number, int) and match.group(2)
+        ) or (
+            not isinstance(self.order, int) and match.group(3)
+        )
 
-        if match.group(4):
-            self.header = match.group(4).strip()
-
-        if (
-            isinstance(self.subsection_number, str) and
-                self.subsection_number.isdigit()
-        ):
-            self.subsection_number = int(self.subsection_number)
-        elif match.group(2):
-            self.example = True
-
-        if isinstance(self.order, str) and self.order.isdigit():
-            self.order = int(self.order)
-        elif match.group(3):
-            self.example = True
-
-    def __str__(self):
-        section_str = f'{self.index_string} {self.header}\n'
-        if self.example:
-            section_str = f'{self.index_string} {self.header} (EXAMPLE)\n'
-        for name, param in self.parameters.items():
-            section_str += f'\t{param}\n'
-        return section_str
-    
-    @property
-    def contains_values(self):
-        """
-        True if any parameter in this section contains a real value that is
-        not a placeholder.
-        """
-        for name, param in self.parameters.items():
-            if not (param.is_empty or param.is_placeholder):
-                return True
-        return False
-
-    @property
-    def index_string(self):
-        index = f'{self.section_number}'
-        if self.subsection_number or self.example:
-            index += f'.'
-            if self.subsection_number:
-                index += str(self.subsection_number)
-            else:
-                index += 'x'
-            if self.subsection_number and (self.order or self.example):
-                index += f'.{self.order if self.order else "x"}'
-        return index
 
     @property
     def index_tuple(self):
@@ -323,15 +183,13 @@ class ParsedSection:
                 self.line_end = parameter.line_end
 
 
-class SiteLogParser:
+class SiteLogParser(BaseParser):
     """
     This is a VERY lenient parser. SLM will never publish a submitted site log
     without reformatting it, so the main goal here is to make a best-effort
     parsing of the log and provide some deep introspective output on what the
     parsing recorded.
     """
-
-    lines: Optional[List[str]]
     
     # all non-parameter, section header or graphic lines we expect to see
     # in site log files - we ignore these. If not in this set and it's not
@@ -362,20 +220,7 @@ class SiteLogParser:
         normalize('Notes')
     ]
 
-    """
-    Sections indexed by section number tuple 
-    (section_number, subsection_number, order)
-    """
-    sections: Dict[
-        Tuple[int, Optional[int], Optional[int]],
-        ParsedSection
-    ]
-
     graphic: str = None
-    name_matched: bool = None
-    site_name: str = None
-
-    _findings_: Dict[int, Finding]
 
     # used to figure out where antenna graphic begins
     _graphic_start_: int
@@ -384,83 +229,6 @@ class SiteLogParser:
 
     # last subheading observed and true if activated
     _sub_heading_: SubHeading = SubHeading('', False)
-    
-    @property
-    def findings(self) -> Dict[int, Finding]:
-        """
-        Return findings dictionary keyed by line number and ordered by
-        line number.
-        """
-        # dictionaries are ordered in python 3.7+
-        return dict(sorted(self._findings_.items()))
-
-    @property
-    def findings_context(self) -> Dict[int, str]:
-        return {
-            int(line): (finding.level, finding.message)
-            for line, finding in self.findings.items()
-        }
-
-    @property
-    def context(self):
-        return {
-            'site': self.site_name,
-            'findings': self.findings_context
-        }
-
-    @property
-    def ignored(self):
-        return {
-            lineno: finding for lineno, finding in self._findings_.items()
-            if isinstance(finding, Ignored)
-        }
-    
-    @property
-    def errors(self):
-        return {
-            lineno: finding for lineno, finding in self._findings_.items()
-            if isinstance(finding, Error)
-        }
-    
-    @property
-    def warnings(self):
-        return {
-            lineno: finding for lineno, finding in self._findings_.items()
-            if isinstance(finding, Warn)
-        }
-
-    def remove_finding(self, lineno):
-        if lineno in self._findings_:
-            del self._findings_[lineno]
-
-    def add_finding(self, finding):
-        if not isinstance(finding, Finding):
-            raise ValueError(
-                f'add_finding() expected a {Finding.__class__.__name__} '
-                f'object, was given: {finding.__class__.__name__}.'
-            )
-        
-        self._findings_[finding.lineno] = finding
-
-    def add_section(self, section):
-        if not section.example and section.contains_values:
-            if section.index_tuple in self.sections:
-                self.duplicate_section_error(section)
-            self.sections[section.index_tuple] = section
-
-    def duplicate_section_error(self, duplicate_section):
-        for lineno in range(
-                duplicate_section.line_no,
-                duplicate_section.line_end
-        ):
-            self.add_finding(
-                Error(
-                    lineno,
-                    self,
-                    f'Duplicate section {duplicate_section.index_string}',
-                    section=duplicate_section
-                )
-            )
 
     def __init__(
             self,
@@ -468,25 +236,15 @@ class SiteLogParser:
             site_name: str = None
     ) -> None:
         """
-        Parse the ASCII Site Log format into model instances.
+        Parse the ASCII Site Log format into data structures.
 
         :param site_log: The entire site log contents as a string or as a list
             of lines
         :param site_name: The expected 9-character site name of this site or
             None (default) if name is unknown
         """
-        self._findings_ = {}
-        self.sections = {}
-        self.site_name = site_name.upper() if site_name else site_name
-        if isinstance(site_log, str):
-            self.lines = site_log.split('\n')
-        elif isinstance(site_log, list):
-            self.lines = site_log
-        else:
-            raise ValueError(
-                f'Expected site_log input to be string or list of lines, '
-                f'given: {type(site_log)}.'
-            )
+        super().__init__(site_log=site_log, site_name=site_name)
+
         idx = 0
         while idx < len(self.lines):
             idx = self.visit_line(idx, self.lines[idx].strip())
@@ -679,14 +437,6 @@ class SiteLogParser:
                 )
 
         return line_no
-
-    @property
-    def is_valid(self):
-        return len(self.errors) == 0
-
-    @property
-    def has_warnings(self):
-        return len(self.warnings) == 0
 
     def count_indent(self, line):
         count = 0

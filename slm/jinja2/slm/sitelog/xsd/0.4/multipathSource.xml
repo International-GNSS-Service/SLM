@@ -1,0 +1,10 @@
+{% set condition_tag='MultipathSource' %}
+{% set condition_id="multipath-source" %}
+{% extends "slm/sitelog/xsd/0.4/condition.xml" %}
+{% block condition %}
+{{ super() }}
+    {% block section %}
+    <geo:possibleProblemSource>{{ condition.sources }}</geo:possibleProblemSource>
+    {{ super() }}
+    {% endblock section %}
+{% endblock condition %}

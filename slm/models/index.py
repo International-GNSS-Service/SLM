@@ -250,6 +250,7 @@ class ArchivedSiteLog(SiteFile):
         unique_together = ('index', 'log_format')
 
 
+'''
 class GeodesyMLUpload(models.Model):
     """
     We track the last validated GeodesyML document that was uploaded for each
@@ -276,3 +277,4 @@ class GeodesyMLUpload(models.Model):
 
     class Meta:
         unique_together = ('site', 'version')
+'''

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from slm.settings import is_defined, set_default
 from split_settings.tools import include
+from jinja2 import select_autoescape
 
 set_default('DEBUG', False)
 
@@ -38,6 +39,7 @@ if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
 INSTALLED_APPS = [
     'slm.map',
     'slm',
+    'polymorphic',
     'rest_framework',
     'render_static',
     'django_filters',
@@ -69,6 +71,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'slm.middleware.SetLastVisitMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -89,6 +92,18 @@ TEMPLATES = [
             'builtins': ['slm.templatetags.slm']
         },
     },
+    {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'autoescape': select_autoescape(
+                disabled_extensions=('log',),
+                default_for_string=True,
+                default=True,
+            ),
+            'environment': 'slm.jinja2.environment'
+        }
+    }
 ]
 
 WSGI_APPLICATION = 'sites.wsgi.application'
@@ -118,25 +133,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # Following two statements added to assist with handling of static files
 STATIC_URL = '/static/'
 
-set_default(
-    'SITE_NAME',
-    ALLOWED_HOSTS[0] if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS
-    else 'localhost'
-)
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+include('internationalization.py')
+include('slm.py')
 include('secrets.py')
 include('logging.py')
-include('internationalization.py')
 include('static_templates.py')
 include('routines.py')
 include('auth.py')
 include('rest.py')
-include('slm.py')
 include('debug.py')
 include('uploads.py')
 #include('security.py')

@@ -1,0 +1,11 @@
+<geo:GnssReceiver gml:id="gnss-receiver-{{ count }}">
+    <geo:manufacturerSerialNumber>{{ rcvr.serial_number }}</geo:manufacturerSerialNumber>
+    <geo:igsModelCode codeList="http://xml.gov.au/icsm/geodesyml/codelists/antenna-receiver-codelists.xml#GeodesyML_GNSSReceiverTypeCode" codeListValue="{{ rcvr.receiver_type.model }}" codeSpace="urn:xml-gov-au:icsm:egeodesy:0.5">{{ rcvr.receiver_type.model }}</geo:igsModelCode>
+    <geo:satelliteSystem>{{ rcvr.satellite_system|satellite_str }}</geo:satelliteSystem>
+    <geo:firmwareVersion>{{ rcvr.firmware }}</geo:firmwareVersion>
+    <geo:elevationCutoffSetting {% if rcvr.elevation_cutoff is none %}xsi:nil="true"{% endif %}>{{ rcvr.elevation_cutoff|precision(1) }}</geo:elevationCutoffSetting>
+    <geo:dateInstalled>{{ rcvr.installed|iso_utc_full }}</geo:dateInstalled>
+    <geo:dateRemoved>{{ rcvr.removed|iso_utc_full }}</geo:dateRemoved>
+    <geo:temperatureStabilization {% if rcvr.temp_stab is none %}xsi:nil="true"{% endif %}>{% if rcvr.temp_stab is not none %}{{ rcvr.temp_stab|none2empty }}{% endif %}</geo:temperatureStabilization>
+</geo:GnssReceiver>
+<geo:dateInserted>{{ rcvr.inserted|iso_utc_full }}</geo:dateInserted>

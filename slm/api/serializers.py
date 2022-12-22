@@ -3,7 +3,7 @@ import json
 from django.template.loader import get_template
 from django.utils.functional import cached_property
 from rest_framework import serializers
-from slm.defines import SiteLogFormat, GeodesyMLVersion
+from slm.defines import SiteLogFormat, GeodesyMLVersion, SLMFileType
 from slm.models import Site
 from lxml import etree
 
@@ -26,13 +26,6 @@ class SiteLogSerializer(serializers.BaseSerializer):
 
     text_tmpl = get_template('slm/sitelog/legacy.log')
 
-    xml_tmpl = {
-        #GeodesyMLVersion.v0_4:
-        # get_template('slm/sitelog/xsd/geodesyml_04.xml'),
-        GeodesyMLVersion.v0_5:
-            get_template('slm/sitelog/xsd/geodesyml_05.xml')
-    }
-
     xml_parser = etree.XMLParser(remove_blank_text=True)
 
     def __init__(self, *args, instance, epoch=None, published=True, **kwargs):
@@ -47,12 +40,15 @@ class SiteLogSerializer(serializers.BaseSerializer):
     def xml(self, version):
         return etree.tostring(
             etree.fromstring(
-                self.xml_tmpl[version].render({
+                version.template.render({
                     **self.context,
                     'identifier': self.site.get_filename(
                         log_format=SiteLogFormat.GEODESY_ML,
                         epoch=self.epoch_param
-                    ).split('.')[0]
+                    ).split('.')[0],
+                    'files': self.site.sitefileuploads.public().order_by(
+                        'timestamp'
+                    )
                 }).encode(),
                 parser=self.xml_parser
             ),

@@ -1,0 +1,13 @@
+{% set sensor_tag='TemperatureSensor' %}
+{% set sensor_id="temperature-sensor" %}
+{% extends "slm/sitelog/xsd/0.4/sensor.xml" %}
+{% block sensor %}
+    {{ super() }}
+        {% block section %}
+        <geo:type codeSpace="urn:ga-gov-au:temperature-sensor-type">{{ sensor.model }}</geo:type>
+        {{ super() }}
+        <geo:dataSamplingInterval>{{ sensor.sampling_interval|none2empty }}</geo:dataSamplingInterval>
+        <geo:accuracy-degreesCelcius>{{ sensor.accuracy|precision(1) }}</geo:accuracy-degreesCelcius>
+        <geo:aspiration>{{ sensor.aspiration|enum_str|upper }}</geo:aspiration>
+        {% endblock section %}
+{% endblock sensor %}

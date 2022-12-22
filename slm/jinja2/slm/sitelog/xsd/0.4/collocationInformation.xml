@@ -1,0 +1,12 @@
+<geo:CollocationInformation gml:id="collocation-information-{{ count }}">
+    <geo:instrumentationType codeSpace="urn:ga-gov-au:collocation-information-type">{{ colloc.instrument_type}}</geo:instrumentationType>
+    <geo:status codeSpace="urn:ga-gov-au:collocation-information-type">{{ colloc.status|enum_str|upper }}</geo:status>
+    <gml:validTime>
+        <gml:TimePeriod gml:id="collocation-information-{{ count }}-time-period-1">
+            <gml:beginPosition>{{colloc.effective_start|simple_utc}}</gml:beginPosition>
+            <gml:endPosition>{{colloc.effective_end|simple_utc}}</gml:endPosition>
+        </gml:TimePeriod>
+    </gml:validTime>
+    {% if colloc.notes %}<geo:notes>{{ colloc.notes }}</geo:notes>{% endif %}
+</geo:CollocationInformation>
+<geo:dateInserted>{{ colloc.inserted|iso_utc_full }}</geo:dateInserted>

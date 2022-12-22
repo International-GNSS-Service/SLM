@@ -1,0 +1,11 @@
+{% set sensor_tag='WaterVaporSensor' %}
+{% set sensor_id="water-vapor-sensor" %}
+{% extends "slm/sitelog/xsd/0.4/sensor.xml" %}
+{% block sensor %}
+    {{ super() }}
+    {% block section %}
+    <geo:type codeSpace="urn:ga-gov-au:water-vapor-sensor-type">{{ sensor.model }}</geo:type>
+    {{ super() }}
+    <geo:distanceToAntenna>{{ sensor.distance_to_antenna|none2empty }}</geo:distanceToAntenna>
+    {% endblock section %}
+{% endblock sensor %}

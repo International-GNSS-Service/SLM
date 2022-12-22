@@ -1,0 +1,10 @@
+{% set condition_tag='SignalObstruction' %}
+{% set condition_id="signal-obstruction" %}
+{% extends "slm/sitelog/xsd/0.4/condition.xml" %}
+{% block condition %}
+    {{ super() }}
+        {% block section %}
+        <geo:possibleProblemSource>{{ condition.obstructions }}</geo:possibleProblemSource>
+        {{ super() }}
+        {% endblock section %}
+{% endblock condition %}

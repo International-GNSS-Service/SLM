@@ -17,7 +17,7 @@ LOGGING = {
             'level': DEFAULT_LOG_LEVEL,  # set in deployment routine
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'formatter': 'verbose' if DEBUG else 'simple',  # set in deployment routine
-            'filename': LOG_DIR / f'{SITE_NAME.lower()}{"_manage" if MANAGEMENT_MODE else ""}.log',
+            'filename': LOG_DIR / f'{SLM_SITE_NAME.lower()}{"_manage" if MANAGEMENT_MODE else ""}.log',
             'when': 'midnight',
             'interval': 1,
             'backupCount': 14

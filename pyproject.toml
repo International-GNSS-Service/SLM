@@ -76,6 +76,8 @@ geojson = "^2.5.0"
 Pillow = "^9.3.0"
 polyline = "^1.4.0"
 lxml = "^4.9.1"
+django-polymorphic = "^3.1.0"
+Jinja2 = "^3.1.2"
 
 [tool.poetry.group.dev.dependencies]
 django-extensions = "^3.1.5"

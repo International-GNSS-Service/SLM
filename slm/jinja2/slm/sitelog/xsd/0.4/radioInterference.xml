@@ -1,0 +1,11 @@
+{% set condition_tag='RadioInterference' %}
+{% set condition_id="radio-interference" %}
+{% extends "slm/sitelog/xsd/0.4/condition.xml" %}
+{% block condition %}
+    {{ super() }}
+        {% block section %}
+        <geo:possibleProblemSource>{{ condition.interferences }}</geo:possibleProblemSource>
+        {{ super() }}
+        <geo:observedDegradation>{{ condition.degradations }}</geo:observedDegradation>
+        {% endblock section %}
+{% endblock condition %}

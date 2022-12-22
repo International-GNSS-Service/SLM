@@ -3,13 +3,39 @@ import inspect
 import sys
 from logging import Filter
 from pprint import pformat
-
 from rest_framework.serializers import Serializer
+from django.conf import settings
+
+
+PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
+
+
+def set_protocol(request):
+    global PROTOCOL
+    if not PROTOCOL:
+        PROTOCOL = 'https' if request.is_secure() else 'http'
+
+
+def get_protocol():
+    global PROTOCOL
+    if PROTOCOL is not None:
+        return PROTOCOL
+    return (
+        'https'
+        if getattr(settings, 'SECURE_SSL_REDIRECT', False) else
+        'http'
+    )
+
+
+def build_absolute_url(path, request=None):
+    if request:
+        return request.build_absolute_uri(path)
+    return f'{get_url()}/{path.lstrip("/")}'
 
 
 def get_url():
     from django.contrib.sites.models import Site
-    return f'https://{Site.objects.get_current().domain}'
+    return f'{get_protocol()}://{Site.objects.get_current().domain}'
 
 
 class SquelchStackTraces(Filter):

@@ -1,0 +1,20 @@
+<geo:SiteIdentification gml:id="site-identification">
+    <geo:siteName>{{ identification.site_name }}</geo:siteName>
+    <geo:fourCharacterID>{{ identification.four_character_id}}</geo:fourCharacterID>
+    {% if identification.monument_inscription %}<geo:monumentInscription>{{ identification.monument_inscription }}</geo:monumentInscription>{% endif %}
+    <geo:iersDOMESNumber>{{ identification.iers_domes_number }}</geo:iersDOMESNumber>
+    <geo:cdpNumber>{{ identification.cdp_number }}</geo:cdpNumber>
+    {% if identification.monument_description %}<geo:monumentDescription codeSpace="urn:ga-gov-au:monument-description-type">{{ identification.monument_description }}</geo:monumentDescription>{% endif %}
+    {% if identification.monument_height is not none %}<geo:heightOfTheMonument>{{ identification.monument_height|none2empty }}</geo:heightOfTheMonument>{% endif %}
+    {% if identification.monument_foundation %}<geo:monumentFoundation>{{ identification.monument_foundation }}</geo:monumentFoundation>{% endif %}
+    {% if identification.foundation_depth is not none %}<geo:foundationDepth>{{ identification.foundation_depth|none2empty }}</geo:foundationDepth>{% endif %}
+    {% if identification.marker_description %}<geo:markerDescription>{{ identification.marker_description }}</geo:markerDescription>{% endif %}
+    {% if identification.date_installed %}<geo:dateInstalled>{{ identification.date_installed|iso_utc_full }}</geo:dateInstalled>{% endif %}
+    {% if identification.geologic_characteristic %}<geo:geologicCharacteristic codeSpace="urn:ga-gov-au:geologic-characteristic-type">{{ identification.geologic_characteristic }}</geo:geologicCharacteristic>{% endif %}
+    {% if identification.bedrock_type %}<geo:bedrockType>{{ identification.bedrock_type }}</geo:bedrockType>{% endif %}
+    {% if identification.bedrock_condition %}<geo:bedrockCondition>{{ identification.bedrock_condition }}</geo:bedrockCondition>{% endif %}
+    {% if identification.fracture_spacing %}<geo:fractureSpacing>{{ identification.fracture_spacing|enum_str|lower }}</geo:fractureSpacing>{% endif %}
+    {% if identification.fault_zones %}<geo:faultZonesNearby codeSpace="urn:ga-gov-au:fault-zones-type">{{ identification.fault_zones }}</geo:faultZonesNearby>{% endif %}
+    {% if identification.distance %}<geo:distance-Activity>{{ identification.distance }}</geo:distance-Activity>{% endif %}
+    {% if identification.additional_information %}<geo:notes>{{ identification.additional_information }}</geo:notes>{% endif %}
+</geo:SiteIdentification>

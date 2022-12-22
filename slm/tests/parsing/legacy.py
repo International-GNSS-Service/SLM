@@ -1,8 +1,8 @@
 from pathlib import Path
 from unittest import TestCase
 
-from slm.legacy.binding import SiteLogBinder
-from slm.legacy.parser import Error, SiteLogParser
+from slm.parsing.legacy.binding import SiteLogBinder
+from slm.parsing.legacy.parser import Error, SiteLogParser
 
 file_dir = Path(__file__).parent / 'files'
 
@@ -22,15 +22,15 @@ class TestLegacyParser(TestCase):
             print(finding)
 
         #print(parsed.graphic)
-        from pprint import pprint
-        pprint(parsed.sections)
+        #from pprint import pprint
+        #pprint(parsed.sections)
 
         SiteLogBinder(parsed)
-        for section_heading, section in parsed.sections.items():
-            print(f'################## {section_heading} ##################')
-            print(section_heading)
-            for name, parameter in section.binding.items():
-                print(f'{name} = {parameter}')
+        #for section_heading, section in parsed.sections.items():
+        #    print(f'################## {section_heading} ##################')
+        #    print(section_heading)
+        #    for name, parameter in section.binding.items():
+        #        print(f'{name} = {parameter}')
 
     def test_name_match(self):
 

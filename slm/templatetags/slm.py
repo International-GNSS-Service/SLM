@@ -6,7 +6,7 @@ from html import unescape
 from django import template
 from django.conf import settings
 from django.utils.translation import gettext as _
-from slm.utils import to_snake_case
+from slm.utils import to_snake_case, build_absolute_url
 
 register = template.Library()
 
@@ -22,7 +22,7 @@ def to_snake(string):
 
 
 @register.filter(name='arg')
-def arg(arg1,arg2):
+def arg(arg1, arg2):
     if isinstance(arg1, list):
         return arg1 + [arg2]
     return [arg1, arg2]
@@ -304,11 +304,9 @@ def split_rows(iterable, row_length):
     return rows
 
 
-@register.filter(name='absolute_uri')
-def absolute_uri(request, path):
-    if request is not None:
-        return request.build_absolute_uri(path)
-    return "todo"
+@register.filter(name='absolute_url')
+def absolute_url(path, request=None):
+    return build_absolute_url(path, request=request)
 
 
 @register.filter(name='contact')

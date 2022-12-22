@@ -1,0 +1,10 @@
+<geo:Document gml:id="file-{{ count }}">
+    {% if file.description %}<gml:description>{{ file.description }}</gml:description>{% endif %}
+    {% if file.name %}<gml:name>{{ file.name }}</gml:name>{% endif %}
+    <geo:type>{{ file.file_type.type }}</geo:type>
+    {% if file.created is not none %}<geo:createdDate>{{ file.created|iso_utc_full }}</geo:createdDate>{% endif %}
+    {% if file.timestamp is not none %}<geo:receivedDate>{{ file.timestamp|iso_utc_full }}</geo:receivedDate>{% endif %}
+    <geo:body>
+        <geo:fileReference xlink:href="{{ file.link|absolute_url }}"/>
+    </geo:body>
+</geo:Document>

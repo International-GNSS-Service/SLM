@@ -1,0 +1,20 @@
+<geo:MoreInformation gml:id="more-information">
+    <geo:dataCenter>{{ moreinformation.primary }}</geo:dataCenter>
+    <geo:dataCenter>{{ moreinformation.secondary }}</geo:dataCenter>
+    <geo:urlForMoreInformation>{{ moreinformation.more_info }}</geo:urlForMoreInformation>
+    <geo:siteMap>{{ moreinformation.sitemap }}</geo:siteMap>
+    <geo:siteDiagram>{{ moreinformation.site_diagram }}</geo:siteDiagram>
+    <geo:horizonMask>{{ moreinformation.horizon_mask }}</geo:horizonMask>
+    <geo:monumentDescription>{{ moreinformation.monument_description }}</geo:monumentDescription>
+    <geo:sitePictures>{{ moreinformation.site_picture }}</geo:sitePictures>
+    {% if moreinformation.additional_information %}<geo:notes>{{ moreinformation.additional_information }}</geo:notes>{% endif %}
+    <geo:antennaGraphicsWithDimensions/>
+    {% if graphic %}
+    <geo:insertTextGraphicFromAntenna>
+{{ graphic }}
+    </geo:insertTextGraphicFromAntenna>
+    {% else %}
+    <geo:insertTextGraphicFromAntenna/>
+    {% endif %}
+    <geo:DOI codeSpace="urn:ga-gov-au:self.moreInformation-type">TODO</geo:DOI>
+</geo:MoreInformation>

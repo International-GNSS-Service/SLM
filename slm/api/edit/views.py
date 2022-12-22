@@ -42,7 +42,7 @@ from slm.api.permissions import (
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.defines import SiteFileUploadStatus, SiteLogFormat, SLMFileType
-from slm.legacy.parser import Error
+from slm.parsing.legacy.parser import Error
 from slm.models import (
     Alert,
     LogEntry,
@@ -1047,7 +1047,7 @@ class SiteFileUploadViewSet(
             )
 
             if upload.file_type is SLMFileType.SITE_LOG:
-                from slm.legacy import SiteLogBinder, SiteLogParser
+                from slm.parsing.legacy import SiteLogBinder, SiteLogParser
                 if upload.log_format is SiteLogFormat.LEGACY:
                     with upload.file.open() as uplf:
                         content = uplf.read()
@@ -1076,10 +1076,29 @@ class SiteFileUploadViewSet(
                         upload.save()
 
                 elif upload.log_format is SiteLogFormat.GEODESY_ML:
-                    return Response(
-                        f'GeodesyML uploads are not yet supported.',
-                        status=400
-                    )
+                    from slm.parsing.xsd import SiteLogBinder, SiteLogParser
+                    with upload.file.open() as uplf:
+                        content = uplf.read()
+                        parsed = SiteLogParser(
+                            content.decode(),
+                            site_name=self.site.name
+                        )
+
+                        upload.context = parsed.context
+                        if parsed.errors:
+                            upload.status = SiteFileUploadStatus.INVALID
+                            upload.save()
+                            return Response(_(
+                                'There were errors parsing the site log.'
+                                ),
+                                status=400
+                            )
+                        upload.save()
+                        return Response(
+                            f'GeodesyML uploads are not yet supported.',
+                            status=400
+                        )
+
                 elif upload.log_format is SiteLogFormat.JSON:
                     return Response(
                         f'JSON uploads are not yet supported.',

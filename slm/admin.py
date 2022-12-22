@@ -39,23 +39,30 @@ class UserAdmin(BaseUserAdmin):
     form = UserAdminChangeForm # see slm/forms.py
 
     # chooses which fields to display for admin users
-    list_display = ('email', 'is_superuser', 'is_staff', 'agency')
-    search_fields = ['email']
-    readonly_fields = []
+    list_display = (
+        'email', 'last_visit', 'is_superuser', 'is_staff', 'agency'
+    )
+    search_fields = ['email', 'first_name', 'last_name']
+    readonly_fields = ['last_visit', 'date_joined']
 
-    ordering = ['email']
+    ordering = ('-last_visit',)
     filter_horizontal = ()
-    list_filter = ('agency__name',)
-    fieldsets = (
-        (None, {
-            'fields': ('email', 'password', 'is_superuser', 'is_staff', 'agency')}
-         ),
-    )
-    add_fieldsets = (
-        (None, {
-            'fields': ('email', 'password', 'password_2', 'is_superuser', 'is_staff', 'agency')}
-         ),
-    )
+    list_filter = ('is_superuser', 'is_staff', 'agency__name',)
+    fieldsets = ((
+        None, {
+            'fields': (
+                'email', 'password', 'is_superuser', 'is_staff', 'agency'
+            )
+        }
+    ),)
+    add_fieldsets = ((
+        None, {
+            'fields': (
+                'email', 'password', 'password_2', 'is_superuser', 'is_staff',
+                'agency'
+            )
+        }
+    ),)
 
     actions = ['request_password_reset']
 

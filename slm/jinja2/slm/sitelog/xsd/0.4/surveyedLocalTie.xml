@@ -1,0 +1,20 @@
+<geo:SurveyedLocalTie gml:id="local-tie-{{ count }}">
+    <geo:tiedMarkerName>{{ tie.name }}</geo:tiedMarkerName>
+    <geo:tiedMarkerUsage>{{ tie.usage }}</geo:tiedMarkerUsage>
+    <geo:tiedMarkerCDPNumber>{{ tie.cdp_number }}</geo:tiedMarkerCDPNumber>
+    <geo:tiedMarkerDOMESNumber>{{ tie.domes_number }}</geo:tiedMarkerDOMESNumber>
+    {% if tie.dx is none or tie.dy is none or tie.dz is none %}
+    <geo:differentialComponentsGNSSMarkerToTiedMonumentITRS xsi:nil="true"/>
+    {% else %}
+    <geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
+        <geo:dx>{{ tie.dx }}</geo:dx>
+        <geo:dy>{{ tie.dy }}</geo:dy>
+        <geo:dz>{{ tie.dz }}</geo:dz>
+    </geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
+    {% endif %}
+    <geo:localSiteTiesAccuracy{% if tie.accuracy is none %} xsi:nil="true"{% endif %}>{{ tie.accuracy|precision(1) }}</geo:localSiteTiesAccuracy>
+    <geo:surveyMethod>{{ tie.survey_method }}</geo:surveyMethod>
+    <geo:dateMeasured>{{ tie.measured|iso_utc_full }}</geo:dateMeasured>
+    {% if tie.additional_information %}<geo:notes>{{ tie.additional_information }}</geo:notes>{% endif %}
+</geo:SurveyedLocalTie>
+<geo:dateInserted>{{ tie.inserted|iso_utc_full }}</geo:dateInserted>

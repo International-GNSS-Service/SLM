@@ -1,3 +1,15 @@
+{% extends "account/email/base.html" %}
 {% load slm i18n %}
 
+{% block title %}
+Review Site Log
+{% endblock %}
+
+{% block content %}
+
 {{ user.name }} {% trans 'has requested a site log review of' %} {{site.name}}.
+<br>
+<br>
+{% url 'slm:review' station=site.name %}
+
+{% endblock %}

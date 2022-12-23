@@ -1,0 +1,15 @@
+{% extends "account/email/base.html" %}
+{% load slm i18n %}
+
+{% block title %}
+New Alert
+{% endblock %}
+
+{% block content %}{% autoescape off %}{% blocktrans %}
+
+alert message here
+<br>
+<br>
+To view this alert, go to <a href="#">alert url</a>
+
+{% endblocktrans %}{% endautoescape %}{% endblock %}

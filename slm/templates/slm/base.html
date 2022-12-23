@@ -1,15 +1,15 @@
-<!-- 
+{% comment %}
 
 Base Template
 
 NOTES:
 Base template extended into all other templates.
-Allows for efficient preservation of key componenets. 
+Allows for efficient preservation of key components.
 
 More info:
 https://docs.djangoproject.com/en/3.2/topics/templates/
 
--->
+{% endcomment %}
 
 {% load static compress %}
 
@@ -69,60 +69,60 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
         <div class="d-flex align-items-center w-50">
           <a href="{% url "slm:home" %}" class="navbar-brand"><img id="logo" class="me-4" src="{% static 'slm/img/slm-logo.svg' %}" alt="SLM"> Site Log Manager 2.0 Beta</a>
         </div>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3" title="Navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        {% if user.is_authenticated %}
-          {% block top_menu %}
-            <!--
-            Template for top menu bar
-            -->
-              <div class="navbar-collapse collapse w-100" id="collapsingNavbar">
-                <ul class="navbar-nav w-100 justify-content-evenly">
-                  {% include "slm/top_nav.html" with url_name=request.resolver_match.url_name %}
-                </ul>
-                <ul class="nav navbar-nav ms-auto w-100 justify-content-end">             
-                  <li class="nav-item dropdown">
-                    <a id="quick-help" class="nav-link help-popover" role="button" tabindex="0"  title="Legend">
-                      Legend <i class="bi bi-info-circle ms-1"></i>
-                    </a>
-                    {% include "slm/widgets/legend.html" with url_name=request.resolver_match.url_name %}
-                  </li>
-                  <li class="nav-item dropdown">
-                    <a class="nav-link" href="{% url 'slm:alerts' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %} ms-1"></i></a>
-                  </li>
-                  <li class="nav-item dropdown">
-                    <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                      <!-- User Drop Down -->
-                      {% if request.user.is_superuser %}
-                      <li><a class="dropdown-item" href="{% url "admin:index" %}">Admin</a></li>
-                      <li>
-                        <hr class="dropdown-divider">
-                      </li>
-                      {% endif %}
-                      <li><a class="dropdown-item" href="{% url "slm:profile" %}">Profile</a></li>
-                      <li><a class="dropdown-item" href="{% url "account_change_password" %}">Change Password</a></li>
-                      <li><a class="dropdown-item" href="{% url "slm:user_activity" %}">Activity Log</a></li>
-                      <li>
-                        <hr class="dropdown-divider">
-                      </li>
-                      <li><a class="dropdown-item" href="{% url "account_logout" %}">Logout</a></li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-          {% endblock %}
-        {% endif %}
-      </div>
-    </nav>
-  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3" title="Navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          {% if user.is_authenticated %}
+            {% block top_menu %}
+              <!--
+              Template for top menu bar
+              -->
+                <div class="navbar-collapse collapse w-100" id="collapsingNavbar">
+                  <ul class="navbar-nav w-100 justify-content-evenly">
+                    {% include "slm/top_nav.html" with url_name=request.resolver_match.url_name %}
+                  </ul>
+                  <ul class="nav navbar-nav ms-auto w-100 justify-content-end">             
+                    <li class="nav-item dropdown">
+                      <a id="quick-help" class="nav-link help-popover" role="button" tabindex="0"  title="Legend">
+                        Legend <i class="bi bi-info-circle ms-1"></i>
+                      </a>
+                      {% include "slm/widgets/legend.html" with url_name=request.resolver_match.url_name %}
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link" href="{% url 'slm:alerts' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %} ms-1"></i></a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <!-- User Drop Down -->
+                        {% if request.user.is_superuser %}
+                        <li><a class="dropdown-item" href="{% url "admin:index" %}">Admin</a></li>
+                        <li>
+                          <hr class="dropdown-divider">
+                        </li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url "slm:profile" %}">Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url "account_change_password" %}">Change Password</a></li>
+                        <li><a class="dropdown-item" href="{% url "slm:user_activity" %}">Activity Log</a></li>
+                        <li>
+                          <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="{% url "account_logout" %}">Logout</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+            {% endblock %}
+          {% endif %}
+        </div>
+      </nav>
+    </div>
 
-  {% block login_content %}{% endblock %}
+    {% block login_content %}{% endblock %}
 
-  {% block page_content %}{% endblock %}
+    {% block page_content %}{% endblock %}
 
-  <div id="footer" class="container-fluid bg-igs-blue">
+  <div id="footer" class="container-fluid bg-igs-blue mt-auto">
     <footer class="d-flex flex-wrap justify-content-end align-items-center py-2 border-top">
       <div class="col-md-4 d-flex align-items-center justify-content-end pe-4">
         <a href="/" class="mb-3 me-2 mb-md-0">

@@ -7,7 +7,7 @@ library will emerge at some point - when that happens this should be replaced wi
 
 from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
-from allauth.account.app_settings import AuthenticationMethod
+from allauth.account.app_settings import AuthenticationMethod  # do not remove!
 from allauth.account.forms import EmailAwarePasswordResetTokenGenerator
 from allauth.account.utils import user_pk_to_url_str, user_username
 from allauth.utils import build_absolute_uri
@@ -15,6 +15,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from rest_framework import authentication, exceptions
+from django.utils.module_loading import import_string
+from django.conf import settings
+from functools import lru_cache
+
 
 """
 Reusing failure exceptions serves several purposes:
@@ -169,3 +173,34 @@ def initiate_password_resets(users, request=None):
         get_adapter(request).send_mail(
             "account/email/password_reset_key", user.email, context
         )
+
+
+@lru_cache(maxsize=None)
+def permissions():
+    try:
+        return import_string(
+            getattr(
+                settings,
+                'SLM_PERMISSIONS',
+                'slm.authentication.default_permissions'
+            )
+        )().all()
+    except ImportError:
+        # this is not critical don't make it mean! - so we fail quietly
+        # a check for this setting is performed in check
+        from django.contrib.auth.models import Permission
+        return Permission.objects.all()
+
+
+def default_permissions():
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
+    return Permission.objects.filter(
+        content_type=ContentType.objects.get_for_model(
+            get_user_model()
+        ),
+        codename__in=[
+            perm[0] for perm in get_user_model()._meta.permissions
+        ]
+    )

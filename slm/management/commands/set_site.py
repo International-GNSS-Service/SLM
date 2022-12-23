@@ -27,9 +27,9 @@ class Command(BaseCommand):
         domain = getattr(settings, 'SLM_SITE_NAME', None)
         org = getattr(settings, 'SLM_ORG_NAME', None)
         if domain and org:
-            site = Site.objects.current()
+            site = Site.objects.get_current()
             site.domain = domain
-            site.org = org
+            site.name = org
             site.save()
         else:
             raise CommandError(

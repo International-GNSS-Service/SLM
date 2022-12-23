@@ -734,7 +734,12 @@ slm.formToObject = function(form) {
     let formData = new FormData(form.get(0));
     let data = {};
     formData.forEach(function(value, key) {
-        data[key] = value;
+        let element = form.find(`[name="${key}"]`).get(0);
+        if (element.hasAttribute( 'multiple' )) {
+            data[key] = formData.getAll(key);
+        } else {
+            data[key] = value;
+        }
     });
     return data;
 }

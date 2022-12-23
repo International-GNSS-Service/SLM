@@ -64,3 +64,8 @@ set_default(
 # set this to either http or https, this will be used to determine the protocol
 # of absolute uri links where a request object is not present
 SLM_HTTP_PROTOCOL = None
+
+# this should point to a cached property that holds the set of Django
+# permissions relevant to the SLM - if you extend the permission set override
+# this property
+SLM_PERMISSIONS = 'slm.authentication.default_permissions'

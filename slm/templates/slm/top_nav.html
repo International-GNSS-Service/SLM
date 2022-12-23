@@ -1,7 +1,7 @@
 <li class="nav-item {% if url_name == 'home' %}active{% endif %}">
   <a class="nav-link" href="{% url "slm:home" %}">Home</a>
 </li>
-{% if request.user.is_superuser %}
+{% if request.user.can_propose_site %}
 <li class="nav-item {% if url_name == 'new_site' %}active{% endif %}">
   <a class="nav-link" href="{% url 'slm:new_site' %}">New Site</a>
 </li>

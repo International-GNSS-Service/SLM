@@ -134,17 +134,17 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             email='editor@example.com',
             password='password',
             first_name='Test',
-            last_name='Editor',
-            agency=self.test_agency_1
+            last_name='Editor'
         )
+        self.test_editor.agencies.add(self.test_agency_1)
 
         self.test_moderator = get_user_model().objects.create_user(
             email='moderator@example.com',
             password='password',
             first_name='Test',
-            last_name='Moderator',
-            agency=self.test_agency_1
+            last_name='Moderator'
         )
+        self.test_moderator.agencies.add(self.test_agency_1)
 
         self.test_superuser = get_user_model().objects.create_superuser(
             email='superuser@example.com',
@@ -165,7 +165,11 @@ class TestEditAPI(SLMSignalTracker, TestCase):
 
         ret = c.post(
             reverse('slm_edit_api:stations-list'),
-            data={'name': 'AAA200USA', 'agencies': [self.test_agency_1.id]}
+            data={
+                'name': 'AAA200USA',
+                'agencies': [{'id': self.test_agency_1.id}]
+            },
+            content_type='application/json'
         )
         self.assertTrue(ret.status_code < 300)
 
@@ -387,6 +391,18 @@ class TestEditAPI(SLMSignalTracker, TestCase):
         )
 
         # publish entire log
+        ret = c.patch(
+            reverse('slm_edit_api:stations-detail', kwargs={'pk': site.id}),
+            data={
+                'publish': True
+            },
+            content_type='application/json'
+        )
+        self.assertEqual(ret.status_code, 403)
+
+        self.assertTrue(
+            c.login(email='superuser@example.com', password='password')
+        )
         ret = c.patch(
             reverse('slm_edit_api:stations-detail', kwargs={'pk': site.id}),
             data={

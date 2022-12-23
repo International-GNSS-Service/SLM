@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Case, F, Max, Q, Value, When
+from django.contrib.auth.models import Permission
 from django.db.models.functions import (
     Cast,
     Concat,
@@ -154,7 +155,7 @@ class SiteQuerySet(models.QuerySet):
         if user.is_authenticated:
             if user.is_superuser:
                 return self
-            return self.filter(agencies__in=[user.agency])
+            return self.filter(agencies__in=user.agencies.all())
         return self.none()
 
     def annotate_review_pending(self):
@@ -344,7 +345,12 @@ class Site(models.Model):
         :return: A queryset containing users with moderate permission for the
             site
         """
-        return get_user_model().objects.filter(is_superuser=True)
+        perm = Permission.objects.get_by_natural_key('moderate', 'slm', 'user')
+        return get_user_model().objects.filter(
+            Q(is_superuser=True) |
+            Q(groups__permissions=perm) |
+            Q(user_permissions=perm)
+        ).distinct()
 
     @cached_property
     def editors(self):
@@ -469,8 +475,7 @@ class Site(models.Model):
         if user and user.is_authenticated:
             if self.is_moderator(user) or self.owner == user:
                 return True
-            if hasattr(user, 'agency'):
-                return user.agency in self.agencies.all()
+            return user.agencies.filter(pk__in=self.agencies.all()).count() > 0
         return False
 
     def update_status(self, save=True, head=True, user=None, timestamp=None):
@@ -636,7 +641,7 @@ class SiteSectionQueryset(models.QuerySet):
     def editable_by(self, user):
         if user.is_superuser:
             return self
-        return self.filter(site__agencies__in=[user.agency])
+        return self.filter(site__agencies__in=user.agencies.all())
 
     def station(self, station):
         if isinstance(station, str):

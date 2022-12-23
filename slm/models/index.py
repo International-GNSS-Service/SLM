@@ -207,21 +207,19 @@ class ArchivedSiteLogManager(models.Manager):
                 return file
 
             from slm.api.serializers import SiteLogSerializer
-            archive_file = ArchivedSiteLog.objects.create(
+            return ArchivedSiteLog.objects.create(
                 site=site,
                 log_format=log_format,
                 index=index,
                 timestamp=index.begin,
                 mimetype=log_format.mimetype,
                 file_type=SLMFileType.SITE_LOG,
-                name=site.get_filename(log_format=log_format, epoch=epoch)
-            )
-            archive_file.file.save(
-                site.get_filename(log_format=log_format, epoch=epoch),
-                ContentFile(
+                name=site.get_filename(log_format=log_format, epoch=epoch),
+                file=ContentFile(
                     SiteLogSerializer(instance=site, epoch=epoch).format(
                         log_format
-                    )
+                    ),
+                    name=site.get_filename(log_format=log_format, epoch=epoch)
                 )
             )
 

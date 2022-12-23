@@ -38,9 +38,7 @@ class AgencyQuerySet(models.QuerySet):
         """Get the agency(s) this user is a member of."""
         if user.is_superuser:
             return self
-        if user.agency:
-            return self.filter(pk__in=[user.agency.pk])
-        return self.none()
+        return user.agencies.all()
 
 
 class Agency(models.Model):
@@ -116,7 +114,7 @@ class AlertQuerySet(models.QuerySet):
             from slm.models.sitelog import Site
             qry = Q(user=user) | Q(site__in=Site.objects.editable_by(user))
             if getattr(user, 'agency', None):
-                qry |= Q(agency=user.agency)
+                qry |= Q(agency__in=user.agencies.all())
             return self.filter(qry)
         return self.none()
 
@@ -223,14 +221,14 @@ class ReviewRequestManager(models.Manager):
         return super().get_queryset().select_related(
             'site',
             'requester',
-            'requester__agency',
             'site__owner',
-            'site__owner__agency',
             'site__last_user',
-            'site__last_user__agency'
         ).prefetch_related(
             'site__agencies',
-            'site__networks'
+            'site__networks',
+            'requester__agencies',
+            'site__last_user__agencies',
+            'site__owner__agencies'
         )
 
 
@@ -424,11 +422,12 @@ class SiteFile(models.Model):
         help_text=_('A pointer to the uploaded file on disk.')
     )
 
-    file_size = models.PositiveIntegerField(
-        null=True,
-        default=None,
-        help_text=_('The size of the file on disk.')
-    )
+    @property
+    def size(self):
+        """Size of the file in bytes"""
+        if self.file:
+            return self.file.size
+        return None
 
     thumbnail = models.ImageField(
         upload_to=site_thumbnail_path,
@@ -472,10 +471,6 @@ class SiteFile(models.Model):
                 self.mimetype
             )
         self.generate_thumbnail()
-        try:
-            self.file_size = os.path.getsize(self.file.path)
-        except OSError:
-            self.file_size = None
         return super().save(*args, **kwargs)
 
     @classmethod
@@ -709,7 +704,7 @@ class LogEntryQuerySet(models.QuerySet):
     def for_user(self, user):
         if user.is_superuser:
             return self
-        return self.filter(site__agencies__in=[user.agency])
+        return self.filter(site__agencies__in=user.agencies.all())
 
 
 class LogEntry(models.Model):

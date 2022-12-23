@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.contrib.sites.models import Site as DjangoSite
 from django.utils.timezone import now
 from rest_framework import serializers
 from slm import signals as slm_signals
@@ -13,10 +12,12 @@ from slm.models import (
     SiteFileUpload,
     UserProfile,
 )
+from django.db.models import Q
 from slm.utils import build_absolute_url
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Agency
         fields = [
@@ -25,6 +26,12 @@ class EmbeddedAgencySerializer(serializers.ModelSerializer):
             'country',
             'active'
         ]
+        extra_kwargs = {
+            'id': {'read_only': False},
+            'name': {'read_only': True},
+            'country': {'read_only': True},
+            'active': {'read_only': True}
+        }
 
 
 class EmbeddedNetworkSerializer(serializers.ModelSerializer):
@@ -38,7 +45,7 @@ class EmbeddedNetworkSerializer(serializers.ModelSerializer):
 
 class EmbeddedUserSerializer(serializers.ModelSerializer):
 
-    agency = EmbeddedAgencySerializer(many=False, required=False)
+    agencies = EmbeddedAgencySerializer(many=True, required=False)
 
     class Meta:
         model = get_user_model()
@@ -47,7 +54,7 @@ class EmbeddedUserSerializer(serializers.ModelSerializer):
             'email',
             'first_name',
             'last_name',
-            'agency'
+            'agencies'
         ]
 
 
@@ -55,12 +62,12 @@ class StationSerializer(serializers.ModelSerializer):
 
     owner = EmbeddedUserSerializer(many=False, read_only=True)
     last_user = EmbeddedUserSerializer(many=False, read_only=True)
-    agencies = EmbeddedAgencySerializer(many=True, read_only=True)
+    agencies = EmbeddedAgencySerializer(many=True, required=False)
     networks = EmbeddedNetworkSerializer(many=True, read_only=True)
 
     can_publish = serializers.SerializerMethodField(read_only=True)
 
-    publish = serializers.BooleanField(write_only=True)
+    publish = serializers.BooleanField(write_only=True, required=False)
 
     def get_can_publish(self, obj):
         if 'request' in self.context:
@@ -78,16 +85,21 @@ class StationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # strip out anything but name or agencies
-        validated_data = {
-            key: val
-            for key, val in validated_data.items()
-            if key in {'name'}
-        }
-
+        validated_data.pop('publish', None)
         validated_data['name'] = validated_data['name'].upper()
+        agencies = Agency.objects.filter(
+            pk__in=[acy['id'] for acy in validated_data.pop('agencies', [])]
+        )
+        if not self.context['request'].user.can_propose_site(
+            agencies=agencies
+        ):
+            raise PermissionError(
+                'You do not have permission to propose a new site with the '
+                'given agencies.'
+            )
+
         new_site = super().create(validated_data)
-        if not self.context['request'].user.is_superuser:
-            new_site.agencies.add(self.context['request'].user.agency)
+        new_site.agencies.set(agencies)
 
         slm_signals.site_proposed.send(
             sender=self,
@@ -220,7 +232,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(UserProfileSerializer):
 
-    agency = serializers.CharField(source='agency.name', read_only=True)
+    agencies = EmbeddedAgencySerializer(many=True, read_only=True)
 
     profile = UserProfileSerializer(many=False)
 
@@ -244,10 +256,10 @@ class UserSerializer(UserProfileSerializer):
             'first_name',
             'last_name',
             'date_joined',
-            'agency',
+            'agencies',
             'profile'
         ]
-        read_only_fields = ['id', 'agency', 'date_joined']
+        read_only_fields = ['id', 'agencies', 'date_joined']
 
 
 class SiteFileUploadSerializer(serializers.ModelSerializer):

@@ -15,7 +15,6 @@ from pathlib import Path
 
 from slm.settings import is_defined, set_default
 from split_settings.tools import include
-from jinja2 import select_autoescape
 
 set_default('DEBUG', False)
 
@@ -78,34 +77,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'slm.settings.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages'
-            ],
-            'builtins': ['slm.templatetags.slm']
-        },
-    },
-    {
-        'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'autoescape': select_autoescape(
-                disabled_extensions=('log',),
-                default_for_string=True,
-                default=True,
-            ),
-            'environment': 'slm.jinja2.environment'
-        }
-    }
-]
-
 WSGI_APPLICATION = 'sites.wsgi.application'
 
 # Password validation
@@ -142,6 +113,7 @@ include('internationalization.py')
 include('slm.py')
 include('secrets.py')
 include('logging.py')
+include('templates.py')
 include('static_templates.py')
 include('routines.py')
 include('auth.py')

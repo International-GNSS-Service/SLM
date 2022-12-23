@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/3.2/ref/models/fields/
 """
 
 from django import forms
-from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import transaction
@@ -49,56 +47,6 @@ from slm.models import (
     SiteWaterVaporRadiometer,
 )
 from slm.utils import to_snake_case
-
-
-class UserAdminCreationForm(forms.ModelForm):
-    # Creates new users with all the required
-    # fields. Requires repeated password.
-
-    password = forms.CharField(widget=forms.PasswordInput)
-    password_2 = forms.CharField(
-        label='Confirm Password',
-        widget=forms.PasswordInput
-    )
-
-    class Meta:
-        model = get_user_model()
-        fields = ['email']
-
-    def clean(self):
-        # Verify both passwords match.
-
-        cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password_2 = cleaned_data.get("password_2")
-        if password is not None and password != password_2:
-            self.add_error("password_2", "Your passwords must match")
-        return cleaned_data
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.set_password(self.cleaned_data["password"])
-        if commit:
-            user.save()
-        return user
-
-
-class UserAdminChangeForm(forms.ModelForm):
-    """
-    Updates users. Replaces password field with admin's
-    password hash display field.
-    """
-    password = ReadOnlyPasswordHashField()
-
-    class Meta:
-        model = get_user_model()
-        fields = ['email', 'password', 'is_active', 'is_superuser']
-
-    def clean_password(self):
-        # Regardless of what the user provides, return the initial value.
-        # This is done here, rather than on the field, because the
-        # field does not have access to the initial value
-        return self.initial["password"]
 
 
 class NewSiteForm(forms.ModelForm):
@@ -451,11 +399,16 @@ class SiteMoreInformationForm(SectionForm):
 
 class UserForm(forms.ModelForm):
 
-    agency = forms.ModelChoiceField(
+    agencies = forms.ModelMultipleChoiceField(
         queryset=Agency.objects.all(),
         required=False,
         disabled=True
     )
+
+    def __init__(self, *args, instance=None, **kwargs):
+        super().__init__(*args, instance=instance, **kwargs)
+        if instance:
+            self.fields['agencies'].queryset = instance.agencies.all()
 
     class Meta:
         model = UserSerializer.Meta.model

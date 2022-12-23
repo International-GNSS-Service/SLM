@@ -23,7 +23,7 @@ Template for upload page.
               <hr>
           </div>
 
-          <form id='slm-new-site-form' action="{% url 'slm:new_site' %}" method="post">
+          <form id='slm-new-site-form'>
             {% csrf_token %}
             {% if form.non_field_errors %}
                 <div class="alert alert-danger slm-form-fail"><strong>{{ form.non_field_errors }}</strong></div>
@@ -50,16 +50,70 @@ Template for upload page.
             {% endfor %}
             <!-- Cancel/Save Buttons -->
             <br/>
-            <div id="update" class="d-grid gap-2 d-flex justify-content-between">
-              <button type='submit' name='update' class="btn btn-success">
-                {% translate "Submit" %}
-              </button>
-            </div>
           </form>
-
+          <div id="update" class="d-grid gap-2 d-flex justify-content-between">
+              <button onclick="newSite()" type='submit' name='update' class="btn btn-success">
+                {% trans "Submit" %}
+              </button>
+          </div>
       </div>
     </div>
 
 </div>
+
+<script>
+
+    const newSite = function() {
+        let form = $('#slm-new-site-form');
+        let data = slm.formToObject(form);
+        let agencies = [];
+        for (const agency of data.agencies) {
+            agencies.push({id: agency});
+        }
+        data.agencies = agencies;
+        $.ajax({
+            url: "{% url 'slm_edit_api:stations-list' %}",
+            method: 'POST',
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json"
+        }).done(
+            function(data, status, jqXHR) {
+                window.location = slm.urls.reverse(
+                    'slm:edit', {kwargs: {station: data.name}}
+                );
+            }
+        ).fail(
+            function(jqXHR, textStatus, errorThrown) {
+                if (jqXHR.hasOwnProperty('responseJSON')) {
+                    const error = jqXHR.responseJSON;
+                    if (Array.isArray(data)) {
+                        for (const error of data) {
+                            form.prepend(
+                                `<div class="alert alert-danger slm-form-fail">` +
+                                    `<strong>${error}</strong>` +
+                                `</div>`
+                            );
+                        }
+                    } else {
+                        for (const [key, value] of Object.entries(error)) {
+                            let errorElem = form.find(`#id_${key}`);
+                            errorElem.addClass('is-invalid');
+                            errorElem.after(`<div class="invalid-feedback">${value}</div>`);
+                        }
+                    }
+                } else if (jqXHR.hasOwnProperty('responseText')) {
+                    form.prepend(
+                        `<div class="alert alert-danger slm-form-fail">` +
+                            `<strong>${jqXHR.responseText}</strong>` +
+                         `</div>`
+                    );
+                }
+                console.log(jqXHR);
+            }
+        );
+    }
+
+</script>
 
 {% endblock %}

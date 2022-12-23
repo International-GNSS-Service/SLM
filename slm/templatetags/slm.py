@@ -136,22 +136,22 @@ def epsg7912(lat_lng, prec=10):
 
 
 @register.filter(name='precision')
-def precision(number, precision):
-    if number not in {None, ''}:
-        return f'{number:.{precision}f}'.rstrip('0').rstrip('.')
+def precision(number, prec):
+    if number or number == 0:
+        return f'{number:.{prec}f}'.rstrip('0').rstrip('.')
     return ''
 
 
 @register.filter(name='precision_full')
-def precision_full(alt, precision):
-    if alt not in {None, ''}:
-        return f'{alt:.{precision}f}'
+def precision_full(alt, prec):
+    if alt or alt == 0:
+        return f'{alt:.{prec}f}'
     return ''
 
 
 @register.filter(name='pos')
 def pos(number):
-    if number not in {None, ''}:
+    if number or number == 0:
         if float(number) > 0:
             return f'+{number}'
         return number
@@ -160,9 +160,9 @@ def pos(number):
 
 @register.filter(name='none2empty')
 def none2empty(number, suffix=''):
-    if number is None:
-        return ''
-    return f'{number}{suffix}'
+    if number or number == 0:
+        return f'{number}{suffix}'
+    return ''
 
 
 @register.filter(name='enum_str')

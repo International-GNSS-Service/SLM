@@ -224,12 +224,12 @@ class StationListViewSet(
             self.request.user
         ).prefetch_related(
             'agencies',
-            'networks'
+            'networks',
+            'owner__agencies',
+            'last_user__agencies'
         ).annotate_review_pending().select_related(
             'owner',
-            'owner__agency',
-            'last_user',
-            'last_user__agency'
+            'last_user'
         )
 
 
@@ -324,7 +324,7 @@ class UserProfileViewSet(
     def get_queryset(self):
         return get_user_model().objects.filter(
             id=self.request.user.id
-        ).select_related('profile', 'agency')
+        ).select_related('profile').prefetch_related('agencies')
 
     def list(self, request, **kwargs):
         resp = super(UserProfileViewSet, self).list(request, **kwargs)
@@ -1159,7 +1159,7 @@ class SiteFileUploadViewSet(
         }
         with transaction.atomic():
             for index, section in parsed.sections.items():
-                if section.example:
+                if section.example or not section.contains_values:
                     continue
 
                 section_view = self.SECTION_VIEWS.get(

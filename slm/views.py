@@ -100,12 +100,8 @@ class SLMView(TemplateView):
         context['networks'] = Network.objects.all()
         if self.request.user.is_superuser:
             context['user_agencies'] = Agency.objects.all()
-        elif self.request.user.agency:
-            context['user_agencies'] = Agency.objects.filter(
-                pk=self.request.user.agency.pk
-            )
         else:
-            context['user_agencies'] = Agency.objects.none()
+            context['user_agencies'] = self.request.user.agencies.all()
         return context
 
 
@@ -459,58 +455,16 @@ class UploadView(StationContextView):
 class NewSiteView(StationContextView):
     template_name = 'slm/new_site.html'
 
-    @method_decorator(login_required)
-    def post(self, request, *args, **kwargs):
-        data = {
-            field: request.POST[field]
-            for field in NewSiteForm._meta.fields if field in request.POST
-        }
-        if data.get('agencies', None):
-            data['agencies'] = [
-                Agency.objects.get(pk=int(agency))
-                for agency in [data['agencies']]
-            ]
-        data['name'] = data['name'].upper()
-        if not request.user.is_superuser:
-            for agency in data['agencies']:
-                if request.user.agency != agency:
-                    raise PermissionDenied(
-                        'Only allowed to create new sites for your agency.'
-                    )
-
-        new_site = NewSiteForm(data)
-        if new_site.is_bound and new_site.is_valid():
-            new_site.save()
-            slm_signals.site_proposed.send(
-                sender=self,
-                site=new_site.instance,
-                user=request.user,
-                timestamp=new_site.instance.created,
-                request=request,
-                agencies=data['agencies']
-            )
-            return redirect(
-                to=reverse(
-                    'slm:edit',
-                    kwargs={'station': new_site.instance.name}
-                )
-            )
-
-        context = super().get_context_data(**kwargs)
-        context['form'] = new_site
-        return self.render_to_response(context)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = NewSiteForm(
             initial={
-                'agencies': Agency.objects.filter(
-                    id=self.request.user.agency.id
-                )} if not self.request.user.is_superuser else {}
+                'agencies': self.request.user.agencies.all()
+            } if not self.request.user.is_superuser else {}
         )
         if not self.request.user.is_superuser:
             context['form'].fields["agencies"].queryset = \
-                Agency.objects.filter(id=self.request.user.agency.id)
+                self.request.user.agencies
         return context
 
 

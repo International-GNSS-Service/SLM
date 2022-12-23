@@ -19,50 +19,71 @@ https://docs.djangoproject.com/en/3.2/ref/contrib/admin/
 """
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.admin import (
+    UserAdmin as BaseUserAdmin,
+    GroupAdmin as BaseGroupAdmin
+)
 from django.contrib.auth.models import Group
 from django.utils.translation import gettext as _
 from slm.authentication import initiate_password_resets
-from slm.forms import UserAdminChangeForm, UserAdminCreationForm
-from slm.models import Agency, SatelliteSystem, Site
+from slm.models import (
+    Agency,
+    SatelliteSystem,
+    Site,
+    Alert,
+    Antenna,
+    Receiver,
+    Radome,
+    Manufacturer,
+    SiteFileUpload,
+    Network
+)
+from slm.authentication import permissions
+from allauth.account.models import EmailAddress
 
-from .models import *
 
-User = get_user_model() # accesses custom user model
+admin.site.unregister(Group)
+#admin.site.unregister(EmailAddress)
 
-# Note that "Group" is a built in feature
-admin.site.unregister(Group) # no initial need to see Group
+
+class UserAgencyInline(admin.TabularInline):
+    model = Agency.users.through
+    extra = 0
 
 
 class UserAdmin(BaseUserAdmin):
-    add_form = UserAdminCreationForm # see slm/forms.py
-    form = UserAdminChangeForm # see slm/forms.py
 
     # chooses which fields to display for admin users
     list_display = (
-        'email', 'last_visit', 'is_superuser', 'is_staff', 'agency'
+        'email', 'first_name', 'last_name', 'last_visit', 'is_superuser'
     )
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['last_visit', 'date_joined']
 
+    inlines = [UserAgencyInline]
+
     ordering = ('-last_visit',)
-    filter_horizontal = ()
-    list_filter = ('is_superuser', 'is_staff', 'agency__name',)
-    fieldsets = ((
-        None, {
+    list_filter = ('is_superuser',)
+
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name',)}),
+        (_('Permissions'), {
             'fields': (
-                'email', 'password', 'is_superuser', 'is_staff', 'agency'
-            )
-        }
-    ),)
-    add_fieldsets = ((
-        None, {
+                'is_active', 'is_superuser', 'groups', 'user_permissions'
+            ),
+        }),
+        (_('Important dates'), {'fields': ('last_visit', 'date_joined')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
             'fields': (
-                'email', 'password', 'password_2', 'is_superuser', 'is_staff',
-                'agency'
-            )
-        }
-    ),)
+                'email', 'first_name', 'last_name', 'is_superuser',
+                'password1', 'password2'
+            ),
+        }),
+    )
 
     actions = ['request_password_reset']
 
@@ -73,13 +94,34 @@ class UserAdmin(BaseUserAdmin):
         'Request password resets.'
     )
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # remove all of the standard django object permissions from the admin
+        # they are just clutter because we restrict access to the admin to
+        # superusers. The only permissions that should be shown are permissions
+        # specific the to the SLM
+        form.base_fields['user_permissions'].queryset = permissions()
+        return form
+
+
+class GroupAdmin(BaseGroupAdmin):
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # remove all of the standard django object permissions from the admin
+        # they are just clutter because we restrict access to the admin to
+        # superusers. The only permissions that should be shown are permissions
+        # specific the to the SLM
+        form.base_fields['permissions'].queryset = permissions()
+        return form
+
 
 class NetworkInline(admin.TabularInline):
     model = Network.sites.through
     extra = 0
 
 
-class AgencyInline(admin.TabularInline):
+class SiteAgencyInline(admin.TabularInline):
     model = Agency.sites.through
     extra = 0
 
@@ -88,7 +130,7 @@ class AgencyInline(admin.TabularInline):
 class SiteAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
-    inlines = [AgencyInline, NetworkInline]
+    inlines = [SiteAgencyInline, NetworkInline]
     exclude = ['agencies']
 
 
@@ -133,7 +175,8 @@ class SiteFileUploadAdmin(admin.ModelAdmin):
     list_filter = ['file_type', 'log_format']
 
 
-admin.site.register(User, UserAdmin)
+admin.site.register(get_user_model(), UserAdmin)
+admin.site.register(Group, GroupAdmin)
 admin.site.register(Agency, AgencyAdmin)
 admin.site.register(Alert, AlertAdmin)
 admin.site.register(SatelliteSystem, SatelliteSystemAdmin)

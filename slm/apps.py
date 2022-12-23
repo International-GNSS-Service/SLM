@@ -1,6 +1,34 @@
 from django.apps import AppConfig
 from django.db.models.signals import post_init, post_save
 from django.dispatch import receiver
+from django.core.checks import Warning, register
+from django.utils.translation import gettext as _
+
+
+@register()
+def check_permissions_setting(**kwargs):
+    from django.conf import settings
+    permissions = getattr(settings, 'SLM_PERMISSIONS', None)
+    if permissions:
+        try:
+            from django.utils.module_loading import import_string
+            import_string(permissions)
+        except ImportError:
+            return [
+                Warning(
+                    _(
+                        f'Was unable to load SLM_PERMISSIONS callable: '
+                        f'{permissions}'
+                    ),
+                    hint=_(
+                        'Set SLM_PERMISSIONS to the import string for a '
+                        'callable that returns a queryset of valid system'
+                        'permissions.'
+                    ),
+                    id='slm.W001',
+                )
+            ]
+    return []
 
 
 class SLMConfig(AppConfig):

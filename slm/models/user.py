@@ -3,6 +3,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import UserManager as DjangoUserManager
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 
@@ -24,12 +25,12 @@ class UserManager(DjangoUserManager):
         return user
 
     def create_user(self, email=None, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
+        extra_fields.pop('is_staff', None)
         extra_fields.setdefault('is_superuser', False)
         return self._create_user(email, password, **extra_fields)
 
     def create_superuser(self, email=None, password=None, **extra_fields):
-        extra_fields['is_staff'] = True
+        extra_fields.pop('is_staff', None)
         extra_fields['is_superuser'] = True
         return self._create_user(email, password, **extra_fields)
 
@@ -143,11 +144,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(
         max_length=255,
         null=True,
+        blank=True,
+        default='',
         verbose_name=_('First Name')
     )
     last_name = models.CharField(
         max_length=255,
         null=True,
+        blank=True,
+        default='',
         verbose_name=_('Last Name')
     )
 
@@ -158,12 +163,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_index=True
     )
 
-    is_staff = models.BooleanField(
-        _('Staff'),
-        default=True,
-        help_text=_('Designates if the user is staff.'),
-        db_index=True
-    )
+    @property
+    def is_staff(self):
+        """
+        Django users typically have an is_staff flag which allows access
+        to sub-superusers to the admin. This seems like an unnecessary layer of
+        complexity for SLM use cases. Only superusers should be able to see the
+        admin. If necessary in the future - this could be converted into a
+        database field.
+        """
+        return self.is_superuser
 
     is_active = models.BooleanField(
         _('Active'),
@@ -190,13 +199,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_index=True
     )
 
-    agency = models.ForeignKey(
+    agencies = models.ManyToManyField(
         'slm.Agency',
-        null=True,
-        default=None,
         blank=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_('Agency')
+        verbose_name=_('Agency'),
+        help_text=_(
+            "The agencies this user is a member of. At bare minimum this user "
+            "will have edit permissions for all these agency sites."
+        ),
+        related_name='users'
     )
 
     profile = models.OneToOneField(
@@ -222,6 +233,25 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_moderator(self, station):
         return station.is_moderator(self)
 
+    def can_propose_site(self, agencies=None):
+        """
+        Superusers can propose any site, otherwise the user must have the
+        slm.propose_sites permission and they must be a member of every
+        agency the proposed site is a member of.
+
+        :param agencies: A QuerySet of Agencies the proposed site will be a
+            member of
+        :return: True if this user can propose the site, false otherwise.
+        """
+        if self.is_superuser:
+            return True
+        if not self.has_perm('slm.propose_sites'):
+            return False
+        if agencies is None:
+            from slm.models import Agency
+            agencies = Agency.objects.none()
+        return not agencies.filter(~Q(pk__in=self.agencies.all())).exists()
+
     @property
     def name(self):
         if self.first_name or self.last_name:
@@ -239,3 +269,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
+
+    class Meta:
+        permissions = [
+            (
+                'propose_sites',
+                _('May propose new sites for their agencies.')
+            ),
+            (
+                'moderate',
+                _('May moderate and publish logs for sites in their agencies.')
+            )
+        ]

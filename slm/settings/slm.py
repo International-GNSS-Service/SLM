@@ -7,16 +7,16 @@ SLM_STATUS_COLORS = {
     SiteLogStatus.DORMANT: '#3D4543',
     SiteLogStatus.PENDING: '#913D88',
     SiteLogStatus.UPDATED: '#8D6708',
-    SiteLogStatus.PUBLISHED: '#008000',
+    SiteLogStatus.PUBLISHED: '#0F980F',
     SiteLogStatus.EMPTY: '#00000000'
 }
 
 SLM_FILE_COLORS = {
     SiteFileUploadStatus.UNPUBLISHED: '#8D6708',
-    SiteFileUploadStatus.PUBLISHED: '#008000',
+    SiteFileUploadStatus.PUBLISHED: '#0F980F',
     SiteFileUploadStatus.INVALID: '#8b0000',
     SiteFileUploadStatus.WARNINGS: '#8D6708',
-    SiteFileUploadStatus.VALID: '#008000'
+    SiteFileUploadStatus.VALID: '#0F980F'
 }
 
 # if True, for subsections and missing sections, placeholder structures will

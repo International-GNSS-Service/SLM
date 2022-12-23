@@ -1,131 +1,86 @@
 /*------- Typography CSS -------*/
-
 .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
     /* margin-bottom: 0; */
     font-family: 'Roboto', serif;
     font-weight: bold;
 }
-
 .h-110 {
     height: 110%;
 }
-
 body {
     font-family: 'Roboto', serif;
 }
-
 button {
     font-weight: 700;
 }
-
 a, a:hover {
     color: #175A7D;
 }
-
 .mono {
   font-family: "Lucida Console", Courier, monospace;
 }
-
-
-/*------- Button/Icon CSS -------*/
-.btn-primary {
-    color: #fff;
-    background-color: #185A7D;
+span.slm-section-header {
+    font-size: calc(1.4rem + .3vw);
 }
 
-.btn-success {
-    background-color: #185A7D;
-}
-
-.btn:hover {
-    color: #fff;
-}
-
-.btn-secondary {
-    background-color: #50595E;
-}
-
-[type=button] .bi-question-circle {
-    font-size: 24px;
-}
-
-/* Removes default button border/bg color for help popover */
-.icon {
-    background-color: #fff;
-    border: none;
-    padding: 0px;
-}
-
-.modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
- }
 
 
 /*------- Layout CSS -------*/
-
 @media (max-width: 797px) {
     body { 
         padding-left: 0px;
         padding-right: 0px;
     }
 }
-
 .container-fluid {
     padding: 0px;
 }
 
 
+
 /*------- Top Menu Navigation CSS -------*/
-
-
 .navbar-dark .navbar-nav .active>.nav-link {
     background-color: #185A7D !important;
     color: #fff;
     border-radius: 0.25rem;
 }
-
 .navbar-dark .navbar-nav .nav-link {
     color: #fff;
 }
-
 .nav-link {
     width: 100%;
     text-align: left;
     color: #000;
 }
-
 @media (min-width: 768px) {
     .navbar-expand-md .navbar-nav .nav-link {
         padding: 0.5rem 1rem;
     }
 }
-
 /* Fixes active CSS on dropdown sections (DO NOT MOVE) */
 .nav-link.active, .active>.nav-link  { 
     background-color: #185A7D !important;
     color: #fff;
 } 
-
 .show>.nav-link {
     background-color: #fff !important;
     color: #000 !important;
 }
-
 .nav-link:focus, .nav-link:hover {
     background-color: #185A7D !important;
     color: #fff !important;
     border-radius: 0.25rem;
 }
-
 .list-group-item.active {
     background-color: #185A7D !important;
     border-color: #185A7D !important;
 }
 
+
+/*------- Review Diff CSS -------*/
 #review-diff-container {
     padding: 50px;
 }
-
 #review-diff {
     border: 1px solid #212529;
     background-color: ghostwhite;
@@ -134,7 +89,7 @@ a, a:hover {
 
 
 
-/*------- Alerts CSS -------*/
+/*------- Alerts/Log CSS -------*/
 .slm-alert-item {
     position: relative;
     display: block;
@@ -146,7 +101,6 @@ a, a:hover {
     border-left-width: 0.5rem;
     border-radius: 0.5rem;
 }
-
 .slm-log-item {
     position: relative;
     display: block;
@@ -159,63 +113,27 @@ a, a:hover {
     border-radius: 0.5rem;
     cursor: pointer;
 }
-
-.slm-log-delete {
-    border-left-color: #CD2026;
+.slm-log-scroll {
+    overflow-y: auto;
 }
 
-.slm-log-add,
-.slm-log-update {
-    border-left-color: #BF8C0D;
+
+
+/*------- Agency Header CSS -------*/
+header.slm-agency, .slm-agency a {
+    background-color: #175A7D;
+    color: ghostwhite;
 }
 
-.slm-log-publish {
-    border-left-color: green;
-}
 
-.slm-log-new {
-    border-left-color: #913D88;
-}
 
-.slm-log-log-upload {
-    border-left-color: dodgerblue;
-}
-
-.slm-log-file-upload {
-    border-left-color: darkblue;
-}
-
-span.badge.slm-log-add,
-span.badge.slm-log-update {
-    background-color: #BF8C0D;
-    color: white;
-}
-span.badge.slm-log-publish {
-    background-color: green;
-    color: white;
-}
-span.badge.slm-log-new {
-    background-color: #913D88;
-    color: white;
-}
-span.badge.slm-log-delete {
-    background-color: #CD2026;
-    color: white;
-}
-span.badge.slm-log-log-upload {
-    background-color: dodgerblue;
-    color: white;
-}
-span.badge.slm-log-file-upload {
-    background-color: darkblue;
-    color: white;
-}
-
+/*------- Station Location CSS -------*/
 img.slm-station-location {
   width: 100%;
   height: 100%;
   background: url(http://goo.gl/vyAs27) no-repeat scroll 0 0;
 }
+
 
 
 /*------- Background CSS -------*/
@@ -225,14 +143,14 @@ img.slm-station-location {
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
-    height: 500px;
+    height: 300px;
 }
-
 .bg-igs-blue {
     background-color: #051C2C;
-
 }
-
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+ }
 
 
 
@@ -241,24 +159,41 @@ img.slm-station-location {
 .form-label {
     margin-bottom: 0rem;
 }
-
 .input-group {
     width: 50%;
 }
-
 .form-control, .input-group-text {
     border: 1px solid #545454;
 }
-
 .accordion-button:not(.collapsed) {
     color: white;
     background-color: #175A7D
 }
-
 .slm-form-error {
     padding: 7px;
 }
+.slm-form-fieldset {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+fieldset.slm-form-group {
+    border: 1px groove #ddd !important;
+    padding: 0 1.4em 1.4em 1.4em !important;
+    margin: 0 0 1.5em 0 !important;
+    -webkit-box-shadow:  0px 0px 0px 0px #000;
+            box-shadow:  0px 0px 0px 0px #000;
+}
+fieldset.slm-form-group > legend {
+    width:inherit; /* Or auto */
+    padding:0 10px; /* To give a bit of padding on the left and right */
+    border-bottom:none;
+    float: none;
+}
 
+
+
+
+/*------- Station/File List CSS -------*/
 #slm-station-list,
 #slm-file-list {
     justify-content: flex-start;
@@ -278,13 +213,11 @@ img.slm-station-location {
     font-size: 20px;
     margin-right: 5px;
 }
-
 #slm-file-list button {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
 #slm-station-list button.active,
 #slm-station-list button:hover,
 #slm-file-list button.active,
@@ -298,7 +231,6 @@ img.slm-station-location {
     position: sticky;
     top: 0;
 }
-#slm-file-container {}
 #slm-form-menu {
     position: -webkit-sticky; /* Safari */
     position: sticky;
@@ -308,46 +240,29 @@ img.slm-station-location {
     margin-right: 5px;
 }
 
+
+
+/*------- Validation CSS -------*/
 .is-invalid.slm-form-unpublished {
     /*border-color: #ffecb5;*/
     border-color: #BF8C0D;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23d89133'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23d89133' stroke='none'/%3e%3c/svg%3e");
 }
-
 .invalid-feedback.slm-form-unpublished {
     /*color: #ffecb5;*/
     color: #BF8C0D;
 }
-
 .was-validated .form-control.slm-form-unpublished:invalid:focus, .form-control.is-invalid.slm-form-unpublished:focus {
   border-color: #BF8C0D;
   box-shadow: 0 0 0 0.25rem rgba(216, 145, 51, 0.25);
 }
-
 .alert-warning.slm-form-unpublished {
     border-color: #BF8C0D;
 }
 
-/* remove bootstrap accordion arrows */
-.accordion-button:after {
-    display: none;
-}
 
-button.slm-subsection > .slm-effective {
-  vertical-align: middle;
-  float:right;
-  content: "";
-  position:absolute;
-  right:20px;
-  top:35%;
-}
-button.slm-subsection {
-    display:block;
-    text-align:left;
-    overflow:hidden;
-    position:relative;
-}
 
+/*------- Flag CSS -------*/
 .slm-flag-error {
     font-size: large;
 }
@@ -357,7 +272,6 @@ button.slm-subsection {
 .slm-flag-error .bi-x-circle {
     color: red;
 }
-
 .slm-flag-error > .bi + .bi,
 .slm-flag-error:hover > .bi {
   display: none;
@@ -365,63 +279,20 @@ button.slm-subsection {
 .slm-flag-error:hover > .bi + .bi {
   display: inherit;
 }
-
-
 .form-control.slm-flag-input {
     margin-top: 5px;
     background-color:  #CD2026!important;
     color: #F8F9FA;
 }
-
 .form-control.slm-flag-input:invalid:focus,
 .form-control.slm-flag-input:focus {
   border-color: darkred;
   box-shadow: 0 0 0 0.1rem rgba(139, 0, 0, 1);
 }
 
-.slm-form-fieldset {
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
 
-.slm-modified {
-    color: #BF8C0D;
-}
 
-.slm-published {
-    color: green;
-}
-.slm-published-bg {
-    background-color: #BF8C0D;
-}
-
-.slm-files-badge {
-    background-color: #BF8C0D;
-}
-
-span.slm-section-header {
-    font-size: calc(1.4rem + .3vw);
-}
-
-fieldset.slm-form-group {
-    border: 1px groove #ddd !important;
-    padding: 0 1.4em 1.4em 1.4em !important;
-    margin: 0 0 1.5em 0 !important;
-    -webkit-box-shadow:  0px 0px 0px 0px #000;
-            box-shadow:  0px 0px 0px 0px #000;
-}
-
-fieldset.slm-form-group > legend {
-    width:inherit; /* Or auto */
-    padding:0 10px; /* To give a bit of padding on the left and right */
-    border-bottom:none;
-    float: none;
-}
-
-.slm-log-scroll {
-    overflow-y: auto;
-}
-
+/*------- SLM Loader CSS -------*/
 .slm-loader {
   border: 6px solid #f3f3f3; /* Light grey */
   border-top: 6px solid #175A7D; /* Blue */
@@ -430,11 +301,174 @@ fieldset.slm-form-group > legend {
   height: 40px;
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+
+
+/*------- SLM Status Colors CSS -------*/
+/* Status Background Color*/
+.slm-bg-pending {
+    background-color: #913D88;
+}
+.slm-bg-updated {
+    background-color: #BF8C0D;
+    color: #000;
+}
+.slm-bg-dormant {
+    background-color: #3D4543;
+}
+.slm-bg-published {
+    background-color: #0F980F;
+}
+/* Status Text Color */
+.slm-text-pending {
+    color: #913D88;
+}
+.slm-text-updated {
+    color: #BF8C0D;
+}
+.slm-text-dormant {
+    color: #3D4543;
+}
+.slm-text-published {
+    color: #0F980F;
+}
+/* Actvity Log Item Border Colors */
+.slm-log-delete {
+    border-left-color: #CD2026;
+}
+.slm-log-add,
+.slm-log-update {
+    border-left-color: #BF8C0D;
+}
+.slm-log-publish {
+    border-left-color: #0F980F;
+}
+.slm-log-new-site {
+    border-left-color: #913D88;
+}
+.slm-log-log-upload {
+    border-left-color: dodgerblue;
+}
+.slm-log-file-upload {
+    border-left-color: darkblue;
+}
+/* Download Tab Icons Colors */
+.slm-modified {
+    color: #BF8C0D;
+}
+.slm-published {
+    color: green;
+}
+
+
+
+/*------- Badge Colors CSS -------*/
+span.badge.slm-log-add,
+span.badge.slm-log-update {
+    background-color: #BF8C0D;
+    color: white;
+}
+span.badge.slm-log-publish {
+    background-color: green;
+    color: white;
+}
+span.badge.slm-log-new-site {
+    background-color: #913D88;
+    color: white;
+}
+span.badge.slm-log-delete {
+    background-color: #CD2026;
+    color: white;
+}
+span.badge.slm-log-log-upload {
+    background-color: dodgerblue;
+    color: white;
+}
+span.badge.slm-log-file-upload {
+    background-color: darkblue;
+    color: white;
+}
+/* Badge Color for Upload Tab */
+.slm-files-badge {
+    background-color: #BF8C0D;
+}
+
+
+/*------- Upload widget CSS -------*/
+/* Upload widget custom CSS */
+i.bi.bi-cloud-arrow-up {
+    font-size: 60px;
+    color: #9D9D9D;
+}
+.dropzone {
+    border: none !important;
+    border-radius: 16px;
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%239D9D9DFF' stroke-width='4' stroke-dasharray='21%2c 16' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e") !important;
+}
+.dropzone .dz-message {
+    text-align: center;
+    margin: 10% 5% !important;
+}
+.dz-message:hover {
+    color: #175A7D !important;
+}
+
+
+
+/*------- Button/Icon/Accordion CSS -------*/
+/* Bootstrap Buttons */
+.btn-primary {
+    color: #fff;
+    background-color: #185A7D;
+}
+.btn-success {
+    background-color: #185A7D;
+}
+.btn:hover {
+    color: #fff;
+}
+.btn-secondary {
+    background-color: #50595E;
+}
+/* Removes default button border/bg color for help popover */
+.icon {
+    background-color: #fff;
+    border: none;
+    padding: 0px;
+}
+/* Removes bootstrap accordion arrows */
+.accordion-button:after {
+    display: none;
+}
+/* Adds border to empty icon in legend */
+.bi-square-fill::before {
+    border: 1px solid #000;
+    border-radius: 4px;
+}
+/* Increases size of tooltip icon */
+[type=button] .bi-question-circle {
+    font-size: 24px;
+}
+/* Subsection CSS */
+button.slm-subsection > .slm-effective {
+    vertical-align: middle;
+    float:right;
+    content: "";
+    position:absolute;
+    right:20px;
+    top:35%;
+}
+button.slm-subsection {
+    display:block;
+    text-align:left;
+    overflow:hidden;
+    position:relative;
+}
+/* Button Status CSS */
 button.slm-status-updated,
 button.nav-link.slm-status-updated {
     border-left: 10px solid #BF8C0D;
@@ -443,7 +477,7 @@ button.nav-link.slm-status-updated {
 }
 button.slm-status-published,
 button.nav-link.slm-status-published {
-    border-left: 10px solid #008000;
+    border-left: 10px solid #0F980F;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
@@ -465,7 +499,7 @@ button.nav-link.slm-status-empty  {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
-
+/* Upload Buttons CSS */
 button.slm-upload-unpublished,
 button.nav-link.slm-upload-unpublished {
     border-left: 10px solid #BF8C0D;
@@ -474,7 +508,7 @@ button.nav-link.slm-upload-unpublished {
 }
 button.slm-upload-published,
 button.nav-link.slm-upload-published {
-    border-left: 10px solid #008000;
+    border-left: 10px solid #0F980F;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
@@ -492,11 +526,11 @@ button.nav-link.slm-upload-warnings  {
 }
 button.slm-upload-valid,
 button.nav-link.slm-upload-valid  {
-    border-left: 10px solid #008000;
+    border-left: 10px solid #0F980F;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
-
+/* Accordion CSS */
 .accordion,
 .accordion-item,
 .accordion-item:first-of-type,
@@ -504,68 +538,7 @@ button.nav-link.slm-upload-valid  {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
-
 button.nav-link {
     margin-left: 5px;
     margin-top: 3px;
-}
-
-header.slm-agency {
-    background-color: #175A7D;
-    color: ghostwhite;
-}
-
-.slm-bg-pending {
-    background-color: #913D88;
-}
-.slm-bg-updated {
-    background-color: #BF8C0D;
-    color: #000;
-}
-.slm-bg-dormant {
-    background-color: #3D4543;
-}
-.slm-bg-published {
-    background-color: #008000;
-}
-
-.slm-text-pending {
-    color: #913D88;
-}
-.slm-text-updated {
-    color: #BF8C0D;
-}
-.slm-text-dormant {
-    color: #3D4543;
-}
-.slm-text-published {
-    color: #008000;
-}
-
-.slm-agency a {
-    color: #fff;
-}
-
-/* Adds border to empty icon in legend */
-.bi-square-fill::before {
-    border: 1px solid #000;
-    border-radius: 4px;
-}
-
-/* Upload widget custom CSS */
-i.bi.bi-cloud-arrow-up {
-    font-size: 60px;
-    color: #9D9D9D;
-}
-.dropzone {
-    border: none !important;
-    border-radius: 16px;
-    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='%239D9D9DFF' stroke-width='4' stroke-dasharray='21%2c 16' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e") !important;
-}
-.dropzone .dz-message {
-    text-align: center;
-    margin: 10% 5% !important;
-}
-.dz-message:hover {
-    color: #175A7D !important;
 }

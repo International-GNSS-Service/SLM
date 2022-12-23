@@ -1,9 +1,19 @@
+{% extends "account/email/base.html" %}
 {% load slm i18n %}
 
-{{ rejecter.name }} {% trans 'has rejected the proposed site log changes for' %} {{site.name}}.
+{% block title %}
+Changes Rejected
+{% endblock %}
 
+{% block content %}
+
+{{ rejecter.name }} {% trans 'has rejected the proposed site log changes for' %} {{site.name}}.
+<br>
+<br>
 {% url 'slm:review' station=site.name %}
 
 {% comment %}
 todo list errors
 {% endcomment %}
+
+{% endblock %}

@@ -6,10 +6,11 @@ from slm.settings import set_default, is_defined
 
 SLM_STATUS_COLORS = {
     SiteLogStatus.DORMANT: '#3D4543',
-    SiteLogStatus.PENDING: '#913D88',
+    SiteLogStatus.NASCENT: '#913D88',
+    SiteLogStatus.IN_REVIEW: '#0084BD',
     SiteLogStatus.UPDATED: '#8D6708',
     SiteLogStatus.PUBLISHED: '#0F980F',
-    SiteLogStatus.EMPTY: '#00000000'
+    SiteLogStatus.EMPTY: '#D3D3D3'
 }
 
 SLM_FILE_COLORS = {

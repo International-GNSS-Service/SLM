@@ -15,7 +15,7 @@ SLM_ROUTINES.setdefault('deploy', {}).setdefault('defaults', [
     (20, ['renderstatic', []]),
     (21, ['collectstatic', [], {'interactive': False, 'ignore': ['*.scss']}]),
     (22, ['set_site', [], {}], 'initial'),
-    (23, ['createsuperuser', [], {}], 'initial'),
+    (100, ['createsuperuser', [], {}], 'initial'),
 ])
 
 SLM_ROUTINE_DEPLOY = _(

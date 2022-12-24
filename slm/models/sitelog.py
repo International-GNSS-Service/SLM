@@ -82,7 +82,7 @@ class SiteQuerySet(models.QuerySet):
         return self.filter(
             ~Q(status__in=[
                 SiteLogStatus.DORMANT,
-                SiteLogStatus.PENDING
+                SiteLogStatus.NASCENT
             ])
             & Q(agencies__public=True)
             & Q(agencies__active=True)
@@ -262,7 +262,7 @@ class Site(models.Model):
     # dormant is now deduplicated into status field
     status = EnumField(
         SiteLogStatus,
-        default=SiteLogStatus.PENDING,
+        default=SiteLogStatus.NASCENT,
         blank=True,
         help_text=_('The current status of the site.')
     )
@@ -345,7 +345,9 @@ class Site(models.Model):
         :return: A queryset containing users with moderate permission for the
             site
         """
-        perm = Permission.objects.get_by_natural_key('moderate', 'slm', 'user')
+        perm = Permission.objects.get_by_natural_key(
+            'moderate_sites', 'slm', 'user'
+        )
         return get_user_model().objects.filter(
             Q(is_superuser=True) |
             Q(groups__permissions=perm) |
@@ -362,7 +364,7 @@ class Site(models.Model):
         """
         return get_user_model().objects.filter(
             ~Q(pk__in=self.moderators) & (
-                Q(agency__in=self.agencies.all()) | Q(pk=self.owner.pk)
+                Q(agencies__in=self.agencies.all()) | Q(pk=self.owner.pk)
             )
         )
 
@@ -526,7 +528,7 @@ class Site(models.Model):
         # if in either of these two states - status update must come from
         # a global publish of the site log, not from this which can be
         # triggered by a section publish
-        if self.status not in {SiteLogStatus.DORMANT, SiteLogStatus.PENDING}:
+        if self.status not in {SiteLogStatus.DORMANT, SiteLogStatus.NASCENT}:
             if status == SiteLogStatus.PUBLISHED:
                 self.last_publish = timestamp
             self.status = status
@@ -535,6 +537,10 @@ class Site(models.Model):
                 and hasattr(self, 'review_request')
             ):
                 self.review_request.delete()
+
+        if self.status == SiteLogStatus.UPDATED and self.review_pending:
+            self.status = SiteLogStatus.IN_REVIEW
+
         if save:
             self.save()
 
@@ -608,7 +614,7 @@ class Site(models.Model):
                     )
                 )
 
-        # this might be an initial PUBLISH when we're in PENDING or DORMANT
+        # this might be an initial PUBLISH when we're in NASCENT or DORMANT
         if sections_published or self.status != SiteLogStatus.PUBLISHED:
             self.status = SiteLogStatus.PUBLISHED
             self.last_publish = timestamp

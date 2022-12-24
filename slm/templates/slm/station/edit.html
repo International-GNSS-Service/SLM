@@ -132,7 +132,7 @@ Add new section capability is not functional.
                             </div>
                         </div>
                     </div>
-                `.replace('new_form_id', formId));
+                `.replaceAll('new_form_id', formId));
                 slm.initForm($(`#site-${formId}`));
                 $(`#site-${formId} div.slm-flag`).hide();
                 $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();

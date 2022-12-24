@@ -71,4 +71,3 @@ class Command(BaseCommand):
                     pbar.set_postfix({'site': site.name})
                     SiteIndex.objects.add_index(site=site)
                     pbar.update(n=1)
-

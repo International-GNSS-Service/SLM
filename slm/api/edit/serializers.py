@@ -160,6 +160,7 @@ class ReviewRequestSerializer(serializers.ModelSerializer):
                 'timestamp': now()
             }
         )[0]
+        validated_data['site'].update_status(save=True)
         request.refresh_from_db()
         self.review_pending = validated_data['site'].review_pending
         return request
@@ -216,7 +217,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = [
-            'html_emails',
             'phone1',
             'phone2',
             'address1',
@@ -256,6 +256,8 @@ class UserSerializer(UserProfileSerializer):
             'first_name',
             'last_name',
             'date_joined',
+            'silence_emails',
+            'html_emails',
             'agencies',
             'profile'
         ]

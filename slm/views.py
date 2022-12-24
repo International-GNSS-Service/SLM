@@ -585,7 +585,8 @@ class StationReviewView(StationContextView):
             'forward_text': forward_text,
             'back_text': back_text,
             'needs_publish': self.station.status in {
-                SiteLogStatus.PENDING,
+                SiteLogStatus.NASCENT,
+                SiteLogStatus.IN_REVIEW,
                 SiteLogStatus.UPDATED
             },
             'forward_prev': forward_prev.epoch.isoformat()

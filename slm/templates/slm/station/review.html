@@ -65,6 +65,7 @@ Template for View/Diff page.
     const submitBtn = reviewActions.find('button[name="submit"]');
     const publishBtn = reviewActions.find('button[name="publish"]');
     const rejectBtn = reviewActions.find('button[name="reject"]');
+    let navBtn = $('button#select-{{ station }}');
 
     const updateButtonState = function(request) {
         let site = request.site;
@@ -79,7 +80,8 @@ Template for View/Diff page.
                 publishBtn.show();
             } else if (
                 status === slm.SiteLogStatus.UPDATED ||
-                status === slm.SiteLogStatus.PENDING ||
+                status === slm.SiteLogStatus.NASCENT ||
+                status === slm.SiteLogStatus.IN_REVIEW ||
                 status === slm.SiteLogStatus.EMPTY
             ) {
                 publishBtn.show();
@@ -100,10 +102,19 @@ Template for View/Diff page.
         }
     }
 
+    const updateStatus = function(data) {
+        navBtn.removeClass(
+            slm.SiteLogStatus.get(navBtn.data('slmStatus')).css
+        );
+        navBtn.data('slmStatus', data.site.status);
+        navBtn.addClass(slm.SiteLogStatus.get(data.site.status).css);
+    }
+
     const submit = function() {
         slm.requestReview('{{station}}').done(
             function(data, status, jqXHR) {
                 updateButtonState(data);
+                updateStatus(data);
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {
@@ -118,9 +129,7 @@ Template for View/Diff page.
         slm.publish({{site.id}}).done(
             function(data, status, jqXHR) {
                 updateButtonState({'site': data});
-                let navBtn = $(`button#select-${data.name}`);
-                navBtn.data('slmStatus', data.status);
-                navBtn.addClass(slm.SiteLogStatus.get(data.status).css);
+                updateStatus({'site': data});
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {
@@ -134,6 +143,9 @@ Template for View/Diff page.
     const reject = function() {
         slm.rejectReview(rejectBtn.data('slmReviewRequest')).done(
             function(data, status, jqXHR) {
+                updateStatus(
+                    {'site': {'status': slm.SiteLogStatus.UPDATED.val}}
+                );
                 rejectBtn.data('slmReviewRequest', null);
                 rejectBtn.hide();
             }

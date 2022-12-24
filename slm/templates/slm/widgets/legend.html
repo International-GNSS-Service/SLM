@@ -1,29 +1,12 @@
 <div hidden>
     <div id="quick-help-info">
+        {% for status in SiteLogStatus %}
         <div class="d-flex py-0">
-            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: #0F980F;"></i>
-            <p class="mb-1">Published (changes published)</p>
+            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{ status.color }}"></i>
+            <p class="mb-1"><strong>{{ status.label }}</strong></p>
         </div>
-        <div class="d-flex py-0">
-            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: #8D6708;"></i>
-            <p class="mb-1">Updated (unpublished changes)</p>
-        </div>
-        <div class="d-flex py-0">
-            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: #0084BD;"></i>
-            <p class="mb-1">Pending (submitted to IGS)</p>
-        </div>
-        <div class="d-flex py-0">
-            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: #913D88;"></i>
-            <p class="mb-1">Nascent</p>
-        </div>
-        <div class="d-flex py-0">
-            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: #797979;"></i>
-            <p class="mb-1">Dormant</p>
-        </div>
-        <div class="d-flex p-0">
-            <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: #d3d3d3;"></i>
-            <p class="mb-1">Empty (form sections only)</p>
-        </div>
+        <p style="margin-left: 2em;">{{ status.help }}</p>
+        {% endfor %}
         <a class="btn btn-primary mt-2" href="{% url 'slm:help' %}#process" role="button">4-step process</a>
     </div>
 </div>

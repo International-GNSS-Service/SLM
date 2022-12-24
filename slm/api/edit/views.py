@@ -114,6 +114,8 @@ class ReviewRequestView(
     def perform_destroy(self, instance):
         review_pending = instance.site.review_pending
         super().perform_destroy(instance)
+        instance.site.refresh_from_db()
+        instance.site.update_status(save=True)
         if review_pending:
             slm_signals.changes_rejected.send(
                 sender=self,

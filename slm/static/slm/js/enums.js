@@ -43,10 +43,11 @@ class LogEntryType {
 class SiteLogStatus {
     
     static DORMANT = new SiteLogStatus(0, 'Dormant', 'slm-status-dormant', '#3D4543');
-    static PENDING = new SiteLogStatus(1, 'Pending', 'slm-status-pending', '#913D88');
-    static UPDATED = new SiteLogStatus(2, 'Updated', 'slm-status-updated', '#8D6708');
-    static PUBLISHED = new SiteLogStatus(3, 'Published', 'slm-status-published', '#0F980F');
-    static EMPTY = new SiteLogStatus(4, 'Empty', 'slm-status-empty', '#00000000');
+    static NASCENT = new SiteLogStatus(1, 'Nascent', 'slm-status-nascent', '#913D88');
+    static IN_REVIEW = new SiteLogStatus(2, 'In Review', 'slm-status-in-review', '#0084BD');
+    static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#8D6708');
+    static PUBLISHED = new SiteLogStatus(4, 'Published', 'slm-status-published', '#0F980F');
+    static EMPTY = new SiteLogStatus(5, 'Empty', 'slm-status-empty', '#D3D3D3');
 
     constructor(val, label, css, color) {
         this.val = val;
@@ -82,12 +83,14 @@ class SiteLogStatus {
             case 0:
                 return SiteLogStatus.DORMANT;
             case 1:
-                return SiteLogStatus.PENDING;
+                return SiteLogStatus.NASCENT;
             case 2:
-                return SiteLogStatus.UPDATED;
+                return SiteLogStatus.IN_REVIEW;
             case 3:
-                return SiteLogStatus.PUBLISHED;
+                return SiteLogStatus.UPDATED;
             case 4:
+                return SiteLogStatus.PUBLISHED;
+            case 5:
                 return SiteLogStatus.EMPTY;
         }
     }

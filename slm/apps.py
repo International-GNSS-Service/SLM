@@ -79,4 +79,3 @@ class SLMConfig(AppConfig):
                     previous_status=instance._slm_pre_status,
                     new_status=instance.status
                 )
-

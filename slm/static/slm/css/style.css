@@ -310,7 +310,7 @@ fieldset.slm-form-group > legend {
 
 /*------- SLM Status Colors CSS -------*/
 /* Status Background Color*/
-.slm-bg-pending {
+.slm-bg-nascent {
     background-color: #913D88;
 }
 .slm-bg-updated {
@@ -324,7 +324,7 @@ fieldset.slm-form-group > legend {
     background-color: #0F980F;
 }
 /* Status Text Color */
-.slm-text-pending {
+.slm-text-nascent {
     color: #913D88;
 }
 .slm-text-updated {
@@ -471,7 +471,7 @@ button.slm-subsection {
 /* Button Status CSS */
 button.slm-status-updated,
 button.nav-link.slm-status-updated {
-    border-left: 10px solid #BF8C0D;
+    border-left: 10px solid #8D6708;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
@@ -481,8 +481,14 @@ button.nav-link.slm-status-published {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
-button.slm-status-pending,
-button.nav-link.slm-status-pending {
+button.slm-status-in-review,
+button.nav-link.slm-status-in-review {
+    border-left: 10px solid #0084BD;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-status-nascent,
+button.nav-link.slm-status-nascent {
     border-left: 10px solid #913D88;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;

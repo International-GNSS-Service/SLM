@@ -70,7 +70,7 @@
                         dataType: "json"
                     }).done(
                         function(data, status, jqXHR) {
-                            updateBtn.blur();
+                            window.location = "{% url 'slm:profile' %}";
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {

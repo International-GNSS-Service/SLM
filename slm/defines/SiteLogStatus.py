@@ -16,36 +16,43 @@ class SiteLogStatus(IntegerChoices, p('help')):
         _('Site is inactive and updates to the log are no longer published.')
     )
 
-    PENDING = (
+    NASCENT = (
         1,
-        _('Pending'),
+        _('Nascent'),
         _(
-            'Site is pending approval, updates will not be published until '
-            'the site is activated.'
+            'This is a new Site that has never been published.'
+        )
+    )
+
+    IN_REVIEW = (
+        2,
+        _('In Review'),
+        _(
+            'Updates to this Site are pending approval by moderators.'
         )
     )
 
     UPDATED = (
-        2,
+        3,
         _('Updated'),
         _('Site log or section has unpublished updates.')
     )
 
     PUBLISHED = (
-        3,
+        4,
         _('Published'),
         _('Site log or section is published with no unpublished changes.')
     )
 
     EMPTY = (
-        4,
+        5,
         _('Empty'),
-        _('Site log or section is empty.')
+        _('Site log section is empty.')
     )
 
     @property
     def css(self):
-        return f'slm-status-{self.label.lower()}'
+        return f'slm-status-{self.label.lower().replace(" ", "-")}'
     
     @property
     def color(self):

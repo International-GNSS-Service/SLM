@@ -23,9 +23,10 @@ from slm.defines import (
     SiteLogFormat,
     SLMFileType,
 )
+from polymorphic.models import PolymorphicModel
+from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
 from slm.models import compat
 from slm.models.sitelog import DefaultToStrEncoder, SiteSection, SiteSubSection
-
 
 
 class AgencyManager(models.Manager):
@@ -103,11 +104,11 @@ class SatelliteSystem(models.Model):
         ordering = ('order',)
 
 
-class AlertManager(models.Manager):
+class AlertManager(PolymorphicManager):
     pass
 
 
-class AlertQuerySet(models.QuerySet):
+class AlertQuerySet(PolymorphicQuerySet):
 
     def for_user(self, user):
         if user.is_authenticated:
@@ -119,7 +120,7 @@ class AlertQuerySet(models.QuerySet):
         return self.none()
 
 
-class Alert(models.Model):
+class Alert(PolymorphicModel):
 
     header = models.CharField(
         max_length=100,
@@ -695,11 +696,11 @@ class SiteFileUpload(SiteFile):
         ordering = ('-timestamp',)
 
 
-class LogEntryManager(models.Manager):
+class LogEntryManager(PolymorphicManager):
     pass
 
 
-class LogEntryQuerySet(models.QuerySet):
+class LogEntryQuerySet(PolymorphicQuerySet):
 
     def for_user(self, user):
         if user.is_superuser:
@@ -707,7 +708,7 @@ class LogEntryQuerySet(models.QuerySet):
         return self.filter(site__agencies__in=user.agencies.all())
 
 
-class LogEntry(models.Model):
+class LogEntry(PolymorphicModel):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

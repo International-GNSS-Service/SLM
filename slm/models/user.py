@@ -40,7 +40,7 @@ class UserQueryset(models.QuerySet):
     def emails_ok(self, html=None):
         if html is None:
             return self.filter(silence_emails=False)
-        return self.filter(silence_emails=False, profile__html_emails=html)
+        return self.filter(silence_emails=False, html_emails=html)
 
 
 class UserProfile(models.Model):
@@ -119,13 +119,17 @@ class UserProfile(models.Model):
         verbose_name=_('Registration Agency')
     )
 
-    # preferences
-    html_emails = models.BooleanField(
-        default=True,
+    user = models.OneToOneField(
+        'slm.User',
+        on_delete=models.PROTECT,
+        null=True,
         blank=True,
-        verbose_name=_('HTML Emails'),
-        help_text=_('Receive HTML in email communications.')
+        default=None,
+        related_name='profile'
     )
+
+    def __str__(self):
+        return self.user.name
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -210,14 +214,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name='users'
     )
 
-    profile = models.OneToOneField(
-        UserProfile,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        default=None
-    )
-
     silence_emails = models.BooleanField(
         null=False,
         default=False,
@@ -229,6 +225,20 @@ class User(AbstractBaseUser, PermissionsMixin):
         ),
         db_index=True
     )
+
+    # preferences
+    html_emails = models.BooleanField(
+        default=True,
+        blank=True,
+        verbose_name=_('HTML Emails'),
+        help_text=_('Receive HTML in email communications.'),
+        db_index=True
+    )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not hasattr(self, 'profile') or not self.profile:
+            UserProfile.objects.create(user=self)
 
     def is_moderator(self, station):
         return station.is_moderator(self)
@@ -277,7 +287,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 _('May propose new sites for their agencies.')
             ),
             (
-                'moderate',
-                _('May moderate and publish logs for sites in their agencies.')
+                'moderate_sites',
+                _('May publish logs for sites in their agencies.')
             )
         ]

@@ -9,33 +9,33 @@ class TestSiteLogStatus(TestCase):
     def test_equality(self):
 
         self.assertEqual(SiteLogStatus.DORMANT, 'Dormant')
-        self.assertEqual(SiteLogStatus.PENDING, 'PENDING')
+        self.assertEqual(SiteLogStatus.NASCENT, 'NASCENT')
         self.assertEqual(SiteLogStatus.UPDATED, SiteLogStatus('UPDATED'))
         self.assertEqual(SiteLogStatus.PUBLISHED, 'Published')
 
         self.assertEqual(SiteLogStatus.PUBLISHED.label, 'Published')
         self.assertEqual(SiteLogStatus.DORMANT.label, 'Dormant')
-        self.assertEqual(SiteLogStatus.PENDING.label, 'Pending')
+        self.assertEqual(SiteLogStatus.NASCENT.label, 'Pending')
         self.assertEqual(SiteLogStatus.UPDATED.label, 'Updated')
 
         self.assertEqual(str(SiteLogStatus.PUBLISHED), 'Published')
         self.assertEqual(str(SiteLogStatus.DORMANT), 'Dormant')
-        self.assertEqual(str(SiteLogStatus.PENDING), 'Pending')
+        self.assertEqual(str(SiteLogStatus.NASCENT), 'Pending')
         self.assertEqual(str(SiteLogStatus.UPDATED), 'Updated')
 
         self.assertEqual(SiteLogStatus.DORMANT, 0)
-        self.assertEqual(SiteLogStatus.PENDING, 1)
+        self.assertEqual(SiteLogStatus.NASCENT, 1)
         self.assertEqual(SiteLogStatus.UPDATED, 2)
         self.assertEqual(SiteLogStatus.PUBLISHED, 3)
 
     def test_merge(self):
 
         self.assertEqual(
-            SiteLogStatus.DORMANT.merge(SiteLogStatus.PENDING),
+            SiteLogStatus.DORMANT.merge(SiteLogStatus.NASCENT),
             SiteLogStatus.DORMANT
         )
         self.assertEqual(
-            SiteLogStatus.PENDING.merge(SiteLogStatus.DORMANT),
+            SiteLogStatus.NASCENT.merge(SiteLogStatus.DORMANT),
             SiteLogStatus.DORMANT
         )
 
@@ -58,12 +58,12 @@ class TestSiteLogStatus(TestCase):
         )
 
         self.assertEqual(
-            SiteLogStatus.PENDING.merge(SiteLogStatus.UPDATED),
-            SiteLogStatus.PENDING
+            SiteLogStatus.NASCENT.merge(SiteLogStatus.UPDATED),
+            SiteLogStatus.NASCENT
         )
         self.assertEqual(
-            SiteLogStatus.UPDATED.merge(SiteLogStatus.PENDING),
-            SiteLogStatus.PENDING
+            SiteLogStatus.UPDATED.merge(SiteLogStatus.NASCENT),
+            SiteLogStatus.NASCENT
         )
 
         self.assertEqual(
@@ -72,8 +72,8 @@ class TestSiteLogStatus(TestCase):
         )
 
         self.assertEqual(
-            SiteLogStatus.PENDING.merge(None),
-            SiteLogStatus.PENDING
+            SiteLogStatus.NASCENT.merge(None),
+            SiteLogStatus.NASCENT
         )
         self.assertEqual(
             SiteLogStatus.UPDATED.merge(None),

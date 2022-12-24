@@ -36,19 +36,25 @@ from slm.models import (
     Radome,
     Manufacturer,
     SiteFileUpload,
-    Network
+    Network,
+    UserProfile
 )
 from slm.authentication import permissions
-from allauth.account.models import EmailAddress
 
 
 admin.site.unregister(Group)
-#admin.site.unregister(EmailAddress)
 
 
 class UserAgencyInline(admin.TabularInline):
     model = Agency.users.through
     extra = 0
+
+
+class ProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = 'Profile'
+    fk_name = 'user'
 
 
 class UserAdmin(BaseUserAdmin):
@@ -60,20 +66,21 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['last_visit', 'date_joined']
 
-    inlines = [UserAgencyInline]
+    inlines = [UserAgencyInline, ProfileInline]
 
     ordering = ('-last_visit',)
-    list_filter = ('is_superuser',)
+    list_filter = ('is_superuser', 'html_emails', 'silence_emails')
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name',)}),
+        (_('Personal Info'), {'fields': ('first_name', 'last_name',)}),
         (_('Permissions'), {
             'fields': (
                 'is_active', 'is_superuser', 'groups', 'user_permissions'
             ),
         }),
-        (_('Important dates'), {'fields': ('last_visit', 'date_joined')}),
+        (_('Preferences'), {'fields': ('silence_emails', 'html_emails')}),
+        (_('Important Dates'), {'fields': ('last_visit', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
@@ -86,6 +93,11 @@ class UserAdmin(BaseUserAdmin):
     )
 
     actions = ['request_password_reset']
+
+    def get_inline_instances(self, request, obj=None):
+        if not obj:
+            return list()
+        return super().get_inline_instances(request, obj)
 
     def request_password_reset(self, request, queryset):
         initiate_password_resets(queryset, request=request)
@@ -100,7 +112,9 @@ class UserAdmin(BaseUserAdmin):
         # they are just clutter because we restrict access to the admin to
         # superusers. The only permissions that should be shown are permissions
         # specific the to the SLM
-        form.base_fields['user_permissions'].queryset = permissions()
+        user_permissions = form.base_fields.get('user_permissions', None)
+        if user_permissions:
+            user_permissions.queryset = permissions()
         return form
 
 
@@ -112,7 +126,9 @@ class GroupAdmin(BaseGroupAdmin):
         # they are just clutter because we restrict access to the admin to
         # superusers. The only permissions that should be shown are permissions
         # specific the to the SLM
-        form.base_fields['permissions'].queryset = permissions()
+        permissions_field = form.base_fields.get('permissions', None)
+        if permissions_field:
+            permissions_field.queryset = permissions()
         return form
 
 

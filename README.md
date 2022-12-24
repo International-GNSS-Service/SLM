@@ -1,11 +1,11 @@
-# Site Log Manager (SLM)
+# ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) Site Log Manager (SLM)
 
 The Site Log Manager (SLM) is a web platform that aims to provide:
 
-1. Moderated GNSS Site meta data (site log) management.
+1. GNSS Site meta data (site log) management with a moderation workflow.
 2. Support for multiple organizations and networks to be managed in an access controlled way.
-3. Full legacy site log format support.
-4. Full GeodesyML support.
+3. Full legacy site log format support (both import and export).
+4. Full GeodesyML support (both import and export).
 5. JSON renderings of meta data.
 6. Point-and-click graphical editing of site log data.
 7. Public RESTful api for searching site log data.

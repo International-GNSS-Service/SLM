@@ -25,7 +25,9 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
     html = get_template('slm/emails/review_requested.html')
     context = {
         'user': review_request.requester,
-        'site': review_request.site
+        'site': review_request.site,
+        'request': request,
+        'current_site': DjangoSite.objects.get_current()
     }
 
     try:
@@ -36,7 +38,8 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
         )
 
         send_mail(
-            subject=f'{_("Site Log Review Requested:")} '
+            subject=f'[{DjangoSite.objects.get_current().name}] '
+                    f'{_("Site Log Review Requested:")} '
                     f'{review_request.site.name}',
             from_email=getattr(
                 settings,
@@ -82,7 +85,9 @@ def send_changes_rejected_emails(
     context = {
         'rejecter': rejecter,
         'site': review_request.site,
-        'requester': review_request.requester
+        'requester': review_request.requester,
+        'request': request,
+        'current_site': DjangoSite.objects.get_current()
     }
     try:
         html_ok = not (
@@ -92,7 +97,8 @@ def send_changes_rejected_emails(
         )
 
         send_mail(
-            subject=f'{_("Site Log Changes Rejected:")} '
+            subject=f'[{DjangoSite.objects.get_current().name}] '
+                    f'{_("Site Log Changes Rejected:")} '
                     f'{review_request.site.name}',
             from_email=getattr(
                 settings,

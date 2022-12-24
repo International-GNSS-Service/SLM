@@ -6,14 +6,7 @@ Changes Rejected
 {% endblock %}
 
 {% block content %}
-
-{{ rejecter.name }} {% trans 'has rejected the proposed site log changes for' %} {{site.name}}.
-<br>
-<br>
-{% url 'slm:review' station=site.name %}
-
-{% comment %}
-todo list errors
-{% endcomment %}
+{% url 'slm:review' station=site.name as review %}
+{{ rejecter.name }} {% trans 'has rejected the proposed site log changes for' %}: <a href="{{ review|absolute_url:request }}" target="_blank">{{site.name}}</a>
 
 {% endblock %}

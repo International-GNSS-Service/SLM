@@ -1,10 +1,12 @@
 {% load i18n %}
 {% load static %}
 
+{% static 'slm/img/email-branding.png' as branding %}
+
 {% autoescape off %}
 <div id="container" style="background-color: #f6f6f6; padding: 10%; font-family: Arial, sans-serif, 'Open Sans'; overflow-wrap: break-word;">
     <div id="logo" style="background-color: #212529; padding: 5% 10%; text-decoration: none;">
-        <a href="{% url "slm:home" %}"><img id="logo" style="margin-right: 16px; display: inline-block; vertical-align: middle; max-width: 100%; height: auto;" src="{{ ''|absolute_url }}{% static 'slm/img/email-branding.png' %}" alt="International GNSS Service"/></a>
+        <a href="{% url "slm:home" %}"><img id="logo" style="margin-right: 16px; display: inline-block; vertical-align: middle; max-width: 100%; height: auto;" src="{{ branding|absolute_url:request }}" alt="International GNSS Service"/></a>
     </div>
 
     <div id="wrapper" style="background-color: #fff; border: 1px solid #d6d6d6; padding: 5% 10% 5% 10%;">

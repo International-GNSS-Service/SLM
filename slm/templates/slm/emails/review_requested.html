@@ -6,10 +6,7 @@ Review Site Log
 {% endblock %}
 
 {% block content %}
-
-{{ user.name }} {% trans 'has requested a site log review of' %} {{site.name}}.
-<br>
-<br>
-{% url 'slm:review' station=site.name %}
+{% url 'slm:review' station=site.name as review %}
+{{ user.name }} {% trans 'has requested a site log review of' %}: <a href="{{ review|absolute_url:request }}" target="_blank">{{site.name}}</a>
 
 {% endblock %}

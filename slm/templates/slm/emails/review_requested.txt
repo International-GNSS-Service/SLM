@@ -1,5 +1,7 @@
 {% load slm i18n %}
 
+{% url 'slm:review' station=site.name as review %}
+
 {{ user.name }} {% trans 'has requested a site log review of' %} {{site.name}}.
 
-{% url 'slm:review' station=site.name %}
+{{ review|absolute_url:request }}

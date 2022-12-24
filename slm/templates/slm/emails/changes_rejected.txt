@@ -1,9 +1,7 @@
 {% load slm i18n %}
 
+{% url 'slm:review' station=site.name as review %}
+
 {{ rejecter.name }} {% trans 'has rejected the proposed site log changes for' %} {{site.name}}.
 
-{% url 'slm:review' station=site.name %}
-
-{% comment %}
-todo list errors
-{% endcomment %}
+{{ review|absolute_url:request }}

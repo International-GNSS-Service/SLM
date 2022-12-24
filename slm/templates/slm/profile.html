@@ -16,7 +16,11 @@
                       <label class="form-label">{{ field.label }}</label>
                   </div>
                   <div class="col-6">
+                      {% if field.widget_type == 'checkbox' %}
+                      {% render_field field class="form-check-input" %}
+                      {% else %}
                       {% render_field field class="form-control" %}
+                      {% endif %}
                   </div>
                   <div class="col-3 align-items-center">
                       {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}

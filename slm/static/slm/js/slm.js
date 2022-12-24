@@ -741,5 +741,8 @@ slm.formToObject = function(form) {
             data[key] = value;
         }
     });
+    form.find('input:checkbox:not(:checked)').each(function(idx, element) {
+        data[element.getAttribute('name')] = 'off';
+    });
     return data;
 }

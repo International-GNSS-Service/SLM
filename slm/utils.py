@@ -5,6 +5,7 @@ from logging import Filter
 from pprint import pformat
 from rest_framework.serializers import Serializer
 from django.conf import settings
+from lxml.etree import Resolver
 
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
@@ -179,4 +180,3 @@ class SerializerRegistry(Singleton):
 
     def __str__(self):
         return pformat(self.serializer_map)
-

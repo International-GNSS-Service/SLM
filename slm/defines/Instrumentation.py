@@ -1,14 +1,11 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django_enum import IntegerChoices
 from enum_properties import s
 
 
 class Instrumentation(IntegerChoices):
 
-    _symmetric_builtins_ = [
-        s('name', case_fold=True),
-        s('label', case_fold=True)
-    ]
+    _symmetric_builtins_ = [s('name', case_fold=True)]
 
     GPS     = 1, _('GPS')
     GLONASS = 2, _('GLONASS')
@@ -20,4 +17,4 @@ class Instrumentation(IntegerChoices):
     ETC     = 8, _('etc')
 
     def __str__(self):
-        return self.label
+        return str(self.label)

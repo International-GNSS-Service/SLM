@@ -64,6 +64,7 @@ class StationSerializer(serializers.ModelSerializer):
     last_user = EmbeddedUserSerializer(many=False, read_only=True)
     agencies = EmbeddedAgencySerializer(many=True, required=False)
     networks = EmbeddedNetworkSerializer(many=True, read_only=True)
+    max_alert = serializers.IntegerField(read_only=True)
 
     can_publish = serializers.SerializerMethodField(read_only=True)
 
@@ -127,7 +128,8 @@ class StationSerializer(serializers.ModelSerializer):
             'last_user',
             'can_publish',
             'publish',
-            'review_pending'
+            'review_pending',
+            'max_alert'
         ]
         extra_kwargs = {
             field: {'read_only': True} for field in fields if field not in {
@@ -191,9 +193,30 @@ class LogEntrySerializer(serializers.ModelSerializer):
 
 class AlertSerializer(serializers.ModelSerializer):
 
-    site = serializers.CharField(source='site.name', allow_null=True)
-    user = EmbeddedUserSerializer(many=False)
-    agency = EmbeddedAgencySerializer(many=False)
+    target = serializers.SerializerMethodField()
+
+    def get_target(self, obj):
+        if obj.target:
+            if isinstance(obj.target, Site):
+                return {
+                    'type': 'Site',
+                    'id': obj.target.id,
+                    'name': obj.target.name
+                }
+            elif isinstance(obj.target, Agency):
+                return {
+                    'type': 'Agency',
+                    'id': obj.target.id,
+                    'name': obj.target.name
+                }
+            elif isinstance(obj.target, get_user_model()):
+                return {
+                    'type': 'User',
+                    'id': obj.target.id,
+                    'name': obj.target.name,
+                    'email': obj.target.email
+                }
+        return None
 
     class Meta:
         model = Alert
@@ -205,9 +228,7 @@ class AlertSerializer(serializers.ModelSerializer):
             'timestamp',
             'sticky',
             'expires',
-            'site',
-            'user',
-            'agency'
+            'target'
         ]
         read_only_fields = fields
 

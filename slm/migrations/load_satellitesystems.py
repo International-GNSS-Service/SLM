@@ -24,7 +24,7 @@ def unload_satellitesystems(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('slm', 'load_perm_groups')
+        ('slm', '0001_initial')
     ]
 
     operations = [

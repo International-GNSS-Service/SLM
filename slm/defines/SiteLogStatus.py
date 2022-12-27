@@ -1,14 +1,11 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django_enum import IntegerChoices
 from enum_properties import p, s
 
 
 class SiteLogStatus(IntegerChoices, p('help')):
 
-    _symmetric_builtins_ = [
-        s('name', case_fold=True),
-        s('label', case_fold=True)
-    ]
+    _symmetric_builtins_ = [s('name', case_fold=True)]
 
     DORMANT = (
         0,
@@ -81,5 +78,13 @@ class SiteLogStatus(IntegerChoices, p('help')):
             return child
         return self.merge(child)
 
+    @classmethod
+    def unpublished_states(cls):
+        return {cls.UPDATED, cls.IN_REVIEW, cls.NASCENT}
+
+    @classmethod
+    def active_states(cls):
+        return {cls.UPDATED, cls.IN_REVIEW, cls.PUBLISHED}
+
     def __str__(self):
-        return self.label
+        return str(self.label)

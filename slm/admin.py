@@ -31,6 +31,10 @@ from slm.models import (
     SatelliteSystem,
     Site,
     Alert,
+    UserAlert,
+    SiteReceiver,
+    AgencyAlert,
+    SiteAlert,
     Antenna,
     Receiver,
     Radome,
@@ -40,6 +44,11 @@ from slm.models import (
     UserProfile
 )
 from slm.authentication import permissions
+from polymorphic.admin import (
+    PolymorphicParentModelAdmin,
+    PolymorphicChildModelAdmin,
+    PolymorphicChildModelFilter
+)
 
 
 admin.site.unregister(Group)
@@ -191,10 +200,39 @@ class SiteFileUploadAdmin(admin.ModelAdmin):
     list_filter = ['file_type', 'log_format']
 
 
+class AlertChildAdmin(PolymorphicChildModelAdmin):
+    base_model = Alert
+
+
+@admin.register(UserAlert)
+class UserAlertAdmin(AlertChildAdmin):
+    base_model = UserAlert
+    show_in_index = True
+
+
+@admin.register(SiteAlert)
+class SiteAlertAdmin(AlertChildAdmin):
+    base_model = SiteAlert
+    show_in_index = True
+
+
+@admin.register(AgencyAlert)
+class AgencyAlertAdmin(AlertChildAdmin):
+    base_model = AgencyAlert
+    show_in_index = True
+
+
+@admin.register(Alert)
+class AlertAdmin(PolymorphicParentModelAdmin):
+    """ The parent alert model admin """
+    base_model = Alert
+    child_models = (Alert, UserAlert, SiteAlert, AgencyAlert)
+    list_filter = (PolymorphicChildModelFilter,)
+
+
 admin.site.register(get_user_model(), UserAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(Agency, AgencyAdmin)
-admin.site.register(Alert, AlertAdmin)
 admin.site.register(SatelliteSystem, SatelliteSystemAdmin)
 admin.site.register(Antenna, AntennaAdmin)
 admin.site.register(Receiver, ReceiverAdmin)

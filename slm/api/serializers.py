@@ -3,7 +3,7 @@ import json
 from django.template.loader import get_template
 from django.utils.functional import cached_property
 from rest_framework import serializers
-from slm.defines import SiteLogFormat, GeodesyMLVersion, SLMFileType
+from slm.defines import SiteLogFormat, GeodesyMLVersion, SiteLogStatus
 from slm.models import Site
 from lxml import etree
 
@@ -32,9 +32,16 @@ class SiteLogSerializer(serializers.BaseSerializer):
         self.site = instance
         self.epoch_param = epoch
         self.epoch = epoch
-        self.published_param = published
+        self.published_param = (bool(epoch) or published) or None
+        self.is_published = self.published_param or (
+            not self.site.status in SiteLogStatus.unpublished_states()
+        )
         if self.epoch is None:
-            self.epoch = self.site.created  # todo resolve this to the real one
+            self.epoch = (
+                self.site.last_publish
+                if self.published_param else
+                self.site.last_update or self.site.created
+            )
         super().__init__(*args, instance=instance, **kwargs)
 
     def xml(self, version):

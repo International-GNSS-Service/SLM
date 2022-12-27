@@ -1,16 +1,10 @@
-from django.utils.translation import gettext as _
 from django_enum import TextChoices
 from enum_properties import s
 
 
 class TectonicPlates(TextChoices):
-    """
-    """
 
-    _symmetric_builtins_ = [
-        s('name', case_fold=True),
-        s('label', case_fold=True)
-    ]
+    _symmetric_builtins_ = [s('name', case_fold=True)]
 
     AFRICAN        = 'AF', 'African'
     ANTARCTIC      = 'AN', 'Antarctic'
@@ -32,4 +26,4 @@ class TectonicPlates(TextChoices):
     MARIANA        = 'MA', 'Mariana'
 
     def __str__(self):
-        return self.label
+        return str(self.label)

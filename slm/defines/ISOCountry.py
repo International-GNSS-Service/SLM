@@ -1,5 +1,5 @@
 """The standard enum type for ISO 3166-1 common countrys"""
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django_enum import TextChoices
 from enum_properties import p, s
 
@@ -16,7 +16,7 @@ class ISOCountry(
     An enumeration for ISO 3166-1 Country codes.
     """
 
-    _symmetric_builtins_ = [s('label', case_fold=True)]
+    _symmetric_builtins_ = [s('name', case_fold=True)]
     
     AD = "AD", _("Andorra"), 20, "AND", True, "Andorra", "the Principality of Andorra"
     AE = "AE", _("United Arab Emirates (the)"), 784, "ARE", True, "United Arab Emirates (the)", "the United Arab Emirates"
@@ -277,4 +277,4 @@ class ISOCountry(
         """
         The string representation of this enum is its alpha-2 country code
         """
-        return self.value
+        return str(self.value)

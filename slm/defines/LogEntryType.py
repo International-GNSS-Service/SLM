@@ -1,14 +1,11 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django_enum import IntegerChoices
 from enum_properties import s
 
 
 class LogEntryType(IntegerChoices):
 
-    _symmetric_builtins_ = [
-        s('name', case_fold=True),
-        s('label', case_fold=True)
-    ]
+    _symmetric_builtins_ = [s('name', case_fold=True)]
 
     NEW_SITE    = 1, _('New Site')
     ADD         = 2, _('Add')
@@ -24,4 +21,4 @@ class LogEntryType(IntegerChoices):
                f'{self.label.lower().replace("_", "-").replace(" ", "-")}'
 
     def __str__(self):
-        return self.label
+        return str(self.label)

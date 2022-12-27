@@ -1,4 +1,4 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django_enum import IntegerChoices
 from enum_properties import p, s
 from slm.defines import SLMFileType
@@ -10,10 +10,7 @@ class SiteFileUploadStatus(IntegerChoices, p('help')):
     status tuples.
     """
 
-    _symmetric_builtins_ = [
-        s('name', case_fold=True),
-        s('label', case_fold=True)
-    ]
+    _symmetric_builtins_ = [s('name', case_fold=True)]
 
     UNPUBLISHED = (
         0,
@@ -67,4 +64,4 @@ class SiteFileUploadStatus(IntegerChoices, p('help')):
         return getattr(settings, 'SLM_FILE_COLORS', {}).get(self, None)
 
     def __str__(self):
-        return self.label
+        return str(self.label)

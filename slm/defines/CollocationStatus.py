@@ -13,4 +13,4 @@ class CollocationStatus(TextChoices):
     HOURLY    = 'M', 'MOBILE'
 
     def __str__(self):
-        return self.label
+        return str(self.label)

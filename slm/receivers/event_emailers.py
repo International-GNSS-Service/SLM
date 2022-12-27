@@ -15,6 +15,12 @@ from slm import signals as slm_signals
 logger = logging.getLogger(__name__)
 
 
+@receiver(slm_signals.alert_issued)
+def send_alert_emails(sender, alert, **kwargs):
+    if alert.send_email:
+        alert.send_emails()
+
+
 @receiver(slm_signals.review_requested)
 def send_review_request_emails(sender, review_request, request, **kwargs):
     """

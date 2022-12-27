@@ -15,4 +15,4 @@ class FractureSpacing(TextChoices):
     OVER_200_CM                    = '200', 'over 200 cm'
 
     def __str__(self):
-        return self.label
+        return str(self.label)

@@ -31,7 +31,6 @@ from slm.models.sitelog import (
 )
 from slm.models.system import (
     Agency,
-    Alert,
     Antenna,
     LogEntry,
     Manufacturer,
@@ -42,6 +41,13 @@ from slm.models.system import (
     SatelliteSystem,
     SiteFile,
     SiteFileUpload,
+)
+from slm.models.alerts import (
+    Alert,
+    UserAlert,
+    SiteAlert,
+    AgencyAlert,
+    GeodesyMLInvalid
 )
 from slm.models.user import User, UserProfile
 

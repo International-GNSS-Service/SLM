@@ -16,4 +16,4 @@ class FrequencyStandardType(TextChoices, s('geodesy_ml', case_fold=True)):
     EXTERNAL_QUARTZ   = 'Q',  'EXTERNAL QUARTZ',   'QUARTZ'
 
     def __str__(self):
-        return self.label
+        return str(self.label)

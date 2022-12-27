@@ -47,7 +47,8 @@ Template for stations list.
             role="tab"
             data-slm-flags={{ site.num_flags }}
             data-slm-status={{ site.status.value }}
-            aria-selected="true"><span>{{ station }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not site.num_flags %}style="display: none"{% endif %}>{{site.num_flags}}</span></button>
+            data-slm-alert={{ station_alert_level.value }}
+            aria-selected="true"><span>{{ station }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not site.num_flags %}style="display: none"{% endif %}>{{site.num_flags}}</span> <i class="bi bi-bell-fill slm-alert-bell text-{{ station_alert_level.bootstrap }}" {% if station_alert_level is None %}style="display: none"{% endif %}></i></button>
         {% endif %}
         <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
             <div class="slm-loader"></div>
@@ -73,10 +74,16 @@ Template for stations list.
         function getBadge(station) {
             if (station.hasOwnProperty('num_flags') && station.num_flags) {
                 return `<span class="badge rounded-pill bg-danger slm-error-badge">${station.num_flags}</span>`;
-            } else {
-                return `<span class="badge rounded-pill bg-danger slm-error-badge" style="display: none">${station.num_flags}</span>`;
             }
-            return '';
+            return `<span class="badge rounded-pill bg-danger slm-error-badge" style="display: none">${station.num_flags}</span>`;
+        }
+
+        function getAlertBell(station) {
+            if (station.hasOwnProperty('max_alert') && station.max_alert !== null) {
+                let alert = slm.AlertLevel.get(station.max_alert);
+                return `<i class="bi bi-bell-fill slm-alert-bell text-${ alert.bootstrap }"></i>`
+            }
+            return `<i class="bi bi-bell-fill slm-alert-bell text-${ alert.bootstrap }" style="display: none"></i>`
         }
 
         for (const station of data) {
@@ -106,7 +113,7 @@ Template for stations list.
                     role="tab"
                     data-slm-flags=${station.num_flags}
                     data-slm-status=${status.val}
-                    aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)}</button>`
+                    aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)} ${getAlertBell(station)}</button>`
                 ).insertBefore(pos);
         }
     }

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import Q, Subquery, Max, OuterRef
 from django.http.response import HttpResponseForbidden, HttpResponseNotFound
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
@@ -46,6 +46,7 @@ from slm.parsing.legacy.parser import Error
 from slm.models import (
     Alert,
     LogEntry,
+    Agency,
     ReviewRequest,
     Site,
     SiteAntenna,
@@ -222,6 +223,7 @@ class StationListViewSet(
     ordering = ('name',)
 
     def get_queryset(self):
+        max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
         return Site.objects.editable_by(
             self.request.user
         ).prefetch_related(
@@ -229,9 +231,11 @@ class StationListViewSet(
             'networks',
             'owner__agencies',
             'last_user__agencies'
-        ).annotate_review_pending().select_related(
+        ).select_related(
             'owner',
             'last_user'
+        ).annotate_review_pending().annotate(
+            max_alert=Subquery(max_alert.values('level')[:1])
         )
 
 
@@ -287,18 +291,24 @@ class AlertViewSet(
 
     class AlertFilter(FilterSet):
 
-        site = django_filters.CharFilter(
-            field_name='site__name',
-            lookup_expr='iexact'
-        )
-        user = django_filters.CharFilter(
-            field_name='user__email',
-            lookup_expr='iexact'
-        )
-        agency = django_filters.CharFilter(
-            field_name='agency__name',
-            lookup_expr='iexact'
-        )
+        site = django_filters.CharFilter(method='for_site')
+        user = django_filters.CharFilter(method='for_user')
+        agency = django_filters.CharFilter(method='for_agency')
+
+        def for_agency(self, queryset, name, value):
+            return queryset.for_agency(
+                Agency.objects.filter(name__iexact=value)
+            )
+
+        def for_site(self, queryset, name, value):
+            return queryset.for_site(
+                Site.objects.filter(name__iexact=value).first()
+            )
+
+        def for_user(self, queryset, name, value):
+            return queryset.for_user(
+                get_user_model().filter(email__iexact=value)
+            )
 
         class Meta:
             model = Alert
@@ -308,9 +318,7 @@ class AlertViewSet(
     filterset_class = AlertFilter
 
     def get_queryset(self):
-        return Alert.objects.for_user(
-            self.request.user
-        ).select_related('user', 'site', 'agency')
+        return Alert.objects.visible_to(self.request.user)
 
 
 class UserProfileViewSet(

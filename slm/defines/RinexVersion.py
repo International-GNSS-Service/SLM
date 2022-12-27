@@ -31,4 +31,4 @@ class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
             ]})
 
     def __str__(self):
-        return self.label
+        return str(self.label)

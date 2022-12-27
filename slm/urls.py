@@ -5,6 +5,7 @@ from slm.api.edit import views as edit_views
 from slm.api.public import views as public_views
 from slm.views import (
     AlertsView,
+    AlertView,
     DownloadView,
     EditView,
     IndexView,
@@ -193,5 +194,10 @@ urlpatterns = [
         download_site_attachment,
         name='download_attachment_thumbnail',
         kwargs={'thumbnail': True}
+    ),
+    path(
+        'alert/<int:alert>',
+        AlertView.as_view(),
+        name='alert',
     )
 ]

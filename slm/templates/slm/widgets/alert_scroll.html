@@ -21,7 +21,7 @@
             if (alert.site) {
                 siteUrl = slm.urls.reverse('slm:edit', {kwargs: {'station': alert.site}});
             }
-            $(`<div class="slm-alert-item slm-alert-${level.label.toLowerCase()} border-${level.bootstrap} d-flex gap-3 py-3 mt-1" aria-current="true">` +
+            $(`<div class="slm-alert-item slm-alert-${level.label.toLowerCase()} border-${level.bootstrap} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id} onclick="window.location='${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}'">` +
                     `<div class="d-flex gap-2 w-100 justify-content-between">` +
                         `<div>` +
                             `<h3 class="mb-2">${alert.header ? alert.header : alert.site}</h3>` +

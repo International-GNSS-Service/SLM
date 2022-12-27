@@ -13,7 +13,6 @@ from django.utils.translation import gettext as _
 from django_enum import EnumField
 from PIL import Image
 from slm.defines import (
-    AlertLevel,
     AntennaFeatures,
     AntennaReferencePoint,
     CardinalDirection,
@@ -21,7 +20,7 @@ from slm.defines import (
     LogEntryType,
     SiteFileUploadStatus,
     SiteLogFormat,
-    SLMFileType,
+    SLMFileType
 )
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
@@ -102,103 +101,6 @@ class SatelliteSystem(models.Model):
     class Meta:
         verbose_name_plural = _('Satellite Systems')
         ordering = ('order',)
-
-
-class AlertManager(PolymorphicManager):
-    pass
-
-
-class AlertQuerySet(PolymorphicQuerySet):
-
-    def for_user(self, user):
-        if user.is_authenticated:
-            from slm.models.sitelog import Site
-            qry = Q(user=user) | Q(site__in=Site.objects.editable_by(user))
-            if getattr(user, 'agency', None):
-                qry |= Q(agency__in=user.agencies.all())
-            return self.filter(qry)
-        return self.none()
-
-
-class Alert(PolymorphicModel):
-
-    header = models.CharField(
-        max_length=100,
-        null=False,
-        default='',
-        help_text=_('A short description of the alert.')
-    )
-    detail = models.TextField(
-        blank=True,
-        null=False,
-        default='',
-        help_text=_('Longer description containing details of the alert.')
-    )
-
-    level = EnumField(AlertLevel, null=False, blank=False, db_index=True)
-
-    timestamp = models.DateTimeField(
-        auto_now_add=True,
-        help_text=_('The time the alert was created.'),
-        db_index=True
-    )
-
-    sticky = models.BooleanField(
-        default=False,
-        blank=True,
-        help_text=_(
-            'Do not allow target users to clear this alert, only admins may '
-            'clear.'
-        )
-    )
-
-    expires = models.DateTimeField(
-        null=True,
-        default=None,
-        blank=True,
-        help_text=_('Automatically remove this alert after this time.')
-    )
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        default=None,
-        blank=True,
-        on_delete=models.CASCADE,
-        help_text=_('Only this user will see this alert.'),
-        related_name='alerts'
-    )
-
-    site = models.ForeignKey(
-        'slm.Site',
-        null=True,
-        default=None,
-        blank=True,
-        on_delete=models.CASCADE,
-        help_text=_(
-            'Only users with access to this site will see this alert.'
-        ),
-        related_name='alerts'
-    )
-
-    agency = models.ForeignKey(
-        'slm.Agency',
-        null=True,
-        default=None,
-        blank=True,
-        on_delete=models.CASCADE,
-        help_text=_('Only members of this agency will see this alert.'),
-        related_name='alerts'
-    )
-
-    objects = AlertManager.from_queryset(AlertQuerySet)()
-
-    def __str__(self):
-        return self.header
-
-    class Meta:
-        managed = True
-        ordering = ('-timestamp',)
 
 
 class Network(models.Model):
@@ -466,7 +368,7 @@ class SiteFile(models.Model):
         if not self.mimetype:
             import mimetypes
             self.mimetype = mimetypes.guess_type(self.file.path)[0]
-        if self.file_type is SLMFileType.ATTACHMENT:
+        if self.file_type in [SLMFileType.ATTACHMENT, None]:
             self.file_type, self.log_format = self.determine_type(
                 self.file,
                 self.mimetype
@@ -694,6 +596,7 @@ class SiteFileUpload(SiteFile):
 
     class Meta:
         ordering = ('-timestamp',)
+        verbose_name_plural = 'Site File Uploads'
 
 
 class LogEntryManager(PolymorphicManager):

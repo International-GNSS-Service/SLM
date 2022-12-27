@@ -1,0 +1,6 @@
+{% extends "slm/alerts/alert.html" %}
+
+{% block alert_content %}
+{{ block.super }}
+{% include "slm/station/uploads/geodesyml.html" %}
+{% endblock alert_content %}

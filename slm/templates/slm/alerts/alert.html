@@ -1,0 +1,8 @@
+<div class="d-flex flex-column justify-content-left align-items-left mt-4 pb-3 border-bottom">
+  <h2>{{ alert.header }}</h2>
+</div>
+<div class="container px-5 pt-3">
+    {% block alert_content %}
+    {{ alert.detail }}
+    {% endblock %}
+</div>

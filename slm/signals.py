@@ -137,6 +137,34 @@ Sent when a user uploads a site log.
 site_file_uploaded = dispatch.Signal()
 
 """
+Sent when a user uploads a site log.
+
+:param sender: The sending object (unreliable).
+:param site: The Site object. 
+:param user: The user that uploaded the site log.
+:param timestamp: The time the site log was uploaded.
+:param request: The Django request object that contained the upload.
+:param upload: The uploaded file (SiteFileUpload).
+:param kwargs: Misc other key word arguments
+"""
+site_file_published = dispatch.Signal()
+
+
+"""
+Sent when a user uploads a site log.
+
+:param sender: The sending object (unreliable).
+:param site: The Site object. 
+:param user: The user that uploaded the site log.
+:param timestamp: The time the site log was uploaded.
+:param request: The Django request object that contained the upload.
+:param upload: The uploaded file (SiteFileUpload).
+:param kwargs: Misc other key word arguments
+"""
+site_file_unpublished = dispatch.Signal()
+
+
+"""
 Sent when a user requests a site log be reviewed and published by moderators.
 
 :param sender: The sending object (unreliable).
@@ -162,7 +190,6 @@ Sent when an alert is issued.
 
 :param sender: The sending object (unreliable).
 :param alert: The alert object that was issued.
-:param issuer: The issuing moderator.
 :param kwargs: Misc other key word arguments
 """
 alert_issued = dispatch.Signal()
@@ -172,7 +199,6 @@ Sent when an alert is cleared.
 
 :param sender: The sending object (unreliable).
 :param alert: The alert object that was issued.
-:param clearer: The clearing user.
 :param kwargs: Misc other key word arguments
 """
 alert_cleared = dispatch.Signal()

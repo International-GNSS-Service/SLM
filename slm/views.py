@@ -71,6 +71,8 @@ from slm.models import (
     SiteSubSection,
 )
 from slm.utils import to_bool
+from django.template import Template
+from django.template.exceptions import TemplateDoesNotExist
 
 User = get_user_model()
 
@@ -79,7 +81,7 @@ class SLMView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        max_alert = Alert.objects.for_user(
+        max_alert = Alert.objects.visible_to(
             self.request.user
         ).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
@@ -137,9 +139,9 @@ class StationContextView(SLMView):
                 self.request.user
             ).filter(status=SiteFileUploadStatus.UNPUBLISHED).count()
 
-        max_alert = Alert.objects.for_user(
+        max_alert = Alert.objects.visible_to(
             self.request.user
-        ).filter(site=self.site).aggregate(Max('level'))['level__max']
+        ).for_site(self.site).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
         context.update({
@@ -605,6 +607,43 @@ class StationReviewView(StationContextView):
 
 class AlertsView(SLMView):
     template_name = 'slm/alerts.html'
+
+
+class AlertView(StationContextView):
+
+    template_name = 'slm/station/alert.html'
+    template_map = {}
+    alert = None
+
+    def get_template(self, alert):
+        if alert.__class__ not in self.template_map:
+            try:
+                self.template_map[alert.__class__] = Template(
+                    f'slm/alerts/{alert.__class__.__name__.lower()}.html'
+                )
+            except TemplateDoesNotExist:
+                self.template_map[alert.__class__] = Template(
+                    'slm/alerts/base.html'
+                )
+
+        return self.template_map[alert.__class__]
+
+    def get_context_data(self, **kwargs):
+        if hasattr(self.alert, 'site') and self.alert.site:
+            kwargs['station'] = self.alert.site.name
+        context = super().get_context_data(**kwargs)
+        context.update({
+            **self.alert.context,
+            'alert_template': self.get_template(self.alert).source
+        })
+        return context
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.alert = Alert.objects.get(pk=kwargs.pop('alert', None))
+        except Alert.DoesNotExist:
+            return HttpResponseNotFound()
+        return super().get(request, *args, **kwargs)
 
 
 def download_site_attachment(request, site=None, pk=None, thumbnail=False):

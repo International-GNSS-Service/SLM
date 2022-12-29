@@ -245,7 +245,7 @@ class ISOCountry(
     TR = "TR", _("Türkiye"), 792, "TUR", True, "Türkiye", "the Republic of Türkiye"
     TT = "TT", _("Trinidad and Tobago"), 780, "TTO", True, "Trinidad and Tobago", "the Republic of Trinidad and Tobago"
     TV = "TV", _("Tuvalu"), 798, "TUV", True, "Tuvalu", "Tuvalu"
-    TW = "TW", _("Taiwan"), 158, "TWN", False, "Taiwan (Province of China)", "Taiwan (Province of China)"
+    TW = "TW", _("Taiwan"), 158, "TWN", False, "Taiwan", "Taiwan (Province of China)"
     TZ = "TZ", _("Tanzania, the United Republic of"), 834, "TZA", True, "Tanzania, the United Republic of", "the United Republic of Tanzania"
     UA = "UA", _("Ukraine"), 804, "UKR", True, "Ukraine", "Ukraine"
     UG = "UG", _("Uganda"), 800, "UGA", True, "Uganda", "the Republic of Uganda"

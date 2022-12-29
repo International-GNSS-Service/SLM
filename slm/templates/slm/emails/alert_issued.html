@@ -2,14 +2,19 @@
 {% load slm i18n %}
 
 {% block title %}
-New Alert
+<div style="color: {{ alert.level.color }}">
+{% if alert.target %}{{ alert.target.name }} | {% endif %}<a href="{{ alert_link|absolute_url:request }}">{{ alert.header }}</a>
+</div>
 {% endblock %}
 
-{% block content %}{% autoescape off %}{% blocktrans %}
+{% block greeting %}
+{% endblock greeting %}
 
-alert message here
-<br>
-<br>
-To view this alert, go to <a href="#">alert url</a>
 
-{% endblocktrans %}{% endautoescape %}{% endblock %}
+{% block content %}
+
+{% autoescape off %}
+{{ alert.detail }}
+{% endautoescape %}
+
+{% endblock %}

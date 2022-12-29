@@ -205,16 +205,18 @@ class SLMConfig(AppConfig):
                     new_status=instance.status
                 )
 
-        @receiver(post_save, sender=Alert.objects.classes())
         def alert_save(
             sender, instance, created, raw, using, update_fields, **kwargs
         ):
             if created:
                 slm_signals.alert_issued.send(sender=sender, alert=instance)
 
-        @receiver(post_delete, sender=Alert.objects.classes())
         def alert_delete(sender, instance, using, **kwargs):
             slm_signals.alert_cleared.send(sender=sender, alert=instance)
+
+        for alert in Alert.objects.classes():
+            post_save.connect(alert_save, sender=alert)
+            post_delete.connect(alert_delete, sender=Alert)
 
         @receiver(post_migrate)
         def populate_groups(**kwargs):
@@ -236,7 +238,7 @@ class SLMConfig(AppConfig):
             'SLM_PRELOAD_SCHEMAS',
             [geo for geo in GeodesyMLVersion]
         )
-        if xsd_preload:
+        if xsd_preload and not getattr(settings, 'SLM_MANAGEMENT_MODE', False):
             with tqdm(
                 total=len(xsd_preload),
                 desc='Loading',

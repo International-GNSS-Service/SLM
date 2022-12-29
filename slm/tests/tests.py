@@ -171,6 +171,20 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             },
             content_type='application/json'
         )
+        self.assertEqual(ret.status_code, 403)
+
+        self.assertTrue(
+            c.login(email='superuser@example.com', password='password')
+        )
+
+        ret = c.post(
+            reverse('slm_edit_api:stations-list'),
+            data={
+                'name': 'AAA200USA',
+                'agencies': [{'id': self.test_agency_1.id}]
+            },
+            content_type='application/json'
+        )
         self.assertTrue(ret.status_code < 300)
 
         self.assertEqual(

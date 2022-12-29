@@ -10,6 +10,7 @@ from slm.defines import (
 )
 from slm import signals as slm_signals
 from slm.models.system import SiteFile
+from slm.utils import from_email
 from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
 from django.utils.timezone import now
@@ -18,10 +19,11 @@ from slm.parsing.xsd import SiteLogParser
 from django.core.files.base import ContentFile
 from django.template.loader import get_template
 from django.contrib.sites.models import Site as DjangoSite
-from django.core.mail import send_mail
 from django.core.exceptions import ImproperlyConfigured
 from logging import getLogger
 from smtplib import SMTPException
+from django.core.mail import EmailMultiAlternatives
+from ckeditor_uploader.fields import RichTextUploadingField
 import os
 
 
@@ -78,38 +80,59 @@ class AlertManager(PolymorphicManager):
 
     @classmethod
     def site_alerts(cls):
+        """Get the Alert classes that target sites"""
         cls._init_alert_models_()
         return cls.ALERT_MODELS['site']
 
     @classmethod
     def agency_alerts(cls):
+        """Get the Alert classes that target agencies"""
         cls._init_alert_models_()
         return cls.ALERT_MODELS['agency']
 
     @classmethod
     def user_alerts(cls):
+        """Get the Alert classes that target users"""
         cls._init_alert_models_()
         return cls.ALERT_MODELS['user']
 
     @classmethod
     def untargeted_alerts(cls):
+        """Get the Alert classes that target all users"""
         cls._init_alert_models_()
         return cls.ALERT_MODELS['untargeted']
 
     def from_signal(self, **kwargs):
+        """
+        Automated alerts must implement from_signal() to check for and create
+        alerts based off supported triggering signals. The list of supported
+        signals must be set in the Alert's manager SUPPORTED_SIGNALS class
+        field.
+
+        :param kwargs: The signal kwargs
+        :return:
+        """
         raise NotImplementedError(
             f'{self.__class__} must implement from_signal() to trigger alerts '
             f'from a signal.'
         )
 
     def classes(self):
+        """
+        Get all registered Alert classes of this type.
+        :return:
+        """
         from django.apps import apps
         classes = set()
         for app_config in apps.get_app_configs():
             for mdl in app_config.get_models():
-                if isinstance(mdl, self.model):
+                if issubclass(mdl, self.model):
                     classes.add(mdl)
         return classes
+
+    def create(self, **kwargs):
+        kwargs.setdefault('priority', getattr(self, 'DEFAULT_PRIORITY', 0))
+        return super().create(**kwargs)
 
 
 class AlertQuerySet(PolymorphicQuerySet):
@@ -188,9 +211,9 @@ class AlertQuerySet(PolymorphicQuerySet):
                 )
         return self.none()
 
-    def send_email(self):
+    def send_emails(self, request=None):
         for alert in self:
-            alert.send_email()
+            alert.get_real_instance().send(request)
 
 
 class Alert(PolymorphicModel):
@@ -203,15 +226,54 @@ class Alert(PolymorphicModel):
 
     logger = getLogger()
 
+    DEFAULT_PRIORITY = 1
+
     @property
     def context(self):
+        """Get the template render context for this alert"""
         return {
             'alert': self
         }
 
     @property
     def target(self):
-        return None
+        """Return the targeted object if any"""
+        real = self.get_real_instance()
+        if real == self:
+            return None
+        return real.target
+
+    @property
+    def untargeted(self):
+        """Return true if this alert is for all users"""
+        return (
+            self.get_real_instance().__class__ in
+            Alert.objects.untargeted_alerts()
+        )
+
+    @property
+    def agency_alert(self):
+        """Return true if this alert is for an Agency"""
+        return (
+            self.get_real_instance().__class__ in
+            Alert.objects.agency_alerts()
+        )
+
+    @property
+    def site_alert(self):
+        """Return true if this alert is for a Site"""
+        return (
+            self.get_real_instance().__class__ in
+            Alert.objects.site_alerts()
+        )
+
+    @property
+    def user_alert(self):
+        """Return true if this alert is for a User"""
+        return (
+            self.get_real_instance().__class__ in
+            Alert.objects.user_alerts()
+        )
 
     @property
     def users(self):
@@ -222,23 +284,14 @@ class Alert(PolymorphicModel):
         :return: User QuerySet
         """
         from django.contrib.auth import get_user_model
-        if self.__class__ in self.objects.ALERT_MODELS.get('untargeted', {}):
+        if self.untargeted:
             return get_user_model().objects.all()
-        if self.__class__ in self.objects.ALERT_MODELS.get('agency', {}):
-            return get_user_model().objects.filter(
-                Q(agencies__in=[self.agency]) |
-                Q(is_superuser=True)
-            )
-        if self.__class__ in self.objects.ALERT_MODELS.get('site', {}):
-            return get_user_model().objects.filter(
-                Q(pk__in=self.site.editors()) |
-                Q(pk__in=self.site.moderators())
-            )
-        if self.__class__ in self.objects.ALERT_MODELS.get('user', {}):
-            return get_user_model().objects.filter(
-                Q(pk=self.user.pk) |
-                Q(is_superuser=True)
-            )
+        if self.agency_alert:
+            return get_user_model().objects.filter(agencies__in=[self.agency])
+        if self.site_alert:
+            return get_user_model().objects.filter(Q(pk__in=self.site.editors))
+        if self.user_alert:
+            return get_user_model().objects.filter(pk=self.user.pk)
         raise RuntimeError(
             f'Unable to determine targeted users for alert: {self}'
         )
@@ -248,7 +301,8 @@ class Alert(PolymorphicModel):
         on_delete=models.SET_NULL,
         default=None,
         null=True,
-        blank=True
+        blank=True,
+        help_text=_('The issuing user (if any).')
     )
 
     header = models.CharField(
@@ -257,14 +311,20 @@ class Alert(PolymorphicModel):
         default='',
         help_text=_('A short description of the alert.')
     )
-    detail = models.TextField(
+    detail = RichTextUploadingField(
         blank=True,
         null=False,
         default='',
         help_text=_('Longer description containing details of the alert.')
     )
 
-    level = EnumField(AlertLevel, null=False, blank=False, db_index=True)
+    level = EnumField(
+        AlertLevel,
+        null=False,
+        blank=False,
+        db_index=True,
+        help_text=_('The severity level of this alert.')
+    )
 
     timestamp = models.DateTimeField(
         auto_now_add=True,
@@ -278,6 +338,16 @@ class Alert(PolymorphicModel):
         help_text=_(
             'Do not allow target users to clear this alert, only admins may '
             'clear.'
+        )
+    )
+
+    priority = models.IntegerField(
+        default=0,
+        blank=True,
+        help_text=_(
+            'The priority ordering for this alert. Alerts are shown by '
+            'decreasing priority order first then by decreasing timestamp '
+            'order.'
         )
     )
 
@@ -301,42 +371,88 @@ class Alert(PolymorphicModel):
 
     objects = AlertManager.from_queryset(AlertQuerySet)()
 
-    def send_emails(self):
+    def send(self, request=None):
         """
-        Send an email to all targeted recipients about this alert.
+        Send an email to all targeted recipients about this alert. Targeted
+        recipients are direct recipients, untargeted administrators are CCed.
+        If this is an untargeted alert for all users the recipient list is
+        BCCed.
 
         :return: True if the email was sent successfully - false otherwise
         """
+        from django.contrib.auth import get_user_model
         text = get_template(self.template_txt)
         html = get_template(self.template_html)
-        html_ok = not (self.users.emails_ok(html=False).count())
+        html_ok = self.untargeted or (
+            not (self.users.emails_ok(html=False).count())
+        )
+
+        context = self.context
+        context.update({
+            'request': request,
+            'current_site': DjangoSite.objects.get_current()
+        })
 
         try:
-            send_mail(
-                subject=f'[{DjangoSite.objects.get_current().name}] {self}',
-                from_email=getattr(
-                    settings,
-                    'DEFAULT_FROM_EMAIL',
-                    f'noreply@{DjangoSite.objects.first().domain}'
-                ),
-                message=text.render(self.context),
-                recipient_list=(user.email for user in self.users.emails_ok()),
-                fail_silently=False,
-                html_message=html.render(self.context) if html_ok else None
-            )
-        except SMTPException as smtp_exc:
-            self.logger.exception(smtp_exc)
+            to, cc, bcc, bcc_text = set(), set(), set(), set()
+
+            if self.untargeted:
+                bcc = {
+                    user.email for user in self.users.emails_ok(html=True)
+                }
+                bcc_text = {
+                    user.email for user in self.users.emails_ok(html=False)
+                }
+            else:
+                to = {user.email for user in self.users.emails_ok()}
+                cc = {
+                    user.email
+                    for user in get_user_model().objects.filter(
+                        is_superuser=True
+                    )
+                    if user not in bcc and user not in to
+                }
+
+            email_kwargs = {
+                'subject': f'[{DjangoSite.objects.get_current().name}] {self}',
+                'body': text.render(context),
+                'from_email': from_email(),
+                'to': to,
+                'cc': cc,
+                'bcc': bcc
+            }
+            email = EmailMultiAlternatives(**email_kwargs)
+            if html_ok:
+                email.attach_alternative(
+                    html.render(context),
+                    'text/html'
+                )
+            email.send(fail_silently=False)
+            if bcc_text:
+                EmailMultiAlternatives(
+                    **{
+                        **email_kwargs,
+                        'bcc': bcc_text
+                    }
+                ).send(fail_silently=False)
+            return True
+        except (SMTPException, ConnectionError) as exc:
+            self.logger.exception(exc)
             return False
 
     def __str__(self):
+        if self.target:
+            return f'[{self.target}] {self.header}'
         return self.header
 
     class Meta:
-        ordering = ('-timestamp',)
+        ordering = ('-priority', '-timestamp',)
         verbose_name_plural = 'Alerts'
 
 
 class SiteAlert(Alert):
+
+    DEFAULT_PRIORITY = 2
 
     site = models.ForeignKey(
         'slm.Site',
@@ -365,6 +481,8 @@ class SiteAlert(Alert):
 
 class UserAlert(Alert):
 
+    DEFAULT_PRIORITY = 4
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -384,6 +502,8 @@ class UserAlert(Alert):
 
 
 class AgencyAlert(Alert):
+
+    DEFAULT_PRIORITY = 3
 
     agency = models.ForeignKey(
         'slm.Agency',
@@ -510,6 +630,7 @@ class GeodesyMLInvalidQuerySet(AlertQuerySet):
 class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
 
     SUB_DIRECTORY = 'alerts'
+    DEFAULT_PRIORITY = 0
 
     @property
     def context(self):
@@ -524,6 +645,7 @@ class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
     def target(self):
         return self.site
 
+    # eliminate conflict between Alert.timestamp and SiteFile.timestamp
     timestamp = Alert.timestamp
 
     site = models.OneToOneField(
@@ -566,10 +688,11 @@ class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
             'The data for this site does not validate against GeodesyML '
             'schema version: '
         ) + str(self.schema)
-        self.sticky = False
+        self.sticky = True
         self.expires = None
         self.send_email = False
         super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ('site',)
+        verbose_name_plural = 'GeodesyML Alerts'

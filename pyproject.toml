@@ -34,10 +34,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Topic :: Software Development :: Libraries",
@@ -55,8 +55,8 @@ exclude = ["slm/tests"]
 manage_slm = 'slm.manage:main'
 
 [tool.poetry.dependencies]
-python = "^3.7.2"
-Django = "<5.0.0"
+python = "^3.8"
+Django = "^4.1.0"
 django-split-settings = "^1.1.0"
 importlib-resources = "^5.4.0"
 mysqlclient = "^2.1.0"
@@ -78,6 +78,7 @@ polyline = "^1.4.0"
 lxml = "^4.9.1"
 django-polymorphic = "^3.1.0"
 Jinja2 = "^3.1.2"
+django-ckeditor = "^6.5.1"
 
 [tool.poetry.group.dev.dependencies]
 django-extensions = "^3.1.5"

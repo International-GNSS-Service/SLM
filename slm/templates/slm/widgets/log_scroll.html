@@ -1,13 +1,15 @@
 {% load compress %}
 
-<div
-    id='slm-log-scroll'
-    class="list-group station-alerts w-100"
-    data-slm-page=0
-    data-slm-page-size={{page_size|default:10}}
->
-    <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
-        <div class="slm-loader"></div>
+<div class="slm-scroll-container">
+    <div
+        id='slm-log-scroll'
+        class="list-group station-alerts w-100"
+        data-slm-page=0
+        data-slm-page-size={{page_size|default:10}}
+    >
+        <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
+            <div class="slm-loader"></div>
+        </div>
     </div>
 </div>
 
@@ -47,9 +49,10 @@
     }
     
     $(document).ready(function() {
+        let scrollDiv = $("#slm-log-scroll");
         slm.initInfiniteScroll(
-            $("#slm-log-scroll"),
-            null,
+            scrollDiv,
+            scrollDiv,
             $('#slm-log-scroll .slm-loader'),
             "slm_edit_api:logentries-list",
             {},

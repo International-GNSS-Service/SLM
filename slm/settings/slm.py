@@ -8,6 +8,19 @@ from slm.defines import (
     GeodesyMLVersion
 )
 from slm.settings import set_default, is_defined
+import os
+
+# manage.py will set this to true if django has been loaded to run a
+# management command
+SLM_MANAGEMENT_MODE = os.environ.get('SLM_MANAGEMENT_FLAG', False) == 'ON'
+
+set_default(
+    'SLM_ALERT_COLORS', {
+        AlertLevel.NOTICE: '#12CAF0',
+        AlertLevel.WARNING: '#FFC106',
+        AlertLevel.ERROR: '#DD3444'
+    }
+)
 
 set_default(
     'SLM_STATUS_COLORS', {
@@ -95,6 +108,11 @@ set_default(
 # reduce load times. It is recommended to leave this set to the default setting
 # in production
 set_default('SLM_PRELOAD_SCHEMAS', [geo for geo in GeodesyMLVersion])
+
+# By default the SLM will not send moderation related emails to user accounts
+# who have never logged in, set this to False to disable this behavior
+# This does not apply to account related emails like password reset requests
+set_default('SLM_EMAILS_REQUIRE_LOGIN', True)
 
 # Automated alert configuration
 #

@@ -2949,7 +2949,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TW, 158)
         self.assertEqual(ISOCountry.TW.label, "Taiwan")
         self.assertEqual(ISOCountry.TW.alpha2, "TW")
-        self.assertEqual(ISOCountry.TW.short_name, "Taiwan (Province of China)")
+        self.assertEqual(ISOCountry.TW.short_name, "Taiwan")
         self.assertEqual(ISOCountry.TW, ISOCountry("Taiwan (Province of China)"))
         self.assertEqual(ISOCountry.TW, "TW")
         self.assertEqual(ISOCountry.TW, "TWN")

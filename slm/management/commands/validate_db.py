@@ -6,11 +6,8 @@ import logging
 from django.core.management import BaseCommand
 from django.db import transaction
 from django.utils.translation import gettext as _
-from slm.models import Site
-from slm.defines import GeodesyMLVersion, SiteLogFormat
-from slm.api.serializers import SiteLogSerializer
+from slm.models import Site, GeodesyMLInvalid
 from tqdm import tqdm
-from lxml import etree
 
 
 class Command(BaseCommand):
@@ -48,6 +45,16 @@ class Command(BaseCommand):
                 'against the latest schema.'
             )
         )
+        
+        parser.add_argument(
+            '--all',
+            dest='all',
+            action='store_true',
+            default=False,
+            help=_(
+                'Validate all sites, not just the currently public sites.'
+            )
+        )
 
     def handle(self, *args, **options):
 
@@ -56,15 +63,19 @@ class Command(BaseCommand):
         invalid = 0
         valid = 0
         with transaction.atomic():
+            
+            sites = Site.objects.public()
+            if options['all']:
+                sites = Site.objects.all()
 
             with tqdm(
-                total=Site.objects.count(),
+                total=sites.count(),
                 desc='Validating',
                 unit='sites',
                 postfix={'site': ''}
-            ) as pbar:
-                for site in Site.objects.all():
-                    pbar.set_postfix({'site': site.name})
+            ) as p_bar:
+                for site in sites:
+                    p_bar.set_postfix({'site': site.name})
                     for section in self.SECTIONS:
                         head = getattr(site, section).head()
                         if not hasattr(head, '__iter__'):
@@ -76,33 +87,14 @@ class Command(BaseCommand):
                             obj.save()
 
                     if options['schema']:
-                        geo_version = GeodesyMLVersion.latest()
-
-                        try:
-                            result = geo_version.schema.validate(
-                                etree.fromstring(
-                                    SiteLogSerializer(instance=site).format(
-                                        SiteLogFormat.GEODESY_ML,
-                                        version=geo_version
-                                    )
-                                )
-                            )
-                            if not result:
-                                invalid += 1
-                                print(f'[{site.name}] did not validate.')
-
-                                for error in geo_version.schema.error_log:
-                                    print(f'[{error.line}] {error.message}')
-                            else:
-                                valid += 1
-                        except Exception as exc:
-                            print(
-                                f'[{site.name}] failed to generate xml: {exc}'
-                            )
+                        alert = GeodesyMLInvalid.objects.check_site(site=site)
+                        if alert:
                             invalid += 1
+                        else:
+                            valid += 1
 
                     site.update_status(save=True)
-                    pbar.update(n=1)
+                    p_bar.update(n=1)
 
         if options['schema']:
             print(

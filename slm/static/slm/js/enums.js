@@ -133,14 +133,15 @@ class SiteFileUploadStatus {
 
 class AlertLevel {
     
-    static INFO = new AlertLevel(0, 'INFO', 'info');
-    static WARNING = new AlertLevel(1, 'WARNING', 'warning');
-    static ERROR = new AlertLevel(2, 'ERROR', 'danger');
+    static NOTICE = new AlertLevel(0, 'NOTICE', 'info', '#12CAF0');
+    static WARNING = new AlertLevel(1, 'WARNING', 'warning', '#FFC106');
+    static ERROR = new AlertLevel(2, 'ERROR', 'danger', '#DD3444');
 
-    constructor(val, label, bootstrap) {
+    constructor(val, label, bootstrap, color) {
         this.val = val;
         this.label = label;
         this.bootstrap = bootstrap;
+        this.color = color;
     }
 
     toString() {
@@ -150,7 +151,7 @@ class AlertLevel {
     static get(val) {
         switch(val) {
             case 0:
-                return AlertLevel.INFO;
+                return AlertLevel.NOTICE;
             case 1:
                 return AlertLevel.WARNING;
             case 2:

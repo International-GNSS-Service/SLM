@@ -33,6 +33,7 @@ from slm.models import (
     Alert,
     UserAlert,
     SiteReceiver,
+    GeodesyMLInvalid,
     AgencyAlert,
     SiteAlert,
     Antenna,
@@ -49,6 +50,7 @@ from polymorphic.admin import (
     PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter
 )
+from django.conf import settings
 
 
 admin.site.unregister(Group)
@@ -70,14 +72,14 @@ class UserAdmin(BaseUserAdmin):
 
     # chooses which fields to display for admin users
     list_display = (
-        'email', 'first_name', 'last_name', 'last_visit', 'is_superuser'
+        'email', 'first_name', 'last_name', 'last_activity', 'is_superuser'
     )
     search_fields = ['email', 'first_name', 'last_name']
-    readonly_fields = ['last_visit', 'date_joined']
+    readonly_fields = ['last_activity', 'date_joined']
 
     inlines = [UserAgencyInline, ProfileInline]
 
-    ordering = ('-last_visit',)
+    ordering = ('-last_activity',)
     list_filter = ('is_superuser', 'html_emails', 'silence_emails')
 
     fieldsets = (
@@ -89,7 +91,7 @@ class UserAdmin(BaseUserAdmin):
             ),
         }),
         (_('Preferences'), {'fields': ('silence_emails', 'html_emails')}),
-        (_('Important Dates'), {'fields': ('last_visit', 'date_joined')}),
+        (_('Important Dates'), {'fields': ('last_activity', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
@@ -101,7 +103,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    actions = ['request_password_reset']
+    actions = ['request_password_reset', 'enable_emails', 'disable_emails']
 
     def get_inline_instances(self, request, obj=None):
         if not obj:
@@ -110,10 +112,15 @@ class UserAdmin(BaseUserAdmin):
 
     def request_password_reset(self, request, queryset):
         initiate_password_resets(queryset, request=request)
+    request_password_reset.short_description = _('Request password resets.')
 
-    request_password_reset.short_description = _(
-        'Request password resets.'
-    )
+    def enable_emails(self, request, queryset):
+        queryset.update(silence_emails=False)
+    enable_emails.short_description = _('Enable alert emails for users.')
+
+    def disable_emails(self, request, queryset):
+        queryset.update(silence_emails=True)
+    disable_emails.short_description = _('Disable alert emails for users.')
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -124,6 +131,9 @@ class UserAdmin(BaseUserAdmin):
         user_permissions = form.base_fields.get('user_permissions', None)
         if user_permissions:
             user_permissions.queryset = permissions()
+        form.base_fields.get('silence_emails').initial = getattr(
+            settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
+        )
         return form
 
 
@@ -170,10 +180,6 @@ class AgencyAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
-class AlertAdmin(admin.ModelAdmin):
-    pass
-
-
 class SatelliteSystemAdmin(admin.ModelAdmin):
     pass
 
@@ -200,7 +206,29 @@ class SiteFileUploadAdmin(admin.ModelAdmin):
     list_filter = ['file_type', 'log_format']
 
 
-class AlertChildAdmin(PolymorphicChildModelAdmin):
+class AlertAdminMixin:
+
+    actions = ['send_emails']
+
+    def send_emails(self, request, queryset):
+        queryset.send_emails(request)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['issuer'].initial = request.user
+        form.base_fields['issuer'].disabled = True
+        form.base_fields['issuer'].widget.can_change_related = False
+        form.base_fields['issuer'].widget.can_delete_related = False
+        form.base_fields['issuer'].widget.can_add_related = False
+        form.base_fields['priority'].initial = getattr(
+            self.model,
+            'DEFAULT_PRIORITY',
+            0
+        )
+        return form
+
+
+class AlertChildAdmin(AlertAdminMixin, PolymorphicChildModelAdmin):
     base_model = Alert
 
 
@@ -222,13 +250,52 @@ class AgencyAlertAdmin(AlertChildAdmin):
     show_in_index = True
 
 
+@admin.register(GeodesyMLInvalid)
+class GeodesyMLInvalidAdmin(AlertChildAdmin):
+    base_model = GeodesyMLInvalid
+    show_in_index = True
+
+
 @admin.register(Alert)
-class AlertAdmin(PolymorphicParentModelAdmin):
+class AlertAdmin(AlertAdminMixin, PolymorphicParentModelAdmin):
     """ The parent alert model admin """
     base_model = Alert
-    child_models = (Alert, UserAlert, SiteAlert, AgencyAlert)
+    child_models = (Alert, UserAlert, SiteAlert, AgencyAlert, GeodesyMLInvalid)
     list_filter = (PolymorphicChildModelFilter,)
 
+
+class SLMAdminSite(admin.AdminSite):
+
+    def get_app_list(self, request, app_label=None):
+        """
+        Return a sorted list of all the installed apps that have been
+        registered in this site.
+        """
+        ret = super().get_app_list(request, app_label=app_label)
+
+        # force group all alerts together
+        spoofed_alerts_app = {
+            'app_label': 'slm_alerts',
+            'app_url': '/admin/slm/alerts/',
+            'has_module_perms': True,
+            'models': [],
+            'name': 'SLM Alerts'
+        }
+
+        for app in ret:
+            models = []
+            for model in app['models']:
+                if issubclass(model['model'], Alert):
+                    spoofed_alerts_app['models'].append(model)
+                else:
+                    models.append(model)
+            app['models'] = models
+
+        ret.insert(1, spoofed_alerts_app)
+        return ret
+
+
+#admin.site = SLMAdminSite()
 
 admin.site.register(get_user_model(), UserAdmin)
 admin.site.register(Group, GroupAdmin)
@@ -239,3 +306,5 @@ admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Radome, RadomeAdmin)
 admin.site.register(Manufacturer, ManufacturerAdmin)
 admin.site.register(SiteFileUpload, SiteFileUploadAdmin)
+
+admin.autodiscover()

@@ -23,9 +23,6 @@ set_default('BASE_DIR', Path(__file__).resolve().parent.parent)
 set_default('SITE_DIR', BASE_DIR)
 set_default('DJANGO_DEBUG_TOOLBAR', False)
 
-# manage.py will set this to true if django has been loaded to run a management command
-MANAGEMENT_MODE = os.environ.get('SLM_MANAGEMENT_FLAG', False) == 'ON'
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -38,6 +35,8 @@ if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
 INSTALLED_APPS = [
     'slm.map',
     'slm',
+    'ckeditor_uploader',
+    'ckeditor',
     'polymorphic',
     'rest_framework',
     'render_static',
@@ -120,6 +119,7 @@ include('auth.py')
 include('rest.py')
 include('debug.py')
 include('uploads.py')
+include('ckeditor.py')
 #include('security.py')
 include('validation.py')
 

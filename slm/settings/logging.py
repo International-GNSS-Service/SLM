@@ -17,7 +17,7 @@ LOGGING = {
             'level': DEFAULT_LOG_LEVEL,  # set in deployment routine
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'formatter': 'verbose' if DEBUG else 'simple',  # set in deployment routine
-            'filename': LOG_DIR / f'{SLM_SITE_NAME.lower()}{"_manage" if MANAGEMENT_MODE else ""}.log',
+            'filename': LOG_DIR / f'{SLM_SITE_NAME.lower()}{"_manage" if SLM_MANAGEMENT_MODE else ""}.log',
             'when': 'midnight',
             'interval': 1,
             'backupCount': 14
@@ -77,14 +77,14 @@ LOGGING = {
     },
 }
 
-if DEBUG and not MANAGEMENT_MODE:
+if DEBUG and not SLM_MANAGEMENT_MODE:
     LOGGING['loggers']['core.middleware.RequestLogger'] = {
         'handlers': ['file'],
         'level': 'DEBUG',
         'propagate': False,
     }
 
-if MANAGEMENT_MODE:
+if SLM_MANAGEMENT_MODE:
     LOGGING.setdefault('handlers', {})['console'] = {
         'level': 'INFO',
         'class': 'logging.StreamHandler',

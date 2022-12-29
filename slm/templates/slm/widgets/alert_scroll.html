@@ -1,18 +1,43 @@
-{% load compress %}
+{% load compress i18n %}
 
-<div
-    id='slm-alert-scroll'
-    class="list-group w-100"
-    data-slm-page=0
-    data-slm-page-size={{page_size|default:10}}
->
-    <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
-        <div class="slm-loader"></div>
+<div class="slm-scroll-container">
+    <div
+        id='slm-alert-scroll'
+        class="list-group overflow-auto vh-100 w-100"
+        data-slm-page=0
+        data-slm-page-size={{page_size|default:10}}
+    >
+        <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
+            <div class="slm-loader"></div>
+        </div>
     </div>
 </div>
 
 {% compress js inline %}
 <script>
+
+    const includeTargets = {% if exclude_targets %}false{% else %}true{% endif %};
+    const deleteAlert = function(alertId) {
+        this.event.stopPropagation();
+        $.ajax({
+            url: slm.urls.reverse(
+                'slm_edit_api:alerts-detail',
+                {'pk': alertId}
+            ),
+            method: 'DELETE'
+        }).done(
+            function(data, status, jqXHR) {
+                $(`#alert-${alertId}`).remove();
+            }
+        ).fail(
+            function(jqXHR, textStatus, errorThrown) {
+                //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+                $('body').html(jqXHR.responseText);
+                console.log(jqXHR);
+            }
+        );
+    }
+
     function drawAlerts(position, data) {
         for (const alert of data) {
             const level = slm.AlertLevel.get(alert.level);
@@ -21,34 +46,52 @@
             if (alert.site) {
                 siteUrl = slm.urls.reverse('slm:edit', {kwargs: {'station': alert.site}});
             }
-            $(`<div class="slm-alert-item slm-alert-${level.label.toLowerCase()} border-${level.bootstrap} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id} onclick="window.location='${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}'">` +
+            const deleteButton = function() {
+                if (alert.sticky) {
+                    return '';
+                }
+                return `<div class="slm-alert-close" onclick="deleteAlert(${alert.id})" title='{% trans "Dismiss alert" %}'><i class="bi bi-trash3 text-danger"></i></div>`;
+            }
+            const targetButton = function() {
+                if (alert.target && includeTargets) {
+                    if (alert.target.type.toLowerCase() === 'site') {
+                        return `<button class="btn btn-outline-${level.bootstrap}" tabindex= "0" onclick="window.event.stopPropagation(); window.location='${slm.urls.reverse('slm:edit', {kwargs: {station: alert.target.name}})}'" type="submit">${alert.target.name}</button>`;
+                    } else if (alert.target.type.toLowerCase() === 'agency') {
+                        return `<button class="btn btn-outline-${level.bootstrap}" tabindex= "0" type="submit">${alert.target.name}</button>`;
+                    } else if (alert.target.type.toLowerCase() === 'user') {
+                        return `<button class="btn btn-outline-${level.bootstrap}" tabindex= "0" onclick="window.event.stopPropagation(); window.location='mailto:${alert.target.email}'" type="submit">${alert.target.name}</button>`;
+                    }
+                }
+                return '';
+            }
+            $(`<div id="alert-${alert.id}" class="slm-alert-item slm-alert-${level.label.toLowerCase()} border-${level.bootstrap} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id}>` +
                     `<div class="d-flex gap-2 w-100 justify-content-between">` +
                         `<div>` +
-                            `<h3 class="mb-2">${alert.header ? alert.header : alert.site}</h3>` +
-                            `<p class="opacity-75">${alert.detail}</p>` + (
-                                siteUrl ?
-                                `<button class="btn btn-outline-secondary" tabindex= "0" onclick="window.location='${siteUrl}'" type="submit">${alert.site}</button>` :
-                                ``
-                            ) +
+                            `<h3 class="mb-2 slm-alert-header"><a href="${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}">${alert.header}</a></h3>` +
+                            `<div class="opacity-75 slm-alert-detail">${alert.detail}</div>` +
+                            targetButton() +
                         `</div>` +
-                        `<div class="opacity-75">` +
-                            `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
-                        `<div/>` +
                     `</div>` +
+                    `<div class="opacity-75 slm-alert-time">` +
+                        `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
+                    `</div>` +
+                    deleteButton() +
                 `</div>`
             ).insertBefore(position);
         }
         let div = $("#slm-alert-scroll");
         if (data.length === 0 && div.data('slmPage') === 0 ) { 
-            $(`<h3 class="text-center text-secondary">No Alerts</h3>`
+            $(
+                `<h3 class="text-center text-secondary">No Alerts</h3>`
             ).insertBefore(position);
         }
     }
 
     $(document).ready(function() {
+        let scrollDiv = $("#slm-alert-scroll");
         slm.initInfiniteScroll(
-            $("#slm-alert-scroll"),
-            null,
+            scrollDiv,
+            scrollDiv,
             $('#slm-alert-scroll .slm-loader'),
             "slm_edit_api:alerts-list",
             {},

@@ -124,7 +124,8 @@ def api_patterns(api_namespace):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
-    path('', include('slm.urls'))
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('', include('slm.urls')),
 ]
 
 if getattr(settings, 'DJANGO_DEBUG_TOOLBAR', False):

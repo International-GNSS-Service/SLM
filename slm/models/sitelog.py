@@ -350,22 +350,24 @@ class Site(models.Model):
         )
         return get_user_model().objects.filter(
             Q(is_superuser=True) |
-            Q(groups__permissions=perm) |
-            Q(user_permissions=perm)
+            (
+                Q(agencies__in=self.agencies.all()) & (
+                    Q(groups__permissions=perm) |
+                    Q(user_permissions=perm)
+                )
+            )
         ).distinct()
 
     @cached_property
     def editors(self):
         """
-        Get the users who have edit permission, but not moderate permission on
-        for this site.
+        Get the users who have edit permission for this site. This may include
+        moderators who are part of the same agency.
 
         :return: A queryset containing users with edit permissions for the site
         """
         return get_user_model().objects.filter(
-            ~Q(pk__in=self.moderators) & (
-                Q(agencies__in=self.agencies.all()) | Q(pk=self.owner.pk)
-            )
+            Q(agencies__in=self.agencies.all()) | Q(pk=self.owner.pk)
         )
 
     @property

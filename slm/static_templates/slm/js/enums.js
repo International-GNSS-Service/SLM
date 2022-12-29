@@ -88,12 +88,13 @@ class SiteFileUploadStatus {
 
 class AlertLevel {
     {% for level in AlertLevel %}
-    static {{level.name}} = new AlertLevel({{level.value}}, '{{level.label}}', '{{level.bootstrap}}');{% endfor %}
+    static {{level.name}} = new AlertLevel({{level.value}}, '{{level.label}}', '{{level.bootstrap}}', '{{level.color}}');{% endfor %}
 
-    constructor(val, label, bootstrap) {
+    constructor(val, label, bootstrap, color) {
         this.val = val;
         this.label = label;
         this.bootstrap = bootstrap;
+        this.color = color;
     }
 
     toString() {

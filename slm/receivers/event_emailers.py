@@ -11,6 +11,7 @@ from django.dispatch import receiver
 from django.template.loader import get_template
 from django.utils.translation import gettext as _
 from slm import signals as slm_signals
+from slm.utils import from_email
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 @receiver(slm_signals.alert_issued)
 def send_alert_emails(sender, alert, **kwargs):
     if alert.send_email:
-        alert.send_emails()
+        alert.send()
 
 
 @receiver(slm_signals.review_requested)
@@ -47,11 +48,7 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
             subject=f'[{DjangoSite.objects.get_current().name}] '
                     f'{_("Site Log Review Requested:")} '
                     f'{review_request.site.name}',
-            from_email=getattr(
-                settings,
-                'DEFAULT_FROM_EMAIL',
-                f'noreply@{DjangoSite.objects.first().domain}'
-            ),
+            from_email=from_email(),
             message=text.render(context),
             recipient_list=(
                 [
@@ -71,8 +68,8 @@ def send_review_request_emails(sender, review_request, request, **kwargs):
             'Sent review request email for %s',
             review_request.site.name
         )
-    except SMTPException as smtp_exc:
-        logger.exception(smtp_exc)
+    except (SMTPException, ConnectionError) as exc:
+        logger.exception(exc)
 
 
 @receiver(slm_signals.changes_rejected)
@@ -130,5 +127,5 @@ def send_changes_rejected_emails(
             'Sent changes rejected for %s',
             review_request.site.name
         )
-    except SMTPException as smtp_exc:
-        logger.exception(smtp_exc)
+    except (SMTPException, ConnectionError) as exc:
+        logger.exception(exc)

@@ -39,6 +39,15 @@ def get_url():
     return f'{get_protocol()}://{Site.objects.get_current().domain}'
 
 
+def from_email():
+    from django.contrib.sites.models import Site
+    return getattr(
+        settings,
+        'DEFAULT_FROM_EMAIL',
+        f'noreply@{Site.objects.get_current().domain}'
+    )
+
+
 class SquelchStackTraces(Filter):
 
     def filter(self, record):

@@ -1,0 +1,9 @@
+{% load slm i18n %}
+
+{% url 'slm:alert' alert=alert.pk as alert_link %}
+
+{{ alert.level }}: {{ alert.header }}
+
+{{ alert.detail }}
+
+{{ alert_link|absolute_url:request }}

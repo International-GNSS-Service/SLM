@@ -419,6 +419,11 @@ class EditView(StationContextView):
 class StationAlertsView(StationContextView):
     template_name = 'slm/station/alerts.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['exclude_targets'] = True
+        return context
+
 
 class UploadView(StationContextView):
     template_name = 'slm/station/upload.html'
@@ -625,7 +630,6 @@ class AlertView(StationContextView):
                 self.template_map[alert.__class__] = Template(
                     'slm/alerts/base.html'
                 )
-
         return self.template_map[alert.__class__]
 
     def get_context_data(self, **kwargs):
@@ -634,7 +638,8 @@ class AlertView(StationContextView):
         context = super().get_context_data(**kwargs)
         context.update({
             **self.alert.context,
-            'alert_template': self.get_template(self.alert).source
+            'alert_template': self.get_template(self.alert).source,
+            'exclude_targets': True
         })
         return context
 

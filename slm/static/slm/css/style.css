@@ -90,6 +90,13 @@ span.slm-section-header {
 
 
 /*------- Alerts/Log CSS -------*/
+#slm-alert-scroll div.slm-alert-detail {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 15px;
+}
 .slm-alert-item {
     position: relative;
     display: block;
@@ -100,8 +107,38 @@ span.slm-section-header {
     border-left: 1px solid #212529;
     border-left-width: 0.5rem;
     border-radius: 0.5rem;
-    cursor: pointer;
 }
+.slm-alert-item .slm-alert-header a {
+    color: #0f0f0f;
+    text-decoration: none;
+}
+.slm-alert-item .slm-alert-header a:hover {
+    text-decoration: underline;
+}
+
+.slm-alert-close {
+    position: absolute;
+    top: 8px;
+    right: 16px;
+    font-size: 18px;
+}
+.slm-alert-close:hover .bi-trash3:before {
+    content: "\F78A";
+}
+
+.slm-alert-close {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+    font-size: 18px;
+}
+.slm-alert-time {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+    font-size: 14px;
+}
+
 .slm-log-item {
     position: relative;
     display: block;
@@ -228,6 +265,8 @@ fieldset.slm-form-group > legend {
 }
 #slm-station-container {
     background-color: ghostwhite;
+}
+.slm-scroll-container {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;

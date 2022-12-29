@@ -5,6 +5,7 @@ from django.contrib.auth.models import UserManager as DjangoUserManager
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from django.conf import settings
 
 
 class UserManager(DjangoUserManager):
@@ -27,11 +28,17 @@ class UserManager(DjangoUserManager):
     def create_user(self, email=None, password=None, **extra_fields):
         extra_fields.pop('is_staff', None)
         extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('silence_emails', getattr(
+            settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
+        ))
         return self._create_user(email, password, **extra_fields)
 
     def create_superuser(self, email=None, password=None, **extra_fields):
         extra_fields.pop('is_staff', None)
         extra_fields['is_superuser'] = True
+        extra_fields.setdefault('silence_emails', getattr(
+            settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
+        ))
         return self._create_user(email, password, **extra_fields)
 
 
@@ -194,7 +201,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_index=True
     )
 
-    last_visit = models.DateTimeField(
+    last_activity = models.DateTimeField(
         verbose_name=_('Last Visit'),
         editable=False,
         null=True,
@@ -216,7 +223,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     silence_emails = models.BooleanField(
         null=False,
-        default=False,
+        default=True,
         blank=True,
         help_text=_(
             'If set to true this user will not be sent any emails by the '

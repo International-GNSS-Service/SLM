@@ -320,6 +320,16 @@ class AlertViewSet(
     def get_queryset(self):
         return Alert.objects.visible_to(self.request.user)
 
+    def perform_destroy(self, instance):
+        if (
+            self.request.user.is_superuser or (
+                not instance.sticky and
+                self.request.user in instance.users
+            )
+        ):
+            return super().perform_destroy(instance)
+        raise PermissionDenied()
+
 
 class UserProfileViewSet(
     mixins.UpdateModelMixin,

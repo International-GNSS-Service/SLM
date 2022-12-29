@@ -14,11 +14,13 @@
             <h1>{% block title %}{% endblock %}</h1>
         </div>
 
+        {% block greeting %}
         <div id="greeting" style="font-weight: bold;">
             {% blocktrans with site_name=current_site.name %}Hello from {{ site_name }}!{% endblocktrans %}
             <br>
             <br>
         </div>
+        {% endblock greeting %}
         
         <div id="content" style="margin-bottom: 32px;">
             {% block content %}{% endblock %}

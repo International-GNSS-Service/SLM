@@ -12,8 +12,11 @@ from slm.models import (
     SiteFileUpload,
     UserProfile,
 )
+from django.core.exceptions import PermissionDenied
+from django.utils.translation import gettext as _
 from django.db.models import Q
 from slm.utils import build_absolute_url
+from django.urls import reverse
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -77,7 +80,11 @@ class StationSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if validated_data.get('publish', False):
-            instance.publish(request=self.context.get('request', None))
+            if not instance.can_publish(self.context['request'].user):
+                raise PermissionDenied(
+                    _('You do not have permission to publish the site log.')
+                )
+            instance.publish(request=self.context['request'])
             # this might have been cached by an annotation - clear it in case
             # because publish may invalidate it
             if hasattr(instance, '_review_pending'):
@@ -94,7 +101,7 @@ class StationSerializer(serializers.ModelSerializer):
         if not self.context['request'].user.can_propose_site(
             agencies=agencies
         ):
-            raise PermissionError(
+            raise PermissionDenied(
                 'You do not have permission to propose a new site with the '
                 'given agencies.'
             )

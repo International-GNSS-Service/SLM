@@ -1,8 +1,12 @@
 <div class="d-flex flex-column justify-content-left align-items-left mt-4 pb-3 border-bottom">
-  <h2>{{ alert.header }}</h2>
+  <h2 class="text-{{ alert.level.bootstrap }}">{{ alert.header }}</h2>
 </div>
 <div class="container px-5 pt-3">
+    <div class="slm-alert-item slm-alert-{{ alert.level.label.lower }} border-{{ alert.level.bootstrap }}">
     {% block alert_content %}
+    {% autoescape off %}
     {{ alert.detail }}
+    {% endautoescape %}
     {% endblock %}
+    </div>
 </div>

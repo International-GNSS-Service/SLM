@@ -25,7 +25,6 @@ api = {
         'serializer_module': 'slm.api.edit.serializers',
         'endpoints': [
             ('stations', edit_views.StationListViewSet),
-            ('submit', edit_views.ReviewRequestView),
             ('profile', edit_views.UserProfileViewSet),
             ('download', edit_views.SiteLogDownloadViewSet),
             (
@@ -72,7 +71,9 @@ api = {
             ('siteresponsibleagency', edit_views.SiteResponsibleAgencyViewSet),
             ('sitemoreinformation', edit_views.SiteMoreInformationViewSet),
             ('logentries', edit_views.LogEntryViewSet),
-            ('alerts', edit_views.AlertViewSet)
+            ('alerts', edit_views.AlertViewSet),
+            ('request_review', edit_views.ReviewRequestView),
+            ('reject_updates', edit_views.RejectUpdatesView),
         ]
     },
     'public': {

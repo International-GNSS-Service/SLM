@@ -34,6 +34,8 @@ from slm.models import (
     UserAlert,
     SiteReceiver,
     GeodesyMLInvalid,
+    ReviewRequested,
+    UpdatesRejected,
     AgencyAlert,
     SiteAlert,
     Antenna,
@@ -80,7 +82,7 @@ class UserAdmin(BaseUserAdmin):
     inlines = [UserAgencyInline, ProfileInline]
 
     ordering = ('-last_activity',)
-    list_filter = ('is_superuser', 'html_emails', 'silence_emails')
+    list_filter = ('is_superuser', 'html_emails', 'silence_alerts')
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -90,7 +92,7 @@ class UserAdmin(BaseUserAdmin):
                 'is_active', 'is_superuser', 'groups', 'user_permissions'
             ),
         }),
-        (_('Preferences'), {'fields': ('silence_emails', 'html_emails')}),
+        (_('Preferences'), {'fields': ('silence_alerts', 'html_emails')}),
         (_('Important Dates'), {'fields': ('last_activity', 'date_joined')}),
     )
     add_fieldsets = (
@@ -115,11 +117,11 @@ class UserAdmin(BaseUserAdmin):
     request_password_reset.short_description = _('Request password resets.')
 
     def enable_emails(self, request, queryset):
-        queryset.update(silence_emails=False)
+        queryset.update(silence_alerts=False)
     enable_emails.short_description = _('Enable alert emails for users.')
 
     def disable_emails(self, request, queryset):
-        queryset.update(silence_emails=True)
+        queryset.update(silence_alerts=True)
     disable_emails.short_description = _('Disable alert emails for users.')
 
     def get_form(self, request, obj=None, **kwargs):
@@ -131,7 +133,9 @@ class UserAdmin(BaseUserAdmin):
         user_permissions = form.base_fields.get('user_permissions', None)
         if user_permissions:
             user_permissions.queryset = permissions()
-        form.base_fields.get('silence_emails').initial = getattr(
+        silence_alerts = form.base_fields.get('silence_alerts')
+        if silence_alerts is not None:
+            silence_alerts.initial = getattr(
             settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
         )
         return form
@@ -256,11 +260,31 @@ class GeodesyMLInvalidAdmin(AlertChildAdmin):
     show_in_index = True
 
 
+@admin.register(ReviewRequested)
+class ReviewRequestedAdmin(AlertChildAdmin):
+    base_model = ReviewRequested
+    show_in_index = True
+
+
+@admin.register(UpdatesRejected)
+class UpdatesRejectedAdmin(AlertChildAdmin):
+    base_model = UpdatesRejected
+    show_in_index = True
+
+
 @admin.register(Alert)
 class AlertAdmin(AlertAdminMixin, PolymorphicParentModelAdmin):
     """ The parent alert model admin """
     base_model = Alert
-    child_models = (Alert, UserAlert, SiteAlert, AgencyAlert, GeodesyMLInvalid)
+    child_models = (
+        Alert,
+        UserAlert,
+        SiteAlert,
+        AgencyAlert,
+        GeodesyMLInvalid,
+        ReviewRequested,
+        UpdatesRejected
+    )
     list_filter = (PolymorphicChildModelFilter,)
 
 

@@ -26,7 +26,6 @@ set_default(
     'SLM_STATUS_COLORS', {
         SiteLogStatus.DORMANT: '#3D4543',
         SiteLogStatus.NASCENT: '#913D88',
-        SiteLogStatus.IN_REVIEW: '#0084BD',
         SiteLogStatus.UPDATED: '#8D6708',
         SiteLogStatus.PUBLISHED: '#0F980F',
         SiteLogStatus.EMPTY: '#D3D3D3'
@@ -119,13 +118,41 @@ set_default('SLM_EMAILS_REQUIRE_LOGIN', True)
 set_default(
     'SLM_AUTOMATED_ALERTS', {
         'slm.GeodesyMLInvalid': {
-            'signals': [
+            'issue': [
                 'slm.signals.site_published',
                 'slm.signals.site_file_published',
                 'slm.signals.site_file_unpublished'
             ],
             'level': AlertLevel.ERROR,
             'send_email': False
+        },
+        'slm.ReviewRequested': {
+            'issue': [
+                'slm.signals.review_requested'
+            ],
+            'rescind': [
+                'slm.signals.updates_rejected',
+                'slm.signals.site_published',
+                'slm.signals.section_added',
+                'slm.signals.section_edited',
+                'slm.signals.section_deleted',
+            ],
+            'level': AlertLevel.NOTICE,
+            'send_email': True
+        },
+        'slm.UpdatesRejected': {
+            'issue': [
+                'slm.signals.updates_rejected'
+            ],
+            'rescind': [
+                'slm.signals.review_requested',
+                'slm.signals.site_published',
+                'slm.signals.section_added',
+                'slm.signals.section_edited',
+                'slm.signals.section_deleted'
+            ],
+            'level': AlertLevel.WARNING,
+            'send_email': True
         }
     }
 )

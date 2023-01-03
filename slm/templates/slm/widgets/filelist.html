@@ -11,7 +11,7 @@ Template for stations list.
     <div class="pt-3 px-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center"> 
             <h5 class="text-center mb-0"><b><span id="slm-num-files">{{ num_files }}</span></b> Files</h5>
-            <a id="filter-files" class="btn btn-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#file-filter" data-backdrop="false">
+            <a id="filter-files" class="btn btn-outline-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#file-filter" data-backdrop="false">
                 Filter <i class="bi bi-filter"></i>
             </a>
         </div>
@@ -64,14 +64,14 @@ Template for stations list.
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form>
-                    <div id="file-filter-options" class="row px-3 pb-3">
+                <form id="slm-file-filter">
+                    <div class="row px-3 pb-3">
                         <div class="col-6">
-                            <fieldset id="slm-file-filter-status">
+                            <fieldset>
                                 <legend class="form-label px-0"><span class="fs-6 fw-bold">File Status:</span></legend>
                                 {% for status in SiteFileUploadStatus %}
                                 <div class="form-check">
-                                    <input id="slm-file-status-{{status.value}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{status.value}}">
+                                    <input id="slm-file-status-{{status.value}}" class="form-check-input" type="checkbox" name="status" value="{{status.value}}">
                                     <label class="form-check-label d-flex" for="slm-file-status-{{status.value}}">
                                         <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
                                         <p class="mb-1">{{status.label}}</p>
@@ -81,11 +81,11 @@ Template for stations list.
                             </fieldset>
                         </div>
                         <div class="col-6">
-                            <fieldset id="slm-file-filter-type">
+                            <fieldset>
                                 <legend class="form-label px-0"><span class="fs-6 fw-bold">File Type:</span></legend>
                                 {% for type in SLMFileType %}
                                 <div class="form-check">
-                                    <input id="slm-file-type-{{type.value}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{type.value}}">
+                                    <input id="slm-file-type-{{type.value}}" class="form-check-input" type="checkbox" name="fileType" value="{{type.value}}">
                                     <label class="form-check-label d-flex" for="slm-file-type-{{type.value}}">
                                         <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
                                         <p class="mb-1">{{type.label}}</p>
@@ -97,7 +97,7 @@ Template for stations list.
                                 <legend class="form-label px-0"><span class="fs-6 fw-bold">Log Format:</span></legend>
                                 {% for type in SiteLogFormat %}
                                 <div class="form-check">
-                                    <input id="slm-file-log-{{type.value}}" class="form-check-input" type="checkbox" name="filterToggle" value="{{type.value}}">
+                                    <input id="slm-file-log-{{type.value}}" class="form-check-input" type="checkbox" name="logType" value="{{type.value}}">
                                     <label class="form-check-label d-flex" for="slm-file-log-{{type.value}}">
                                         <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
                                         <p class="mb-1">{{type.label}}</p>
@@ -111,7 +111,7 @@ Template for stations list.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
-                <button id="clear-file-filter" type="button" class="btn btn-outline-danger">Clear Filters</button>
+                <button id="clear-file-filter" type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Clear Filters</button>
                 <button id="apply-file-filter" type="button" class="btn btn-success" data-bs-dismiss="modal">Apply Filters</button>
             </div>
         </div>
@@ -123,7 +123,8 @@ Template for stations list.
 
 {% compress js inline %}
 <script>
-
+    const fileFilter = $('#slm-file-filter');
+    const filterFiles = $('#filter-files');
     $('input#slm-file-type-{{SLMFileType.SITE_LOG.value}}').change(function() {
         if ($(this).is(':checked')) {
             $('fieldset#slm-file-filter-log').prop('disabled', false);
@@ -200,6 +201,7 @@ Template for stations list.
         const fileList = $("#slm-file-list");
         const searchInput = $('#file-search');
         const filterInput = $("#apply-file-filter");
+        const clearFilter = $('#clear-file-filter');
 
         searchInput.keypress(function (event) {
             if (event.key === "Enter") {
@@ -222,26 +224,34 @@ Template for stations list.
                 initFileList(fileList);
             }, 500);
         });
-        filterInput.click(function() {
+
+        const applyFilter = function() {
             let query = fileList.data('slmQuery') || {};
-            query["status"] = $("#slm-file-filter-status input[name=filterToggle]:checked").map(function () {
+            query.status = fileFilter.find('input[name="status"]:checked').map(function () {
                 return this.value;
-            }).get().join(",");
-            query["file_type"] = $("#slm-file-filter-type input[name=filterToggle]:checked").map(function () {
+            }).get();
+            query.file_type = fileFilter.find('input[name="fileType"]:checked').map(function () {
                 return this.value;
-            }).get().join(",");
-            query["log_format"] = $("#slm-file-filter-log input[name=filterToggle]:checked").map(function () {
+            }).get();
+            query.log_format = fileFilter.find('input[name="logType"]:checked').map(function () {
                 return this.value;
-            }).get().join(",");
+            }).get();
+            if (slm.hasParameters(query)) {
+                filterFiles.removeClass("btn-outline-primary").addClass("btn-primary");
+            } else {
+                filterFiles.removeClass("btn-primary").addClass("btn-outline-primary");
+            }
             fileList.data('slmQuery', query);
             initFileList(fileList);
+        };
+        filterInput.click(applyFilter);
+        clearFilter.on('click', function() {
+            fileFilter.find("input[type='checkbox']:checked").prop("checked", false);
+            fileFilter.find("input[type='radio']:checked").prop("checked", false);
+            applyFilter();
         });
         initFileList(fileList);
     });
 
-    function uncheckAll() {
-        $("input[type='checkbox']:checked").prop("checked", false)
-    }
-    $('#clear-file-filter').on('click', uncheckAll)
 </script>
 {% endcompress %}

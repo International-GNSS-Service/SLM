@@ -15,8 +15,8 @@ class GeodesyMLVersion(
     ]
 
     # name  value     label      version              xmlns
-    v0_4   = 0,  'GeodesyML/0.4',  0.4,  'urn:xml-gov-au:icsm:egeodesy:0.4'
-    v0_5   = 1,  'GeodesyML/0.5',  0.5,  'urn:xml-gov-au:icsm:egeodesy:0.5'
+    v0_4   = 1,  'GeodesyML/0.4',  0.4,  'urn:xml-gov-au:icsm:egeodesy:0.4'
+    v0_5   = 2,  'GeodesyML/0.5',  0.5,  'urn:xml-gov-au:icsm:egeodesy:0.5'
 
     def __str__(self):
         return self.label

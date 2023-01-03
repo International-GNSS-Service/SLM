@@ -14,9 +14,17 @@
           <div class="container-fluid">
 
             {% block actions_bar %}
-                <div id="station_nav">
+                <div id="slm-station-nav">
                     {% if agencies %}
-                    {% block station_agencies %}{% endblock %}
+                    {% block station_agencies %}
+                    <header class="d-flex flex-wrap justify-content-center p-3 slm-agency">
+                    {% for agency in agencies %}
+                        <a href="{% url 'slm:home' %}?agency={{ agency.id }}" class="text-decoration-none">
+                            <span class="fs-3 fw-bold">{{ agency.name }}{% if not forloop.last %},&nbsp;{% endif %}</span>
+                        </a>
+                    {% endfor %}
+                    </header>
+                    {% endblock %}
                     {% endif %}
                     {% if station %}
                     <header class="d-flex flex-wrap justify-content-center py-3 px-3 border-bottom">
@@ -31,7 +39,7 @@
                             {% with station_name=site.fourid %}
                                 {% with url_name=request.resolver_match.url_name %}
                                 <li class="nav-item {% if url_name == 'alerts' %}active{% endif %}">
-                                    <a href="{% if station %}{% url 'slm:alerts' station=station %}{% else %}{% url 'slm:alerts' %}{% endif %}" class="nav-link"><i class="bi bi-bell{% if station_alert_level %}-fill text-{{ station_alert_level.bootstrap }}{% endif %}"></i> {% trans "Alerts" %}</a>
+                                    <a href="{% if station %}{% url 'slm:alerts' station=station %}{% else %}{% url 'slm:alerts' %}{% endif %}" class="nav-link"><i class="bi bi-bell{% if station_alert_level %}-fill {{ station_alert_level.css }}{% endif %} slm-alert-bell"></i> {% trans "Alerts" %}</a>
                                 </li>
                                 <li class="nav-item {% if url_name == 'edit' %}active{% endif %}">
                                     <a href="{% if station %}{% url 'slm:edit' station=station %}{% else %}{% url 'slm:edit' %}{% endif %}" class="nav-link"><i class="bi bi-pencil-square"></i> {% trans "Edit" %}</a>

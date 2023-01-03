@@ -665,21 +665,25 @@ slm.dataTablesAdaptor = function( data, select=null ) {
     }
 }
 
-slm.requestReview = function(site_name) {
+slm.requestReview = function(siteId, detail='') {
     return $.ajax({
-        url: slm.urls.reverse('slm_edit_api:submit-list'),
-        data: {'site_name': site_name},
-        method: 'POST'
+        url: slm.urls.reverse(
+            'slm_edit_api:request_review-detail',
+            {kwargs: {pk: siteId}}
+        ),
+        method: 'PUT',
+        data: {detail: detail}
     });
 }
 
-slm.rejectReview = function(review) {
+slm.rejectReview = function(siteId, detail='') {
     return $.ajax({
         url: slm.urls.reverse(
-            'slm_edit_api:submit-detail',
-            {'pk': review}
+            'slm_edit_api:reject_updates-detail',
+            {kwargs: {pk: siteId}}
         ),
-        method: 'DELETE'
+        method: 'PUT',
+        data: {detail: detail}
     });
 }
 
@@ -745,4 +749,52 @@ slm.formToObject = function(form) {
         data[element.getAttribute('name')] = 'off';
     });
     return data;
+}
+
+slm.stationFilterCallbacks = [];
+
+slm.stationFilterChanged = function(filterParams) {
+    for (const callback of slm.stationFilterCallbacks) {
+        callback(filterParams);
+    }
+}
+
+slm.hasParameters = function(query){
+    for (const [key, value] of Object.entries(query)) {
+        if (key === 'start' || key === 'length') {
+            continue;
+        }
+        if (Array.isArray(value)) {
+            if (value.length > 0) { return true; }
+        } else if (
+            value !== null &&
+            value !== '' &&
+            typeof value !== 'undefined'
+        ) { return true; }
+    }
+    return false;
+}
+
+slm.updateAlertBell = function(site) {
+    let level = site.max_alert ? AlertLevel.get(site.max_alert) : null;
+    let navBtn = $(`#select-${site.name}`);
+    let bells = $(
+        `#select-${site.name} .slm-alert-bell, #slm-station-nav .slm-alert-bell`
+    );
+    let current = AlertLevel.get(navBtn.data('slmAlert'));
+    bells.removeClass('bi-bell-fill');
+    bells.addClass('bi-bell');
+    navBtn.data('slmAlert', null);
+    if (current) {
+        bells.removeClass(`${current.css}`);
+    }
+    if (level) {
+        navBtn.data('slmAlert', level.val);
+        bells.addClass(`${level.css}`);
+        bells.removeClass('bi-bell');
+        bells.addClass('bi-bell-fill');
+        bells.show();
+    } else {
+        $(`#select-${site.name} .slm-alert-bell`).hide();
+    }
 }

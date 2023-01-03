@@ -24,9 +24,9 @@ Template for View/Diff page.
   <div class="d-flex justify-content-between mt-4 pb-3 mx-5 border-bottom">
       <h2>Review and Submit</h2>
       <div id="review-actions">
-        <button name="reject" onclick="reject();" class="btn btn-danger" {% if not can_publish or not site.review_pending %}style="display: none"{% endif %} {% if site.review_pending %}data-slm-review-request={{site.review_request.id}}{% endif %}>{% trans 'Reject Changes' %}</button>
+        <button id="slm-reject-changes" name="reject" class="btn btn-danger" {% if not can_publish or not site.review_requested %}style="display: none"{% endif %} tabindex="0" data-bs-toggle="modal" data-bs-target="#slm-reject-modal" data-backdrop="false">{% trans 'Reject Changes' %}</button>
         <button name="publish" onclick="publish();" class="btn btn-primary" {% if not can_publish or not needs_publish %}style="display: none"{% endif %}>{% trans 'Publish' %}</button>
-        <button name="submit" onclick="submit();" class="btn btn-primary" {% if can_publish or not needs_publish %}style="display: none"{% endif %} {% if site.review_pending %}disabled{% endif %}>{% if site.review_pending %}{% trans 'Pending Review' %}{% else %}{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}{% endif %}</button>
+        <button name="submit" onclick="submit();" class="btn btn-primary" {% if can_publish or not needs_publish %}style="display: none"{% endif %} {% if site.review_requested %}disabled{% endif %}>{% if site.review_requested %}{% trans 'Pending Review' %}{% else %}{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}{% endif %}</button>
       </div>
   </div>
 
@@ -59,35 +59,65 @@ Template for View/Diff page.
     <pre id="review-diff"></pre>
   </div>
 </div>
+
+<div class="modal fade" id="slm-reject-modal" tabindex="-1" aria-labelledby="filter-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="filter-label">{% trans "Why are you rejecting these updates?" %}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex justify-content-center">
+                <form id="slm-reject-text-input">
+                    {{ richtextform.media }}
+                    {{ richtextform.text }}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button id="slm-reject-updates" type="button" class="btn btn-primary" data-bs-dismiss="modal">{% trans "Reject" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% compress js inline %}
 <script>
     const reviewActions = $('#review-actions');
     const submitBtn = reviewActions.find('button[name="submit"]');
     const publishBtn = reviewActions.find('button[name="publish"]');
     const rejectBtn = reviewActions.find('button[name="reject"]');
+    const rejectSubmit = $('#slm-reject-updates');
     let navBtn = $('button#select-{{ station }}');
 
-    const updateButtonState = function(request) {
-        let site = request.site;
-        rejectBtn.data('slmReviewRequest', request.id);
+    const rejectModal = new bootstrap.Modal(
+        document.getElementById('slm-reject-modal'), {
+             // fix a focus bug with some of the ckeditor widgets when inside
+            // a bootstrap modal - suggested solutions for bootstrap 3 no
+            // longer works in bootstrap 5
+            focus: false,
+        	show: false
+        }
+    );
+
+    const updateButtonState = function(site) {
         rejectBtn.hide();
         submitBtn.hide();
         publishBtn.hide();
         let status = slm.SiteLogStatus.get(site.status);
         if (site.can_publish) {
-            if (site.review_pending) {
+            if (site.review_requested) {
                 rejectBtn.show();
                 publishBtn.show();
             } else if (
                 status === slm.SiteLogStatus.UPDATED ||
                 status === slm.SiteLogStatus.NASCENT ||
-                status === slm.SiteLogStatus.IN_REVIEW ||
                 status === slm.SiteLogStatus.EMPTY
             ) {
                 publishBtn.show();
             }
         } else {
-            if (site.review_pending) {
+            if (site.review_requested) {
                 submitBtn.html("{% trans 'Pending Review' %}");
                 submitBtn.prop('disabled', true);
                 submitBtn.show();
@@ -102,16 +132,17 @@ Template for View/Diff page.
         }
     }
 
-    const updateStatus = function(data) {
+    const updateStatus = function(site) {
         navBtn.removeClass(
             slm.SiteLogStatus.get(navBtn.data('slmStatus')).css
         );
-        navBtn.data('slmStatus', data.site.status);
-        navBtn.addClass(slm.SiteLogStatus.get(data.site.status).css);
+        navBtn.data('slmStatus', site.status);
+        navBtn.addClass(slm.SiteLogStatus.get(site.status).css);
+        slm.updateAlertBell(site);
     }
 
     const submit = function() {
-        slm.requestReview('{{station}}').done(
+        slm.requestReview({{ site.id }}).done(
             function(data, status, jqXHR) {
                 updateButtonState(data);
                 updateStatus(data);
@@ -128,8 +159,8 @@ Template for View/Diff page.
     const publish = function() {
         slm.publish({{site.id}}).done(
             function(data, status, jqXHR) {
-                updateButtonState({'site': data});
-                updateStatus({'site': data});
+                updateButtonState(data);
+                updateStatus(data);
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {
@@ -140,13 +171,13 @@ Template for View/Diff page.
         );
     }
 
-    const reject = function() {
-        slm.rejectReview(rejectBtn.data('slmReviewRequest')).done(
+    rejectSubmit.on('click', function() {
+        slm.rejectReview(
+            {{ site.id }},
+            CKEDITOR.instances['id_text'].getData()
+        ).done(
             function(data, status, jqXHR) {
-                updateStatus(
-                    {'site': {'status': slm.SiteLogStatus.UPDATED.val}}
-                );
-                rejectBtn.data('slmReviewRequest', null);
+                updateStatus(data);
                 rejectBtn.hide();
             }
         ).fail(
@@ -156,7 +187,7 @@ Template for View/Diff page.
                 console.log(jqXHR);
             }
         );
-    }
+    });
 
     {% autoescape off %}
     const back_text = `{{ back_text|escapejs }}`;

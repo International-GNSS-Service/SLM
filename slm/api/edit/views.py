@@ -23,6 +23,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from slm import signals as slm_signals
+from slm.api.filter import AcceptListArguments, MustIncludeThese
 from slm.api.edit.serializers import (
     AlertSerializer,
     LogEntrySerializer,
@@ -36,18 +37,23 @@ from slm.api.permissions import (
     CanDeleteAlert,
     CanEditSite,
     CanRejectReview,
-    CanRequestReview,
     IsUserOrAdmin,
     UpdateAdminOnly,
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
-from slm.defines import SiteFileUploadStatus, SiteLogFormat, SLMFileType
+from slm.defines import (
+    SiteFileUploadStatus,
+    SiteLogFormat,
+    SLMFileType,
+    AlertLevel,
+    SiteLogStatus
+)
 from slm.parsing.legacy.parser import Error
 from slm.models import (
     Alert,
     LogEntry,
+    Network,
     Agency,
-    ReviewRequest,
     Site,
     SiteAntenna,
     SiteCollocation,
@@ -73,6 +79,8 @@ from slm.models import (
     SiteTemperatureSensor,
     SiteWaterVaporRadiometer,
 )
+from django.utils.functional import cached_property
+from django_enum.filters import EnumFilter
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -94,41 +102,150 @@ class DataTablesListMixin(mixins.ListModelMixin):
 
 
 class ReviewRequestView(
-    mixins.CreateModelMixin,
+    DataTablesListMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-
     serializer_class = ReviewRequestSerializer
-    permission_classes = (IsAuthenticated, CanRequestReview, CanRejectReview)
+    permission_classes = (IsAuthenticated, CanEditSite)
 
-    def perform_create(self, serializer):
-        super().perform_create(serializer)
-        if serializer.review_pending:
-            slm_signals.review_requested.send(
-                sender=self,
-                review_request=serializer.instance,
-                request=self.request
-            )
-
-    def perform_destroy(self, instance):
-        review_pending = instance.site.review_pending
-        super().perform_destroy(instance)
-        instance.site.refresh_from_db()
-        instance.site.update_status(save=True)
-        if review_pending:
-            slm_signals.changes_rejected.send(
-                sender=self,
-                review_request=instance,
-                request=self.request,
-                rejecter=self.request.user
-            )
+    def perform_update(self, serializer):
+        slm_signals.review_requested.send(
+            sender=self,
+            site=serializer.instance,
+            detail=serializer.validated_data.get('detail', None),
+            request=self.request
+        )
+        serializer.instance.refresh_from_db()
 
     def get_queryset(self):
-        return ReviewRequest.objects.editable_by(
+        return Site.objects.editable_by(
             self.request.user
+        ).filter(review_requested__isnull=True).filter(
+            status__in=SiteLogStatus.unpublished_states()
+        ).annotate_max_alert()
+
+
+class RejectUpdatesView(
+    DataTablesListMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = ReviewRequestSerializer
+    permission_classes = (IsAuthenticated, CanRejectReview)
+
+    def perform_update(self, serializer):
+        slm_signals.updates_rejected.send(
+            sender=self,
+            site=serializer.instance,
+            detail=serializer.validated_data.get('detail', None),
+            request=self.request
         )
+        serializer.instance.refresh_from_db()
+
+    def get_queryset(self):
+        return Site.objects.moderated(
+            self.request.user
+        ).filter(review_requested__isnull=False).annotate_max_alert()
+
+
+class StationFilter(AcceptListArguments, FilterSet):
+
+    @cached_property
+    def alert_fields(self):
+        """
+        Fetch the mapping of alert names to related fields.
+        """
+        def get_related_field(alert):
+            for obj in Site._meta.related_objects:
+                if obj.related_model is alert:
+                    return obj.name
+        return {
+            alert.__name__.lower(): get_related_field(alert)
+            for alert in Alert.objects.site_alerts()
+        }
+
+    name = django_filters.CharFilter(
+        field_name='name',
+        lookup_expr='istartswith'
+    )
+    published_before = django_filters.CharFilter(
+        field_name='last_publish',
+        lookup_expr='lt'
+    )
+    published_after = django_filters.CharFilter(
+        field_name='last_publish',
+        lookup_expr='gte'
+    )
+    updated_before = django_filters.CharFilter(
+        field_name='last_update',
+        lookup_expr='lt'
+    )
+    updated_after = django_filters.CharFilter(
+        field_name='last_update',
+        lookup_expr='gte'
+    )
+    agency = django_filters.ModelMultipleChoiceFilter(
+        field_name='agencies',
+        queryset=Agency.objects.all(),
+        distinct=False
+    )
+    network = django_filters.ModelMultipleChoiceFilter(
+        field_name='networks',
+        queryset=Network.objects.all(),
+        distinct=False
+    )
+    id = MustIncludeThese()
+
+    status = django_filters.MultipleChoiceFilter(
+        choices=SiteLogStatus.choices,
+        distinct=False
+    )
+
+    alert = django_filters.MultipleChoiceFilter(
+        choices=[
+            (alert.__name__, alert._meta.verbose_name.title())
+            for alert in Alert.objects.site_alerts()
+        ],
+        method='filter_alerts',
+        distinct=False
+    )
+
+    max_alert = EnumFilter(enum=AlertLevel, field_name='_max_alert')
+
+    review_requested = django_filters.BooleanFilter(
+        field_name='review_requested'
+    )
+
+    def filter_alerts(self, queryset, name, value):
+        alert_q = Q()
+        for alert in value:
+            alert_q |= Q(
+                **{f'{self.alert_fields[alert.lower()]}__isnull': False}
+            )
+        return queryset.filter(alert_q)
+
+    class Meta:
+        model = Site
+        fields = (
+            'name',
+            'published_before',
+            'published_after',
+            'updated_before',
+            'updated_after',
+            'agency',
+            'status',
+            'network',
+            'review_requested',
+            'max_alert',
+            'alert',
+            'id'
+        )
+        distinct = True
 
 
 class StationListViewSet(
@@ -142,75 +259,6 @@ class StationListViewSet(
     serializer_class = StationSerializer
     permission_classes = (IsAuthenticated, CanEditSite,)
 
-    class StationFilter(FilterSet):
-
-        name = django_filters.CharFilter(
-            field_name='name',
-            lookup_expr='istartswith'
-        )
-        published_before = django_filters.CharFilter(
-            field_name='last_publish',
-            lookup_expr='lt'
-        )
-        published_after = django_filters.CharFilter(
-            field_name='last_publish',
-            lookup_expr='gte'
-        )
-        updated_before = django_filters.CharFilter(
-            field_name='last_update',
-            lookup_expr='lt'
-        )
-        updated_after = django_filters.CharFilter(
-            field_name='last_update',
-            lookup_expr='gte'
-        )
-        agency = django_filters.CharFilter(
-            method='filter_agencies'
-        )
-        network = django_filters.CharFilter(
-            method='filter_networks'
-        )
-        status = django_filters.CharFilter(
-            method='filter_status'
-        )
-        review_pending = django_filters.BooleanFilter(
-            field_name='_review_pending'
-        )
-
-        def filter_agencies(self, queryset, name, value):
-            values = value.split(',')
-            return queryset.filter(
-                Q(agencies__pk__in=[int(val) for val in values if val.isdigit()]) |
-                Q(agencies__name__in=values)
-            )
-
-        def filter_networks(self, queryset, name, value):
-            values = value.split(',')
-            return queryset.filter(
-                Q(networks__pk__in=[int(val) for val in values if val.isdigit()]) |
-                Q(networks__name__in=values)
-            )
-
-        def filter_status(self, queryset, name, value):
-            values = value.split(',')
-            return queryset.filter(
-                Q(status__in=values)
-            )
-
-        class Meta:
-            model = Site
-            fields = (
-                'name',
-                'published_before',
-                'published_after',
-                'updated_before',
-                'updated_after',
-                'agency',
-                'status',
-                'network',
-                'review_pending'
-            )
-
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = StationFilter
     ordering_fields = [
@@ -223,7 +271,6 @@ class StationListViewSet(
     ordering = ('name',)
 
     def get_queryset(self):
-        max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
         return Site.objects.editable_by(
             self.request.user
         ).prefetch_related(
@@ -233,10 +280,10 @@ class StationListViewSet(
             'last_user__agencies'
         ).select_related(
             'owner',
-            'last_user'
-        ).annotate_review_pending().annotate(
-            max_alert=Subquery(max_alert.values('level')[:1])
-        )
+            'last_user',
+            'review_requested',
+            'updates_rejected'
+        ).annotate_max_alert()
 
 
 class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
@@ -291,13 +338,35 @@ class AlertViewSet(
 
     class AlertFilter(FilterSet):
 
+        sites = None
+
+        def __init__(
+            self,
+            data=None,
+            queryset=None,
+            *,
+            request=None,
+            **kwargs
+        ):
+            super().__init__(
+                data,
+                queryset=queryset,
+                request=request,
+                **kwargs
+            )
+            self.sites = StationFilter(
+                data=data,
+                queryset=Site.objects.annotate_max_alert(),
+                request=request,
+                **kwargs
+            )
+
         site = django_filters.CharFilter(method='for_site')
         user = django_filters.CharFilter(method='for_user')
-        agency = django_filters.CharFilter(method='for_agency')
 
-        def for_agency(self, queryset, name, value):
-            return queryset.for_agency(
-                Agency.objects.filter(name__iexact=value)
+        def filter_queryset(self, queryset):
+            return super().filter_queryset(queryset).concerning_sites(
+                self.sites.qs
             )
 
         def for_site(self, queryset, name, value):
@@ -312,23 +381,14 @@ class AlertViewSet(
 
         class Meta:
             model = Alert
-            fields = ('site', 'user', 'agency')
+            fields = ('site', 'user',)
 
     filter_backends = (DjangoFilterBackend,)
     filterset_class = AlertFilter
 
     def get_queryset(self):
+        Alert.objects.delete_expired()
         return Alert.objects.visible_to(self.request.user)
-
-    def perform_destroy(self, instance):
-        if (
-            self.request.user.is_superuser or (
-                not instance.sticky and
-                self.request.user in instance.users
-            )
-        ):
-            return super().perform_destroy(instance)
-        raise PermissionDenied()
 
 
 class UserProfileViewSet(
@@ -463,7 +523,7 @@ class SectionViewSet(type):
 
             def get_can_publish(self, obj):
                 if 'request' in self.context:
-                    return obj.can_publish(self.context['request'].user)
+                    return self.context['request'].user.is_moderator()
                 return None
 
             def get__diff(self, obj):
@@ -996,11 +1056,23 @@ class SiteFileUploadViewSet(
             return section.ordering_id
         return None
 
-    class FileFilter(FilterSet):
+    class FileFilter(AcceptListArguments, FilterSet):
 
         name = django_filters.CharFilter(
             field_name='name',
             lookup_expr='istartswith'
+        )
+
+        file_type = django_filters.MultipleChoiceFilter(
+            choices=SLMFileType.choices
+        )
+
+        log_format = django_filters.MultipleChoiceFilter(
+            choices=SiteLogFormat.choices
+        )
+
+        status = django_filters.MultipleChoiceFilter(
+            choices=SiteFileUploadStatus.choices
         )
 
         class Meta:

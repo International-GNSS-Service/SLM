@@ -5,7 +5,6 @@ from logging import Filter
 from pprint import pformat
 from rest_framework.serializers import Serializer
 from django.conf import settings
-from lxml.etree import Resolver
 
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
@@ -29,6 +28,8 @@ def get_protocol():
 
 
 def build_absolute_url(path, request=None):
+    if path.startswith('mailto:'):
+        return path
     if request:
         return request.build_absolute_uri(path)
     return f'{get_url()}/{path.lstrip("/")}'
@@ -46,6 +47,13 @@ def from_email():
         'DEFAULT_FROM_EMAIL',
         f'noreply@{Site.objects.get_current().domain}'
     )
+
+
+def clear_caches():
+    from slm.models import Site
+    from slm.models import User
+    User.is_moderator.cache_clear()
+    Site.is_moderator.cache_clear()
 
 
 class SquelchStackTraces(Filter):

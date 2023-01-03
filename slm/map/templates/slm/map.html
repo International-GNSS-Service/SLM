@@ -73,7 +73,7 @@
                                 <select name="agency" id="slm-agency-select" class="form-control">
                                     <option value="" {% if not agency %}selected>{% endif %}- Select Agency -</option>
                                     {% for agcy in agencies %}
-                                        <option value="{{ agcy.name }}" {% if agency and agency.id == agcy.id %}selected{% endif %}>{{ agcy.name }}</option>
+                                        <option value="{{ agcy.pk }}" {% if agency and agency.id == agcy.id %}selected{% endif %}>{{ agcy.name }}</option>
                                     {% endfor %}
                                 </select>
                             </th>
@@ -82,7 +82,7 @@
                                 <select name="network" id="slm-network-select" class="form-control">
                                     <option value="" {% if not network %}selected>{% endif %}- Select Network -</option>
                                     {% for ntwrk in networks %}
-                                        <option value="{{ ntwrk.name }}" {% if network and network.id == ntwrk.id %}selected{% endif %}>{{ ntwrk.name }}</option>
+                                        <option value="{{ ntwrk.pk }}" {% if network and network.id == ntwrk.id %}selected{% endif %}>{{ ntwrk.name }}</option>
                                     {% endfor %}
                                 </select>
                             </th>

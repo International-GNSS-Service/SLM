@@ -6,7 +6,9 @@ All signals contain a request object that holds the request that initiated the
 event. This object is provided mostly for logging purposes and is not
 guaranteed to be non-null.
 """
-from django import dispatch
+from django.dispatch import Signal
+from django.utils.module_loading import import_string
+import sys
 
 """
 Signal sent when a new site is proposed.
@@ -20,7 +22,7 @@ Signal sent when a new site is proposed.
     responsible agencies.
 :param kwargs: Misc other key word arguments
 """
-site_proposed = dispatch.Signal()
+site_proposed = Signal()
 
 """
 Sent when a site log is published, or when a section of a site log is
@@ -35,7 +37,7 @@ published.
     section was published this will be the Section object instance.
 :param kwargs: Misc other key word arguments
 """
-site_published = dispatch.Signal()
+site_published = Signal()
 
 """
 Sent when a site log is published, or when a section of a site log is
@@ -49,7 +51,7 @@ The published timestamp will have increased.
 :param new_status: The new status
 :param kwargs: Misc other key word arguments
 """
-site_status_changed = dispatch.Signal()
+site_status_changed = Signal()
 
 """
 Sent when a site log section is edited.
@@ -63,7 +65,7 @@ Sent when a site log section is edited.
 :param fields: The list of edited fields
 :param kwargs: Misc other key word arguments
 """
-section_edited = dispatch.Signal()
+section_edited = Signal()
 
 """
 Sent when a site log section is added.
@@ -76,7 +78,7 @@ Sent when a site log section is added.
 :param section: The section object that was added.
 :param kwargs: Misc other key word arguments
 """
-section_added = dispatch.Signal()
+section_added = Signal()
 
 """
 Sent when a site log section is deleted.
@@ -89,7 +91,7 @@ Sent when a site log section is deleted.
 :param section: The section object that was deleted.
 :param kwargs: Misc other key word arguments
 """
-section_deleted = dispatch.Signal()
+section_deleted = Signal()
 
 """
 Sent when a site log section has fields flagged.
@@ -104,7 +106,7 @@ Sent when a site log section has fields flagged.
 :param fields: The list of fields that were flagged.
 :param kwargs: Misc other key word arguments
 """
-fields_flagged = dispatch.Signal()
+fields_flagged = Signal()
 
 """
 Sent when a site log section has fields flagged.
@@ -121,7 +123,7 @@ Sent when a site log section has fields flagged.
 :param clear: True if the section has no remaining flags - false otherwise.
 :param kwargs: Misc other key word arguments
 """
-flags_cleared = dispatch.Signal()
+flags_cleared = Signal()
 
 """
 Sent when a user uploads a site log.
@@ -134,7 +136,7 @@ Sent when a user uploads a site log.
 :param upload: The uploaded file (SiteFileUpload).
 :param kwargs: Misc other key word arguments
 """
-site_file_uploaded = dispatch.Signal()
+site_file_uploaded = Signal()
 
 """
 Sent when a user uploads a site log.
@@ -147,7 +149,7 @@ Sent when a user uploads a site log.
 :param upload: The uploaded file (SiteFileUpload).
 :param kwargs: Misc other key word arguments
 """
-site_file_published = dispatch.Signal()
+site_file_published = Signal()
 
 
 """
@@ -161,29 +163,30 @@ Sent when a user uploads a site log.
 :param upload: The uploaded file (SiteFileUpload).
 :param kwargs: Misc other key word arguments
 """
-site_file_unpublished = dispatch.Signal()
+site_file_unpublished = Signal()
 
 
 """
 Sent when a user requests a site log be reviewed and published by moderators.
 
 :param sender: The sending object (unreliable).
-:param review_request: The review request object.
+:param site: The site the reviews were requested for.
+:param detail: The user given reasons for requesting the update (if any).
 :param request: The Django request object that contained the request.
 :param kwargs: Misc other key word arguments
 """
-review_requested = dispatch.Signal()
+review_requested = Signal()
 
 """
 Sent when a moderator rejects edits requested for publish in a review request.
 
 :param sender: The sending object (unreliable).
-:param review_request: The review request object that was rejected.
+:param site: The site the updates were rejected for.
+:param detail: The user given reasons for rejecting the update (if any).
 :param request: The Django request object that contained the rejection.
-:param rejecter: The user that rejected the changes.
 :param kwargs: Misc other key word arguments
 """
-changes_rejected = dispatch.Signal()
+updates_rejected = Signal()
 
 """
 Sent when an alert is issued.
@@ -192,7 +195,7 @@ Sent when an alert is issued.
 :param alert: The alert object that was issued.
 :param kwargs: Misc other key word arguments
 """
-alert_issued = dispatch.Signal()
+alert_issued = Signal()
 
 """
 Sent when an alert is cleared.
@@ -201,4 +204,29 @@ Sent when an alert is cleared.
 :param alert: The alert object that was issued.
 :param kwargs: Misc other key word arguments
 """
-alert_cleared = dispatch.Signal()
+alert_cleared = Signal()
+
+
+_signal_names_ = {
+    value: f'slm.signals.{key}' for key, value in
+    sys._getframe().f_globals.items()
+    if isinstance(value, Signal)
+}
+
+
+def signal_name(signal):
+    """
+    Given a signal object - try to determine its name (import path). This is
+    not easy and prone to failure so don't use it for anything critical.
+    """
+    if not isinstance(signal, Signal):
+        return signal
+    name = _signal_names_.get(signal, None)
+    if name:
+        return name
+    return {
+        value: f'{signal.__module__}.{key}' for key, value in
+        vars(import_string(signal.__module__)).items()
+        if isinstance(value, Signal)
+    }.get(signal, str(signal))
+

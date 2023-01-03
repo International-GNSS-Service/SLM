@@ -37,14 +37,14 @@ class LogEntryType {
             case 7:
                 return LogEntryType.FILE_UPLOAD;
         }
+        return null;
     }
 }
 
 class SiteLogStatus {
     
-    static DORMANT = new SiteLogStatus(0, 'Dormant', 'slm-status-dormant', '#3D4543');
-    static NASCENT = new SiteLogStatus(1, 'Nascent', 'slm-status-nascent', '#913D88');
-    static IN_REVIEW = new SiteLogStatus(2, 'In Review', 'slm-status-in-review', '#0084BD');
+    static DORMANT = new SiteLogStatus(1, 'Dormant', 'slm-status-dormant', '#3D4543');
+    static NASCENT = new SiteLogStatus(2, 'Nascent', 'slm-status-nascent', '#913D88');
     static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#8D6708');
     static PUBLISHED = new SiteLogStatus(4, 'Published', 'slm-status-published', '#0F980F');
     static EMPTY = new SiteLogStatus(5, 'Empty', 'slm-status-empty', '#D3D3D3');
@@ -80,12 +80,10 @@ class SiteLogStatus {
 
     static get(val) {
         switch(val) {
-            case 0:
-                return SiteLogStatus.DORMANT;
             case 1:
-                return SiteLogStatus.NASCENT;
+                return SiteLogStatus.DORMANT;
             case 2:
-                return SiteLogStatus.IN_REVIEW;
+                return SiteLogStatus.NASCENT;
             case 3:
                 return SiteLogStatus.UPDATED;
             case 4:
@@ -93,16 +91,17 @@ class SiteLogStatus {
             case 5:
                 return SiteLogStatus.EMPTY;
         }
+        return null;
     }
 }
 
 class SiteFileUploadStatus {
     
-    static UNPUBLISHED = new SiteFileUploadStatus(0, 'Unpublished File', 'slm-upload-unpublished file', '#8D6708');
-    static PUBLISHED = new SiteFileUploadStatus(1, 'Published File', 'slm-upload-published file', '#0F980F');
-    static INVALID = new SiteFileUploadStatus(2, 'Invalid Site Log', 'slm-upload-invalid site log', '#8b0000');
-    static WARNINGS = new SiteFileUploadStatus(3, 'Warnings Site Log', 'slm-upload-warnings site log', '#8D6708');
-    static VALID = new SiteFileUploadStatus(4, 'Valid Site Log', 'slm-upload-valid site log', '#0F980F');
+    static UNPUBLISHED = new SiteFileUploadStatus(1, 'Unpublished File', 'slm-upload-unpublished file', '#8D6708');
+    static PUBLISHED = new SiteFileUploadStatus(2, 'Published File', 'slm-upload-published file', '#0F980F');
+    static INVALID = new SiteFileUploadStatus(3, 'Invalid Site Log', 'slm-upload-invalid site log', '#8b0000');
+    static WARNINGS = new SiteFileUploadStatus(4, 'Warnings Site Log', 'slm-upload-warnings site log', '#8D6708');
+    static VALID = new SiteFileUploadStatus(5, 'Valid Site Log', 'slm-upload-valid site log', '#0F980F');
 
     constructor(val, label, css, color) {
         this.val = val;
@@ -117,31 +116,32 @@ class SiteFileUploadStatus {
 
     static get(val) {
         switch(val) {
-            case 0:
-                return SiteFileUploadStatus.UNPUBLISHED;
             case 1:
-                return SiteFileUploadStatus.PUBLISHED;
+                return SiteFileUploadStatus.UNPUBLISHED;
             case 2:
-                return SiteFileUploadStatus.INVALID;
+                return SiteFileUploadStatus.PUBLISHED;
             case 3:
-                return SiteFileUploadStatus.WARNINGS;
+                return SiteFileUploadStatus.INVALID;
             case 4:
+                return SiteFileUploadStatus.WARNINGS;
+            case 5:
                 return SiteFileUploadStatus.VALID;
         }
+        return null;
     }
 }
 
 class AlertLevel {
     
-    static NOTICE = new AlertLevel(0, 'NOTICE', 'info', '#12CAF0');
-    static WARNING = new AlertLevel(1, 'WARNING', 'warning', '#FFC106');
-    static ERROR = new AlertLevel(2, 'ERROR', 'danger', '#DD3444');
+    static NOTICE = new AlertLevel(1, 'NOTICE', '#12CAF0', 'slm-alert-notice');
+    static WARNING = new AlertLevel(2, 'WARNING', '#FFC106', 'slm-alert-warning');
+    static ERROR = new AlertLevel(3, 'ERROR', '#DD3444', 'slm-alert-error');
 
-    constructor(val, label, bootstrap, color) {
+    constructor(val, label, color, css) {
         this.val = val;
         this.label = label;
-        this.bootstrap = bootstrap;
         this.color = color;
+        this.css = css;
     }
 
     toString() {
@@ -150,22 +150,23 @@ class AlertLevel {
 
     static get(val) {
         switch(val) {
-            case 0:
-                return AlertLevel.NOTICE;
             case 1:
-                return AlertLevel.WARNING;
+                return AlertLevel.NOTICE;
             case 2:
+                return AlertLevel.WARNING;
+            case 3:
                 return AlertLevel.ERROR;
         }
+        return null;
     }
 }
 
 
 class SiteLogFormat {
     
-    static LEGACY = new SiteLogFormat(0, 'Legacy (ASCII)', 'bi bi-file-text');
-    static GEODESY_ML = new SiteLogFormat(1, 'GeodesyML', 'bi bi-filetype-xml');
-    static JSON = new SiteLogFormat(2, 'JSON', 'bi bi-filetype-json');
+    static LEGACY = new SiteLogFormat(1, 'Legacy (ASCII)', 'bi bi-file-text');
+    static GEODESY_ML = new SiteLogFormat(2, 'GeodesyML', 'bi bi-filetype-xml');
+    static JSON = new SiteLogFormat(3, 'JSON', 'bi bi-filetype-json');
 
     constructor(val, label, icon) {
         this.val = val;
@@ -179,21 +180,22 @@ class SiteLogFormat {
 
     static get(val) {
         switch(val) {
-            case 0:
-                return SiteLogFormat.LEGACY;
             case 1:
-                return SiteLogFormat.GEODESY_ML;
+                return SiteLogFormat.LEGACY;
             case 2:
+                return SiteLogFormat.GEODESY_ML;
+            case 3:
                 return SiteLogFormat.JSON;
         }
+        return null;
     }
 }
 
 class SLMFileType {
     
-    static SITE_LOG = new SLMFileType(0, 'Site Log');
-    static SITE_IMAGE = new SLMFileType(1, 'Site Image');
-    static ATTACHMENT = new SLMFileType(2, 'Attachment');
+    static SITE_LOG = new SLMFileType(1, 'Site Log');
+    static SITE_IMAGE = new SLMFileType(2, 'Site Image');
+    static ATTACHMENT = new SLMFileType(3, 'Attachment');
 
     constructor(val, label) {
         this.val = val;
@@ -206,13 +208,14 @@ class SLMFileType {
 
     static get(val) {
         switch(val) {
-            case 0:
-                return SLMFileType.SITE_LOG;
             case 1:
-                return SLMFileType.SITE_IMAGE;
+                return SLMFileType.SITE_LOG;
             case 2:
+                return SLMFileType.SITE_IMAGE;
+            case 3:
                 return SLMFileType.ATTACHMENT;
         }
+        return null;
     }
 }
 

@@ -13,13 +13,13 @@ class SiteFileUploadStatus(IntegerChoices, p('help')):
     _symmetric_builtins_ = [s('name', case_fold=True)]
 
     UNPUBLISHED = (
-        0,
+        1,
         _('Unpublished File'),
         _('The file is pending moderation before it will be made public.')
     )
 
     PUBLISHED = (
-        1,
+        2,
         _('Published File'),
         _(
             'The file is published and is publicly available as an attachment '
@@ -28,19 +28,19 @@ class SiteFileUploadStatus(IntegerChoices, p('help')):
     )
 
     INVALID = (
-        2,
+        3,
         _('Invalid Site Log'),
         _('The file did not pass validation.')
     )
 
     WARNINGS = (
-        3,
+        4,
         _('Warnings Site Log'),
         _('The file is valid but has some warnings.')
     )
 
     VALID = (
-        4,
+        5,
         _('Valid Site Log'),
         _('The file is valid.')
     )

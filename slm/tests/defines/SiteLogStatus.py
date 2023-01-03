@@ -11,26 +11,26 @@ class TestSiteLogStatus(TestCase):
         self.assertEqual(SiteLogStatus.DORMANT, 'Dormant')
         self.assertEqual(SiteLogStatus.NASCENT, 'NASCENT')
         self.assertEqual(SiteLogStatus.UPDATED, SiteLogStatus('UPDATED'))
-        self.assertEqual(SiteLogStatus.IN_REVIEW, SiteLogStatus('In_Review'))
         self.assertEqual(SiteLogStatus.PUBLISHED, 'Published')
+        self.assertEqual(SiteLogStatus.EMPTY, 'EmptY')
 
         self.assertEqual(SiteLogStatus.PUBLISHED.label, 'Published')
         self.assertEqual(SiteLogStatus.DORMANT.label, 'Dormant')
-        self.assertEqual(SiteLogStatus.IN_REVIEW.label, 'In Review')
         self.assertEqual(SiteLogStatus.NASCENT.label, 'Nascent')
         self.assertEqual(SiteLogStatus.UPDATED.label, 'Updated')
+        self.assertEqual(SiteLogStatus.EMPTY.label, 'Empty')
 
         self.assertEqual(str(SiteLogStatus.PUBLISHED), 'Published')
         self.assertEqual(str(SiteLogStatus.DORMANT), 'Dormant')
-        self.assertEqual(str(SiteLogStatus.IN_REVIEW), 'In Review')
         self.assertEqual(str(SiteLogStatus.NASCENT), 'Nascent')
         self.assertEqual(str(SiteLogStatus.UPDATED), 'Updated')
+        self.assertEqual(str(SiteLogStatus.EMPTY), 'Empty')
 
         self.assertEqual(SiteLogStatus.DORMANT, 0)
         self.assertEqual(SiteLogStatus.NASCENT, 1)
-        self.assertEqual(SiteLogStatus.IN_REVIEW, 2)
-        self.assertEqual(SiteLogStatus.UPDATED, 3)
-        self.assertEqual(SiteLogStatus.PUBLISHED, 4)
+        self.assertEqual(SiteLogStatus.UPDATED, 2)
+        self.assertEqual(SiteLogStatus.PUBLISHED, 3)
+        self.assertEqual(SiteLogStatus.EMPTY, 4)
 
     def test_merge(self):
 

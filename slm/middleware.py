@@ -21,7 +21,7 @@ class SetLastVisitMiddleware:
                 request.user.last_activity is None and
                 getattr(settings, 'SLM_EMAILS_REQUIRE_LOGIN', True)
             ):
-                request.user.silence_emails = False
+                request.user.silence_alerts = False
             request.user.last_activity = now()
             request.user.save()
 

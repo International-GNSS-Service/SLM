@@ -7,9 +7,9 @@ class SLMFileType(IntegerChoices, s('type')):
 
     _symmetric_builtins_ = [s('name', case_fold=True)]
 
-    SITE_LOG   = 0, _('Site Log'),   'log'
-    SITE_IMAGE = 1, _('Site Image'), 'image'
-    ATTACHMENT = 2, _('Attachment'), 'attachment'
+    SITE_LOG   = 1, _('Site Log'),   'log'
+    SITE_IMAGE = 2, _('Site Image'), 'image'
+    ATTACHMENT = 3, _('Attachment'), 'attachment'
 
     @staticmethod
     def icon(mimetype):

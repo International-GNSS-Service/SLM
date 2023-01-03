@@ -1,16 +1,11 @@
-<!--
-
-Template for stations list.
-
--->
-<!-- Select Station -->
+{% load i18n %}
 
 <div id="slm-station-container" class="slm-scroll-container p-2">
     
     <div class="pt-3 px-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center"> 
             <h5 class="text-center mb-0"><b><span id="slm-num-stations">{{ num_sites }}</span></b> Stations</h5>
-            <a id="filter-stations" class="btn btn-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#filter" data-backdrop="false">
+            <a id="filter-stations" class="btn btn{% if not station_filter %}-outline{% endif %}-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#filter" data-backdrop="false">
                 Filter <i class="bi bi-filter"></i>
             </a>
         </div>
@@ -48,7 +43,7 @@ Template for stations list.
             data-slm-flags={{ site.num_flags }}
             data-slm-status={{ site.status.value }}
             data-slm-alert={{ station_alert_level.value }}
-            aria-selected="true"><span>{{ station }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not site.num_flags %}style="display: none"{% endif %}>{{site.num_flags}}</span> <i class="bi bi-bell-fill slm-alert-bell text-{{ station_alert_level.bootstrap }}" {% if station_alert_level is None %}style="display: none"{% endif %}></i></button>
+            aria-selected="true"><span>{{ station }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not site.num_flags %}style="display: none"{% endif %}>{{site.num_flags}}</span> <i class="bi bi-bell-fill slm-alert-bell {{ station_alert_level.css }}" {% if station_alert_level is None %}style="display: none"{% endif %}></i></button>
         {% endif %}
         <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
             <div class="slm-loader"></div>
@@ -57,14 +52,102 @@ Template for stations list.
 </div>
 
 <!-- Filter Modal -->
-{% include "slm/widgets/filter.html" with url_name=request.resolver_match.url_name %}
+<div class="modal fade" id="filter" tabindex="-1" aria-labelledby="filter-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="filter-label">Filter Station List</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="slm-station-filter">
+                    <div id="filter-station-options" class="row px-3 pb-3">
+                        <div class="col-4">
+                            <fieldset>
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">Site Status:</span></legend>
+                                {% for status in SiteLogStatus %}
+                                <div class="form-check">
+                                    <input id="slm-status-{{status.value}}" class="form-check-input" type="checkbox" name="status" value="{{status.value}}" {% if status in station_filter.status %}checked{% endif %}>
+                                    <label class="form-check-label d-flex" for="slm-status-{{status.value}}">
+                                        <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
+                                        <span class="mb-1">{{status.label}}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                            <fieldset class="d-flex flex-column">
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Active Alerts" %}</span></legend>
+                                {% for site_alert in site_alerts %}
+                                <div>
+                                    <input id="slm-site-alert-{{ site_alert|class_name }}" class="form-check-input" type="checkbox" name="alert" value="{{ site_alert|class_name }}" {% if alert|lower in station_filter.alerts %}checked{% endif %}>
+                                    <label class="form-check-label" for="slm-site-alert-{{ site_alert|class_name }}">
+                                        <span class="mb-1">{{ site_alert|model_meta:"verbose_name" }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                            <fieldset class="d-flex flex-column">
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Alert Level" %}</span></legend>
+                                {% for level in AlertLevel %}
+                                <div>
+                                    <input id="slm-alert-level-{{ level.label }}" class="form-check-input" type="radio" name="alertLevel" value={{ level.value }} {% if station_filter.max_alert == level %}checked{% endif %}>
+                                    <label class="form-check-label" for="slm-alert-level-{{ level.label }}">
+                                        <span class="mb-1"><i class="bi bi-bell-fill slm-alert-bell {{ level.css }}"></i> {{ level.label }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </fieldset>
+                        </div>
+                        <div class="col-4">
+                            <fieldset>
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Neworks:" %}</span></legend>
+                                <div class="overflow-auto" style="max-height: 400px;">
+                                    {% for network in networks %}
+                                    <div class="form-check">
+                                        <input id="slm-network-{{network.id}}" class="form-check-input" type="checkbox" name="network" value="{{network.id}}" {% if network in station_filter.network %}checked{% endif %}>
+                                        <label class="form-check-label d-flex" for="slm-network-{{network.id}}">
+                                            <span class="mb-1">{{network.name}}</span>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="col-4">
+                            <fieldset>
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Agencies:" %}</span></legend>
+                                <div class="overflow-auto" style="max-height: 400px;">
+                                {% for agency in user_agencies %}
 
+                                    <div class="form-check">
+                                        <input id="slm-agency-{{agency.id}}" class="form-check-input" type="checkbox" name="agency" value="{{agency.id}}" {% if agency in station_filter.agency %}checked{% endif %}>
+                                        <label class="form-check-label d-flex" for="slm-agency-{{agency.id}}">
+                                            <span class="mb-1">{{agency.name}}</span>
+                                        </label>
+                                    </div>
+
+                                {% endfor %}
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button id="clear-filter" type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">{% trans "Clear Filters" %}</button>
+                <button id="apply-filter" type="button" class="btn btn-success" data-bs-dismiss="modal">{% trans "Apply Filters" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% load compress %}
 
 {% compress js inline %}
 <script>
     let keyupTimeoutID = 0;
+    const stationFilter = $('#slm-station-filter');
     function drawStations(position, data, filtered, total) {
 
         if (filtered !== null) {
@@ -81,9 +164,9 @@ Template for stations list.
         function getAlertBell(station) {
             if (station.hasOwnProperty('max_alert') && station.max_alert !== null) {
                 let alert = slm.AlertLevel.get(station.max_alert);
-                return `<i class="bi bi-bell-fill slm-alert-bell text-${ alert.bootstrap }"></i>`
+                return `<i class="bi bi-bell-fill slm-alert-bell ${ alert.css }"></i>`
             }
-            return `<i class="bi bi-bell-fill slm-alert-bell text-${ alert.bootstrap }" style="display: none"></i>`
+            return `<i class="bi bi-bell-fill slm-alert-bell" style="display: none"></i>`
         }
 
         for (const station of data) {
@@ -92,6 +175,7 @@ Template for stations list.
             let selected = 'false';
             const editLink = slm.urls.reverse("{{ link_view }}", {kwargs: {station: station.name}});
             const status = slm.SiteLogStatus.get(station.status);
+            const level = station.max_alert !== null ? slm.AlertLevel.get(station.max_alert) : null;
             let pos = position;
             if (station.name === '{{ station }}') {
                 if (
@@ -113,6 +197,7 @@ Template for stations list.
                     role="tab"
                     data-slm-flags=${station.num_flags}
                     data-slm-status=${status.val}
+                    data-slm-alert=${level ? level.val : null}
                     aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)} ${getAlertBell(station)}</button>`
                 ).insertBefore(pos);
         }
@@ -121,6 +206,8 @@ Template for stations list.
         const stationList = $("#slm-station-list");
         const searchInput = $('#station-search');
         const filterInput = $("#apply-filter");
+        const filterStations = $("#filter-stations");
+        const clearFilter = $('#clear-filter');
         function init() {
             slm.initInfiniteScroll(
                 stationList,
@@ -131,6 +218,7 @@ Template for stations list.
                 {},
                 drawStations
             );
+            slm.stationFilterChanged(stationList.data('slmQuery'));
         }
 
         searchInput.keypress(function (event) {
@@ -156,28 +244,47 @@ Template for stations list.
                 init();
             }, 500);
         });
-        filterInput.click(function() {
+
+        const applyFilter = function() {
             stationList.find('button').remove();
             let query = stationList.data('slmQuery') || {};
-            query["status"] = $("#slm-status-filter input[name=filterToggle]:checked").map(function () {
+            query.status = stationFilter.find('input[name="status"]:checked').map(function () {
                 return this.value;
-            }).get().join(",");
-            query["network"] = $("#slm-network-filter input[name=filterToggle]:checked").map(function () {
+            }).get();
+            query.alert = stationFilter.find('input[name="alert"]:checked').map(function () {
                 return this.value;
-            }).get().join(",");
-            query["agency"] = $("#slm-agency-filter input[name=filterToggle]:checked").map(function () {
+            }).get();
+            query.network = stationFilter.find('input[name="network"]:checked').map(function () {
                 return this.value;
-            }).get().join(",");
+            }).get();
+            query.agency = stationFilter.find('input[name="agency"]:checked').map(function () {
+                return this.value;
+            }).get();
+
+            query.max_alert = stationFilter.find('input[name="alertLevel"]:checked').val();
+            if (typeof query.max_alert === 'undefined' || query.max_alert === null) {
+                delete query.max_alert;
+            }
+            if (slm.hasParameters(query)) {
+                filterStations.removeClass("btn-outline-primary").addClass("btn-primary");
+            } else {
+                filterStations.removeClass("btn-primary").addClass("btn-outline-primary");
+            }
+            {% if site %}query.id = [{{site.pk}}];{% endif %}
             stationList.data('slmPage', 0);
             stationList.data('slmQuery', query);
             init();
+        }
+        filterInput.click(applyFilter);
+
+        clearFilter.on('click', function() {
+            stationFilter.find("input[type='checkbox']:checked").prop("checked", false);
+            stationFilter.find("input[type='radio']:checked").prop("checked", false);
+            applyFilter();
         });
-        init();
+
+        applyFilter();
     });
 
-    function uncheckAll() {
-        $("input[type='checkbox']:checked").prop("checked", false)
-    }
-    $('#clear-filter').on('click', uncheckAll)
 </script>
 {% endcompress %}

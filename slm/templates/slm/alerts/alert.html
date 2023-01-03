@@ -1,12 +1,15 @@
-<div class="d-flex flex-column justify-content-left align-items-left mt-4 pb-3 border-bottom">
-  <h2 class="text-{{ alert.level.bootstrap }}">{{ alert.header }}</h2>
+<div class="d-flex justify-content-between mt-4 pb-3 border-bottom">
+  <h2 class="{{ alert.level.css }}">{{ alert.header }}</h2>
+  <h3 class="opacity-75">{{ alert.timestamp.date }}</h3>
 </div>
 <div class="container px-5 pt-3">
-    <div class="slm-alert-item slm-alert-{{ alert.level.label.lower }} border-{{ alert.level.bootstrap }}">
+    <div class="slm-alert-item {{ alert.level.css }}">
     {% block alert_content %}
+    <div class="slm-alert-detail">
     {% autoescape off %}
     {{ alert.detail }}
     {% endautoescape %}
+    </div>
     {% endblock %}
     </div>
 </div>

@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.utils.timezone import now
 from rest_framework import serializers
 from slm import signals as slm_signals
 from slm.models import (
@@ -7,16 +6,13 @@ from slm.models import (
     Alert,
     LogEntry,
     Network,
-    ReviewRequest,
     Site,
     SiteFileUpload,
     UserProfile,
 )
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
-from django.db.models import Q
 from slm.utils import build_absolute_url
-from django.urls import reverse
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -73,9 +69,15 @@ class StationSerializer(serializers.ModelSerializer):
 
     publish = serializers.BooleanField(write_only=True, required=False)
 
+    review_requested = serializers.DateTimeField(
+        read_only=True,
+        required=False,
+        source='review_requested.timestamp'
+    )
+
     def get_can_publish(self, obj):
         if 'request' in self.context:
-            return obj.can_publish(self.context['request'].user)
+            return self.context['request'].user.is_moderator()
         return None
 
     def update(self, instance, validated_data):
@@ -85,10 +87,7 @@ class StationSerializer(serializers.ModelSerializer):
                     _('You do not have permission to publish the site log.')
                 )
             instance.publish(request=self.context['request'])
-            # this might have been cached by an annotation - clear it in case
-            # because publish may invalidate it
-            if hasattr(instance, '_review_pending'):
-                del instance._review_pending
+            # instance.refresh_from_db() - necessary?
         return instance
 
     def create(self, validated_data):
@@ -135,7 +134,7 @@ class StationSerializer(serializers.ModelSerializer):
             'last_user',
             'can_publish',
             'publish',
-            'review_pending',
+            'review_requested',
             'max_alert'
         ]
         extra_kwargs = {
@@ -146,37 +145,21 @@ class StationSerializer(serializers.ModelSerializer):
         }
 
 
-class ReviewRequestSerializer(serializers.ModelSerializer):
+class ReviewRequestSerializer(StationSerializer):
 
-    site_name = serializers.CharField(source='site.name', required=True)
-    site = StationSerializer(many=False, read_only=True)
-    requester = EmbeddedUserSerializer(many=False, read_only=True)
-    review_pending = None
+    detail = serializers.CharField(required=False, write_only=True)
 
-    def create(self, validated_data):
-        validated_data['requester'] = getattr(
-            self.context['request'],
-            'user',
-            None
-        )
-        validated_data['site'] = Site.objects.get(
-            name__iexact=validated_data['site']['name']
-        )
-        request = ReviewRequest.objects.update_or_create(
-            site=validated_data['site'],
-            defaults={
-                'requester': validated_data['requester'],
-                'timestamp': now()
-            }
-        )[0]
-        validated_data['site'].update_status(save=True)
-        request.refresh_from_db()
-        self.review_pending = validated_data['site'].review_pending
-        return request
+    def update(self, instance, validated_data):
+        return instance
 
     class Meta:
-        model = ReviewRequest
-        fields = ['site_name', 'site', 'requester', 'timestamp']
+        model = Site
+        fields = StationSerializer.Meta.fields + ['detail']
+        extra_kwargs = {
+            field: {'read_only': True} for field in fields if field not in {
+                'detail'
+            }
+        }
 
 
 class LogEntrySerializer(serializers.ModelSerializer):
@@ -204,25 +187,19 @@ class AlertSerializer(serializers.ModelSerializer):
 
     def get_target(self, obj):
         if obj.target:
-            if isinstance(obj.target, Site):
+            def target():
                 return {
                     'type': 'Site',
                     'id': obj.target.id,
-                    'name': obj.target.name
-                }
-            elif isinstance(obj.target, Agency):
-                return {
-                    'type': 'Agency',
-                    'id': obj.target.id,
-                    'name': obj.target.name
-                }
-            elif isinstance(obj.target, get_user_model()):
-                return {
-                    'type': 'User',
-                    'id': obj.target.id,
                     'name': obj.target.name,
+                    'link': obj.target_link
+                }
+            if isinstance(obj.target, get_user_model()):
+                return {
+                    **target(),
                     'email': obj.target.email
                 }
+            return target()
         return None
 
     class Meta:
@@ -284,7 +261,7 @@ class UserSerializer(UserProfileSerializer):
             'first_name',
             'last_name',
             'date_joined',
-            'silence_emails',
+            'silence_alerts',
             'html_emails',
             'agencies',
             'profile'

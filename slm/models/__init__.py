@@ -37,7 +37,6 @@ from slm.models.system import (
     Network,
     Radome,
     Receiver,
-    ReviewRequest,
     SatelliteSystem,
     SiteFile,
     SiteFileUpload,
@@ -47,7 +46,9 @@ from slm.models.alerts import (
     UserAlert,
     SiteAlert,
     AgencyAlert,
-    GeodesyMLInvalid
+    GeodesyMLInvalid,
+    ReviewRequested,
+    UpdatesRejected
 )
 from slm.models.user import User, UserProfile
 

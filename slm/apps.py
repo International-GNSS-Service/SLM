@@ -1,21 +1,24 @@
 from django.apps import AppConfig, apps
+from django.dispatch import Signal
 from django.db.models.signals import (
     post_init,
     post_save,
     post_delete,
-    post_migrate,
-    Signal
+    post_migrate
 )
 from django.dispatch import receiver
 from django.core.checks import Warning, register, Error, Tags
 from django.utils.translation import gettext as _
-from django.conf import settings
 from django.utils.module_loading import import_string
+from django.conf import settings
 from slm.defines import GeodesyMLVersion
+from slm.signals import signal_name
+from pprint import pformat
 from tqdm import tqdm
+from slm.utils import clear_caches
 
 
-@register('slm')
+@register('slm', Tags.security)
 def check_permission_groups_setting(**kwargs):
     error_id = 'slm.E002'
     header = _('settings.SLM_DEFAULT_PERMISSION_GROUPS is invalid')
@@ -61,7 +64,7 @@ def check_permission_groups_setting(**kwargs):
     return errors
 
 
-@register('slm')
+@register('slm', Tags.security)
 def check_permissions_setting(**kwargs):
     warning_id = 'slm.W001'
     permissions = getattr(settings, 'SLM_PERMISSIONS', None)
@@ -87,7 +90,7 @@ def check_permissions_setting(**kwargs):
     return []
 
 
-@register('slm')
+@register('slm', Tags.signals)
 def check_automated_alerts(**kwargs):
     error_id = 'slm.E001'
 
@@ -98,14 +101,15 @@ def check_automated_alerts(**kwargs):
             error_id
         )
 
-    alerts = getattr(settings, 'settings.SLM_AUTOMATED_ALERTS', {})
+    alerts = getattr(settings, 'SLM_AUTOMATED_ALERTS', {})
     if not isinstance(alerts, dict):
         return [
             alert_conf_error(_(
                 'SLM_AUTOMATED_ALERTS is a {} but it must be a dictionary'
                 'keyed on Alert model labels, the values are dictionaries '
-                'containing the signals configured to trigger the alert '
-                'checks and any default Alert model parameter overrides.')
+                'containing the signals configured to issue the alert and/or'
+                'rescind the alert and any default Alert model parameter '
+                'overrides.')
                 .format(type(alerts))
             )
         ]
@@ -125,32 +129,59 @@ def check_automated_alerts(**kwargs):
                 .format(alert)
             ))
             continue
-        for signal in config.get('signals', []):
-            try:
-                signal = import_string(signal)
-                if not isinstance(signal, Signal):
-                    errors.append(alert_conf_error(
-                        _('SLM_AUTOMATED_ALERTS[{}][signals][{}] is not a '
-                          'Signal').format(signal),
-                    ))
-            except ImportError:
-                errors.append(alert_conf_error(
-                    _('SLM_AUTOMATED_ALERTS[{}] contains a non existent '
-                      'trigger signal ({}).').format(alert, signal)
-                ))
-                continue
 
-            if signal not in AlertModel.objects.SUPPORTED_SIGNALS:
-                errors.append(alert_conf_error(
-                    _('SLM_AUTOMATED_ALERTS[{}] contains an unsupported '
-                      'trigger signal ({}) for alerts of type {}. Must be one '
-                      'of: {}').format(
-                        alert,
-                        signal,
-                        AlertModel,
-                        AlertModel.objects.SUPPORTED_SIGNALS
-                    )
-                ))
+        if not isinstance(AlertModel.objects.SUPPORTED_SIGNALS, dict):
+            errors.append(alert_conf_error(
+                _('{}.objects.SUPPORTED_SIGNALS must be a dictionary keyed '
+                  'with `issue` and `rescind` signal lists that are supported.'
+                  )
+                .format(AlertModel.__name__)
+            ))
+            continue
+
+        def check_signals(signal_type):
+            for signal in config.get(signal_type, []):
+                try:
+                    signal = import_string(signal)
+                    if not isinstance(signal, Signal):
+                        errors.append(alert_conf_error(
+                            _('SLM_AUTOMATED_ALERTS[{}][{}][{}] is not a '
+                              'Signal').format(
+                                alert, signal_type, signal_name(signal)
+                            ),
+                        ))
+                except ImportError:
+                    errors.append(alert_conf_error(
+                        _('SLM_AUTOMATED_ALERTS[{}][{}] contains a non '
+                          'existent trigger signal ({}).').format(
+                            alert, signal_type, signal_name(signal)
+                        )
+                    ))
+                    continue
+
+                if signal not in AlertModel.objects.SUPPORTED_SIGNALS.get(
+                    signal_type, []
+                ):
+                    errors.append(alert_conf_error(
+                        _('SLM_AUTOMATED_ALERTS[{}][{}] contains an '
+                          'unsupported signal ({}) for alerts of type '
+                          '{}. Must be one of:\n{}').format(
+                            alert,
+                            signal_type,
+                            signal_name(signal),
+                            AlertModel,
+                            pformat([
+                                signal_name(sig)
+                                for sig in
+                                AlertModel.objects.SUPPORTED_SIGNALS[
+                                    signal_type
+                                ]
+                            ])
+                        )
+                    ))
+
+        check_signals('issue')
+        check_signals('rescind')
     return errors
 
 
@@ -165,11 +196,9 @@ class SLMConfig(AppConfig):
 
         from slm import signals as slm_signals
         from slm.models import Site, Alert
+        from django.contrib.auth import get_user_model
 
         # don't remove these includes - they ensure signals are connected #####
-        from slm.receivers import (
-            event_emailers,  # register signal receivers that send emails
-        )
         from slm.receivers import (
             event_loggers,  # register signal receivers that log events
         )
@@ -204,6 +233,13 @@ class SLMConfig(AppConfig):
                     previous_status=instance._slm_pre_status,
                     new_status=instance.status
                 )
+
+        @receiver(post_save, sender=get_user_model())
+        def user_save(
+            sender, instance, created, raw, using, update_fields, **kwargs
+        ):
+            """Clear any relevant caches whenever a user is saved."""
+            clear_caches()
 
         def alert_save(
             sender, instance, created, raw, using, update_fields, **kwargs

@@ -1,15 +1,34 @@
 from django.dispatch import Signal
-from django.conf import settings
 from django.utils.module_loading import import_string
 from django.apps import apps
 import logging
 from functools import partial
+from django.conf import settings
+from django.dispatch import receiver
+from slm import signals as slm_signals
 
-logger = logging.getLogger(f'{__name__}.alert_check')
+
+logger = logging.getLogger(f'{__name__}')
 
 
-def alert_check(alert_class, **kwargs):
-    alert_class.objects.from_signal(**kwargs)
+def issue_alert(alert_class, **kwargs):
+    alert = alert_class.objects.issue_from_signal(**kwargs)
+    if alert:
+        logger.debug(
+            'Alert (%s) issued from signal: %s',
+            alert,
+            kwargs.get('signal', None)
+        )
+
+
+def rescind_alert(alert_class, **kwargs):
+    rescinded = alert_class.objects.rescind_from_signal(**kwargs)
+    if rescinded:
+        logger.debug(
+            '%d alerts rescinded from signal: %s',
+            rescinded[0],
+            kwargs.get('signal', None)
+        )
 
 
 def valid_signals(signals):
@@ -31,7 +50,23 @@ for alert, config in getattr(settings, 'SLM_AUTOMATED_ALERTS', {}).items():
     except LookupError:
         continue
     if alert.automated:
-        for signal in valid_signals(config.get('signals', [])).intersection(
-            valid_signals(getattr(alert.objects, 'SUPPORTED_SIGNALS', []))
-        ):
-            signal.connect(partial(alert_check, alert_class=alert))
+        def do_connect(signal_type, connection):
+            for signal in valid_signals(
+                    config.get(signal_type, [])
+            ).intersection(
+                valid_signals(
+                    getattr(
+                        alert.objects, 'SUPPORTED_SIGNALS', {}
+                    ).get(signal_type, [])
+                )
+            ):
+                signal.connect(connection)
+
+        do_connect('issue', partial(issue_alert, alert_class=alert))
+        do_connect('rescind', partial(rescind_alert, alert_class=alert))
+
+
+@receiver(slm_signals.alert_issued)
+def send_alert_emails(sender, alert, **kwargs):
+    if alert.send_email:
+        alert.send(request=kwargs.get('request', None))

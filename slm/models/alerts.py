@@ -23,6 +23,9 @@ from django.core.exceptions import ImproperlyConfigured
 from logging import getLogger
 from smtplib import SMTPException
 from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse
 from ckeditor_uploader.fields import RichTextUploadingField
 import os
 
@@ -33,7 +36,10 @@ class AlertManager(PolymorphicManager):
 
     # automated alerts should set this set to this list of signals
     # that may trigger the alert
-    SUPPORTED_SIGNALS = set()
+    SUPPORTED_SIGNALS = {
+        'issue': {},
+        'rescind': {}
+    }
 
     @classmethod
     def _init_alert_models_(cls):
@@ -102,19 +108,19 @@ class AlertManager(PolymorphicManager):
         cls._init_alert_models_()
         return cls.ALERT_MODELS['untargeted']
 
-    def from_signal(self, **kwargs):
+    def issue_from_signal(self, **kwargs):
         """
-        Automated alerts must implement from_signal() to check for and create
-        alerts based off supported triggering signals. The list of supported
-        signals must be set in the Alert's manager SUPPORTED_SIGNALS class
-        field.
+        Automated alerts must implement issue_from_signal() to check for and
+        create alerts based off supported triggering signals. The list of
+        supported signals must be set in the Alert's manager SUPPORTED_SIGNALS
+        class field.
 
         :param kwargs: The signal kwargs
         :return:
         """
         raise NotImplementedError(
-            f'{self.__class__} must implement from_signal() to trigger alerts '
-            f'from a signal.'
+            f'{self.__class__} must implement issue_from_signal() to trigger '
+            f'alerts from a signal.'
         )
 
     def classes(self):
@@ -163,8 +169,9 @@ class AlertQuerySet(PolymorphicQuerySet):
     @classmethod
     def user_q(cls, user):
         qry = Q()
+        search = '' if isinstance(user, get_user_model()) else '__in'
         for alert_class in AlertManager.user_alerts():
-            qry |= Q(**{f'{alert_class._meta.model_name}__user': user})
+            qry |= Q(**{f'{alert_class._meta.model_name}__user{search}': user})
         return qry
 
     @classmethod
@@ -193,11 +200,24 @@ class AlertQuerySet(PolymorphicQuerySet):
     @classmethod
     def untargeted_q(cls):
         qry = Q()
-        for alert_class in AlertManager.agency_alerts():
-            qry |= Q(instance_of=alert_class)
+        for alert_class in AlertManager.untargeted_alerts():
+            qry |= Q(
+                polymorphic_ctype=ContentType.objects.get_for_model(
+                    alert_class
+                )
+            )
         return qry
 
     def visible_to(self, user):
+        """
+        Return a queryset of Alerts that should be visible to the given user.
+        For super users this is all alerts and for everyone else this is any
+        untargeted alert as well as any alert targeted at them, any agencies
+        they belong to, or any sites belonging to any agencies they belong to.
+
+        :param user: The user to fetch alerts for
+        :return:
+        """
         from slm.models import Site
         if user.is_authenticated:
             if user.is_superuser:
@@ -210,6 +230,46 @@ class AlertQuerySet(PolymorphicQuerySet):
                     self.agencies_q(user.agencies.all())
                 )
         return self.none()
+
+    def concerning_agencies(self, agencies):
+        """
+        Given an iterable of agencies return all Alerts that may be relevant.
+        This includes all untargeted alerts, any alerts for the specific
+        agencies and any alerts for users belonging to representing agencies or
+        any users belonging to the represented agencies.
+        """
+        from slm.models import Site
+        return self.filter(
+            self.untargeted_q() |
+            self.user_q(
+                get_user_model().objects.filter(agencies__in=agencies)
+            ) |
+            self.sites_q(
+                Site.objects.filter(agencies__in=agencies).distinct()
+            ) |
+            self.agencies_q(agencies)
+        )
+
+    def concerning_sites(self, sites):
+        """
+        Given an iterable of sites return all Alerts that may be relevant.
+        This includes all untargeted alerts, any alerts for the specific sites
+        and any alerts for users belonging to representing agencies or directly
+        for represented agencies.
+        """
+        from slm.models import Agency
+        agencies = Agency.objects.filter(sites__in=sites).distinct()
+        ret = self.filter(
+            self.untargeted_q() |
+            self.user_q(
+                get_user_model().objects.filter(
+                    agencies__in=agencies
+                ).distinct()
+            ) |
+            self.sites_q(sites) |
+            self.agencies_q(agencies)
+        )
+        return ret
 
     def send_emails(self, request=None):
         for alert in self:
@@ -242,6 +302,16 @@ class Alert(PolymorphicModel):
         if real == self:
             return None
         return real.target
+
+    @property
+    def target_link(self):
+        if self.site_alert:
+            return reverse('slm:edit', kwargs={'station': self.target.name})
+        elif self.agency_alert:
+            return f'{reverse("slm:home")}?agency={self.target.pk}'
+        elif self.user_alert:
+            return f'mailto:{self.target.email}'
+        return reverse('slm:alert', kwargs={'alert': self.pk})
 
     @property
     def untargeted(self):
@@ -407,7 +477,7 @@ class Alert(PolymorphicModel):
                 to = {user.email for user in self.users.emails_ok()}
                 cc = {
                     user.email
-                    for user in get_user_model().objects.filter(
+                    for user in get_user_model().objects.emails_ok().filter(
                         is_superuser=True
                     )
                     if user not in bcc and user not in to
@@ -442,12 +512,13 @@ class Alert(PolymorphicModel):
 
     def __str__(self):
         if self.target:
-            return f'[{self.target}] {self.header}'
+            return f'({self.target}) {self.header}'
         return self.header
 
     class Meta:
         ordering = ('-priority', '-timestamp',)
         verbose_name_plural = 'Alerts'
+        verbose_name = 'Alerts'
 
 
 class SiteAlert(Alert):
@@ -477,6 +548,7 @@ class SiteAlert(Alert):
 
     class Meta:
         verbose_name_plural = 'Site Alerts'
+        verbose_name = 'Site Alert'
 
 
 class UserAlert(Alert):
@@ -499,6 +571,7 @@ class UserAlert(Alert):
 
     class Meta:
         verbose_name_plural = 'User Alerts'
+        verbose_name = 'User Alert'
 
 
 class AgencyAlert(Alert):
@@ -521,6 +594,7 @@ class AgencyAlert(Alert):
 
     class Meta:
         verbose_name_plural = 'Agency Alerts'
+        verbose_name = 'Agency Alert'
 
 
 class AutomatedAlertMixin:
@@ -530,9 +604,11 @@ class AutomatedAlertMixin:
     def save(self, *args, **kwargs):
         for key, val in getattr(
             settings, 'SLM_AUTOMATED_ALERTS', {}
-        ).get('slm.GeodesyMLInvalid', {}).items():
-            if key in {'signals'}:
+        ).get(self._meta.label, {}).items():
+            if key in {'issue', 'rescind'}:
                 continue
+            if callable(val):
+                val = val()
             setattr(self, key, val)
         super().save(*args, **kwargs)
 
@@ -540,16 +616,18 @@ class AutomatedAlertMixin:
 class GeodesyMLInvalidManager(AlertManager):
 
     SUPPORTED_SIGNALS = {
-        slm_signals.site_published,
-        slm_signals.site_status_changed,
-        slm_signals.section_added,
-        slm_signals.section_edited,
-        slm_signals.section_deleted,
-        slm_signals.site_file_published,
-        slm_signals.site_file_unpublished
+        'issue': {
+            slm_signals.site_published,
+            slm_signals.site_status_changed,
+            slm_signals.section_added,
+            slm_signals.section_edited,
+            slm_signals.section_deleted,
+            slm_signals.site_file_published,
+            slm_signals.site_file_unpublished
+        }
     }
 
-    def from_signal(self, signal, site=None, **kwargs):
+    def issue_from_signal(self, signal, site=None, **kwargs):
         """
         Check if an alert should be issued when the given signal is dispatched
         and issue the alert if necessary.
@@ -579,10 +657,10 @@ class GeodesyMLInvalidManager(AlertManager):
         :return: The alert object if one was issued, None otherwise
         """
         from slm.api.serializers import SiteLogSerializer
-        if hasattr(site, 'schema_alert') and site.schema_alert:
-            if os.path.exists(site.schema_alert.file.path):
-                os.remove(site.schema_alert.file.path)
-            site.schema_alert.delete()
+        if hasattr(site, 'geodesymlinvalid') and site.geodesymlinvalid:
+            if os.path.exists(site.geodesymlinvalid.file.path):
+                os.remove(site.geodesymlinvalid.file.path)
+            site.geodesymlinvalid.delete()
 
         geo_version = GeodesyMLVersion.latest()
         serializer = SiteLogSerializer(instance=site, published=published)
@@ -654,10 +732,8 @@ class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
         default=None,
         blank=True,
         on_delete=models.CASCADE,
-        help_text=_(
-            'This site this alert applies to.'
-        ),
-        related_name='schema_alert'
+        help_text=_('The site this alert applies to.'),
+        related_name='geodesymlinvalid'
     )
 
     findings = models.JSONField()
@@ -695,4 +771,209 @@ class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
 
     class Meta:
         unique_together = ('site',)
-        verbose_name_plural = 'GeodesyML Alerts'
+        verbose_name_plural = 'GeodesyML Invalid Alerts'
+        verbose_name = 'GeodesyML Invalid'
+
+
+class ReviewRequestedManager(AlertManager):
+
+    SUPPORTED_SIGNALS = {
+        'issue': {
+            slm_signals.review_requested,
+            slm_signals.section_added,
+            slm_signals.section_edited,
+            slm_signals.section_deleted,
+            slm_signals.site_file_uploaded,
+            slm_signals.site_file_unpublished,
+            slm_signals.site_proposed
+        },
+        'rescind': {
+            slm_signals.updates_rejected,
+            slm_signals.site_published,
+            slm_signals.site_file_published,
+            slm_signals.section_added,
+            slm_signals.section_edited,
+            slm_signals.section_deleted,
+        }
+    }
+
+    def issue_from_signal(self, signal, site=None, **kwargs):
+        if site:
+            if hasattr(site, 'review_requested') and site.review_requested:
+                site.review_requested.timestamp = now()
+                site.review_requested.save()
+            else:
+                return self.create(
+                    site=site,
+                    issuer=getattr(kwargs.get('request', None), 'user', None),
+                    detail=kwargs.get('detail', '') or ''
+                )
+
+    def rescind_from_signal(self, site=None, **kwargs):
+        if site:
+            return self.filter(site=site).delete()
+
+
+class ReviewRequestedQueryset(AlertQuerySet):
+    pass
+
+
+class ReviewRequested(AutomatedAlertMixin, Alert):
+
+    DEFAULT_PRIORITY = 0
+
+    @property
+    def target_link(self):
+        return reverse('slm:review', kwargs={'station': self.target.name})
+
+    @property
+    def context(self):
+        return {
+            **super().context,
+            'site': self.site
+        }
+
+    @property
+    def target(self):
+        return self.site
+
+    @property
+    def requester(self):
+        return self.issuer
+
+    site = models.OneToOneField(
+        'slm.Site',
+        null=True,
+        default=None,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text=_('The site this alert applies to.'),
+        related_name='review_requested'
+    )
+
+    objects = ReviewRequestedManager.from_queryset(ReviewRequestedQueryset)()
+
+    def save(self, *args, **kwargs):
+        self.header = _('Review Requested.')
+        self.sticky = False
+        self.expires = None
+        self.send_email = True
+        self.level = AlertLevel.NOTICE
+        if not self.detail:
+            self.detail = (
+                _(
+                    '<a href="mailto:{}">{}</a> has requested the updates to '
+                    'this site log be published.'
+                ).format(self.requester.email, self.requester.name)
+                if self.requester else _(
+                    'A request has been made to publish the updates to this '
+                    'site log.'
+                )
+            )
+        super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('site',)
+        verbose_name_plural = 'Review Requested Alerts'
+        verbose_name = 'Review Requested'
+
+
+class UpdatesRejectedManager(AlertManager):
+
+    SUPPORTED_SIGNALS = {
+        'issue': {
+            slm_signals.updates_rejected
+        },
+        'rescind': {
+            slm_signals.site_published,
+            slm_signals.site_file_published,
+            slm_signals.review_requested,
+            slm_signals.section_added,
+            slm_signals.section_edited,
+            slm_signals.section_deleted
+        }
+    }
+
+    def issue_from_signal(self, signal, site=None, **kwargs):
+        if site:
+            if hasattr(site, 'updates_rejected') and site.updates_rejected:
+                site.updates_rejected.timestamp = now()
+                site.updates_rejected.save()
+            else:
+                return self.create(
+                    site=site,
+                    issuer=getattr(kwargs.get('request', None), 'user', None),
+                    detail=kwargs.get('detail', '') or ''
+                )
+
+    def rescind_from_signal(self, site=None, **kwargs):
+        if site:
+            return self.filter(site=site).delete()
+
+
+class UpdatesRejectedQueryset(AlertQuerySet):
+    pass
+
+
+class UpdatesRejected(AutomatedAlertMixin, Alert):
+
+    DEFAULT_PRIORITY = 0
+
+    @property
+    def target_link(self):
+        return reverse('slm:alerts', kwargs={'station': self.target.name})
+
+    @property
+    def context(self):
+        return {
+            **super().context,
+            'site': self.site
+        }
+
+    @property
+    def target(self):
+        return self.site
+
+    @property
+    def rejecter(self):
+        return self.issuer
+
+    requester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    site = models.OneToOneField(
+        'slm.Site',
+        null=True,
+        default=None,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text=_('The site this alert applies to.'),
+        related_name='updates_rejected'
+    )
+
+    objects = UpdatesRejectedManager.from_queryset(UpdatesRejectedQueryset)()
+
+    def save(self, *args, **kwargs):
+        self.header = _('Updates were rejected.')
+        self.sticky = False
+        self.expires = None
+        self.send_email = True
+        self.level = AlertLevel.ERROR
+        if not self.detail:
+            self.detail = (
+                _(
+                    'Updates were rejected by <a href="mailto:{}">{}</a>'
+                ).format(self.rejecter.email, self.rejecter.name)
+                if self.rejecter else _('Updates were rejected.')
+            )
+        super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('site',)
+        verbose_name_plural = 'Updates Rejected Alerts'
+        verbose_name = 'Updates Rejected'

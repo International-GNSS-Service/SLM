@@ -26,12 +26,21 @@
             ),
             method: 'DELETE'
         }).done(
-            function(data, status, jqXHR) {
+            function() {
                 $(`#alert-${alertId}`).remove();
+                {% if site %}
+                $.ajax({
+                    url: slm.urls.reverse(
+                        'slm_edit_api:stations-detail',
+                        {kwargs: {pk: {{ site.pk }} }}
+                    )
+                }).done(function(data) {
+                   slm.updateAlertBell(data);
+                });
+                {% endif %}
             }
         ).fail(
-            function(jqXHR, textStatus, errorThrown) {
-                //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
+            function(jqXHR) {
                 $('body').html(jqXHR.responseText);
                 console.log(jqXHR);
             }
@@ -50,21 +59,15 @@
                 if (alert.sticky) {
                     return '';
                 }
-                return `<div class="slm-alert-close" onclick="deleteAlert(${alert.id})" title='{% trans "Dismiss alert" %}'><i class="bi bi-trash3 text-danger"></i></div>`;
+                return `<div class="slm-alert-close" style="cursor: pointer" onclick="deleteAlert(${alert.id})" title='{% trans "Dismiss alert" %}'><i class="bi bi-trash3 text-danger"></i></div>`;
             }
             const targetButton = function() {
                 if (alert.target && includeTargets) {
-                    if (alert.target.type.toLowerCase() === 'site') {
-                        return `<button class="btn btn-outline-${level.bootstrap}" tabindex= "0" onclick="window.event.stopPropagation(); window.location='${slm.urls.reverse('slm:edit', {kwargs: {station: alert.target.name}})}'" type="submit">${alert.target.name}</button>`;
-                    } else if (alert.target.type.toLowerCase() === 'agency') {
-                        return `<button class="btn btn-outline-${level.bootstrap}" tabindex= "0" type="submit">${alert.target.name}</button>`;
-                    } else if (alert.target.type.toLowerCase() === 'user') {
-                        return `<button class="btn btn-outline-${level.bootstrap}" tabindex= "0" onclick="window.event.stopPropagation(); window.location='mailto:${alert.target.email}'" type="submit">${alert.target.name}</button>`;
-                    }
+                    return `<a class="btn btn-outline ${level.css}" tabindex= "0" href='${ alert.target.link }' type="button">${alert.target.name}</a>`;
                 }
                 return '';
             }
-            $(`<div id="alert-${alert.id}" class="slm-alert-item slm-alert-${level.label.toLowerCase()} border-${level.bootstrap} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id}>` +
+            $(`<div id="alert-${alert.id}" class="slm-alert-item ${level.css} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id}>` +
                     `<div class="d-flex gap-2 w-100 justify-content-between">` +
                         `<div>` +
                             `<h3 class="mb-2 slm-alert-header"><a href="${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}">${alert.header}</a></h3>` +
@@ -82,22 +85,36 @@
         let div = $("#slm-alert-scroll");
         if (data.length === 0 && div.data('slmPage') === 0 ) { 
             $(
-                `<h3 class="text-center text-secondary">No Alerts</h3>`
+                `<h3 class="text-center text-secondary">{% trans 'No Alerts' %}</h3>`
             ).insertBefore(position);
         }
     }
 
     $(document).ready(function() {
         let scrollDiv = $("#slm-alert-scroll");
-        slm.initInfiniteScroll(
-            scrollDiv,
-            scrollDiv,
-            $('#slm-alert-scroll .slm-loader'),
-            "slm_edit_api:alerts-list",
-            {},
-            {% if station %}{site: '{{ station }}'}{% else %}{}{% endif %},
-            drawAlerts
-        );
+        const init = function() {
+            scrollDiv.find('.slm-alert-item').remove();
+            scrollDiv.find('h3').remove();
+            slm.initInfiniteScroll(
+                scrollDiv,
+                scrollDiv,
+                $('#slm-alert-scroll .slm-loader'),
+                "slm_edit_api:alerts-list",
+                {},
+                {% if station %}{site: '{{ station|safe }}'}{% else %}{}{% endif %},
+                drawAlerts
+            );
+        }
+        const stationsFiltered = function(queryParams) {
+            let query = Object.assign(
+                scrollDiv.data('slmQuery') || {}, queryParams
+            );
+            scrollDiv.data('slmPage', 0);
+            scrollDiv.data('slmQuery', query);
+            init();
+        }
+        slm.stationFilterCallbacks.push(stationsFiltered);
+        stationsFiltered($("#slm-station-list").data('slmQuery') || {})
     });
 </script>
 {% endcompress %}

@@ -90,13 +90,33 @@ span.slm-section-header {
 
 
 /*------- Alerts/Log CSS -------*/
+div.slm-alert-detail {
+    color: #0f0f0f;
+    opacity: 0.75;
+}
+
 #slm-alert-scroll div.slm-alert-detail {
     display: -webkit-box;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin: 15px;
+    opacity: 0.5;
 }
+
+.slm-alert-notice {
+    border-color: #12CAF0 !important;
+    color: #12CAF0 !important;
+}
+.slm-alert-warning {
+    border-color: #FFC106 !important;
+    color: #FFC106 !important;
+}
+.slm-alert-error {
+    border-color: #DD3444 !important;
+    color: #DD3444 !important;
+}
+
 .slm-alert-item {
     position: relative;
     display: block;
@@ -137,6 +157,7 @@ span.slm-section-header {
     bottom: 8px;
     right: 16px;
     font-size: 14px;
+    color: #0f0f0f;
 }
 
 .slm-log-item {

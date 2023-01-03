@@ -118,59 +118,6 @@ class Network(models.Model):
         return self.name
 
 
-class ReviewRequestManager(models.Manager):
-
-    def get_queryset(self):
-        return super().get_queryset().select_related(
-            'site',
-            'requester',
-            'site__owner',
-            'site__last_user',
-        ).prefetch_related(
-            'site__agencies',
-            'site__networks',
-            'requester__agencies',
-            'site__last_user__agencies',
-            'site__owner__agencies'
-        )
-
-
-class ReviewRequestQuerySet(models.QuerySet):
-
-    def editable_by(self, user):
-        from slm.models.sitelog import Site
-        return self.filter(
-            site__in=Site.objects.editable_by(user)
-        )
-
-
-class ReviewRequest(models.Model):
-
-    site = models.OneToOneField(
-        'slm.Site',
-        on_delete=models.CASCADE,
-        blank=False,
-        null=False,
-        related_name='review_request'
-    )
-
-    requester = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        default=None
-    )
-
-    timestamp = models.DateTimeField(
-        auto_now_add=True,
-        db_index=True,
-        blank=True
-    )
-
-    objects = ReviewRequestManager.from_queryset(ReviewRequestQuerySet)()
-
-
 class Manufacturer(models.Model):
 
     name = models.CharField(max_length=45, unique=True)

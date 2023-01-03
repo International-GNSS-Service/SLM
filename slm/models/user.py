@@ -6,6 +6,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext as _
 from django.conf import settings
+from django.contrib.auth.models import Permission
+from functools import lru_cache
 
 
 class UserManager(DjangoUserManager):
@@ -28,7 +30,7 @@ class UserManager(DjangoUserManager):
     def create_user(self, email=None, password=None, **extra_fields):
         extra_fields.pop('is_staff', None)
         extra_fields.setdefault('is_superuser', False)
-        extra_fields.setdefault('silence_emails', getattr(
+        extra_fields.setdefault('silence_alerts', getattr(
             settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
         ))
         return self._create_user(email, password, **extra_fields)
@@ -36,7 +38,7 @@ class UserManager(DjangoUserManager):
     def create_superuser(self, email=None, password=None, **extra_fields):
         extra_fields.pop('is_staff', None)
         extra_fields['is_superuser'] = True
-        extra_fields.setdefault('silence_emails', getattr(
+        extra_fields.setdefault('silence_alerts', getattr(
             settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
         ))
         return self._create_user(email, password, **extra_fields)
@@ -46,8 +48,8 @@ class UserQueryset(models.QuerySet):
 
     def emails_ok(self, html=None):
         if html is None:
-            return self.filter(silence_emails=False)
-        return self.filter(silence_emails=False, html_emails=html)
+            return self.filter(silence_alerts=False)
+        return self.filter(silence_alerts=False, html_emails=html)
 
 
 class UserProfile(models.Model):
@@ -128,7 +130,7 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(
         'slm.User',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         default=None,
@@ -202,7 +204,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     last_activity = models.DateTimeField(
-        verbose_name=_('Last Visit'),
+        verbose_name=_('Last Activity'),
         editable=False,
         null=True,
         blank=True,
@@ -221,13 +223,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name='users'
     )
 
-    silence_emails = models.BooleanField(
+    silence_alerts = models.BooleanField(
         null=False,
         default=True,
         blank=True,
         help_text=_(
-            'If set to true this user will not be sent any emails by the '
-            'system. Note: this does not apply to account related emails '
+            'If set to true this user will not be sent any alert emails by '
+            'the system. Note: this does not apply to account related emails '
             '(i.e. password resets).'
         ),
         db_index=True
@@ -247,8 +249,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         if not hasattr(self, 'profile') or not self.profile:
             UserProfile.objects.create(user=self)
 
-    def is_moderator(self, station):
-        return station.is_moderator(self)
+    @lru_cache(maxsize=32)
+    def is_moderator(self, station=None):
+        if self.is_superuser:
+            return True
+        if station:
+            return station.is_moderator(self)
+        moderate_perm = Permission.objects.get_by_natural_key(
+            'moderate_sites', 'slm', 'user'
+        )
+        return (
+            self.user_permissions.filter(pk=moderate_perm.pk).exists() or
+            self.groups.filter(permissions__in=[moderate_perm]).exists()
+        )
 
     def can_propose_site(self, agencies=None):
         """

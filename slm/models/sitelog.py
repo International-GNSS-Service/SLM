@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Case, F, Max, Q, Value, When
+from django.db.models import Case, F, Max, Q, Value, When, OuterRef, Subquery
 from django.contrib.auth.models import Permission
 from django.db.models.functions import (
     Cast,
@@ -42,6 +42,7 @@ from slm.validators import (
     NULL_TIME,
     get_validators
 )
+from functools import lru_cache
 
 
 def bool_condition(*args, **kwargs):
@@ -158,12 +159,19 @@ class SiteQuerySet(models.QuerySet):
             return self.filter(agencies__in=user.agencies.all())
         return self.none()
 
-    def annotate_review_pending(self):
+    def moderated(self, user):
+        if user.is_authenticated:
+            if user.is_superuser:
+                return self.all()
+            elif user.is_moderator():
+                return self.filter(agencies__in=user.agencies.all()).distinct()
+        return self.none()
+
+    def annotate_max_alert(self):
+        from slm.models import Alert
+        max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
         return self.annotate(
-            _review_pending=bool_condition(
-                review_request__isnull=False,
-                review_request__timestamp__gte=F('last_publish')
-            )
+            _max_alert=Subquery(max_alert.values('level')[:1])
         )
 
     def meta(self):
@@ -325,6 +333,7 @@ class Site(models.Model):
 
     last_recalc = models.DateTimeField(null=True, blank=True, default=None)
 
+    @lru_cache(maxsize=32)
     def is_moderator(self, user):
         if user.is_superuser:
             return True
@@ -335,6 +344,22 @@ class Site(models.Model):
             epoch = self.last_publish
         return f'{self.name.upper()}_{epoch.year}{epoch.month:02}' \
                f'{epoch.day:02}.{log_format.ext}'
+
+    @property
+    def max_alert(self):
+        if hasattr(self, '_max_alert'):
+            return self._max_alert
+        from slm.models import Alert
+        return getattr(
+            Alert.objects.for_site(self).order_by('-level').first(),
+            'level',
+            None
+        )
+
+    def refresh_from_db(self, **kwargs):
+        if hasattr(self, '_max_alert'):
+            del self._max_alert
+        return super().refresh_from_db(**kwargs)
 
     @cached_property
     def moderators(self):
@@ -369,23 +394,6 @@ class Site(models.Model):
         return get_user_model().objects.filter(
             Q(agencies__in=self.agencies.all()) | Q(pk=self.owner.pk)
         )
-
-    @property
-    def review_pending(self):
-        """
-        Checks if a review is pending.
-
-        :return: True if a review is pending for this site.
-        """
-        if hasattr(self, '_review_pending'):
-            return self._review_pending
-
-        if hasattr(self, 'review_request') and self.review_request:
-            return (
-                self.last_publish is None or
-                self.review_request.timestamp >= self.last_publish
-            )
-        return False
 
     @classmethod
     def sections(cls):
@@ -539,9 +547,6 @@ class Site(models.Model):
                 and hasattr(self, 'review_request')
             ):
                 self.review_request.delete()
-
-        if self.status == SiteLogStatus.UPDATED and self.review_pending:
-            self.status = SiteLogStatus.IN_REVIEW
 
         if save:
             self.save()
@@ -2084,7 +2089,7 @@ class SiteFrequencyStandard(SiteSubSection):
 
     @property
     def heading(self):
-        return self.standard_type
+        return self.standard_type.label
 
     @property
     def effective(self):

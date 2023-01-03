@@ -1,18 +1,22 @@
 from django.utils.translation import gettext_lazy as _
 from django_enum import IntegerChoices
-from enum_properties import s, p
+from enum_properties import s
 
 
-class AlertLevel(IntegerChoices, p('bootstrap')):
+class AlertLevel(IntegerChoices):
 
     _symmetric_builtins_ = [s('name', case_fold=True)]
 
-    NOTICE  = 0, _('NOTICE'),  'info'
-    WARNING = 1, _('WARNING'), 'warning'
-    ERROR   = 2, _('ERROR'),   'danger'
+    NOTICE  = 1, _('NOTICE')
+    WARNING = 2, _('WARNING')
+    ERROR   = 3, _('ERROR')
 
     def __str__(self):
         return str(self.label)
+
+    @property
+    def css(self):
+        return f'slm-alert-{self.name.lower()}'
 
     @property
     def color(self):

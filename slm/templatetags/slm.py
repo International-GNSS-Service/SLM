@@ -304,6 +304,20 @@ def split_rows(iterable, row_length):
     return rows
 
 
+@register.filter(name='rstrip')
+def absolute_url(to_strip, characters):
+    if to_strip:
+        return to_strip.rstrip(characters)
+    return to_strip
+
+
+@register.filter(name='lstrip')
+def absolute_url(to_strip, characters):
+    if to_strip:
+        return to_strip.lstrip(characters)
+    return to_strip
+
+
 @register.filter(name='absolute_url')
 def absolute_url(path, request=None):
     return build_absolute_url(path, request=request)
@@ -330,3 +344,22 @@ def format_temp_stab(temp, temp_stab):
     elif temp_stab:
         return f'+/- {temp_stab} C'
     return ''
+
+
+@register.filter(name="class_name")
+def class_name(cls):
+    if isinstance(cls, type):
+        return cls.__name__
+    return cls.__class__.__name__
+
+
+@register.filter(name="model_meta")
+def model_meta(cls, parameter):
+    return getattr(cls._meta, parameter)
+
+
+@register.filter(name="params")
+def params(iterable, parameter):
+    return (getattr(obj, parameter) for obj in iterable)
+
+

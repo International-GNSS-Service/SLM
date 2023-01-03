@@ -40,7 +40,10 @@ class CanDeleteAlert(permissions.BasePermission):
         if view.action in {'destroy'}:
             if request.user.is_superuser:
                 return True
-            return obj in Alert.objects.for_user(request.user)
+            return (
+                not obj.sticky and
+                obj in Alert.objects.visible_to(request.user)
+            )
         return True
 
 
@@ -57,28 +60,9 @@ class CanEditSite(permissions.BasePermission):
         return obj.can_edit(request.user)
 
 
-class CanRequestReview(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        """
-        Anyone with edit permission on a site can request a publish.
-        """
-        if view.action == 'create' and 'site_name' in request.POST:
-            site = Site.objects.filter(
-                name__iexact=request.POST['site_name']
-            ).first()
-            return site and site.can_edit(request.user)
-        return True
-
-    def has_object_permission(self, request, view, obj):
-        return obj.site.can_edit(request.user)
-
-
 class CanRejectReview(permissions.BasePermission):
     """
     Only site moderators can reject publish requests.
     """
     def has_object_permission(self, request, view, obj):
-        if view.action in {'destroy'}:
-            return obj.site.is_moderator(request.user)
-        return True
+        return obj.is_moderator(request.user)

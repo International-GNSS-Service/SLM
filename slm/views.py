@@ -59,6 +59,7 @@ from slm.forms import (
     SiteWaterVaporRadiometerForm,
     UserForm,
     UserProfileForm,
+    RichTextForm
 )
 from slm.models import (
     Agency,
@@ -114,6 +115,57 @@ class StationContextView(SLMView):
     sites = None
     site = None
 
+    def get_station_filter(self):
+        station_filter = {}
+        try:
+            max_alert = self.request.GET.get('max_alert', None)
+            if max_alert is not None:
+                station_filter['max_alert'] = AlertLevel(max_alert)
+        except ValueError:
+            pass
+
+        status = set()
+        for stat in self.request.GET.getlist('status', []):
+            try:
+                status.add(SiteLogStatus(stat))
+            except ValueError:
+                pass
+        if status:
+            station_filter['status'] = status
+
+        alerts = self.request.GET.getlist('alert', [])
+        if alerts:
+            station_filter['alert'] = {
+                alrt.lower() for alrt in self.request.GET.getlist('alert', [])
+            }
+
+        networks = set()
+        for nwk in self.request.GET.getlist('network', []):
+            try:
+                if nwk.isdigit():
+                    networks.add(Network.objects.get(id=int(nwk)))
+                else:
+                    networks.add(Network.objects.get(name__iexact=nwk))
+            except Network.DoesNotExist:
+                continue
+        if networks:
+            station_filter['network'] = networks
+
+        agencies = set()
+        for agy in self.request.GET.getlist('agency', []):
+            try:
+                if agy.isdigit():
+                    agencies.add(Agency.objects.get(id=int(agy)))
+                else:
+                    agencies.add(Agency.objects.get(name__iexact=agy))
+            except Agency.DoesNotExist:
+                continue
+        if agencies:
+            station_filter['agency'] = agencies
+
+        station_filter['agency'] = agencies
+        return station_filter
+
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -125,9 +177,10 @@ class StationContextView(SLMView):
         self.site = Site.objects.filter(name__iexact=self.station).editable_by(
             self.request.user
         ).first()
+        station_filter = self.get_station_filter()
         if self.site:
             self.agencies = [
-                agency.name for agency in self.site.agencies.all()
+                agency for agency in self.site.agencies.all()
             ]
             location = SiteLocation.objects.filter(site=self.site).head()
             if location:
@@ -138,6 +191,10 @@ class StationContextView(SLMView):
             context['attn_files'] = self.site.sitefileuploads.available_to(
                 self.request.user
             ).filter(status=SiteFileUploadStatus.UNPUBLISHED).count()
+        else:
+            self.agencies = [
+                agency for agency in station_filter.get('agency', [])
+            ]
 
         max_alert = Alert.objects.visible_to(
             self.request.user
@@ -145,6 +202,7 @@ class StationContextView(SLMView):
         if max_alert is NOT_PROVIDED:
             max_alert = None
         context.update({
+            'station_filter': station_filter,
             'num_sites': self.sites.count(),
             'station': self.station if self.station else None,
             'site': self.site if self.site else None,
@@ -165,8 +223,13 @@ class StationContextView(SLMView):
                 'slm:log',
                 'slm:edit'
             } else self.request.resolver_match.view_name,
-            'station_alert_level': AlertLevel(max_alert) if max_alert else None
+            'station_alert_level': (
+                AlertLevel(max_alert) if max_alert else None
+            ),
+            'site_alerts': Alert.objects.site_alerts(),
+            'AlertLevel': AlertLevel
         })
+
         if self.station:
             try:
                 self.station = Site.objects.get(name=context['station'])
@@ -531,6 +594,8 @@ class StationReviewView(StationContextView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        context['richtextform'] = RichTextForm()
+
         def parse_time(timestamp):
             if timestamp:
                 return datetime.fromisoformat(timestamp)
@@ -591,11 +656,9 @@ class StationReviewView(StationContextView):
         context.update({
             'forward_text': forward_text,
             'back_text': back_text,
-            'needs_publish': self.station.status in {
-                SiteLogStatus.NASCENT,
-                SiteLogStatus.IN_REVIEW,
-                SiteLogStatus.UPDATED
-            },
+            'needs_publish': (
+                self.station.status in SiteLogStatus.unpublished_states()
+            ),
             'forward_prev': forward_prev.epoch.isoformat()
             if forward_prev else None,
             'forward_current': forward_inst.epoch.isoformat(),

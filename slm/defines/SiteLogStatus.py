@@ -8,24 +8,16 @@ class SiteLogStatus(IntegerChoices, p('help')):
     _symmetric_builtins_ = [s('name', case_fold=True)]
 
     DORMANT = (
-        0,
+        1,
         _('Dormant'),
         _('Site is inactive and updates to the log are no longer published.')
     )
 
     NASCENT = (
-        1,
+        2,
         _('Nascent'),
         _(
             'This is a new Site that has never been published.'
-        )
-    )
-
-    IN_REVIEW = (
-        2,
-        _('In Review'),
-        _(
-            'Updates to this Site are pending approval by moderators.'
         )
     )
 
@@ -80,11 +72,11 @@ class SiteLogStatus(IntegerChoices, p('help')):
 
     @classmethod
     def unpublished_states(cls):
-        return {cls.UPDATED, cls.IN_REVIEW, cls.NASCENT}
+        return {cls.UPDATED, cls.NASCENT}
 
     @classmethod
     def active_states(cls):
-        return {cls.UPDATED, cls.IN_REVIEW, cls.PUBLISHED}
+        return {cls.UPDATED, cls.PUBLISHED}
 
     def __str__(self):
         return str(self.label)

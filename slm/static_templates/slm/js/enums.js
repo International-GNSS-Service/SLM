@@ -19,6 +19,7 @@ class LogEntryType {
             case {{entry.value}}:
                 return LogEntryType.{{entry.name}};{% endfor %}
         }
+        return null;
     }
 }
 
@@ -60,6 +61,7 @@ class SiteLogStatus {
             case {{status.value}}:
                 return SiteLogStatus.{{status.name}};{% endfor %}
         }
+        return null;
     }
 }
 
@@ -83,18 +85,19 @@ class SiteFileUploadStatus {
             case {{status.value}}:
                 return SiteFileUploadStatus.{{status.name}};{% endfor %}
         }
+        return null;
     }
 }
 
 class AlertLevel {
     {% for level in AlertLevel %}
-    static {{level.name}} = new AlertLevel({{level.value}}, '{{level.label}}', '{{level.bootstrap}}', '{{level.color}}');{% endfor %}
+    static {{level.name}} = new AlertLevel({{level.value}}, '{{level.label}}', '{{level.color}}', '{{level.css}}');{% endfor %}
 
-    constructor(val, label, bootstrap, color) {
+    constructor(val, label, color, css) {
         this.val = val;
         this.label = label;
-        this.bootstrap = bootstrap;
         this.color = color;
+        this.css = css;
     }
 
     toString() {
@@ -106,6 +109,7 @@ class AlertLevel {
             case {{level.value}}:
                 return AlertLevel.{{level.name}};{% endfor %}
         }
+        return null;
     }
 }
 
@@ -129,6 +133,7 @@ class SiteLogFormat {
             case {{format.value}}:
                 return SiteLogFormat.{{format.name}};{% endfor %}
         }
+        return null;
     }
 }
 
@@ -150,6 +155,7 @@ class SLMFileType {
             case {{typ.value}}:
                 return SLMFileType.{{typ.name}};{% endfor %}
         }
+        return null;
     }
 }
 

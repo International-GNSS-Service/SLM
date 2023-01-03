@@ -51,8 +51,6 @@ class SLMSiteMap {
                         slm.SiteLogStatus.DORMANT.color,
                         slm.SiteLogStatus.NASCENT.val,
                         slm.SiteLogStatus.NASCENT.color,
-                        slm.SiteLogStatus.IN_REVIEW.val,
-                        slm.SiteLogStatus.IN_REVIEW.color,
                         slm.SiteLogStatus.UPDATED.val,
                         slm.SiteLogStatus.UPDATED.color,
                         slm.SiteLogStatus.PUBLISHED.val,

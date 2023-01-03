@@ -1,6 +1,6 @@
 {% extends "slm/station/base.html" %}
 
-{% block station_agencies %}
+{% block station_agencies2 %}
     <header class="d-flex flex-wrap justify-content-center p-3 slm-agency">
         {% for agency in agencies %}
             <a href="{% url 'slm_map:map' agency=agency %}" class="text-decoration-none">

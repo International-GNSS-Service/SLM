@@ -47,6 +47,7 @@ from slm.models import (
     SiteWaterVaporRadiometer,
 )
 from slm.utils import to_snake_case
+from ckeditor.widgets import CKEditorWidget
 
 
 class NewSiteForm(forms.ModelForm):
@@ -443,3 +444,8 @@ class SiteFileForm(forms.ModelForm):
             'description',
             'direction'
         ]
+
+
+class RichTextForm(forms.Form):
+
+    text = forms.CharField(widget=CKEditorWidget(config_name='richtextinput'))

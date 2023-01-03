@@ -3,8 +3,6 @@
 {% load i18n %}
 {% load account widget_tweaks %}
 
-{% block head_title %}{% trans "Sign In" %}{% endblock %}
-
 {% block content %}
 
 <h1>{% trans "Sign In" %}</h1>
@@ -13,60 +11,56 @@
 <a href="{{ signup_url }}">sign up</a> first.{% endblocktrans %}</p>
 
 {% block page_content %}
-<div class="login-bg">
-    <div class="d-flex flex-column justify-content-center align-items-center vh-100" style="margin-top: -77px">
-        <div class="card" style="width: 50rem;">
-            <div class="card-body bg-light p-5">
-                {% include "messages.html" %}
-                <h1 class="card-title">Welcome</h1>
-                <p class="card-text">Please sign in with your IGS Member login information. For registration inquiries, please contact us.</p>
-                <p class="card-header" style="font-weight: bold;">(Note: This site is ONLY for Authorized Users to Edit and Maintain IGS Site Log Data. If you need to view Site Log Data go to igs.org)</p>
-                <br>
-                <!-- Uses form for login authentication -->
-               <form class="login" method="POST" action="{% url 'account_login' %}">
-                {% for error in form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        <strong>{{ error|escape }}</strong>
-                    </div>
-                {% endfor %}
-                {% csrf_token %}
-                <div class="input-group mb-3">
-                    {% for error in form.login.errors %}
-                        <div class="alert alert-danger">
-                            <strong>{{ error|escape }}</strong>
-                        </div>
-                    {% endfor %}
-                    {% render_field form.login class="form-control" %}
+<div class="card slm-account-card" style="width: 50rem;">
+    <div class="card-body bg-light p-5">
+        {% include "messages.html" %}
+        <h1 class="card-title">Welcome</h1>
+        <p class="card-text">Please sign in with your IGS Member login information. For registration inquiries, please contact us.</p>
+        <p class="card-header" style="font-weight: bold;">(Note: This site is ONLY for Authorized Users to Edit and Maintain IGS Site Log Data. If you need to view Site Log Data go to igs.org)</p>
+        <br>
+        <!-- Uses form for login authentication -->
+       <form class="login" method="POST" action="{% url 'account_login' %}">
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+        {% csrf_token %}
+        <div class="input-group mb-3">
+            {% for error in form.login.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
                 </div>
-                <div class="input-group mb-3">
-                    {% for error in form.password.errors %}
-                        <div class="alert alert-danger">
-                            <strong>{{ error|escape }}</strong>
-                        </div>
-                    {% endfor %}
-                    {% render_field form.password class="form-control" %}
+            {% endfor %}
+            {% render_field form.login class="form-control" %}
+        </div>
+        <div class="input-group mb-3">
+            {% for error in form.password.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
                 </div>
-                <div class="row mb-3">
-                    <div class="col offset-sm-0">
-                        <div class="form-check">
-                            {% render_field form.remember class="form-check-input" %}
-                            <label class="form-check-label" for="{{ form.remember.id_for_label }}">{% trans "Remember Me" %}</label>
-                        </div>
-                    </div>
+            {% endfor %}
+            {% render_field form.password class="form-control" %}
+        </div>
+        <div class="row mb-3">
+            <div class="col offset-sm-0">
+                <div class="form-check">
+                    {% render_field form.remember class="form-check-input" %}
+                    <label class="form-check-label" for="{{ form.remember.id_for_label }}">{% trans "Remember Me" %}</label>
                 </div>
-
-              {% if redirect_field_value %}
-              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-              {% endif %}
-              <div class="d-grid gap-2 d-md-flex justify-content-xxl-between">
-                <button class="primaryAction btn btn-primary" type="submit">{% trans "Sign In" %}</button>
-              </div>
-               <div class="mt-3">
-                <a type="button" href="{% url "account_reset_password" %}">Forgot Password?</a>
-               </div>
-            </form>
             </div>
         </div>
+
+      {% if redirect_field_value %}
+      <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+      {% endif %}
+      <div class="d-grid gap-2 d-md-flex justify-content-xxl-between">
+        <button class="primaryAction btn btn-primary" type="submit">{% trans "Sign In" %}</button>
+      </div>
+       <div class="mt-3">
+        <a type="button" href="{% url "account_reset_password" %}">Forgot Password?</a>
+       </div>
+    </form>
     </div>
 </div>
 {% endblock %}

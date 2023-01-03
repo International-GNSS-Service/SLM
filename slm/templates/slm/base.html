@@ -89,7 +89,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                       {% include "slm/widgets/legend.html" with url_name=request.resolver_match.url_name %}
                     </li>
                     <li class="nav-item dropdown">
-                      <a class="nav-link" href="{% url 'slm:alerts' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill text-{{ alert_level.bootstrap }}{% endif %} ms-1"></i></a>
+                      <a class="nav-link" href="{% url 'slm:alerts' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill {{ alert_level.css }}{% endif %} ms-1"></i></a>
                     </li>
                     <li class="nav-item dropdown">
                       <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
@@ -132,6 +132,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
       </div>
     </footer>
   </div>
+</body>
 
   {% compress js %}
   <script type='text/javascript'>

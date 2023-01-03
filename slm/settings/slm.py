@@ -156,3 +156,9 @@ set_default(
         }
     }
 )
+
+set_default(
+    'SLM_AUTOCOMPLETE_LIB',
+    'https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/'
+    '1.4.11/jquery.autocomplete.min.js'
+)

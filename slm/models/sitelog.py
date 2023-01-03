@@ -249,6 +249,8 @@ class Site(models.Model):
        https://files.igs.org/pub/station/general/sitelog_instr.txt
     """
 
+    #API_RELATED_FIELD = 'name'
+
     objects = SiteManager.from_queryset(SiteQuerySet)()
 
     name = models.CharField(

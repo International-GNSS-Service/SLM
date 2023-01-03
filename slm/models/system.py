@@ -131,6 +131,8 @@ class Manufacturer(models.Model):
 
 class Equipment(models.Model):
 
+    API_RELATED_FIELD = 'model'
+
     model = models.CharField(
         max_length=50,
         unique=True,

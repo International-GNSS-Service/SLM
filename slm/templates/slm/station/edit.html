@@ -100,7 +100,11 @@ Add new section capability is not functional.
                               <div class="accordion-body">
                                 {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
                                 {{ form.instance.flags }}
+                                {% compress css inline %}
+                                    {{ form.media.css }}
+                                {% endcompress %}
                                 {% compress js inline %}
+                                    {{ form.media.js }}
                                     {{ form.flags|json_script:flag_id }}
                                 {% endcompress %}
                                 {% include 'slm/station/form.html' with form=form form_id=form_inst_id flag_id=flag_id %}
@@ -143,8 +147,12 @@ Add new section capability is not functional.
       {% elif forms %}
           {% with form=forms|first %}
               {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
+              {% compress css inline %}
+                {{ form.media.css }}
+              {% endcompress %}
               {% compress js inline %}
-                  {{ form.flags|json_script:flag_id }}
+                {{ form.media.js }}
+                {{ form.flags|json_script:flag_id }}
               {% endcompress %}
               {% include 'slm/station/form.html' with form=form form_id=section_id flag_id=flag_id %}
               {% endwith %}

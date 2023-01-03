@@ -80,6 +80,9 @@ api = {
         'serializer_module': 'slm.api.public.serializers',
         'endpoints': [
             ('stations', public_views.StationListViewSet),
+            ('receiver', public_views.ReceiverViewSet),
+            ('antenna', public_views.AntennaViewSet),
+            ('radome', public_views.RadomeViewSet),
             ('download', public_views.SiteLogDownloadViewSet),
             ('files', public_views.SiteFileUploadViewSet)
         ]

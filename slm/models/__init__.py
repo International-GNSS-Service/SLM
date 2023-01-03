@@ -30,6 +30,7 @@ from slm.models.sitelog import (
     SiteWaterVaporRadiometer,
 )
 from slm.models.system import (
+    Equipment,
     Agency,
     Antenna,
     LogEntry,
@@ -39,7 +40,7 @@ from slm.models.system import (
     Receiver,
     SatelliteSystem,
     SiteFile,
-    SiteFileUpload,
+    SiteFileUpload
 )
 from slm.models.alerts import (
     Alert,

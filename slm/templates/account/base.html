@@ -1,6 +1,19 @@
 {% extends "slm/base.html" %}
 {% load widget_tweaks i18n %}
 
+{% block head %}
+    {{ block.super }}
+    <style>
+        body {
+            background: url("/static/slm/img/login-bg.jpg") no-repeat center center fixed;
+            background-size: cover;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+        }
+    </style>
+{% endblock %}
+
 {% block station_list %}{% endblock %}
 
 {% block page_content %}

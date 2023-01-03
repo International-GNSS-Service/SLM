@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, renderers, serializers, status, viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.serializers import SlugRelatedField
 from rest_framework.filters import OrderingFilter
 from rest_framework.parsers import (
     FileUploadParser,
@@ -732,6 +733,34 @@ class SectionViewSet(type):
                     otherwise
                 """
                 return issubclass(ModelClass, SiteSubSection)
+
+            def build_relational_field(self, field_name, relation_info):
+                """
+                By default DRF will use PrimaryKeyRelatedFields to represent
+                ForeignKey relations - for certain fields in the API we'd
+                rather tie them based on a string field on the related model.
+                If API_RELATED_FIELD is set to that field on a related model
+                we use a SlugRelatedField instead so instead of passing PKs
+                in the API, users can pass human readable names instead and do
+                not have to do the work to figure out what the primary key is
+                under the covers - as this is SLM database instance specific.
+
+                This is also critical for our autocomplete fields.
+                """
+                related = getattr(
+                    relation_info.related_model,
+                    'API_RELATED_FIELD',
+                    None
+                )
+                _, defaults = super().build_relational_field(
+                    field_name, relation_info
+                )
+                if related:
+                    return (
+                        SlugRelatedField,
+                        {**defaults, 'slug_field': related}
+                    )
+                return _, defaults
 
             class Meta:
                 model = ModelClass

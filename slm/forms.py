@@ -18,8 +18,10 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+from django.urls import reverse_lazy
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
 from slm.defines import SLMFileType
+from slm.widgets import AutoComplete
 from slm.models import (
     Agency,
     SatelliteSystem,
@@ -233,6 +235,17 @@ class SiteReceiverForm(SubSectionForm):
         empty_label=None
     )
 
+    receiver_type = forms.CharField(
+        widget=AutoComplete(
+            attrs={
+                'data-service-url': reverse_lazy(
+                    'slm_public_api:receiver-list'
+                ),
+                'data-param-name': 'model'
+            }
+        )
+    )
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # todo why is this not automatically done?
@@ -256,6 +269,28 @@ class SiteAntennaForm(SubSectionForm):
         label=SiteAntenna._meta.get_field('alignment').verbose_name,
         max_value=180,
         min_value=-180
+    )
+
+    antenna_type = forms.CharField(
+        widget=AutoComplete(
+            attrs={
+                'data-service-url': reverse_lazy(
+                    'slm_public_api:antenna-list'
+                ),
+                'data-param-name': 'model'
+            }
+        )
+    )
+
+    radome_type = forms.CharField(
+        widget=AutoComplete(
+            attrs={
+                'data-service-url': reverse_lazy(
+                    'slm_public_api:radome-list'
+                ),
+                'data-param-name': 'model'
+            }
+        )
     )
 
     class Meta:

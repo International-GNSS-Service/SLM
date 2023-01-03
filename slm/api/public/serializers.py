@@ -1,7 +1,65 @@
-from django.contrib.sites.models import Site as DjangoSite
 from rest_framework import serializers
-from slm.models import Agency, Network, SiteFileUpload, SiteIndex
+from slm.models import (
+    Agency,
+    Network,
+    SiteFileUpload,
+    SiteIndex,
+    Receiver,
+    Antenna,
+    Radome
+)
 from slm.utils import build_absolute_url
+
+
+class AntennaSerializer(serializers.ModelSerializer):
+
+    manufacturer = serializers.CharField(
+        source='manufacturer.name',
+        allow_null=True
+    )
+
+    class Meta:
+        model = Antenna
+        fields = [
+            'model',
+            'description',
+            'state',
+            'manufacturer'
+        ]
+
+
+class ReceiverSerializer(serializers.ModelSerializer):
+
+    manufacturer = serializers.CharField(
+        source='manufacturer.name',
+        allow_null=True
+    )
+
+    class Meta:
+        model = Receiver
+        fields = [
+            'model',
+            'description',
+            'state',
+            'manufacturer'
+        ]
+
+
+class RadomeSerializer(serializers.ModelSerializer):
+
+    manufacturer = serializers.CharField(
+        source='manufacturer.name',
+        allow_null=True
+    )
+
+    class Meta:
+        model = Radome
+        fields = [
+            'model',
+            'description',
+            'state',
+            'manufacturer'
+        ]
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):

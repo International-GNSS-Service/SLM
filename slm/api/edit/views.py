@@ -33,6 +33,7 @@ from slm.api.edit.serializers import (
     StationSerializer,
     UserSerializer,
 )
+from slm.api.fields import SLMDateTimeField
 from slm.api.pagination import DataTablesPagination
 from slm.api.permissions import (
     CanDeleteAlert,
@@ -478,6 +479,11 @@ class SectionViewSet(type):
                 )
 
         class ViewSetSerializer(ModelSerializer):
+
+            serializer_field_mapping = {
+                **ModelSerializer.serializer_field_mapping,
+                models.DateTimeField: SLMDateTimeField
+            }
 
             _diff = serializers.SerializerMethodField(read_only=True)
             _flags = serializers.JSONField(

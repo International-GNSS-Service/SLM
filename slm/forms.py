@@ -52,6 +52,22 @@ from slm.utils import to_snake_case
 from ckeditor.widgets import CKEditorWidget
 
 
+class SLMDateField(forms.DateField):
+    input_type = 'date'
+
+
+class SLMTimeField(forms.TimeField):
+    input_type = 'time'
+
+
+class SLMDateTimeField(forms.SplitDateTimeField):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget.widgets[0].input_type = 'date'
+        self.widget.widgets[1].input_type = 'time'
+
+
 class NewSiteForm(forms.ModelForm):
 
     class Meta:
@@ -245,6 +261,10 @@ class SiteReceiverForm(SubSectionForm):
             }
         )
     )
+
+    #installed = SLMDateTimeField(
+    #    help_text=SiteReceiver._meta.get_field('installed').help_text
+    #)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

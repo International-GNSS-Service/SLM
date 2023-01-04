@@ -4,7 +4,10 @@ from enum_properties import s
 
 class TectonicPlates(TextChoices):
 
-    _symmetric_builtins_ = [s('name', case_fold=True)]
+    _symmetric_builtins_ = [
+        s('name', case_fold=True),
+        s('label', case_fold=True)
+    ]
 
     AFRICAN        = 'AF', 'African'
     ANTARCTIC      = 'AN', 'Antarctic'

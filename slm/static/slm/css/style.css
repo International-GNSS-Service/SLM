@@ -117,13 +117,28 @@ div.slm-alert-detail {
     border-color: #12CAF0 !important;
     color: #12CAF0 !important;
 }
+.btn.slm-alert-notice:hover {
+    background-color: #12CAF0 !important;
+    color: white !important;
+}
+
 .slm-alert-warning {
     border-color: #FFC106 !important;
     color: #FFC106 !important;
 }
+.btn.slm-alert-warning:hover {
+    background-color: #FFC106 !important;
+    color: white !important;
+}
+
 .slm-alert-error {
     border-color: #DD3444 !important;
     color: #DD3444 !important;
+}
+
+.btn.slm-alert-error:hover {
+    background-color: #DD3444 !important;
+    color: white !important;
 }
 
 .slm-alert-item {

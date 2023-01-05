@@ -157,14 +157,17 @@ Template for View/Diff page.
     }
 
     const publish = function() {
+        let finish = slm.processing(publishBtn);
         slm.publish({{site.id}}).done(
             function(data, status, jqXHR) {
                 updateButtonState(data);
                 updateStatus(data);
+                finish();
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {
                 //alert(`{% trans 'Failed to submit' %}: ${jqXHR.responseText}`);
+                finish();
                 $('body').html(jqXHR.responseText);
                 console.log(jqXHR);
             }

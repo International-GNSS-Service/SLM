@@ -189,15 +189,25 @@ class AlertSerializer(serializers.ModelSerializer):
         if obj.target:
             def target():
                 return {
-                    'type': 'Site',
                     'id': obj.target.id,
                     'name': obj.target.name,
                     'link': obj.target_link
                 }
             if isinstance(obj.target, get_user_model()):
                 return {
+                    'type': 'User',
                     **target(),
                     'email': obj.target.email
+                }
+            if isinstance(obj.target, Agency):
+                return {
+                    'type': 'Agency',
+                    **target()
+                }
+            if isinstance(obj.target, Site):
+                return {
+                    'type': 'Site',
+                    **target()
                 }
             return target()
         return None

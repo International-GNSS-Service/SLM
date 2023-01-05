@@ -180,7 +180,7 @@ slm.resetFormErrorsAndWarnings = function(form) {
     form.find('.slm-form-fail').remove();
     form.find('.alert.slm-form-unpublished').hide();
     form.find('.alert.slm-form-error').hide();
-    form.find('button[name="publish"]').hide();
+    //form.find('button[name="publish"]').hide();
 }
 
 slm.initForm = function(form_id, transform= function(data){ return data; }) {
@@ -195,7 +195,7 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
     } else {
         form.data('slmErrorFlags', {});
     }
-    const handleSubmit = function(action) {
+    const handleSubmit = function(action, btn) {
         slm.resetFormErrorsAndWarnings(form);
         let formData = new FormData(form.get(0));
         let data = {};
@@ -212,10 +212,14 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         delete data.csrfmiddlewaretoken;
         let request = null;
         const dataId = data.id || form.data('slmId');
+        let finished = function() {};
         if (action === 'delete') {
             if (!dataId) {
                 form.closest('.accordion-item').remove();
                 return;
+            }
+            if (btn) {
+                finished = slm.processing(btn);
             }
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-detail`, {'pk': dataId}),
@@ -233,6 +237,13 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
                 options['pk'] = dataId;
                 method = 'PATCH';
             }
+            if (btn) {
+                let btnFinished = slm.processing(btn);
+                finished = function() {
+                    btn.hide();
+                    btnFinished();
+                }
+            }
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(endpoint, options),
                 method: method,
@@ -240,10 +251,13 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
                 data: toPublish
             });
         } else {
+            if (btn) {
+                finished = slm.processing(btn);
+            }
             request = $.ajax({
                 url: form_url ? form_url : slm.urls.reverse(`${form_api}-list`),
                 method: form.attr('data-slm-method') ? form.attr('data-slm-method') : 'POST',
-                headers: {'X-CSRFToken': csrf},
+                headers: {'X-CSRFToken': csrf}, // todo still necessary?
                 data: JSON.stringify(transform(data)),
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
@@ -251,14 +265,28 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         }
 
         request.done(
-            function(data, status, jqXHR) {slm.handlePostSuccess(form, data, status, jqXHR);}
+            function(data, status, jqXHR) {
+                finished();
+                $.ajax({
+                    url: slm.urls.reverse(
+                        'slm_edit_api:stations-detail',
+                        {kwargs: {pk: data.site}}
+                    )
+                }).done(function(site, status, jqXHR){
+                    slm.updateAlertBell(site);
+                });
+                slm.handlePostSuccess(form, data, status, jqXHR);
+            }
         ).fail(
-            function(jqXHR, status, text) {slm.handlePostErrors(form, jqXHR, status, text);}
+            function(jqXHR, status, text) {
+                finished();
+                slm.handlePostErrors(form, jqXHR, status, text);
+            }
         );
     };
-    form.on('click', 'button[name="save"]', function() { handleSubmit('save'); });
-    form.on('click', 'button[name="delete"]', function() { handleSubmit('delete'); });
-    form.on('click', 'button[name="publish"]', function() { handleSubmit('publish'); });
+    form.on('click', 'button[name="save"]', function() { handleSubmit('save', $(this)); });
+    form.on('click', 'button[name="delete"]', function() { handleSubmit('delete', $(this)); });
+    form.on('click', 'button[name="publish"]', function() { handleSubmit('publish', $(this)); });
     form.submit(function(event){ event.preventDefault(); handleSubmit(false);});
 
     form.on('click', '.slm-flag-error', function() {
@@ -761,7 +789,7 @@ slm.stationFilterChanged = function(filterParams) {
 
 slm.hasParameters = function(query){
     for (const [key, value] of Object.entries(query)) {
-        if (key === 'start' || key === 'length') {
+        if (key === 'start' || key === 'length' || key === 'id') {
             continue;
         }
         if (Array.isArray(value)) {
@@ -796,5 +824,15 @@ slm.updateAlertBell = function(site) {
         bells.show();
     } else {
         $(`#select-${site.name} .slm-alert-bell`).hide();
+    }
+}
+
+slm.processing = function(btn) {
+    btn.find('span.spinner-border').remove();
+    $('body').css('cursor', 'progress');
+    btn.append('<span class="ms-2 spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+    return function() {
+        $('body').css('cursor', 'default');
+        btn.find('span.spinner-border').remove();
     }
 }

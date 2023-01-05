@@ -17,7 +17,7 @@ SLM_MANAGEMENT_MODE = os.environ.get('SLM_MANAGEMENT_FLAG', False) == 'ON'
 set_default(
     'SLM_ALERT_COLORS', {
         AlertLevel.NOTICE: '#12CAF0',
-        AlertLevel.WARNING: '#FFC106',
+        AlertLevel.WARNING: '#E3AA00',
         AlertLevel.ERROR: '#DD3444'
     }
 )
@@ -26,7 +26,7 @@ set_default(
     'SLM_STATUS_COLORS', {
         SiteLogStatus.DORMANT: '#3D4543',
         SiteLogStatus.NASCENT: '#913D88',
-        SiteLogStatus.UPDATED: '#8D6708',
+        SiteLogStatus.UPDATED: '#0084BD',
         SiteLogStatus.PUBLISHED: '#0F980F',
         SiteLogStatus.EMPTY: '#D3D3D3'
     }
@@ -34,10 +34,10 @@ set_default(
 
 set_default(
     'SLM_FILE_COLORS', {
-        SiteFileUploadStatus.UNPUBLISHED: '#8D6708',
+        SiteFileUploadStatus.UNPUBLISHED: '#0084BD',
         SiteFileUploadStatus.PUBLISHED: '#0F980F',
         SiteFileUploadStatus.INVALID: '#8b0000',
-        SiteFileUploadStatus.WARNINGS: '#8D6708',
+        SiteFileUploadStatus.WARNINGS: '#E3AA00',
         SiteFileUploadStatus.VALID: '#0F980F'
     }
 )

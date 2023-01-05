@@ -289,10 +289,42 @@ class StationListViewSet(
 
 
 class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
+
     serializer_class = LogEntrySerializer
     permission_classes = (IsAuthenticated,)
 
     class LogEntryFilter(FilterSet):
+
+        sites = None
+
+        def __init__(
+            self,
+            data=None,
+            queryset=None,
+            *,
+            request=None,
+            **kwargs
+        ):
+            super().__init__(
+                data,
+                queryset=queryset,
+                request=request,
+                **kwargs
+            )
+            # we chain this filter so when someone filters the station list
+            # we can show the log entries corresponding to the filtered
+            # stations
+            self.sites = StationFilter(
+                data=data,
+                queryset=Site.objects.annotate_max_alert(),
+                request=request,
+                **kwargs
+            )
+
+        def filter_queryset(self, queryset):
+            return super().filter_queryset(queryset).filter(
+                site__in=self.sites.qs
+            )
 
         site = django_filters.CharFilter(
             field_name='site__name',
@@ -332,6 +364,7 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
 
 class AlertViewSet(
     DataTablesListMixin,
+    mixins.RetrieveModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
@@ -608,117 +641,120 @@ class SectionViewSet(type):
                             pk=instance.pk
                         ).select_for_update().first()
 
-                    # this is a new section
-                    if instance is None:
-                        new_section = super().create(validated_data)
-                        new_section.full_clean()
-                        new_section.save()
-                        update_status = new_section.edited
-                        slm_signals.section_added.send(
-                            sender=self,
-                            site=site,
-                            user=self.context['request'].user,
-                            request=self.context['request'],
-                            timestamp=update_status,
-                            section=new_section
-                        )
-                        instance = new_section
-                    else:
-                        # if an object id was present and it is not at or past
-                        # the last section ID - we have a concurrent edit race
-                        # condition between one or more users.
-                        if section_id is not None and section_id < instance.id:
-                            raise serializers.ValidationError(
-                                _(
-                                    'Edits must be made on HEAD. Someone else '
-                                    'may be editing the log concurrently. '
-                                    'Refresh and try again.'
-                                )
-                            )
-
-
-                    # if not new - does this section have edits?
-                    update = False
-                    flags = validated_data.get('_flags', instance._flags)
-                    edited_fields = []
-                    for field in ModelClass.site_log_fields():
-                        if field in validated_data:
-                            is_many = isinstance(
-                                instance._meta.get_field(field),
-                                models.ManyToManyField
-                            )
-                            new_value = validated_data.get(field)
-                            if (
-                                not is_many and
-                                new_value != getattr(instance, field)) or (
-                                is_many and set(new_value) != set(
-                                    getattr(instance, field).all()
-                                )
-                            ):
-                                update = True
-                                if not instance.published:
-                                    edited_fields.append(field)
-                                    if is_many:
-                                        getattr(instance, field).set(new_value)
-                                    else:
-                                        setattr(instance, field, new_value)
-                                if field in flags:
-                                    del flags[field]
-
-                    if update:
-                        if instance.published:
-                            validated_data['_flags'] = flags
+                    try:
+                        # this is a new section
+                        if instance is None:
                             new_section = super().create(validated_data)
                             new_section.full_clean()
                             new_section.save()
+                            update_status = new_section.edited
+                            slm_signals.section_added.send(
+                                sender=self,
+                                site=site,
+                                user=self.context['request'].user,
+                                request=self.context['request'],
+                                timestamp=update_status,
+                                section=new_section
+                            )
                             instance = new_section
                         else:
+                            # if an object id was present and it is not at or past
+                            # the last section ID - we have a concurrent edit race
+                            # condition between one or more users.
+                            if section_id is not None and section_id < instance.id:
+                                raise DRFValidationError(
+                                    _(
+                                        'Edits must be made on HEAD. Someone else '
+                                        'may be editing the log concurrently. '
+                                        'Refresh and try again.'
+                                    )
+                                )
+
+
+                        # if not new - does this section have edits?
+                        update = False
+                        flags = validated_data.get('_flags', instance._flags)
+                        edited_fields = []
+                        for field in ModelClass.site_log_fields():
+                            if field in validated_data:
+                                is_many = isinstance(
+                                    instance._meta.get_field(field),
+                                    models.ManyToManyField
+                                )
+                                new_value = validated_data.get(field)
+                                if (
+                                    not is_many and
+                                    new_value != getattr(instance, field)) or (
+                                    is_many and set(new_value) != set(
+                                        getattr(instance, field).all()
+                                    )
+                                ):
+                                    update = True
+                                    if not instance.published:
+                                        edited_fields.append(field)
+                                        if is_many:
+                                            getattr(instance, field).set(new_value)
+                                        else:
+                                            setattr(instance, field, new_value)
+                                    if field in flags:
+                                        del flags[field]
+
+                        if update:
+                            if instance.published:
+                                validated_data['_flags'] = flags
+                                new_section = super().create(validated_data)
+                                new_section.full_clean()
+                                new_section.save()
+                                instance = new_section
+                            else:
+                                instance._flags = flags
+                                instance.full_clean()
+                                instance.save()
+
+                            # make sure we use edit timestamp if publish and edit
+                            # are simultaneous
+                            update_status = instance.edited
+                            slm_signals.section_edited.send(
+                                sender=self,
+                                site=site,
+                                user=self.context['request'].user,
+                                request=self.context['request'],
+                                timestamp=update_status,
+                                section=instance,
+                                fields=edited_fields
+                            )
+                        elif '_flags' in validated_data:
+                            # this is just a flag update
+                            added = (
+                                len(flags) -
+                                (len(instance._flags) if instance._flags else 0)
+                            )
+                            site.num_flags += added
+                            if site.num_flags < 0:
+                                site.num_flags = 0
+
+                            site.save()
                             instance._flags = flags
-                            instance.full_clean()
                             instance.save()
 
-                        # make sure we use edit timestamp if publish and edit
-                        # are simultaneous
-                        update_status = instance.edited
-                        slm_signals.section_edited.send(
-                            sender=self,
-                            site=site,
-                            user=self.context['request'].user,
-                            request=self.context['request'],
-                            timestamp=update_status,
-                            section=instance,
-                            fields=edited_fields
-                        )
-                    elif '_flags' in validated_data:
-                        # this is just a flag update
-                        added = (
-                            len(flags) -
-                            (len(instance._flags) if instance._flags else 0)
-                        )
-                        site.num_flags += added
-                        if site.num_flags < 0:
-                            site.num_flags = 0
+                        if do_publish:
+                            update_status = update_status or now()
+                            instance.publish(
+                                request=self.context.get('request', None),
+                                timestamp=update_status,
+                                update_site=False
+                            )
+                            instance.refresh_from_db()
 
-                        site.save()
-                        instance._flags = flags
-                        instance.save()
-
-                    if do_publish:
-                        update_status = update_status or now()
-                        instance.publish(
-                            request=self.context.get('request', None),
-                            timestamp=update_status,
-                            update_site=False
-                        )
-                        instance.refresh_from_db()
-
-                    if update_status:
-                        instance.site.update_status(
-                            save=True,
-                            user=self.context['request'].user,
-                            timestamp=update_status
-                        )
-                    return instance
+                        if update_status:
+                            instance.site.update_status(
+                                save=True,
+                                user=self.context['request'].user,
+                                timestamp=update_status
+                            )
+                        return instance
+                    except DjangoValidationError as ve:
+                        raise DRFValidationError(ve.message_dict)
 
             def update(self, instance, validated_data):
                 return self.perform_section_update(

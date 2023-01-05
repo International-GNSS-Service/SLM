@@ -45,7 +45,7 @@ class SiteLogStatus {
     
     static DORMANT = new SiteLogStatus(1, 'Dormant', 'slm-status-dormant', '#3D4543');
     static NASCENT = new SiteLogStatus(2, 'Nascent', 'slm-status-nascent', '#913D88');
-    static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#8D6708');
+    static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#0084BD');
     static PUBLISHED = new SiteLogStatus(4, 'Published', 'slm-status-published', '#0F980F');
     static EMPTY = new SiteLogStatus(5, 'Empty', 'slm-status-empty', '#D3D3D3');
 
@@ -97,10 +97,10 @@ class SiteLogStatus {
 
 class SiteFileUploadStatus {
     
-    static UNPUBLISHED = new SiteFileUploadStatus(1, 'Unpublished File', 'slm-upload-unpublished file', '#8D6708');
+    static UNPUBLISHED = new SiteFileUploadStatus(1, 'Unpublished File', 'slm-upload-unpublished file', '#0084BD');
     static PUBLISHED = new SiteFileUploadStatus(2, 'Published File', 'slm-upload-published file', '#0F980F');
     static INVALID = new SiteFileUploadStatus(3, 'Invalid Site Log', 'slm-upload-invalid site log', '#8b0000');
-    static WARNINGS = new SiteFileUploadStatus(4, 'Warnings Site Log', 'slm-upload-warnings site log', '#8D6708');
+    static WARNINGS = new SiteFileUploadStatus(4, 'Warnings Site Log', 'slm-upload-warnings site log', '#E3AA00');
     static VALID = new SiteFileUploadStatus(5, 'Valid Site Log', 'slm-upload-valid site log', '#0F980F');
 
     constructor(val, label, css, color) {
@@ -134,7 +134,7 @@ class SiteFileUploadStatus {
 class AlertLevel {
     
     static NOTICE = new AlertLevel(1, 'NOTICE', '#12CAF0', 'slm-alert-notice');
-    static WARNING = new AlertLevel(2, 'WARNING', '#FFC106', 'slm-alert-warning');
+    static WARNING = new AlertLevel(2, 'WARNING', '#E3AA00', 'slm-alert-warning');
     static ERROR = new AlertLevel(3, 'ERROR', '#DD3444', 'slm-alert-error');
 
     constructor(val, label, color, css) {

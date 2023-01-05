@@ -230,7 +230,7 @@
         searchInput.on('input', function() {
             clearTimeout(keyupTimeoutID);
             keyupTimeoutID = setTimeout(function() {
-                stationList.find('button').remove();
+                stationList.find('button').not(`#select-{{ station }}`).remove();
                 let query = stationList.data('slmQuery') || {};
                 if (searchInput.val()) {
                     query.name = searchInput.val();
@@ -246,7 +246,7 @@
         });
 
         const applyFilter = function() {
-            stationList.find('button').remove();
+            stationList.find('button').not(`#select-{{ station }}`).remove();
             let query = stationList.data('slmQuery') || {};
             query.status = stationFilter.find('input[name="status"]:checked').map(function () {
                 return this.value;

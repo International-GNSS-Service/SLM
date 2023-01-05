@@ -6,6 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Case, F, Max, Q, Value, When, OuterRef, Subquery
 from django.contrib.auth.models import Permission
+from enum import Enum
 from django.db.models.functions import (
     Cast,
     Concat,
@@ -2091,7 +2092,11 @@ class SiteFrequencyStandard(SiteSubSection):
 
     @property
     def heading(self):
-        return self.standard_type.label
+        return (
+            self.standard_type.label
+            if isinstance(self.standard_type, Enum)
+            else str(self.standard_type)
+        )
 
     @property
     def effective(self):

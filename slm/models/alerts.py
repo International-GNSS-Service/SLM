@@ -123,6 +123,28 @@ class AlertManager(PolymorphicManager):
             f'alerts from a signal.'
         )
 
+    def check_issue_signal_supported(self, signal):
+        if signal not in self.SUPPORTED_SIGNALS['issue']:
+            from slm.signals import signal_name as name
+            from pprint import pformat
+            names = [name(sig) for sig in self.SUPPORTED_SIGNALS["issue"]]
+            raise ImproperlyConfigured(
+                f'{self.model.__name__} alert was triggered by {name(signal)} '
+                f'which is not a supported issue signal:'
+                f'\n{pformat(names, indent=4)}'
+            )
+
+    def check_rescind_signal_supported(self, signal):
+        if signal not in self.SUPPORTED_SIGNALS['rescind']:
+            from slm.signals import signal_name as name
+            from pprint import pformat
+            names = [name(sig) for sig in self.SUPPORTED_SIGNALS["rescind"]]
+            raise ImproperlyConfigured(
+                f'{self.model.__name__} alert was rescinded by {name(signal)} '
+                f'which is not a supported rescind signal:'
+                f'\n{pformat(names, indent=4)}'
+            )
+
     def classes(self):
         """
         Get all registered Alert classes of this type.
@@ -517,7 +539,7 @@ class Alert(PolymorphicModel):
 
     class Meta:
         ordering = ('-priority', '-timestamp',)
-        verbose_name_plural = 'Alerts'
+        verbose_name_plural = ' Alerts'
         verbose_name = 'Alerts'
 
 
@@ -547,7 +569,7 @@ class SiteAlert(Alert):
         return super().__str__()
 
     class Meta:
-        verbose_name_plural = 'Site Alerts'
+        verbose_name_plural = ' Alerts: Site'
         verbose_name = 'Site Alert'
 
 
@@ -570,7 +592,7 @@ class UserAlert(Alert):
         return self.user
 
     class Meta:
-        verbose_name_plural = 'User Alerts'
+        verbose_name_plural = ' Alerts: User'
         verbose_name = 'User Alert'
 
 
@@ -593,7 +615,7 @@ class AgencyAlert(Alert):
         return self.agency
 
     class Meta:
-        verbose_name_plural = 'Agency Alerts'
+        verbose_name_plural = ' Alerts: Agency'
         verbose_name = 'Agency Alert'
 
 
@@ -637,11 +659,7 @@ class GeodesyMLInvalidManager(AlertManager):
         :param kwargs:
         :return: The alert that was issued if
         """
-        if signal not in self.SUPPORTED_SIGNALS:
-            raise ImproperlyConfigured(
-                f'GeodesyMLInvalid alerts must be triggered by a supported '
-                f'signal: {self.SUPPORTED_SIGNALS}'
-            )
+        self.check_issue_signal_supported(signal)
         site.refresh_from_db()
         return self.check_site(site=site)
 
@@ -771,7 +789,7 @@ class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
 
     class Meta:
         unique_together = ('site',)
-        verbose_name_plural = 'GeodesyML Invalid Alerts'
+        verbose_name_plural = ' Alerts: GeodesyML Invalid'
         verbose_name = 'GeodesyML Invalid'
 
 
@@ -798,6 +816,7 @@ class ReviewRequestedManager(AlertManager):
     }
 
     def issue_from_signal(self, signal, site=None, **kwargs):
+        self.check_issue_signal_supported(signal)
         if site:
             if hasattr(site, 'review_requested') and site.review_requested:
                 site.review_requested.timestamp = now()
@@ -809,7 +828,8 @@ class ReviewRequestedManager(AlertManager):
                     detail=kwargs.get('detail', '') or ''
                 )
 
-    def rescind_from_signal(self, site=None, **kwargs):
+    def rescind_from_signal(self, signal, site=None, **kwargs):
+        self.check_rescind_signal_supported(signal)
         if site:
             return self.filter(site=site).delete()
 
@@ -874,7 +894,7 @@ class ReviewRequested(AutomatedAlertMixin, Alert):
 
     class Meta:
         unique_together = ('site',)
-        verbose_name_plural = 'Review Requested Alerts'
+        verbose_name_plural = ' Alerts: Review Requested'
         verbose_name = 'Review Requested'
 
 
@@ -895,6 +915,7 @@ class UpdatesRejectedManager(AlertManager):
     }
 
     def issue_from_signal(self, signal, site=None, **kwargs):
+        self.check_issue_signal_supported(signal)
         if site:
             if hasattr(site, 'updates_rejected') and site.updates_rejected:
                 site.updates_rejected.timestamp = now()
@@ -906,7 +927,8 @@ class UpdatesRejectedManager(AlertManager):
                     detail=kwargs.get('detail', '') or ''
                 )
 
-    def rescind_from_signal(self, site=None, **kwargs):
+    def rescind_from_signal(self, signal, site=None, **kwargs):
+        self.check_rescind_signal_supported(signal)
         if site:
             return self.filter(site=site).delete()
 
@@ -975,5 +997,5 @@ class UpdatesRejected(AutomatedAlertMixin, Alert):
 
     class Meta:
         unique_together = ('site',)
-        verbose_name_plural = 'Updates Rejected Alerts'
+        verbose_name_plural = ' Alerts: Updates Rejected'
         verbose_name = 'Updates Rejected'

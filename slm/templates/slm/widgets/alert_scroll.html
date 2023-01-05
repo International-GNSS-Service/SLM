@@ -67,10 +67,16 @@
                 }
                 return '';
             }
+            const alertQuery = function() {
+                if (alert.target && alert.target.type === 'Agency') {
+                    return `?agency=${alert.target.id}`;
+                }
+                return '';
+            }
             $(`<div id="alert-${alert.id}" class="slm-alert-item ${level.css} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id}>` +
                     `<div class="d-flex gap-2 w-100 justify-content-between">` +
                         `<div>` +
-                            `<h3 class="mb-2 slm-alert-header"><a href="${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}">${alert.header}</a></h3>` +
+                            `<h3 class="mb-2 slm-alert-header"><a href="${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}${alertQuery()}">${alert.header}</a></h3>` +
                             `<div class="opacity-75 slm-alert-detail">${alert.detail}</div>` +
                             targetButton() +
                         `</div>` +

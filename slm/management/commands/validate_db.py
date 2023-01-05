@@ -28,6 +28,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
 
         parser.add_argument(
+            'sites',
+            metavar='S',
+            nargs='*',
+            help=_('The name of the site(s). Default - all sites.')
+        )
+
+        parser.add_argument(
             '--clear',
             dest='clear',
             action='store_true',
@@ -67,6 +74,11 @@ class Command(BaseCommand):
             sites = Site.objects.public()
             if options['all']:
                 sites = Site.objects.all()
+
+            if options['sites']:
+                sites = Site.objects.filter(
+                    name__in=[site.upper() for site in options['sites']]
+                )
 
             with tqdm(
                 total=sites.count(),

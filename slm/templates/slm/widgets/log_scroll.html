@@ -3,9 +3,9 @@
 <div class="slm-scroll-container">
     <div
         id='slm-log-scroll'
-        class="list-group station-alerts w-100"
+        class="list-group overflow-auto vh-100 w-100"
         data-slm-page=0
-        data-slm-page-size={{page_size|default:10}}
+        data-slm-page-size={{page_size|default:30}}
     >
         <div class="p-2 p-lg-5 d-flex justify-content-center" style="display: none">
             <div class="slm-loader"></div>
@@ -25,16 +25,17 @@
         for (const entry of data) {
             const type = slm.LogEntryType.get(entry.type);
             const timestamp = new Date(entry.timestamp);
-            const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site, 'epoch': entry.epoch}, query: {pub: false}});
-            $(`<div class="slm-log-item d-flex gap-3 py-3 mt-1 ${type.css}" aria-current="true" tabindex="0" onclick="window.location='${diffUrl}'">` +
-                    `<div class="d-flex gap-2 w-100 justify-content-between">` +
-                        `<div>` +
-                            `<h3 class="mb-2">${entry.site}</h3>` +
-                            `<span class="badge ${type.css}">${type.label}</span> <span>${entry.target}</span>` +
+            const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site}});
+            $(`<div class="slm-log-item d-flex py-2 mt-1 ${type.css}" aria-current="true" tabindex="0" onclick="window.location='${diffUrl}'">` +
+                    `<div class="d-flex w-100 justify-content-between align-items-center">` +
+                        `<div class="d-flex justify-content-evenly align-items-center">` +
+                            `<h6 class="m-0 me-2 p-0 mono"><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site}})}">${entry.site}</a></h6>` +
+                            `<span class="badge ${type.css} me-2">${type.label}</span>` +
+                            `<span><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site, section: entry.target.toLowerCase().replaceAll(" ", "")}})}">${entry.target}</a></span>` +
                         `</div>` +
-                        `<div class="opacity-75">` +
-                            `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
-                            `<div class="d-flex justify-content-end">${getName(entry)}</div>` +
+                        `<div class="d-flex justify-content-evenly align-items-center">` +
+                            `<div class="opacity-75 me-2">${getName(entry)}</div>` +
+                            `<small class="text-nowrap opacity-75">${timestamp.toLocaleString()}</small>` +
                             // `<small class="d-flex justify-content-end">${entry.ip ? entry.ip : ''}</small>` +
                         `<div/>` +
                     `</div>` +
@@ -50,15 +51,30 @@
     
     $(document).ready(function() {
         let scrollDiv = $("#slm-log-scroll");
-        slm.initInfiniteScroll(
-            scrollDiv,
-            scrollDiv,
-            $('#slm-log-scroll .slm-loader'),
-            "slm_edit_api:logentries-list",
-            {},
-            {% if station %}{site: '{{ station }}'}{% elif log_user %}{user: '{{ log_user.email }}'}{% else %}{}{% endif %},
-            slm.drawLogs
-        );
+        const init = function() {
+            scrollDiv.find('.slm-log-item').remove();
+            scrollDiv.find('h3').remove();
+            slm.initInfiniteScroll(
+                scrollDiv,
+                scrollDiv,
+                $('#slm-log-scroll .slm-loader'),
+                "slm_edit_api:logentries-list",
+                {},
+                {% if station %}{site: '{{ station }}'}{% elif log_user %}{user: '{{ log_user.email }}'}{% else %}{}{% endif %},
+                slm.drawLogs
+            );
+        };
+
+        const stationsFiltered = function(queryParams) {
+            let query = Object.assign(
+                scrollDiv.data('slmQuery') || {}, queryParams
+            );
+            scrollDiv.data('slmPage', 0);
+            scrollDiv.data('slmQuery', query);
+            init();
+        }
+        slm.stationFilterCallbacks.push(stationsFiltered);
+        stationsFiltered($("#slm-station-list").data('slmQuery') || {});
     });
 </script>
 {% endcompress %}

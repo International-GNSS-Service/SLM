@@ -552,6 +552,7 @@ class UserProfileView(SLMView):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         return self.render_to_response({
+            **self.get_context_data(**kwargs),
             'user_form': UserForm(instance=request.user),
             'profile_form': UserProfileForm(instance=request.user.profile)
         })

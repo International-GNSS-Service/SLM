@@ -123,11 +123,11 @@ div.slm-alert-detail {
 }
 
 .slm-alert-warning {
-    border-color: #FFC106 !important;
-    color: #FFC106 !important;
+    border-color: #E3AA00 !important;
+    color: #E3AA00 !important;
 }
 .btn.slm-alert-warning:hover {
-    background-color: #FFC106 !important;
+    background-color: #E3AA00 !important;
     color: white !important;
 }
 
@@ -152,6 +152,10 @@ div.slm-alert-detail {
     border-left-width: 0.5rem;
     border-radius: 0.5rem;
 }
+.slm-alert-item:hover {
+    background-color: ghostwhite;
+}
+
 .slm-alert-item .slm-alert-header a {
     color: #0f0f0f;
     text-decoration: none;
@@ -198,6 +202,13 @@ div.slm-alert-detail {
 }
 .slm-log-scroll {
     overflow-y: auto;
+}
+.slm-log-item a {
+    text-decoration: none;
+    color: initial;
+}
+.slm-log-item a:hover {
+    text-decoration: underline;
 }
 
 
@@ -391,7 +402,7 @@ fieldset.slm-form-group > legend {
     background-color: #913D88;
 }
 .slm-bg-updated {
-    background-color: #BF8C0D;
+    background-color: #0084BD;
     color: #000;
 }
 .slm-bg-dormant {
@@ -405,7 +416,7 @@ fieldset.slm-form-group > legend {
     color: #913D88;
 }
 .slm-text-updated {
-    color: #BF8C0D;
+    color: #0084BD;
 }
 .slm-text-dormant {
     color: #3D4543;
@@ -415,11 +426,11 @@ fieldset.slm-form-group > legend {
 }
 /* Actvity Log Item Border Colors */
 .slm-log-delete {
-    border-left-color: #CD2026;
+    border-left-color: #D3D3D3;
 }
 .slm-log-add,
 .slm-log-update {
-    border-left-color: #BF8C0D;
+    border-left-color: #0084BD;
 }
 .slm-log-publish {
     border-left-color: #0F980F;
@@ -440,13 +451,16 @@ fieldset.slm-form-group > legend {
 .slm-published {
     color: green;
 }
+.slm-log-item:hover {
+    background-color: ghostwhite;
+}
 
 
 
 /*------- Badge Colors CSS -------*/
 span.badge.slm-log-add,
 span.badge.slm-log-update {
-    background-color: #BF8C0D;
+    background-color: #0084BD;
     color: white;
 }
 span.badge.slm-log-publish {
@@ -458,8 +472,8 @@ span.badge.slm-log-new-site {
     color: white;
 }
 span.badge.slm-log-delete {
-    background-color: #CD2026;
-    color: white;
+    background-color: #D3D3D3;
+    color: black;
 }
 span.badge.slm-log-log-upload {
     background-color: dodgerblue;
@@ -548,7 +562,7 @@ button.slm-subsection {
 /* Button Status CSS */
 button.slm-status-updated,
 button.nav-link.slm-status-updated {
-    border-left: 10px solid #8D6708;
+    border-left: 10px solid #0084BD;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }

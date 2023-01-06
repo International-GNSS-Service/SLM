@@ -69,5 +69,5 @@ dependencies are listed because many are incidental.
    
    | RDBMS                                        | Minimum Version   | Management Utilities                                        |
    | ---------------------------------------------| ----------------- | ------------------------------------------------------------|
-   | [PostgreSQL](https://www.postgresql.org/)    | 9.6               | [PgAdmin](https://www.pgadmin.org/)                         |
+   | [PostgreSQL](https://www.postgresql.org/)    | 11                | [PgAdmin](https://www.pgadmin.org/)                         |
    | [MySQL](https://www.mysql.com/)              | 5.7               | [MySQL Workbench](https://www.mysql.com/products/workbench/)|

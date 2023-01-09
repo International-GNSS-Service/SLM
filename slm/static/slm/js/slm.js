@@ -606,7 +606,6 @@ slm.prettyHtml = function(diffs) {
     let pattern_amp = /&/g;
     let pattern_lt = /</g;
     let pattern_gt = />/g;
-    let pattern_para = /\n/g;
     let pattern_crlf = /\r/g;
     let lineno = 0;
     for (let x = 0; x < diffs.length; x++) {
@@ -615,9 +614,6 @@ slm.prettyHtml = function(diffs) {
       let data = diffs[x][1];  // Text of change.
       let text = data.replace(pattern_amp, '&amp;').replace(pattern_lt, '&lt;').replace(pattern_gt, '&gt;').replace(pattern_crlf, '');
       let lines = [];
-      if (op === DIFF_DELETE) {
-          console.log(text.slice(0,text.length-1));
-      }
       for (const line of text.slice(0,text.length-1).split('\n')) {
           lineno++;
           lines.push(`<span class="slm-review-lineno">${lineno}</span><span class="slm-review-line">${line}</span>`);

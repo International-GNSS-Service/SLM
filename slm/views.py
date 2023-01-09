@@ -611,7 +611,10 @@ class StationReviewView(StationContextView):
                         'index__begin', 'id'
                     )
                 ] for fmt in self.LOG_FORMATS
-            }
+            },
+            'needs_publish': (
+                self.station.status in SiteLogStatus.unpublished_states()
+            )
         }
         if self.site.status == SiteLogStatus.UPDATED:
             for fmt in self.LOG_FORMATS:

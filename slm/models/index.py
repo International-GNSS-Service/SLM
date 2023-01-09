@@ -292,7 +292,51 @@ class ArchivedSiteLogManager(models.Manager):
 
 
 class ArchivedSiteLogQuerySet(models.QuerySet):
-    pass
+
+    def annotate_filenames(
+        self,
+        name_len=None,
+        field_name='filename',
+        lower_case=False
+    ):
+        """
+        Add the log names (w/o) extension as a property called filename to
+        each site.
+
+        :param name_len: If given a number, the filename will start with only
+            the first name_len characters of the site name.
+        :param field_name: Change the name of the annotated field.
+        :param lower_case: Filenames will be lowercase if true.
+        :return: A queryset with the filename annotation added.
+        """
+        name_str = F('site__name')
+        if name_len:
+            name_str = Cast(
+                Substr('site__name', 1, length=name_len), models.CharField()
+            )
+
+        if lower_case:
+            name_str = Lower(name_str)
+
+        return self.annotate(
+            **{
+                field_name: Concat(
+                    name_str,
+                    Value('_'),
+                    Cast(ExtractYear('index__begin'), models.CharField()),
+                    LPad(
+                        Cast(ExtractMonth('index__begin'), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    ),
+                    LPad(
+                        Cast(ExtractDay('index__begin'), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    )
+                )
+            }
+        )
 
 
 class ArchivedSiteLog(SiteFile):

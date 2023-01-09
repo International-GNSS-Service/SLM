@@ -4,7 +4,17 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Case, F, Max, Q, Value, When, OuterRef, Subquery
+from django.db.models import (
+    Case,
+    F,
+    Max,
+    Q,
+    Value,
+    When,
+    OuterRef,
+    Subquery,
+    ExpressionWrapper,
+)
 from django.contrib.auth.models import Permission
 from enum import Enum
 from django.db.models.functions import (
@@ -21,6 +31,7 @@ from django.db.models.functions import (
 from django.utils.functional import cached_property
 from django_enum import EnumField
 from slm.defines import (
+    SiteLogFormat,
     AntennaReferencePoint,
     Aspiration,
     CollocationStatus,
@@ -34,7 +45,6 @@ from slm.models import compat
 from slm.utils import date_to_str
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-from django.db.models import ExpressionWrapper
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from slm import signals as slm_signals
@@ -75,6 +85,73 @@ class SiteManager(models.Manager):
 
 
 class SiteQuerySet(models.QuerySet):
+
+    def annotate_files(self, log_format=SiteLogFormat.LEGACY, prefix=None):
+        from slm.models import ArchivedSiteLog
+        latest_archive = ArchivedSiteLog.objects.filter(
+            Q(site=OuterRef('pk')) & Q(log_format=log_format)
+        ).order_by('-index__begin')
+        size_field = f'{log_format.ext if prefix is None else prefix}_size'
+        file_field = f'{log_format.ext if prefix is None else prefix}_file'
+        return self.annotate(
+            **{
+                size_field: Subquery(latest_archive.values('size')[:1]),
+                file_field: Subquery(latest_archive.values('pk')[:1])
+            }
+        )
+
+    def annotate_filenames(
+            self,
+            published=True,
+            name_len=None,
+            field_name='filename',
+            lower_case=False
+    ):
+        """
+        Add the log names (w/o) extension as a property called filename to
+        each site.
+        :param published: If true (default) annotate with the filename for the
+            most recently published version of the log. If false, will generate
+            a filename for the HEAD version of the log whether published or in
+            moderation.
+        :param name_len: If given a number, the filename will start with only
+            the first name_len characters of the site name.
+        :param field_name: Change the name of the annotated field.
+        :param lower_case: Filenames will be lowercase if true.
+        :return: A queryset with the filename annotation added.
+        """
+        name_str = F('name')
+        if name_len:
+            name_str = Cast(
+                Substr('name', 1, length=name_len), models.CharField()
+            )
+
+        if lower_case:
+            name_str = Lower(name_str)
+
+        timestamp = 'last_update'
+        if published:
+            timestamp = 'last_publish'
+
+        return self.annotate(
+            **{
+                field_name: Concat(
+                    name_str,
+                    Value('_'),
+                    Cast(ExtractYear(timestamp), models.CharField()),
+                    LPad(
+                        Cast(ExtractMonth(timestamp), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    ),
+                    LPad(
+                        Cast(ExtractDay(timestamp), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    )
+                )
+            }
+        )
 
     def public(self):
         """

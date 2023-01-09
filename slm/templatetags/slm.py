@@ -71,9 +71,9 @@ def simple_utc(datetime_field):
     :return: formatted datetime string
     """
     if datetime_field:
-        if isinstance(datetime_field, date):
-            return datetime_field.strftime('%Y-%m-%d')
-        return datetime_field.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M')
+        if isinstance(datetime_field, datetime):
+            return datetime_field.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M')
+        return datetime_field.strftime('%Y-%m-%d')
     return ''
 
 
@@ -329,7 +329,7 @@ def contact(agency, ctype):
         field: getattr(agency, f'{ctype}_{field}')
         for field in [
             'name', 'phone1', 'phone2', 'fax', 'email'
-        ] if getattr(agency, f'{ctype}_{field}')
+        ] if getattr(agency, f'{ctype}_{field}', None)
     }
 
 

@@ -276,15 +276,11 @@ class SiteFile(models.Model):
     file = models.FileField(
         upload_to=site_upload_path,
         null=False,
+        max_length=255,
         help_text=_('A pointer to the uploaded file on disk.')
     )
 
-    @property
-    def size(self):
-        """Size of the file in bytes"""
-        if self.file:
-            return self.file.size
-        return None
+    size = models.PositiveIntegerField(null=True, default=None, blank=True)
 
     thumbnail = models.ImageField(
         upload_to=site_thumbnail_path,
@@ -328,6 +324,10 @@ class SiteFile(models.Model):
                 self.mimetype
             )
         self.generate_thumbnail()
+        if self.file:
+            self.size = self.file.size
+        else:
+            self.size = None
         return super().save(*args, **kwargs)
 
     @classmethod

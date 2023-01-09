@@ -48,7 +48,7 @@ Template for View/Diff page.
             <label for="slm-review-format-input" style="display: none">Site Log Format:</label>
             <select id="slm-review-format-input" class="form-control">
                 {% for format in log_formats %}
-                <option value="{{ format.value }}">{{ format.label }}</option>
+                <option value="{{ format.value }}" {% if format == default_format %}selected{% endif %}>{{ format.label }}</option>
                 {% endfor %}
             </select>
             <div class="form-check form-switch ms-3">

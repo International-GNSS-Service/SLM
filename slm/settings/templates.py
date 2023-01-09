@@ -1,12 +1,16 @@
 from slm.templatetags import slm
 from jinja2 import (
     Environment,
-    select_autoescape
+    select_autoescape,
+    Undefined
 )
 
 
 def site_log_rendering(**options):
-    env = Environment(**options)
+    env = Environment(**{
+        **options,
+        'undefined': Undefined
+    })
     env.filters.update(slm.register.filters)
     return env
 

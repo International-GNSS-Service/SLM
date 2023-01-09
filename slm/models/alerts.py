@@ -706,7 +706,7 @@ class GeodesyMLInvalidManager(AlertManager):
                     for lineno, err in parser.errors.items()
                 },
                 file=ContentFile(
-                    xml_str,
+                    xml_str.encode('utf-8'),
                     name=site.get_filename(log_format=SiteLogFormat.GEODESY_ML)
                 )
             )

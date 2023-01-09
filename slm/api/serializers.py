@@ -117,7 +117,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
 
     @cached_property
     def text(self):
-        return str(self.text_tmpl.render({
+        return self.text_tmpl.render({
             **self.context,
             'include_templates': True
-        }))
+        })

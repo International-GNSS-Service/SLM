@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 from django.db import transaction
 from django.utils.translation import gettext as _
 from slm.models import Site, SiteIndex
+from slm.defines import SiteLogStatus
 from tqdm import tqdm
 
 
@@ -47,8 +48,8 @@ class Command(BaseCommand):
             if options['rebuild']:
                 if yes(input(_(
                     'WARNING: this will delete the current index. This cannot '
-                    'be undone if you do not have an external archive! Proceed? '
-                    '(Y/N): '
+                    'be undone if you do not have an external archive! '
+                    'Proceed? (Y/N): '
                 ))):
                     SiteIndex.objects.all().delete()
                 else:
@@ -60,14 +61,17 @@ class Command(BaseCommand):
                     'Rebuild from archive not implemented yet!'
                 )
 
+            sites = Site.objects.public().filter(
+                status=SiteLogStatus.PUBLISHED
+            )
             # build from current data
             with tqdm(
-                total=Site.objects.public().count(),
+                total=sites.count(),
                 desc='Indexing',
                 unit='sites',
                 postfix={'site': ''}
-            ) as pbar:
-                for site in Site.objects.public():
-                    pbar.set_postfix({'site': site.name})
+            ) as p_bar:
+                for site in sites:
+                    p_bar.set_postfix({'site': site.name})
                     SiteIndex.objects.add_index(site=site)
-                    pbar.update(n=1)
+                    p_bar.update(n=1)

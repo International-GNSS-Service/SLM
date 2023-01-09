@@ -93,6 +93,19 @@ def date_to_str(date_obj):
     return ''
 
 
+def http_accepts(accepted_types, mimetype):
+    if '*/*' in accepted_types:
+        return True
+    if mimetype in accepted_types:
+        return True
+    typ, sub_type = mimetype.split('/')
+    if f'{typ}/*' in accepted_types:
+        return True
+    if f'*/{sub_type}' in accepted_types:
+        return True
+    return False
+
+
 class _Singleton(type):
     _instances = {}
 

@@ -91,60 +91,6 @@ class SiteQuerySet(models.QuerySet):
             & Q(last_publish__isnull=False)
         ).distinct()
 
-    def annotate_filenames(
-            self,
-            published=True,
-            name_len=None,
-            field_name='filename',
-            lower_case=False
-    ):
-        """
-        Add the log names (w/o) extension as a property called filename to
-        each site.
-
-        :param published: If true (default) annotate with the filename for the
-            most recently published version of the log. If false, will generate
-            a filename for the HEAD version of the log whether published or in
-            moderation.
-        :param name_len: If given a number, the filename will start with only
-            the first name_len characters of the site name.
-        :param field_name: Change the name of the annotated field.
-        :param lower_case: Filenames will be lowercase if true.
-        :return: A queryset with the filename annotation added.
-        """
-        name_str = F('name')
-        if name_len:
-            name_str = Cast(
-                Substr('name', 1, length=name_len), models.CharField()
-            )
-
-        if lower_case:
-            name_str = Lower(name_str)
-
-        timestamp = 'last_update'
-        if published:
-            timestamp = 'last_publish'
-
-        return self.annotate(
-            **{
-                field_name: Concat(
-                    name_str,
-                    Value('_'),
-                    Cast(ExtractYear(timestamp), models.CharField()),
-                    LPad(
-                        Cast(ExtractMonth(timestamp), models.CharField()),
-                        2,
-                        fill_text=Value('0')
-                    ),
-                    LPad(
-                        Cast(ExtractDay(timestamp), models.CharField()),
-                        2,
-                        fill_text=Value('0')
-                    )
-                )
-            }
-        )
-
     def editable_by(self, user):
         """
         Return the list of sites that should be visible in the editor to the
@@ -342,11 +288,34 @@ class Site(models.Model):
             return True
         return self.moderators.filter(pk=user.pk).exists()
 
-    def get_filename(self, log_format, epoch=None):
+    def get_filename(
+        self,
+        log_format,
+        epoch=None,
+        name_len=9,
+        lower_case=False
+    ):
+        """
+        Get the filename (including extension) to be used for the rendered
+        site log given the parameters.
+
+        :param log_format: The SiteLogFormat of the rendered log
+        :param epoch: The date (or datetime) when the site log was valid. If
+            not given the last published date will be used.
+        :param name_len: The number of characters from the site log name to use
+            as the prefix. (default: 9 - all of them)
+        :param lower_case: True if the filename should be lower case.
+            (default False)
+        :return: The filename including extension.
+        """
         if epoch is None:
             epoch = self.last_publish
-        return f'{self.name.upper()}_{epoch.year}{epoch.month:02}' \
-               f'{epoch.day:02}.{log_format.ext}'
+        name = self.name[:name_len]
+        return (
+            f'{name.lower() if lower_case else name.upper()}_'
+            f'{epoch.year}{epoch.month:02}'
+            f'{epoch.day:02}.{log_format.ext}'
+        )
 
     @property
     def max_alert(self):

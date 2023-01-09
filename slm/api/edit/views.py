@@ -6,7 +6,11 @@ from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models, transaction
 from django.db.models import Q, Subquery, Max, OuterRef
-from django.http.response import HttpResponseForbidden, HttpResponseNotFound
+from django.http.response import (
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    FileResponse
+)
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
@@ -34,6 +38,7 @@ from slm.api.edit.serializers import (
     UserSerializer,
 )
 from slm.api.fields import SLMDateTimeField
+from slm.api.serializers import SiteLogSerializer
 from slm.api.pagination import DataTablesPagination
 from slm.api.permissions import (
     CanDeleteAlert,
@@ -81,8 +86,11 @@ from slm.models import (
     SiteTemperatureSensor,
     SiteWaterVaporRadiometer,
 )
+from django.http import Http404
+from datetime import datetime
 from django.utils.functional import cached_property
 from django_enum.filters import EnumFilter
+from io import BytesIO
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -448,25 +456,47 @@ class UserProfileViewSet(
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
-    # limit downloads to public sites only! requests for non-public sites will
-    # return 404s, also use legacy four id naming, revisit this?
-    queryset = Site.objects
 
-    class DownloadFilter(BaseSiteLogDownloadViewSet.DownloadFilter):
+    class SiteIndexFilter(BaseSiteLogDownloadViewSet.SiteIndexFilter):
 
-        published = django_filters.BooleanFilter()
-        published.help = _(
+        unpublished = django_filters.BooleanFilter(method='get_unpublished')
+        unpublished.help = _(
             'If true, download the published version of the log. If false,'
             'the HEAD version of the log '
         )
 
-        class Meta(BaseSiteLogDownloadViewSet.DownloadFilter.Meta):
+        def get_unpublished(self, queryset, **_):
+            return queryset.none()
+
+        class Meta(BaseSiteLogDownloadViewSet.SiteIndexFilter.Meta):
             fields = (
-                ['published'] +
-                BaseSiteLogDownloadViewSet.DownloadFilter.Meta.fields
+                'unpublished',
+                *BaseSiteLogDownloadViewSet.SiteIndexFilter.Meta.fields
             )
 
-    filterset_class = DownloadFilter
+    filterset_class = SiteIndexFilter
+
+    def retrieve(self, request, *args, **kwargs):
+        if request.GET.get('unpublished', False):
+            try:
+                site = Site.objects.get(name__iexact=kwargs.get('site'))
+                return FileResponse(
+                    BytesIO(
+                        SiteLogSerializer(
+                            instance=site,
+                            published=None
+                        ).format(request.accepted_renderer.format).encode()
+                    ),
+                    filename=site.get_filename(
+                        log_format=request.accepted_renderer.format,
+                        epoch=datetime.now(),
+                        name_len=request.GET.get('name_len', 9),
+                        lower_case=request.GET.get('lower_case', False)
+                    )
+                )
+            except Site.DoesNotExist:
+                raise Http404()
+        return super().retrieve(request, *args, **kwargs)
 
 
 class SectionViewSet(type):
@@ -920,6 +950,11 @@ class SectionViewSet(type):
                     # we delete it if this section or subsection has never
                     # been published before
                     section.delete()
+                    instance.site.update_status(
+                        save=True,
+                        user=self.request.user,
+                        timestamp=now()
+                    )
                     return None
 
                 if not section.is_deleted:
@@ -937,6 +972,11 @@ class SectionViewSet(type):
                         request=self.request,
                         timestamp=now(),
                         section=section
+                    )
+                    instance.site.update_status(
+                        save=True,
+                        user=self.request.user,
+                        timestamp=now()
                     )
                 return section
 

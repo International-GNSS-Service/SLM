@@ -87,16 +87,34 @@ span.slm-section-header {
 
 
 /*------- Review Diff CSS -------*/
-#review-diff-container {
+#slm-review-diff-container {
     padding: 50px;
 }
-#review-diff {
+#slm-review-diff {
     border: 1px solid #212529;
     background-color: ghostwhite;
-    padding: 30px;
+    padding: 0;
+    border-right: 15px solid #175A7D;
+}
+#slm-review-diff span.slm-review-lineno {
+    width: 5em;
+    text-align: right;
+    display: inline-block;
+    border-right: 2px solid black;
+    padding-right: 5px;
+    margin-right: 10px;
+    background: #175A7D;
+    color: #f1f1f1;
+}
+#slm-review-diff span.slm-review-line {
+    display: inline-block;
 }
 
-
+#slm-review-diff div.slm-diff-header,
+#slm-review-diff div.slm-diff-footer {
+    height: 15px;
+    background: #175A7D;
+}
 
 /*------- Alerts/Log CSS -------*/
 div.slm-alert-detail {
@@ -646,3 +664,4 @@ button.nav-link {
 .autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
 .autocomplete-group { padding: 2px 5px; }
 .autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+

@@ -1,32 +1,3 @@
-
-diff_match_patch.prototype.diff_prettyHtml = function(diffs) {
-    let html = [];
-    let pattern_amp = /&/g;
-    let pattern_lt = /</g;
-    let pattern_gt = />/g;
-    let pattern_para = /\n/g;
-    for (let x = 0; x < diffs.length; x++) {
-      let op = diffs[x][0];    // Operation (insert, delete, equal)
-      let data = diffs[x][1];  // Text of change.
-      //let text = data.replace(pattern_amp, '&amp;').replace(pattern_lt, '&lt;')
-      //    .replace(pattern_gt, '&gt;').replace(pattern_para, '&para;<br>');
-      let text = data.replace(pattern_amp, '&amp;').replace(pattern_lt, '&lt;')
-          .replace(pattern_gt, '&gt;').replace(pattern_para, '<br>');
-      switch (op) {
-        case DIFF_INSERT:
-          html[x] = '<ins style="background:#e6ffe6;">' + text + '</ins>';
-          break;
-        case DIFF_DELETE:
-          html[x] = '<del style="background:#ffe6e6;">' + text + '</del>';
-          break;
-        case DIFF_EQUAL:
-          html[x] = '<span>' + text + '</span>';
-          break;
-      }
-    }
-    return html.join('');
-};
-
 diff_match_patch.prototype.diff_linesToWords_ = function(text1, text2) {
   var lineArray = [];  // e.g. lineArray[4] == 'Hello\n'
   var lineHash = {};   // e.g. lineHash['Hello\n'] == 4

@@ -84,7 +84,8 @@ api = {
             ('antenna', public_views.AntennaViewSet),
             ('radome', public_views.RadomeViewSet),
             ('download', public_views.SiteLogDownloadViewSet),
-            ('files', public_views.SiteFileUploadViewSet)
+            ('files', public_views.SiteFileUploadViewSet),
+            ('archive', public_views.ArchiveViewSet)
         ]
     },
 }

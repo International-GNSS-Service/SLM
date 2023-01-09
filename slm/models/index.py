@@ -17,8 +17,18 @@ Extensions... todo
 """
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models import F, OuterRef, Q, Subquery
-from django.db.models.functions import Now
+from django.db.models import F, OuterRef, Q, Subquery, Value
+from django.db.models.functions import (
+    Now,
+    Cast,
+    LPad,
+    Concat,
+    ExtractYear,
+    ExtractMonth,
+    Substr,
+    Lower,
+    ExtractDay
+)
 from django.utils.timezone import now
 from django_enum import EnumField
 from slm.defines import (
@@ -87,7 +97,7 @@ class SiteIndexManager(models.Manager):
             new_index.satellite_system.set(receiver.satellite_system.all())
 
         for log_format in SiteLogFormat:
-            if log_format in {SiteLogFormat.GEODESY_ML, SiteLogFormat.JSON}:
+            if log_format in {SiteLogFormat.JSON}:
                 continue  # todo - remove
             ArchivedSiteLog.objects.from_site(site=site, log_format=log_format)
 
@@ -134,6 +144,51 @@ class SiteIndexQuerySet(models.QuerySet):
                 last_data_avail.filter(
                     RinexVersion(4).major_q()
                 ).values('last')[:1])
+        )
+
+    def annotate_filenames(
+        self,
+        name_len=None,
+        field_name='filename',
+        lower_case=False
+    ):
+        """
+        Add the log names (w/o) extension as a property called filename to
+        each site.
+
+        :param name_len: If given a number, the filename will start with only
+            the first name_len characters of the site name.
+        :param field_name: Change the name of the annotated field.
+        :param lower_case: Filenames will be lowercase if true.
+        :return: A queryset with the filename annotation added.
+        """
+        name_str = F('site__name')
+        if name_len:
+            name_str = Cast(
+                Substr('site__name', 1, length=name_len), models.CharField()
+            )
+
+        if lower_case:
+            name_str = Lower(name_str)
+
+        return self.annotate(
+            **{
+                field_name: Concat(
+                    name_str,
+                    Value('_'),
+                    Cast(ExtractYear('begin'), models.CharField()),
+                    LPad(
+                        Cast(ExtractMonth('begin'), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    ),
+                    LPad(
+                        Cast(ExtractDay('begin'), models.CharField()),
+                        2,
+                        fill_text=Value('0')
+                    )
+                )
+            }
         )
 
 
@@ -197,32 +252,42 @@ class ArchivedSiteLogManager(models.Manager):
     file does not exist.
     """
 
-    def from_site(self, site, log_format=SiteLogFormat.LEGACY, epoch=None):
-        index = SiteIndex.objects.filter(site=site).at_epoch(
-            epoch=epoch
-        ).first()
+    def from_index(self, index, log_format):
+        from slm.api.serializers import SiteLogSerializer
         if index:
             file = index.files.filter(log_format=log_format).first()
             if file:
                 return file
-
-            from slm.api.serializers import SiteLogSerializer
-            return ArchivedSiteLog.objects.create(
-                site=site,
+            return self.model.objects.create(
+                site=index.site,
                 log_format=log_format,
                 index=index,
                 timestamp=index.begin,
                 mimetype=log_format.mimetype,
                 file_type=SLMFileType.SITE_LOG,
-                name=site.get_filename(log_format=log_format, epoch=epoch),
+                name=index.site.get_filename(
+                    log_format=log_format,
+                    epoch=index.begin
+                ),
                 file=ContentFile(
-                    SiteLogSerializer(instance=site, epoch=epoch).format(
-                        log_format
-                    ),
-                    name=site.get_filename(log_format=log_format, epoch=epoch)
+                    SiteLogSerializer(
+                        instance=index.site,
+                        epoch=index.begin
+                    ).format(log_format),
+                    name=index.site.get_filename(
+                        log_format=log_format,
+                        epoch=index.begin
+                    )
                 )
             )
+        return None
 
+    def from_site(self, site, log_format=SiteLogFormat.LEGACY, epoch=None):
+        index = SiteIndex.objects.filter(
+            site=site
+        ).at_epoch(epoch=epoch).first()
+        if index:
+            return self.from_index(index, log_format=log_format)
         return None
 
 
@@ -246,33 +311,3 @@ class ArchivedSiteLog(SiteFile):
 
     class Meta:
         unique_together = ('index', 'log_format')
-
-
-'''
-class GeodesyMLUpload(models.Model):
-    """
-    We track the last validated GeodesyML document that was uploaded for each
-    site. Serialization of new GeodesyML documents from the data model replace
-    fields in this xml and leave elements unrepresented in the SLM data model
-    untouched. This way we can keep GeodesyML elements that that are not (yet)
-    part of the SLM data model.
-    """
-
-    site = models.ForeignKey(
-        'slm.Site',
-        on_delete=models.CASCADE,
-        null=False
-    )
-
-    xml = models.TextField(null=False, blank=False)
-
-    version = EnumField(GeodesyMLVersion, null=False, blank=False)
-
-    timestamp = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'[{self.site.name}] {self.timestamp}'
-
-    class Meta:
-        unique_together = ('site', 'version')
-'''

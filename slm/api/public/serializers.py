@@ -6,7 +6,8 @@ from slm.models import (
     SiteIndex,
     Receiver,
     Antenna,
-    Radome
+    Radome,
+    ArchivedSiteLog
 )
 from slm.utils import build_absolute_url
 
@@ -162,5 +163,23 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
             'mimetype',
             'description',
             'direction'
+        ]
+        read_only_fields = fields
+
+
+class ArchiveSerializer(serializers.ModelSerializer):
+
+    site = serializers.CharField(source='site.name', allow_null=True)
+
+    class Meta:
+        model = ArchivedSiteLog
+        fields = [
+            'id',
+            'site',
+            'name',
+            'timestamp',
+            'mimetype',
+            'log_format',
+            'size'
         ]
         read_only_fields = fields

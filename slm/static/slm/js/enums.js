@@ -164,14 +164,15 @@ class AlertLevel {
 
 class SiteLogFormat {
     
-    static LEGACY = new SiteLogFormat(1, 'Legacy (ASCII)', 'bi bi-file-text');
-    static GEODESY_ML = new SiteLogFormat(2, 'GeodesyML', 'bi bi-filetype-xml');
-    static JSON = new SiteLogFormat(3, 'JSON', 'bi bi-filetype-json');
+    static LEGACY = new SiteLogFormat(1, 'Legacy (ASCII)', 'bi bi-file-text', 'log');
+    static GEODESY_ML = new SiteLogFormat(2, 'GeodesyML', 'bi bi-filetype-xml', 'xml');
+    static JSON = new SiteLogFormat(3, 'JSON', 'bi bi-filetype-json', 'json');
 
-    constructor(val, label, icon) {
+    constructor(val, label, icon, ext) {
         this.val = val;
         this.label = label;
         this.icon = icon;
+        this.ext = ext;
     }
 
     toString() {

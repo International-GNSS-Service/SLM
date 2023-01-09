@@ -1,10 +1,7 @@
-# stations view
-import json
-
 import django_filters
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
-from rest_framework import mixins, renderers, viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.filters import OrderingFilter
 from slm.api.pagination import DataTablesPagination
 from slm.api.public.serializers import (
@@ -12,71 +9,24 @@ from slm.api.public.serializers import (
     StationListSerializer,
     ReceiverSerializer,
     AntennaSerializer,
-    RadomeSerializer
+    RadomeSerializer,
+    ArchiveSerializer
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.models import (
-    Site,
     SiteFileUpload,
     SiteIndex,
     Receiver,
     Antenna,
-    Radome
+    Radome,
+    ArchivedSiteLog
 )
-
-
-class PassThroughRenderer(renderers.BaseRenderer):
-    """
-        Return data as-is. View should supply a Response.
-    """
-    media_type = ''
-    format = 'legacy'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        return data
-
-
-class LegacyRenderer(renderers.BaseRenderer):
-    """
-    Renderer which serializes to legacy format.
-    """
-    media_type = 'text/plain'
-    format = 'text'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        if data is None:
-            return b''
-        elif isinstance(data, dict):
-            if 'detail' in data:
-                return data['detail'].encode()
-            return json.dumps(data)
-        return data.encode()
-
-
-class GMLRenderer(renderers.BaseRenderer):
-    """
-    Renderer which serializes to legacy format.
-    """
-    media_type = 'application/xml'
-    format = 'xml'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        if data is None:
-            return b''
-        return data.encode()
-
-
-class JSONRenderer(renderers.BaseRenderer):
-    """
-    Renderer which serializes to legacy format.
-    """
-    media_type = 'application/json'
-    format = 'xml'
-
-    def render(self, data, accepted_media_type=None, renderer_context=None):
-        if data is None:
-            return b''
-        return data.encode()
+from slm.api.filter import SLMDateTimeFilter
+from django.http import FileResponse
+from slm.defines import SiteLogFormat
+from django_enum.filters import EnumFilter
+from django.utils.translation import gettext as _
+from datetime import datetime
 
 
 class DataTablesListMixin(mixins.ListModelMixin):
@@ -166,9 +116,9 @@ class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
-    # limit downloads to public sites only! requests for non-public sites will
-    # return 404s, also use legacy four id naming, revisit this?
-    queryset = Site.objects.public()
+    # limit downloads to public sites only!
+    # requests for non-public sites will return 404s
+    pass
 
 
 class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
@@ -177,9 +127,7 @@ class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
 
     class FileFilter(FilterSet):
 
-        site = django_filters.CharFilter(
-            method='find_by_name'
-        )
+        site = django_filters.CharFilter(method='find_by_name')
 
         name = django_filters.CharFilter(
             field_name='name',
@@ -187,9 +135,7 @@ class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
         )
 
         def find_by_name(self, queryset, name, value):
-            return queryset.filter(
-                site__name__istartswith=value
-            )
+            return queryset.filter(site__name__istartswith=value)
 
         class Meta:
             model = SiteFileUpload
@@ -202,11 +148,7 @@ class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = FileFilter
-    ordering_fields = [
-        '-timestamp',
-        'name',
-        'site'
-    ]
+    ordering_fields = ['-timestamp', 'name', 'site']
 
     def get_queryset(self):
         return SiteFileUpload.objects.public().select_related('site')
@@ -282,3 +224,59 @@ class RadomeViewSet(
 
     def get_queryset(self):
         return Radome.objects.select_related('manufacturer')
+
+
+class ArchiveViewSet(
+    mixins.RetrieveModelMixin,
+    DataTablesListMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = ArchiveSerializer
+    permission_classes = []
+
+    class ArchiveFilter(FilterSet):
+
+        site = django_filters.CharFilter(
+            field_name='site__name',
+            help_text=_(
+                'The site of the archived log to download.'
+            )
+        )
+
+        log_format = EnumFilter(
+            enum=SiteLogFormat,
+            help_text=_(
+                'The format of the archived log to download.'
+            )
+        )
+
+        epoch = SLMDateTimeFilter(
+            method='at_epoch',
+            initial=lambda: datetime.now(),
+            help_text=_(
+                'Get the archive that was active at this given date or '
+                'datetime.'
+            )
+        )
+
+        def at_epoch(self, queryset, name, value):
+            return queryset.filter(
+                Q(index__begin__lte=value) &
+                (Q(index__end__isnull=True) | Q(index__end__gt=value))
+            )
+
+        class Meta:
+            model = ArchivedSiteLog
+            fields = ['site', 'epoch', 'log_format']
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = ArchiveFilter
+    ordering_fields = ('timestamp',)
+    ordering = ('-timestamp',)
+
+    def retrieve(self, request, *args, **kwargs):
+        archive = self.get_object()
+        return FileResponse(archive.file, filename=archive.name)
+
+    def get_queryset(self):
+        return ArchivedSiteLog.objects.select_related('index', 'site')

@@ -116,12 +116,13 @@ class AlertLevel {
 
 class SiteLogFormat {
     {% for format in SiteLogFormat %}
-    static {{format.name}} = new SiteLogFormat({{format.value}}, '{{format.label}}', '{{format.icon}}');{% endfor %}
+    static {{format.name}} = new SiteLogFormat({{format.value}}, '{{format.label}}', '{{format.icon}}', '{{format.ext}}');{% endfor %}
 
-    constructor(val, label, icon) {
+    constructor(val, label, icon, ext) {
         this.val = val;
         this.label = label;
         this.icon = icon;
+        this.ext = ext;
     }
 
     toString() {

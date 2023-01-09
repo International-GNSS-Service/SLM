@@ -20,17 +20,14 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Max, Q
 from django.db.models.fields import NOT_PROVIDED
 from django.http import FileResponse, Http404, HttpResponseNotFound
-from django.shortcuts import redirect
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
-from slm import signals as slm_signals
 from slm.api.serializers import SiteLogSerializer
+from slm import defines
 from slm.defines import (
     AlertLevel,
-    LogEntryType,
-    SiteFileUploadStatus,
     SiteLogFormat,
+    SiteFileUploadStatus,
     SiteLogStatus,
     SLMFileType,
 )
@@ -64,24 +61,30 @@ from slm.forms import (
 from slm.models import (
     Agency,
     Alert,
-    LogEntry,
+    ArchivedSiteLog,
     Network,
     Site,
     SiteFileUpload,
     SiteLocation,
     SiteSubSection,
 )
-from slm.utils import to_bool
 from django.template import Template
 from django.template.exceptions import TemplateDoesNotExist
+from enum import Enum
 
 User = get_user_model()
 
 
 class SLMView(TemplateView):
 
+    DEFINES = {
+        name: define for name, define in vars(defines).items()
+        if isinstance(define, type) and issubclass(define, Enum)
+    }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context.update(self.DEFINES)
         max_alert = Alert.objects.visible_to(
             self.request.user
         ).aggregate(Max('level'))['level__max']
@@ -89,8 +92,9 @@ class SLMView(TemplateView):
             max_alert = None
 
         context['user'] = self.request.user
-        context['SiteLogStatus'] = SiteLogStatus
-        context['alert_level'] = AlertLevel(max_alert) if max_alert else None
+        context['alert_level'] = (
+            AlertLevel(max_alert) if max_alert else None
+        )
 
         context['SLM_ORG_NAME'] = getattr(
             settings,
@@ -207,7 +211,6 @@ class StationContextView(SLMView):
             'station': self.station if self.station else None,
             'site': self.site if self.site else None,
             'agencies': self.agencies,
-            'SiteLogStatus': SiteLogStatus,
             'is_moderator': self.site.is_moderator(
                 self.request.user
             ) if self.site else None,
@@ -226,8 +229,7 @@ class StationContextView(SLMView):
             'station_alert_level': (
                 AlertLevel(max_alert) if max_alert else None
             ),
-            'site_alerts': Alert.objects.site_alerts(),
-            'AlertLevel': AlertLevel
+            'site_alerts': Alert.objects.site_alerts()
         })
 
         if self.station:
@@ -515,9 +517,6 @@ class UploadView(StationContextView):
             'SLM_MAX_UPLOAD_SIZE_MB',
             100
         )
-        context['SLMFileType'] = SLMFileType
-        context['SiteLogFormat'] = SiteLogFormat
-        context['SiteFileUploadStatus'] = SiteFileUploadStatus
         context['link_view'] = 'slm:upload'
         return context
 
@@ -592,86 +591,32 @@ class StationReviewView(StationContextView):
 
     template_name = 'slm/station/review.html'
 
+    LOG_FORMATS = {
+        fmt for fmt in SiteLogFormat if fmt not in {SiteLogFormat.JSON}
+    }
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context['richtextform'] = RichTextForm()
-
-        def parse_time(timestamp):
-            if timestamp:
-                return datetime.fromisoformat(timestamp)
-            return timestamp
-
-        epoch = kwargs.get('epoch', None)
-        published = (
-            True if to_bool(self.request.GET.get('pub', True))
-            else None
-        )
-        back_t = parse_time(self.request.GET.get('back', None))
-        forward_t = parse_time(self.request.GET.get('forward', None))
-        log_entries = LogEntry.objects.filter(
-            site=self.station
-        ).prefetch_related('site_log_object')
-
-        pub_q = Q()
-        if published:
-            pub_q = Q(type=LogEntryType.PUBLISH)
-
-        forward_inst = SiteLogSerializer(
-            instance=self.station, epoch=forward_t or epoch, published=None
-        )
-        forward_text = forward_inst.text
-
-        if not published and not back_t:
-            back_t = log_entries.filter(
-                Q(epoch__lt=forward_inst.epoch)
-            ).aggregate(Max('epoch'))['epoch__max']
-
-        back_inst = SiteLogSerializer(
-            instance=self.station, epoch=back_t or epoch, published=published
-        )
-        back_text = back_inst.text
-
-        forward_prev = log_entries.filter(
-            Q(epoch__lt=forward_inst.epoch) &
-            Q(epoch__gt=back_inst.epoch) &
-            pub_q
-        ).order_by('-timestamp').first()
-
-        forward_next = log_entries.filter(
-            Q(epoch__gt=forward_inst.epoch) &
-            pub_q
-        ).order_by('timestamp').first()
-
-        back_prev = log_entries.filter(
-            Q(epoch__lt=back_inst.epoch) &
-            pub_q
-        ).order_by('-timestamp').first()
-
-        back_next = log_entries.filter(
-            Q(epoch__lt=forward_inst.epoch) &
-            Q(epoch__gt=back_inst.epoch) &
-            pub_q
-        ).order_by('timestamp').first()
-
-        context.update({
-            'forward_text': forward_text,
-            'back_text': back_text,
-            'needs_publish': (
-                self.station.status in SiteLogStatus.unpublished_states()
-            ),
-            'forward_prev': forward_prev.epoch.isoformat()
-            if forward_prev else None,
-            'forward_current': forward_inst.epoch.isoformat(),
-            'forward_next': forward_next.epoch.isoformat()
-            if forward_next else None,
-            'back_prev': back_prev.epoch.isoformat() if back_prev else None,
-            'back_current': back_inst.epoch.isoformat(),
-            'back_next': back_next.epoch.isoformat() if back_next else None,
-            'published': published,
-            'epoch': epoch.isoformat() if epoch else ''
-        })
-        return context
+        ctx = {
+            **super().get_context_data(**kwargs),
+            'richtextform': RichTextForm(),
+            'default_format': SiteLogFormat.LEGACY,
+            'log_formats': self.LOG_FORMATS,
+            'review_stack': {
+                fmt: [
+                    (archive[0], archive[1])
+                    for archive in ArchivedSiteLog.objects.filter(
+                        site=self.site,
+                        log_format=fmt
+                    ).order_by('-index__begin').values_list(
+                        'index__begin', 'id'
+                    )
+                ] for fmt in self.LOG_FORMATS
+            }
+        }
+        if self.site.status == SiteLogStatus.UPDATED:
+            for fmt in self.LOG_FORMATS:
+                ctx['review_stack'][fmt].insert(0, (None, None))
+        return ctx
 
 
 class AlertsView(SLMView):

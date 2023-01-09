@@ -60,7 +60,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
                 parser=self.xml_parser
             ),
             pretty_print=True
-        )
+        ).decode()
 
     @cached_property
     def json(self):

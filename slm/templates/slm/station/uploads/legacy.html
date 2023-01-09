@@ -4,7 +4,7 @@
 <hr/>
 
 <pre id="slm-parsed-legacy">{% for line in file|file_lines %}{% with idx=forloop.counter0 %}
-<span data-line-number={{ idx }} class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-html="true" data-bs-content="<pre>{{ findings|finding_content:idx }}</pre>"{% endif %}>{{ line }}</span>{% endwith %}{% endfor %}
+<span data-line-number={{ idx }} class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-custom-class="{{ findings|finding_class:idx }}" data-bs-html="true" data-bs-content="{{ findings|finding_content:idx }}"{% endif %}>{{ line }}</span>{% endwith %}{% endfor %}
 </pre>
 
 
@@ -39,6 +39,21 @@
         background-color: darkgray;
         color: white;
         cursor: pointer;
+    }
+
+    div.popover.slm-parse-error h3 {
+        background-color: darkred;
+        color: white;
+    }
+
+    div.popover.slm-parse-warning h3 {
+        background-color: darkorange;
+        color: white;
+    }
+
+    div.popover.slm-parse-ignore h3 {
+        background-color: darkgray;
+        color: white;
     }
 }
 

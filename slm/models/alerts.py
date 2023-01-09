@@ -661,7 +661,16 @@ class GeodesyMLInvalidManager(AlertManager):
         """
         self.check_issue_signal_supported(signal)
         site.refresh_from_db()
-        return self.check_site(site=site)
+        return self.check_site(
+            site=site,
+            published=(
+                True if signal in {
+                    slm_signals.site_published,
+                    slm_signals.site_file_published,
+                    slm_signals.site_file_unpublished
+                } else None
+            )
+        )
 
     def check_site(self, site, published=None):
         """
@@ -686,7 +695,7 @@ class GeodesyMLInvalidManager(AlertManager):
             SiteLogFormat.GEODESY_ML,
             version=geo_version
         )
-        parser = SiteLogParser(xml_str.decode())
+        parser = SiteLogParser(xml_str)
         if parser.errors:
             return self.model.objects.create(
                 published=serializer.is_published,

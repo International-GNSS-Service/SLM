@@ -31,32 +31,44 @@ Template for View/Diff page.
   </div>
 
   <!-- View/Diff Comparison -->
-  <div id="review-diff-container">
+  <div id="slm-review-diff-container">
     <div class="d-flex justify-content-between mb-2">
         <div
-            id="slm-review-back"
+            id="slm-review-backward"
             class="d-flex justify-content-between"
         >
-            <button class="btn btn-sm mx-1" {% if not back_prev %}disabled{% else %}data-slm-epoch="{{ back_prev }}"{% endif %}><i class="bi bi-skip-backward"></i></button>
-            <div class="d-flex justify-content-center">
-                <label for="back"></label>
-                <input type="datetime-local" id="back" name="back" value="{{ back_current|strip_ms }}" max="{{ forward_current|strip_ms }}" {% if not back_current %}disabled{% endif %}>
+            <button class="btn btn-primary mx-1" name="back"><i class="bi bi-skip-backward"></i></button>
+            <div class="d-flex justify-content-center form-group">
+                <label for="slm-review-backward-input" style="display: none">Backward</label>
+                <input class="form-control" type="datetime-local" id="slm-review-backward-input" name="back">
             </div>
-            <button class="btn btn-sm mx-1" {% if not back_next %}disabled{% else %}data-slm-epoch="{{ back_next }}"{% endif %}><i class="bi bi-skip-forward"></i></button>
+            <button class="btn btn-primary mx-1" name="forward"><i class="bi bi-skip-forward"></i></button>
+        </div>
+        <div class="form-group d-flex justify-space-between align-items-center">
+            <label for="slm-review-format-input" style="display: none">Site Log Format:</label>
+            <select id="slm-review-format-input" class="form-control">
+                {% for format in log_formats %}
+                <option value="{{ format.value }}">{{ format.label }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-check form-switch ms-3">
+                <label for="slm-review-diff-toggle" class="form-check-label" style="display: none">Toggle Diff Only:</label>
+                <input class="form-check-input" type="checkbox" id="slm-review-diff-toggle" title="{% trans 'Toggle Difference Only' %}">
+            </div>
         </div>
         <div
             id="slm-review-forward"
-            class="d-flex justify-content-between"
+            class="d-flex justify-content-between form-group"
         >
-            <button class="btn btn-sm mx-1" {% if not foward_prev %}disabled{% else %}data-slm-epoch="{{ forward_prev }}"{% endif %}><i class="bi bi-skip-backward"></i></button>
+            <button class="btn btn-primary mx-1" name="back"><i class="bi bi-skip-backward"></i></button>
             <div class="d-flex justify-content-center">
-                <label for="forward"></label>
-                <input type="datetime-local" id="forward" name="forward" value="{{ forward_current|strip_ms }}" min="{{ back_current|strip_ms }}" {% if not forward_current %}disabled{% endif %}>
+                <label for="slm-review-forward-input" style="display: none">Forward</label>
+                <input class="form-control" type="datetime-local" id="slm-review-forward-input" name="forward" min="{{ back_current|strip_ms }}">
             </div>
-            <button class="btn btn-sm mx-1" {% if not forward_next %}disabled{% else %}data-slm-epoch="{{ forward_next }}"{% endif %}><i class="bi bi-skip-forward"></i></button>
+            <button class="btn btn-primary mx-1" name="forward"><i class="bi bi-skip-forward"></i></button>
         </div>
     </div>
-    <pre id="review-diff"></pre>
+    <pre id="slm-review-diff"></pre>
   </div>
 </div>
 
@@ -81,6 +93,8 @@ Template for View/Diff page.
     </div>
 </div>
 
+{{ review_stack|json_script:"slm-review-stack" }}
+
 {% compress js inline %}
 <script>
     const reviewActions = $('#review-actions');
@@ -88,6 +102,20 @@ Template for View/Diff page.
     const publishBtn = reviewActions.find('button[name="publish"]');
     const rejectBtn = reviewActions.find('button[name="reject"]');
     const rejectSubmit = $('#slm-reject-updates');
+
+    const reviewStack = JSON.parse(
+        document.getElementById('slm-review-stack').textContent
+    );
+    for (const [fmt, editStack] of Object.entries(reviewStack)) {
+        let idx = 0;
+        for (const edit of editStack) {
+            if (edit[0] !== null) {
+                reviewStack[fmt][idx] = [new Date(Date.parse(edit[0])), edit[1]];
+            }
+            idx++;
+        }
+    }
+
     let navBtn = $('button#select-{{ station }}');
 
     const rejectModal = new bootstrap.Modal(
@@ -192,42 +220,215 @@ Template for View/Diff page.
         );
     });
 
-    {% autoescape off %}
-    const back_text = `{{ back_text|escapejs }}`;
-    const forward_text = `{{ forward_text|escapejs }}`;
-    const epoch = '{{ epoch }}';
-    const published = {% if published %}true{% else %}false{% endif %};
-    const options = {
-        kwargs: {
-            station: '{{ station }}'
-        },
-        query: {}
-    };
-    {% if published %}options.query.pub = true;{% endif %}
-    {% if back_current %}options.query.back = '{{ back_current }}';{% endif %}
-    {% if forward_current %}options.query.forward = '{{ forward_current }}';{% endif %}
-    {% if epoch %}options.kwargs.epoch = '{{ epoch }}'{% endif %}
 
-    {% endautoescape %}
-    $(document).ready(function() {
-        slm.showDiff(forward_text, back_text, $("#review-diff"), 'line'); // mode could also be 'word' or 'char'
-        $('#slm-review-back > button').click(function() {
-            options.query.back = $(this).data('slmEpoch');
-            window.location = slm.urls.reverse('slm:review', options);
-        });
-        $('#slm-review-forward > button').click(function() {
-            options.query.forward = $(this).data('slmEpoch');
-            window.location = slm.urls.reverse('slm:review', options);
-        });
-        $('#slm-review-back > div > input').change(function() {
-           options.query.back = $(this).val();
-           window.location = slm.urls.reverse('slm:review', options);
-        });
-        $('#slm-review-forward > div > input').change(function() {
-           options.query.forward = $(this).val();
-           window.location = slm.urls.reverse('slm:review', options);
-        });
+    const diffContainer = $("#slm-review-diff");
+    const formatInput = $('#slm-review-format-input');
+    const backwardInput = $('#slm-review-backward-input');
+    const forwardInput = $('#slm-review-forward-input');
+    const diffToggle = $('#slm-review-diff-toggle');
+
+    const backwardBack = $('#slm-review-backward button[name="back"]');
+    const backwardForward = $('#slm-review-backward button[name="forward"]');
+
+    const forwardBack = $('#slm-review-forward button[name="back"]');
+    const forwardForward = $('#slm-review-forward button[name="forward"]');
+
+    const content = {};
+    for (const [fmt, _] of Object.entries(reviewStack)) {
+        content[fmt] = {
+            forward: '',
+            backward: ''
+        }
+    }
+
+    const getIndex = function(date_str) {
+        const datetime = new Date(Date.parse(date_str))
+        const stack = reviewStack[slm.SiteLogFormat.get(parseInt(formatInput.val())).val];
+        let idx = 0;
+        for (const edit of stack) {
+            if (edit[0] !== null && datetime > edit[0]) {
+                return idx;
+            }
+            idx++;
+        }
+        return idx;
+    }
+
+    const disable = function(element, disabled) {
+        if (disabled) {
+            element.attr('disabled', true);
+        } else {
+            element.removeAttr('disabled');
+        }
+    }
+
+    const showLines = function() {
+        if (diffToggle.is(':checked')) {
+            $('span.slm-diff-equal').hide();
+        } else {
+            $('span.slm-diff-equal').show();
+        }
+    }
+
+    const initDiff = function() {
+        const format = slm.SiteLogFormat.get(parseInt(formatInput.val()));
+        let fwd = content[format.val].forward;
+        let bck = content[format.val].backward;
+        if (format === slm.SiteLogFormat.GEODESY_ML) {
+            if (fwd) {
+                fwd = new XMLSerializer().serializeToString(fwd.documentElement);
+            }
+            if (bck) {
+                bck = new XMLSerializer().serializeToString(bck.documentElement);
+            }
+        }
+        slm.showDiff(fwd, bck, diffContainer, 'line');
+        showLines();
+    }
+
+    const setDiff = function(back, forward) {
+        $('body').css('cursor', 'progress');
+        const format = slm.SiteLogFormat.get(parseInt(formatInput.val()));
+        const formatSwitch = slm.SiteLogFormat.get(
+            formatInput.data('slmReviewFormat')
+        ) !== format;
+        formatInput.data('slmReviewFormat', format.val);
+        const finish = function() {
+            initDiff();
+            $('body').css('cursor', 'default');
+        }
+        let stack = reviewStack[format.val];
+        let backFetched = !formatSwitch && backwardInput.data('slmReviewIndex') === back;
+        let forwardFetched = !formatSwitch && forwardInput.data('slmReviewIndex') === forward;
+        if (backFetched && forwardFetched) {
+            $('body').css('cursor', 'default');
+            return;
+        }
+        if (!backFetched) {
+            backwardInput.data('slmReviewIndex', back);
+            backwardBack.data('slmNext', back + 1);
+            backwardForward.data('slmNext', back - 1);
+
+            if (stack.length > back) {
+                slm.setDateTimeWidget(backwardInput, stack[back][0]);
+                $.ajax({
+                    url: slm.urls.reverse(
+                        'slm_public_api:archive-detail',
+                        {kwargs: {pk: stack[back][1]}}
+                    )
+                }).done(function (data, status, jqXHR) {
+                    backFetched = true;
+                    content[format.val].backward = data;
+                    if (forwardFetched) {
+                        finish();
+                    }
+                });
+            } else {
+                backwardInput.val(null);
+                backFetched = true;
+                content[format.val].backward = '';
+                if (forwardFetched) {
+                    finish();
+                }
+            }
+        }
+
+        if (!forwardFetched) {
+            slm.setDateTimeWidget(forwardInput, stack[forward][0]);
+            forwardInput.data('slmReviewIndex', forward);
+            forwardBack.data('slmNext', forward + 1);
+            forwardForward.data('slmNext', forward - 1);
+            let request;
+            if (stack[forward][0] !== null) {
+                request = $.ajax({
+                    url: slm.urls.reverse(
+                        'slm_public_api:archive-detail',
+                        {kwargs: {pk: stack[forward][1]}}
+                    )
+                });
+            } else {
+                request = $.ajax({
+                    url: slm.urls.reverse(
+                        'slm_edit_api:download-detail',
+                        {
+                            kwargs: {
+                                site: '{{station}}',
+                                format: format.ext
+                            },
+                            query: {'unpublished': true}
+                        }
+                    )
+                });
+            }
+            request.done(function (data, status, jqXHR) {
+                content[format.val].forward = data;
+                forwardFetched = true;
+                if (backFetched) {finish();}
+            });
+        }
+
+        for (const [fmt, fmtStack] of Object.entries(reviewStack)) {
+            if (fmtStack.length < back) {
+                $(`#slm-review-format-input > option[value=${fmt}]`).attr('disabled', true);
+            } else {
+                $(`#slm-review-format-input > option[value=${fmt}]`).removeAttr('disabled');
+            }
+        }
+        disable(backwardBack, back >= stack.length);
+        disable(forwardBack, (back - 1) < (forward + 1));
+        disable(backwardForward, (forward + 1) > (back - 1));
+        disable(forwardForward, forward === 0);
+        if (stack.length > (forward+1) && stack[forward+1][0] !== null) {
+            slm.setDateTimeWidget(backwardInput, stack[forward+1][0], 'max');
+        } else {
+            backwardInput.attr('max', backwardInput.val());
+        }
+        if (stack.length > (back-1) && stack[back-1][0] !== null) {
+            slm.setDateTimeWidget(forwardInput, stack[back-1][0], 'min');
+        } else {
+            forwardInput.attr('min', forwardInput.val());
+        }
+    }
+
+    const backClick = function() {
+        setDiff(
+            $(this).data('slmNext'),
+            forwardInput.data('slmReviewIndex')
+        );
+    }
+    const forwardClick = function() {
+        setDiff(
+            backwardInput.data('slmReviewIndex'),
+            $(this).data('slmNext'),
+        );
+    }
+
+    formatInput.change(function() {
+        setDiff(
+            backwardInput.data('slmReviewIndex'),
+            forwardInput.data('slmReviewIndex')
+        );
     });
+
+    diffToggle.change(showLines);
+    backwardInput.change(function() {
+        setDiff(
+            getIndex(backwardInput.val()),
+            forwardInput.data('slmReviewIndex')
+        );
+    });
+    forwardInput.change(function() {
+        setDiff(
+            backwardInput.data('slmReviewIndex'),
+            getIndex(forwardInput.val())
+        );
+    });
+    backwardBack.click(backClick);
+    backwardForward.click(backClick);
+    forwardBack.click(forwardClick);
+    forwardForward.click(forwardClick);
+
+    setDiff(1, 0);
 </script>
 {% endcompress %}
 {% endblock %}

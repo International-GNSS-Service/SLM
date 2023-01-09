@@ -583,8 +583,61 @@ slm.showDiff = function(head, ancestor, display, mode='char') {
         dmp.diff_charsToLines_(diffs, lineArray);
     }
     //dmp.diff_cleanupEfficiency(0);
-    display.html(dmp.diff_prettyHtml(diffs));
+    //display.html(dmp.diff_prettyHtml(diffs));
+    display.html(`<div class="slm-diff-header"></div><span class="slm-review-lineno"> </span><span class="slm-review-line"></span><br/>${slm.prettyHtml(diffs)}<div class="slm-diff-footer"></div>`);
 }
+
+slm.setDateTimeWidget = function(widget, datetime, attr=null, length=16) {
+    let val = null;
+    if (datetime) {
+        datetime = new Date(datetime.getTime());
+        datetime.setMinutes(datetime.getMinutes() - datetime.getTimezoneOffset());
+        val = datetime.toISOString().slice(0, length);
+    }
+    if (attr !== null) {
+        widget.attr(attr, val);
+    } else {
+        widget.val(val);
+    }
+}
+
+slm.prettyHtml = function(diffs) {
+    let html = [];
+    let pattern_amp = /&/g;
+    let pattern_lt = /</g;
+    let pattern_gt = />/g;
+    let pattern_para = /\n/g;
+    let pattern_crlf = /\r/g;
+    let lineno = 0;
+    for (let x = 0; x < diffs.length; x++) {
+      let start = lineno;
+      let op = diffs[x][0];    // Operation (insert, delete, equal)
+      let data = diffs[x][1];  // Text of change.
+      let text = data.replace(pattern_amp, '&amp;').replace(pattern_lt, '&lt;').replace(pattern_gt, '&gt;').replace(pattern_crlf, '');
+      let lines = [];
+      if (op === DIFF_DELETE) {
+          console.log(text.slice(0,text.length-1));
+      }
+      for (const line of text.slice(0,text.length-1).split('\n')) {
+          lineno++;
+          lines.push(`<span class="slm-review-lineno">${lineno}</span><span class="slm-review-line">${line}</span>`);
+      }
+      text = lines.join('\n');
+      switch (op) {
+        case DIFF_INSERT:
+          html[x] = `<ins style="background:#e6ffe6;">${text}</ins><br/>`;
+          break;
+        case DIFF_DELETE:
+          html[x] = `<del style="background:#ffe6e6;">${text}</del><br/>`;
+          lineno = start;
+          break;
+        case DIFF_EQUAL:
+          html[x] = `<span class="slm-diff-equal">${text}</span><br/>`;
+          break;
+      }
+    }
+    return html.join('');
+};
 
 
 slm.addColumnFiltering = function( table) {

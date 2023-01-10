@@ -112,6 +112,25 @@ class SiteIndexManager(models.Manager):
             last.end = site.last_publish
             last.save()
 
+    def insert_index(self, begin, **kwargs):
+        """
+        Insert a new index into an existing index deck (i.e. between existing
+        indexes).
+        """
+        next_index = self.get_queryset().filter(
+            site=kwargs['site'],
+            begin__gt=begin
+        ).order_by('begin').first()
+        prev_index = self.get_queryset().filter(
+            site=kwargs['site'],
+            begin__lt=begin
+        ).order_by('-begin').first()
+        kwargs.setdefault('end', next_index.begin if next_index else None)
+        if prev_index:
+            prev_index.end = begin
+            prev_index.save()
+        return self.create(begin=begin, **kwargs)
+
 
 class SiteIndexQuerySet(models.QuerySet):
 
@@ -194,7 +213,12 @@ class SiteIndexQuerySet(models.QuerySet):
 
 class SiteIndex(models.Model):
 
-    site = models.ForeignKey('slm.Site', on_delete=models.CASCADE, null=False)
+    site = models.ForeignKey(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        null=False,
+        related_name='indexes'
+    )
 
     # the point in time at which this record begins being valid
     begin = models.DateTimeField(null=False, db_index=True)
@@ -206,7 +230,12 @@ class SiteIndex(models.Model):
     longitude = models.FloatField(db_index=True, null=True)
     elevation = models.FloatField(db_index=True, null=True)
 
-    city = models.CharField(default='', db_index=True, max_length=100)
+    city = models.CharField(
+        default='',
+        db_index=True,
+        max_length=100,
+        blank=True
+    )
     country = EnumField(
         ISOCountry,
         null=True,
@@ -219,8 +248,18 @@ class SiteIndex(models.Model):
     radome = models.ForeignKey(Radome, on_delete=models.PROTECT, null=True)
     receiver = models.ForeignKey(Receiver, on_delete=models.PROTECT, null=True)
 
-    serial_number = models.CharField(db_index=True, max_length=100)
-    firmware = models.CharField(db_index=True, max_length=100)
+    serial_number = models.CharField(
+        db_index=True,
+        max_length=100,
+        blank=True,
+        default=''
+    )
+    firmware = models.CharField(
+        db_index=True,
+        max_length=100,
+        blank=True,
+        default=''
+    )
 
     frequency_standard = EnumField(
         FrequencyStandardType,
@@ -230,11 +269,21 @@ class SiteIndex(models.Model):
         max_length=100
     )
 
-    domes_number = models.CharField(db_index=True, max_length=100)
+    domes_number = models.CharField(
+        db_index=True,
+        max_length=100,
+        blank=True,
+        default=''
+    )
 
     satellite_system = models.ManyToManyField(SatelliteSystem)
 
-    data_center = models.CharField(db_index=True, max_length=100)
+    data_center = models.CharField(
+        db_index=True,
+        max_length=100,
+        blank=True,
+        default=''
+    )
 
     objects = SiteIndexManager.from_queryset(SiteIndexQuerySet)()
 

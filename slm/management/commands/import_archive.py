@@ -111,7 +111,7 @@ class Command(BaseCommand):
                                 if prep_time == log_time:
                                     prep_eq += 1
                                 if prep_time > log_time:
-                                    prep_eq += 1
+                                    prep_more += 1
                             else:
                                 no_prep += 1
 
@@ -160,6 +160,7 @@ class Command(BaseCommand):
             f'prep_time<({prep_less/count * 100:.04}%)\n'
             f'prep_time=({prep_eq/count * 100:.04}%)\n'
             f'prep_time>({prep_more/count * 100:.04}%)\n'
+            f'prep_time=None({no_prep/count * 100:.04}%)\n'
         )
 
     def log_params(self, log_str, site):

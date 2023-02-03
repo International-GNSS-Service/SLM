@@ -249,6 +249,16 @@ class SiteLogParser(BaseParser):
         while idx < len(self.lines):
             idx = self.visit_line(idx, self.lines[idx].strip())
 
+        # throw an error if we didnt match the expected name
+        if self.name_matched is None and self.site_name:
+            self.add_finding(
+                Error(
+                    0,
+                    self,
+                    f'Expected site name: {self.site_name}'
+                )
+            )
+
         # the only way to be sure where the graphic is, is to rewind from the
         # end to the last encountered - removing any warnings/errors
         for finding in reversed(sorted(self.findings.keys())):
@@ -322,14 +332,17 @@ class SiteLogParser(BaseParser):
             if self.name_matched is None:
                 if (
                     self.site_name is not None and
-                    self.site_name in line.upper()
+                    (
+                        self.site_name.upper() in line.upper() or
+                        f'{self.site_name[0:4].upper()} ' in line.upper()
+                    )
                 ):
                     self.name_matched = True
                     return idx + 1
                 elif (
                     'site' in line.lower() and
                     'info' in line.lower() and
-                    len(line.split()[0]) in {4, 9}
+                    4 <= len(line.split()[0]) <= 9
                 ):
                     self.name_matched = False if self.site_name else None
                     if self.name_matched is False:
@@ -337,7 +350,7 @@ class SiteLogParser(BaseParser):
                             Error(
                                 idx,
                                 self,
-                                f'Incorrect site name: {self.site_name}'
+                                f'Incorrect site name: {line.split()[0]}'
                             )
                         )
                     self.site_name = line.split()[0].upper()

@@ -349,21 +349,54 @@ fieldset.slm-form-group > legend {
 
 
 /*------- Validation CSS -------*/
+/* this needs major cleanup */
+.row.is-invalid.slm-form-unpublished {
+    border: none;
+    background-image: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+.row.is-invalid {
+    border: none;
+    background-image: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.row.slm-widget-container.is-invalid.slm-form-unpublished {
+    border: 1px solid #0084BD;
+    background-image: none;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-left: 0;
+    margin-right: 0;
+}
+.row.slm-widget-container.is-invalid {
+    border: 1px solid red;
+    background-image: none;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
 .is-invalid.slm-form-unpublished {
     /*border-color: #ffecb5;*/
-    border-color: #BF8C0D;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23d89133'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23d89133' stroke='none'/%3e%3c/svg%3e");
+    border-color: #0084BD;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%230084BD'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23d89133' stroke='none'/%3e%3c/svg%3e");
 }
 .invalid-feedback.slm-form-unpublished {
     /*color: #ffecb5;*/
-    color: #BF8C0D;
+    color: #0084BD;
 }
 .was-validated .form-control.slm-form-unpublished:invalid:focus, .form-control.is-invalid.slm-form-unpublished:focus {
-  border-color: #BF8C0D;
-  box-shadow: 0 0 0 0.25rem rgba(216, 145, 51, 0.25);
+  border-color: #0084BD;
+  box-shadow: 0 0 0 0.25rem #0084BD5F;
 }
 .alert-warning.slm-form-unpublished {
-    border-color: #BF8C0D;
+    border-color: #0084BD;
+    background-color: #e6f7ff;
+    color: #0084BD;
 }
 
 
@@ -464,7 +497,7 @@ fieldset.slm-form-group > legend {
 }
 /* Download Tab Icons Colors */
 .slm-modified {
-    color: #BF8C0D;
+    color: #0084BD;
 }
 .slm-published {
     color: green;
@@ -503,7 +536,7 @@ span.badge.slm-log-file-upload {
 }
 /* Badge Color for Upload Tab */
 .slm-files-badge {
-    background-color: #BF8C0D;
+    background-color: #0084BD;
 }
 
 
@@ -617,7 +650,7 @@ button.nav-link.slm-status-empty  {
 /* Upload Buttons CSS */
 button.slm-upload-unpublished,
 button.nav-link.slm-upload-unpublished {
-    border-left: 10px solid #BF8C0D;
+    border-left: 10px solid #0084BD;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
@@ -665,3 +698,44 @@ button.nav-link {
 .autocomplete-group { padding: 2px 5px; }
 .autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
 
+/***************************************************/
+/* styling to make custom 24 hour time widget work */
+div.time-select {
+    border: 1px solid rgba(0,0,0,0.2);
+    background-color: white;
+    box-shadow: 0 2px 10px 2px rgba(0,0,0,0.2);
+    padding: 5px;
+    position: absolute;
+}
+
+div.time-select > div::-webkit-scrollbar {
+    display: none;
+}
+div.time-select > div {
+    scrollbar-width: none;
+}
+
+div.time-select span {
+    height: 40px;
+    width: 55px;
+    cursor: default;
+    display: inline-block;
+    text-align: center;
+    line-height: 40px;
+    font-size: 14px;
+}
+
+div.time-select span:hover {
+    background-color: rgb(192, 214, 252);
+}
+
+div.time-select span.time-set {
+    background-color: rgb(44, 120, 246);
+    color: white;
+    font-weight: bold;
+}
+
+span.time-selected {
+    border: 2px solid black;
+}
+/***************************************************/

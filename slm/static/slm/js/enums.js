@@ -43,11 +43,12 @@ class LogEntryType {
 
 class SiteLogStatus {
     
-    static DORMANT = new SiteLogStatus(1, 'Dormant', 'slm-status-dormant', '#3D4543');
-    static NASCENT = new SiteLogStatus(2, 'Nascent', 'slm-status-nascent', '#913D88');
+    static FORMER = new SiteLogStatus(1, 'Former', 'slm-status-former', '#3D4543');
+    static PROPOSED = new SiteLogStatus(2, 'Proposed', 'slm-status-proposed', '#913D88');
     static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#0084BD');
     static PUBLISHED = new SiteLogStatus(4, 'Published', 'slm-status-published', '#0F980F');
     static EMPTY = new SiteLogStatus(5, 'Empty', 'slm-status-empty', '#D3D3D3');
+    static SUSPENDED = new SiteLogStatus(6, 'Suspended', 'slm-status-suspended', '#E0041A');
 
     constructor(val, label, css, color) {
         this.val = val;
@@ -81,15 +82,17 @@ class SiteLogStatus {
     static get(val) {
         switch(val) {
             case 1:
-                return SiteLogStatus.DORMANT;
+                return SiteLogStatus.FORMER;
             case 2:
-                return SiteLogStatus.NASCENT;
+                return SiteLogStatus.PROPOSED;
             case 3:
                 return SiteLogStatus.UPDATED;
             case 4:
                 return SiteLogStatus.PUBLISHED;
             case 5:
                 return SiteLogStatus.EMPTY;
+            case 6:
+                return SiteLogStatus.SUSPENDED;
         }
         return null;
     }

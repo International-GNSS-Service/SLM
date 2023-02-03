@@ -19,9 +19,15 @@ from django.db.models import Max
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.urls import reverse_lazy
+from django.db.models.fields import NOT_PROVIDED
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
 from slm.defines import SLMFileType
-from slm.widgets import AutoComplete
+from slm.widgets import (
+    AutoComplete,
+    SLMCheckboxSelectMultiple,
+    SLMDateTimeWidget,
+    DatePicker
+)
 from slm.models import (
     Agency,
     SatelliteSystem,
@@ -62,6 +68,8 @@ class SLMTimeField(forms.TimeField):
 
 class SLMDateTimeField(forms.SplitDateTimeField):
 
+    widget = SLMDateTimeWidget
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.widget.widgets[0].input_type = 'date'
@@ -84,8 +92,12 @@ class SectionForm(forms.ModelForm):
         for field in self.fields:
             try:
                 model_field = self.Meta.model._meta.get_field(field)
-                if not (hasattr(model_field, 'default') and model_field.blank):
-                    self.fields[field].required = True
+                self.fields[field].required = not (
+                    getattr(model_field, 'default', None) != NOT_PROVIDED
+                    and model_field.blank
+                )
+                self.fields[field].widget.attrs.setdefault('class', '')
+                self.fields[field].widget.attrs['class'] += ' slm-form-field'
             except FieldDoesNotExist:
                 pass
 
@@ -201,15 +213,24 @@ class SubSectionForm(SectionForm):
             ).replace('.', '').strip().lower()
         return None
 
-    class Meta:
-        fields = SectionForm.Meta.fields + ['subsection']
+    class Meta(SectionForm.Meta):
+        fields = [
+            *SectionForm.Meta.fields,
+            'subsection'
+        ]
 
 
 class SiteFormForm(SectionForm):
 
-    class Meta:
+    class Meta(SectionForm.Meta):
         model = SiteForm
-        fields = SectionForm.Meta.fields + SiteForm.site_log_fields()
+        fields = [
+            *SectionForm.Meta.fields,
+            *SiteForm.site_log_fields()
+        ]
+        widgets = {
+            'date_prepared': DatePicker
+        }
 
 
 class SiteIdentificationForm(SectionForm):
@@ -227,17 +248,26 @@ class SiteIdentificationForm(SectionForm):
         required=False
     )
 
-    class Meta:
+    class Meta(SectionForm.Meta):
         model = SiteIdentification
-        fields = SectionForm.Meta.fields + \
-                 SiteIdentification.site_log_fields() + ['four_character_id']
+        fields = [
+            *SectionForm.Meta.fields,
+            *SiteIdentification.site_log_fields(),
+            'four_character_id'
+        ]
+        field_classes = {
+            'date_installed': SLMDateTimeField
+        }
 
 
 class SiteLocationForm(SectionForm):
 
     class Meta:
         model = SiteLocation
-        fields = SectionForm.Meta.fields + SiteLocation.site_log_fields()
+        fields = [
+            *SectionForm.Meta.fields,
+            *SiteLocation.site_log_fields()
+        ]
 
 
 class SiteReceiverForm(SubSectionForm):
@@ -247,7 +277,7 @@ class SiteReceiverForm(SubSectionForm):
         help_text=SiteReceiver._meta.get_field('satellite_system').help_text,
         label=SiteReceiver._meta.get_field('satellite_system').verbose_name,
         required=True,
-        widget=forms.SelectMultiple,
+        widget=SLMCheckboxSelectMultiple(columns=4),
         empty_label=None
     )
 
@@ -262,10 +292,6 @@ class SiteReceiverForm(SubSectionForm):
         )
     )
 
-    #installed = SLMDateTimeField(
-    #    help_text=SiteReceiver._meta.get_field('installed').help_text
-    #)
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # todo why is this not automatically done?
@@ -276,9 +302,16 @@ class SiteReceiverForm(SubSectionForm):
                 ].all()
             ]
 
-    class Meta:
+    class Meta(SubSectionForm):
         model = SiteReceiver
-        fields = SubSectionForm.Meta.fields + SiteReceiver.site_log_fields()
+        fields = [
+            *SubSectionForm.Meta.fields,
+            *SiteReceiver.site_log_fields()
+        ]
+        field_classes = {
+            'installed': SLMDateTimeField,
+            'removed': SLMDateTimeField
+        }
 
 
 class SiteAntennaForm(SubSectionForm):
@@ -313,144 +346,216 @@ class SiteAntennaForm(SubSectionForm):
         )
     )
 
-    class Meta:
+    class Meta(SubSectionForm):
         model = SiteAntenna
-        fields = SubSectionForm.Meta.fields + SiteAntenna.site_log_fields()
+        fields = [
+            *SubSectionForm.Meta.fields,
+            *SiteAntenna.site_log_fields()
+        ]
+        field_classes = {
+            'installed': SLMDateTimeField,
+            'removed': SLMDateTimeField
+        }
 
 
 class SiteSurveyedLocalTiesForm(SubSectionForm):
 
-    accuracy = forms.FloatField(
-        required=SiteSurveyedLocalTies._meta.get_field('accuracy').blank,
-        help_text=SiteSurveyedLocalTies._meta.get_field('accuracy').help_text,
-        label=SiteSurveyedLocalTies._meta.get_field('accuracy').verbose_name
-    )
-
-    class Meta:
+    class Meta(SubSectionForm.Meta):
         model = SiteSurveyedLocalTies
-        fields = SubSectionForm.Meta.fields + \
-                 SiteSurveyedLocalTies.site_log_fields()
+        fields = [
+            *SubSectionForm.Meta.fields,
+            *SiteSurveyedLocalTies.site_log_fields()
+        ]
+        field_classes = {
+            'measured': SLMDateTimeField
+        }
 
 
 class SiteFrequencyStandardForm(SubSectionForm):
 
-    class Meta:
+    class Meta(SubSectionForm.Meta):
         model = SiteFrequencyStandard
-        fields = SubSectionForm.Meta.fields + \
-                 SiteFrequencyStandard.site_log_fields()
+        fields = [
+            *SubSectionForm.Meta.fields,
+            *SiteFrequencyStandard.site_log_fields()
+        ]
+        widgets = {
+            'effective_start': DatePicker,
+            'effective_end': DatePicker
+        }
 
 
 class SiteCollocationForm(SubSectionForm):
 
-    class Meta:
+    class Meta(SubSectionForm.Meta):
         model = SiteCollocation
-        fields = SubSectionForm.Meta.fields + SiteCollocation.site_log_fields()
+        fields = [
+            *SubSectionForm.Meta.fields,
+            *SiteCollocation.site_log_fields()
+        ]
+        widgets = {
+            'effective_start': DatePicker,
+            'effective_end': DatePicker
+        }
 
 
 class MeteorologicalForm(SubSectionForm):
 
     NAV_HEADING = _('Meteorological Instr.')
 
+    class Meta(SubSectionForm):
+        fields = SubSectionForm.Meta.fields
+        widgets = {
+            'calibration': DatePicker,
+            'effective_start': DatePicker,
+            'effective_end': DatePicker
+        }
+
 
 class SiteHumiditySensorForm(MeteorologicalForm):
 
-    class Meta:
+    class Meta(MeteorologicalForm.Meta):
         model = SiteHumiditySensor
-        fields = MeteorologicalForm.Meta.fields + \
-                 SiteHumiditySensor.site_log_fields()
+        fields = [
+            *MeteorologicalForm.Meta.fields,
+            *SiteHumiditySensor.site_log_fields()
+        ]
 
 
 class SitePressureSensorForm(MeteorologicalForm):
 
-    class Meta:
+    class Meta(MeteorologicalForm.Meta):
         model = SitePressureSensor
-        fields = MeteorologicalForm.Meta.fields + \
-                 SitePressureSensor.site_log_fields()
+        fields = [
+            *MeteorologicalForm.Meta.fields,
+            *SitePressureSensor.site_log_fields()
+        ]
 
 
 class SiteTemperatureSensorForm(MeteorologicalForm):
 
-    class Meta:
+    class Meta(MeteorologicalForm.Meta):
         model = SiteTemperatureSensor
-        fields = MeteorologicalForm.Meta.fields + \
-                 SiteTemperatureSensor.site_log_fields()
+        fields = [
+            *MeteorologicalForm.Meta.fields,
+            *SiteTemperatureSensor.site_log_fields()
+        ]
 
 
 class SiteWaterVaporRadiometerForm(MeteorologicalForm):
 
-    class Meta:
+    class Meta(MeteorologicalForm.Meta):
         model = SiteWaterVaporRadiometer
-        fields = MeteorologicalForm.Meta.fields + \
-                 SiteWaterVaporRadiometer.site_log_fields()
+        fields = [
+            *MeteorologicalForm.Meta.fields,
+            *SiteWaterVaporRadiometer.site_log_fields()
+        ]
 
 
 class SiteOtherInstrumentationForm(MeteorologicalForm):
 
-    class Meta:
+    class Meta(MeteorologicalForm.Meta):
         model = SiteOtherInstrumentation
-        fields = MeteorologicalForm.Meta.fields + \
-                 SiteOtherInstrumentation.site_log_fields()
+        fields = [
+            *MeteorologicalForm.Meta.fields,
+            *SiteOtherInstrumentation.site_log_fields()
+        ]
 
 
 class LocalConditionForm(SubSectionForm):
 
     NAV_HEADING = _('Local Conditions')
 
+    class Meta(SubSectionForm.Meta):
+        fields = SubSectionForm.Meta.fields
+        widgets = {
+            'effective_start': DatePicker,
+            'effective_end': DatePicker
+        }
+
 
 class SiteRadioInterferencesForm(LocalConditionForm):
 
-    class Meta:
+    class Meta(LocalConditionForm.Meta):
         model = SiteRadioInterferences
-        fields = LocalConditionForm.Meta.fields + \
-                 SiteRadioInterferences.site_log_fields()
+        fields = [
+            *LocalConditionForm.Meta.fields,
+            *SiteRadioInterferences.site_log_fields()
+        ]
 
 
 class SiteMultiPathSourcesForm(LocalConditionForm):
 
-    class Meta:
+    class Meta(LocalConditionForm.Meta):
         model = SiteMultiPathSources
-        fields = LocalConditionForm.Meta.fields + \
-                 SiteMultiPathSources.site_log_fields()
+        fields = [
+            *LocalConditionForm.Meta.fields,
+            *SiteMultiPathSources.site_log_fields()
+        ]
 
 
 class SiteSignalObstructionsForm(LocalConditionForm):
 
-    class Meta:
+    class Meta(LocalConditionForm.Meta):
         model = SiteSignalObstructions
-        fields = LocalConditionForm.Meta.fields + \
-                 SiteSignalObstructions.site_log_fields()
+        fields = [
+            *LocalConditionForm.Meta.fields,
+            *SiteSignalObstructions.site_log_fields()
+        ]
 
 
 class SiteLocalEpisodicEffectsForm(SubSectionForm):
 
-    class Meta:
+    class Meta(SubSectionForm.Meta):
         model = SiteLocalEpisodicEffects
-        fields = SubSectionForm.Meta.fields + \
-                 SiteLocalEpisodicEffects.site_log_fields()
+        fields = [
+            *SubSectionForm.Meta.fields,
+            *SiteLocalEpisodicEffects.site_log_fields()
+        ]
+        widgets = {
+            'effective_start': DatePicker,
+            'effective_end': DatePicker
+        }
 
 
-class SiteOperationalContactForm(SectionForm):
+class AgencyPOCForm(SectionForm):
 
-    class Meta:
+    class Meta(SectionForm.Meta):
+        fields = SectionForm.Meta.fields
+        widgets = {
+            'agency': forms.Textarea(attrs={'rows': 1}),
+            'mailing_address': forms.Textarea(attrs={'rows': 4})
+        }
+
+
+class SiteOperationalContactForm(AgencyPOCForm):
+
+    class Meta(AgencyPOCForm.Meta):
         model = SiteOperationalContact
-        fields = SectionForm.Meta.fields + \
-                 SiteOperationalContact.site_log_fields()
+        fields = [
+            *AgencyPOCForm.Meta.fields,
+            *SiteOperationalContact.site_log_fields()
+        ]
 
 
-class SiteResponsibleAgencyForm(SectionForm):
+class SiteResponsibleAgencyForm(AgencyPOCForm):
 
-    class Meta:
+    class Meta(AgencyPOCForm.Meta):
         model = SiteResponsibleAgency
-        fields = SectionForm.Meta.fields + \
-                 SiteResponsibleAgency.site_log_fields()
+        fields = [
+            *AgencyPOCForm.Meta.fields,
+            *SiteResponsibleAgency.site_log_fields()
+        ]
 
 
 class SiteMoreInformationForm(SectionForm):
 
-    class Meta:
+    class Meta(SectionForm.Meta):
         model = SiteMoreInformation
-        fields = SectionForm.Meta.fields + \
-                 SiteMoreInformation.site_log_fields()
+        fields = [
+            *SectionForm.Meta.fields,
+            *SiteMoreInformation.site_log_fields()
+        ]
 
 
 class UserForm(forms.ModelForm):

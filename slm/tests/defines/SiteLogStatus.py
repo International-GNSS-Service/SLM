@@ -8,48 +8,57 @@ class TestSiteLogStatus(TestCase):
 
     def test_equality(self):
 
-        self.assertEqual(SiteLogStatus.DORMANT, 'Dormant')
-        self.assertEqual(SiteLogStatus.NASCENT, 'NASCENT')
+        self.assertEqual(SiteLogStatus.FORMER, 'Former')
+        self.assertEqual(SiteLogStatus.PROPOSED, 'PROPOSED')
         self.assertEqual(SiteLogStatus.UPDATED, SiteLogStatus('UPDATED'))
         self.assertEqual(SiteLogStatus.PUBLISHED, 'Published')
         self.assertEqual(SiteLogStatus.EMPTY, 'EmptY')
 
         self.assertEqual(SiteLogStatus.PUBLISHED.label, 'Published')
-        self.assertEqual(SiteLogStatus.DORMANT.label, 'Dormant')
-        self.assertEqual(SiteLogStatus.NASCENT.label, 'Nascent')
+        self.assertEqual(SiteLogStatus.FORMER.label, 'Former')
+        self.assertEqual(SiteLogStatus.PROPOSED.label, 'Nascent')
         self.assertEqual(SiteLogStatus.UPDATED.label, 'Updated')
         self.assertEqual(SiteLogStatus.EMPTY.label, 'Empty')
 
         self.assertEqual(str(SiteLogStatus.PUBLISHED), 'Published')
-        self.assertEqual(str(SiteLogStatus.DORMANT), 'Dormant')
-        self.assertEqual(str(SiteLogStatus.NASCENT), 'Nascent')
+        self.assertEqual(str(SiteLogStatus.FORMER), 'Former')
+        self.assertEqual(str(SiteLogStatus.PROPOSED), 'Nascent')
         self.assertEqual(str(SiteLogStatus.UPDATED), 'Updated')
         self.assertEqual(str(SiteLogStatus.EMPTY), 'Empty')
 
-        self.assertEqual(SiteLogStatus.DORMANT, 0)
-        self.assertEqual(SiteLogStatus.NASCENT, 1)
-        self.assertEqual(SiteLogStatus.UPDATED, 2)
-        self.assertEqual(SiteLogStatus.PUBLISHED, 3)
-        self.assertEqual(SiteLogStatus.EMPTY, 4)
+        self.assertEqual(SiteLogStatus.FORMER, 1)
+        self.assertEqual(SiteLogStatus.PROPOSED, 2)
+        self.assertEqual(SiteLogStatus.UPDATED, 3)
+        self.assertEqual(SiteLogStatus.PUBLISHED, 4)
+        self.assertEqual(SiteLogStatus.EMPTY, 5)
+        self.assertEqual(SiteLogStatus.SUSPENDED, 6)
 
     def test_merge(self):
 
         self.assertEqual(
-            SiteLogStatus.DORMANT.merge(SiteLogStatus.NASCENT),
-            SiteLogStatus.DORMANT
+            SiteLogStatus.FORMER.merge(SiteLogStatus.PROPOSED),
+            SiteLogStatus.FORMER
         )
         self.assertEqual(
-            SiteLogStatus.NASCENT.merge(SiteLogStatus.DORMANT),
-            SiteLogStatus.DORMANT
+            SiteLogStatus.SUSPENDED.merge(SiteLogStatus.PROPOSED),
+            SiteLogStatus.SUSPENDED
+        )
+        self.assertEqual(
+            SiteLogStatus.PROPOSED.merge(SiteLogStatus.FORMER),
+            SiteLogStatus.FORMER
+        )
+        self.assertEqual(
+            SiteLogStatus.PROPOSED.merge(SiteLogStatus.SUSPENDED),
+            SiteLogStatus.SUSPENDED
         )
 
         self.assertEqual(
-            SiteLogStatus.DORMANT.merge(SiteLogStatus.PUBLISHED),
-            SiteLogStatus.DORMANT
+            SiteLogStatus.FORMER.merge(SiteLogStatus.PUBLISHED),
+            SiteLogStatus.FORMER
         )
         self.assertEqual(
-            SiteLogStatus.PUBLISHED.merge(SiteLogStatus.DORMANT),
-            SiteLogStatus.DORMANT
+            SiteLogStatus.PUBLISHED.merge(SiteLogStatus.FORMER),
+            SiteLogStatus.FORMER
         )
 
         self.assertEqual(
@@ -62,22 +71,22 @@ class TestSiteLogStatus(TestCase):
         )
 
         self.assertEqual(
-            SiteLogStatus.NASCENT.merge(SiteLogStatus.UPDATED),
-            SiteLogStatus.NASCENT
+            SiteLogStatus.PROPOSED.merge(SiteLogStatus.UPDATED),
+            SiteLogStatus.PROPOSED
         )
         self.assertEqual(
-            SiteLogStatus.UPDATED.merge(SiteLogStatus.NASCENT),
-            SiteLogStatus.NASCENT
-        )
-
-        self.assertEqual(
-            SiteLogStatus.DORMANT.merge(None),
-            SiteLogStatus.DORMANT
+            SiteLogStatus.UPDATED.merge(SiteLogStatus.PROPOSED),
+            SiteLogStatus.PROPOSED
         )
 
         self.assertEqual(
-            SiteLogStatus.NASCENT.merge(None),
-            SiteLogStatus.NASCENT
+            SiteLogStatus.FORMER.merge(None),
+            SiteLogStatus.FORMER
+        )
+
+        self.assertEqual(
+            SiteLogStatus.PROPOSED.merge(None),
+            SiteLogStatus.PROPOSED
         )
         self.assertEqual(
             SiteLogStatus.UPDATED.merge(None),

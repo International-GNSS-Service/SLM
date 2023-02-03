@@ -502,8 +502,8 @@ class SiteLogBinder(BaseBinder):
                 except Exception as err:
                     binding_errors.add(param)
                     for line_no in range(
-                            parameter.line_no,
-                            parameter.line_end+1
+                        parameter.line_no,
+                        parameter.line_end+1
                     ):
                         self.parsed.add_finding(
                             Error(

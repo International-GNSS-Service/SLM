@@ -1,6 +1,9 @@
 // https://github.com/devbridge/jQuery-Autocomplete
-$(document).ready(function() {
-    $('input[data-slm-autocomplete]').each(function() {
+if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
+
+slm.initAutoCompletes = function(inputs = null) {
+    const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;
+    autoInputs.each(function() {
         $(this).autocomplete({
             minChars: 0,
             serviceUrl: $(this).data('serviceUrl'),
@@ -15,4 +18,5 @@ $(document).ready(function() {
             }
         });
     });
-});
+}
+

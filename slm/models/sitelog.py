@@ -160,8 +160,9 @@ class SiteQuerySet(models.QuerySet):
         """
         return self.filter(
             ~Q(status__in=[
-                SiteLogStatus.DORMANT,
-                SiteLogStatus.NASCENT
+                SiteLogStatus.FORMER,
+                SiteLogStatus.SUSPENDED,
+                SiteLogStatus.PROPOSED
             ])
             & Q(agencies__public=True)
             & Q(agencies__active=True)
@@ -296,7 +297,7 @@ class Site(models.Model):
     # dormant is now deduplicated into status field
     status = EnumField(
         SiteLogStatus,
-        default=SiteLogStatus.NASCENT,
+        default=SiteLogStatus.PROPOSED,
         blank=True,
         help_text=_('The current status of the site.')
     )
@@ -587,7 +588,11 @@ class Site(models.Model):
         # if in either of these two states - status update must come from
         # a global publish of the site log, not from this which can be
         # triggered by a section publish
-        if self.status not in {SiteLogStatus.DORMANT, SiteLogStatus.NASCENT}:
+        if self.status not in {
+            SiteLogStatus.SUSPENDED,
+            SiteLogStatus.FORMER,
+            SiteLogStatus.PROPOSED
+        }:
             if status == SiteLogStatus.PUBLISHED:
                 self.last_publish = timestamp
             self.status = status
@@ -670,7 +675,7 @@ class Site(models.Model):
                     )
                 )
 
-        # this might be an initial PUBLISH when we're in NASCENT or DORMANT
+        # this might be an initial PUBLISH when we're in PROPOSED or FORMER
         if sections_published or self.status != SiteLogStatus.PUBLISHED:
             self.status = SiteLogStatus.PUBLISHED
             self.last_publish = timestamp
@@ -870,11 +875,10 @@ class SiteSection(models.Model):
             return value
 
         for field in self.site_log_fields():
-            if getattr(self, field) != getattr(published, field, None):
-                diff[field] = {
-                    'pub': transform(getattr(published, field, None), field),
-                    'head': transform(getattr(self, field), field)
-                }
+            pub = transform(getattr(published, field, None), field)
+            head = transform(getattr(self, field), field)
+            if head != pub:
+                diff[field] = {'pub': pub, 'head': head}
         return diff
 
     @classmethod
@@ -1261,7 +1265,7 @@ class SiteIdentification(SiteSection):
     date_installed = models.DateTimeField(
         null=True,
         blank=False,
-        verbose_name=_('Date Installed'),
+        verbose_name=_('Date Installed (UTC)'),
         help_text=_(
             'Enter the original date that this site was included in the IGS. '
             'Format: (CCYY-MM-DDThh:mmZ)'
@@ -1673,7 +1677,7 @@ class SiteReceiver(SiteSubSection):
     installed = models.DateTimeField(
         null=True,
         blank=False,
-        verbose_name=_('Date Installed'),
+        verbose_name=_('Date Installed (UTC)'),
         help_text=_(
             'Enter the date and time the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
@@ -1684,7 +1688,7 @@ class SiteReceiver(SiteSubSection):
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Date Removed'),
+        verbose_name=_('Date Removed (UTC)'),
         help_text=_(
             'Enter the date and time the receiver was removed. It is important'
             ' that the date removed is entered BEFORE the addition of a new '
@@ -1903,7 +1907,7 @@ class SiteAntenna(SiteSubSection):
 
     installed = models.DateTimeField(
         blank=False,
-        verbose_name=_('Date Installed'),
+        verbose_name=_('Date Installed (UTC)'),
         help_text=_(
             'Enter the date the receiver was installed. '
             'Format: (CCYY-MM-DDThh:mmZ)'
@@ -1914,7 +1918,7 @@ class SiteAntenna(SiteSubSection):
         default=None,
         blank=True,
         null=True,
-        verbose_name=_('Date Removed'),
+        verbose_name=_('Date Removed (UTC)'),
         help_text=_(
             'Enter the date the receiver was removed. It is important that '
             'the date removed is entered before the addition of a new '
@@ -2099,7 +2103,7 @@ class SiteSurveyedLocalTies(SiteSubSection):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Date Measured'),
+        verbose_name=_('Date Measured (UTC)'),
         help_text=_(
             'Enter the date of the survey local ties measurement. '
             'Format: (CCYY-MM-DDThh:mmZ)'
@@ -2344,7 +2348,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
             'manufacturer',
             'serial_number',
             'height_diff',
-            'calibration_date',
+            'calibration',
             'effective_dates',
             'notes'
         ]

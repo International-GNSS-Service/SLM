@@ -189,7 +189,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
 
         self.assertEqual(
             Site.objects.get(name='AAA200USA').status,
-            SiteLogStatus.NASCENT
+            SiteLogStatus.PROPOSED
         )
 
         self.assertEqual(
@@ -259,7 +259,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
 
         self.assertEqual(
             site.status,
-            SiteLogStatus.NASCENT
+            SiteLogStatus.PROPOSED
         )
 
         self.assertEqual(
@@ -299,7 +299,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
 
         self.assertEqual(
             site.status,
-            SiteLogStatus.NASCENT
+            SiteLogStatus.PROPOSED
         )
 
         self.assertTrue(ret.status_code < 300)
@@ -342,7 +342,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
 
         self.assertEqual(
             site.status,
-            SiteLogStatus.NASCENT
+            SiteLogStatus.PROPOSED
         )
 
         self.assertEqual(
@@ -357,7 +357,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
         self.clear_signals()
 
         # edit and publish simultaneously - should be two published rows
-        # site log should still be in NASCENT state because other sections
+        # site log should still be in PROPOSED state because other sections
         # are not published
         ret = c.post(
             reverse('slm_edit_api:siteidentification-list'),
@@ -369,7 +369,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
         site.refresh_from_db()
         self.assertEqual(
             site.status,
-            SiteLogStatus.NASCENT
+            SiteLogStatus.PROPOSED
         )
 
         self.assertTrue(ret.status_code < 300)

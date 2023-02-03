@@ -197,17 +197,7 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
     }
     const handleSubmit = function(action, btn) {
         slm.resetFormErrorsAndWarnings(form);
-        let formData = new FormData(form.get(0));
-        let data = {};
-        for (const [key, val] of formData.entries()) {
-            let element = form.find(`[name="${key}"]`).get(0);
-            if (element.hasAttribute( 'multiple' )) {
-                data[key] = formData.getAll(key);
-            } else {
-                data[key] = val;
-            }
-        }
-        //const data = Object.fromEntries(new FormData(form.get(0)).entries());
+        let data = slm.formToObject(form);
         const csrf = data.csrfmiddlewaretoken;
         delete data.csrfmiddlewaretoken;
         let request = null;
@@ -267,14 +257,16 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         request.done(
             function(data, status, jqXHR) {
                 finished();
-                $.ajax({
-                    url: slm.urls.reverse(
-                        'slm_edit_api:stations-detail',
-                        {kwargs: {pk: data.site}}
-                    )
-                }).done(function(site, status, jqXHR){
-                    slm.updateAlertBell(site);
-                });
+                if (data) {
+                    $.ajax({
+                        url: slm.urls.reverse(
+                            'slm_edit_api:stations-detail',
+                            {kwargs: {pk: data.site}}
+                        )
+                    }).done(function (site, status, jqXHR) {
+                        slm.updateAlertBell(site);
+                    });
+                }
                 slm.handlePostSuccess(form, data, status, jqXHR);
             }
         ).fail(
@@ -292,7 +284,7 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
     form.on('click', '.slm-flag-error', function() {
         let field = $(this).closest('.slm-form-fieldset');
         let inpt = field.find('.slm-flag-input');
-        let fieldInpt = field.find(`input[name="${$(field).data('slmField')}"]`);
+        let fieldInpt = field.find(`.slm-form-field[name="${$(field).data('slmField')}"]`);
         if (inpt.is(":visible")) {
             $(this).html('<i class="bi bi-flag"></i><i class="bi bi-flag-fill"></i>');
             inpt.val('');
@@ -327,6 +319,8 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
             slm.flagsUpdated(form);
         }
     });
+    slm.time24Init(form.find('div.time-24hr'));
+    slm.initAutoCompletes(form.find('input[data-slm-autocomplete]'));
 }
 
 slm.extractFlags = function(form) {
@@ -342,7 +336,7 @@ slm.extractFlags = function(form) {
 slm.setFormFlagUI = function(form) {
     form.find('fieldset:visible').each(
         function() {
-            let fieldInpt = $(this).find(`input[name="${$(this).data('slmField')}"]`);
+            let fieldInpt = $(this).find(`.slm-form-field[name="${$(this).data('slmField')}"]`);
             if (form.data('slmErrorFlags').hasOwnProperty($(this).data('slmField'))) {
                 let flag = form.data('slmErrorFlags')[$(this).data('slmField')];
                 $(this).find('.slm-flag-error').html(
@@ -814,15 +808,37 @@ slm.updateFileBadges = function(delta) {
 slm.formToObject = function(form) {
     let formData = new FormData(form.get(0));
     let data = {};
+    let multiples = [];
     formData.forEach(function(value, key) {
-        let element = form.find(`[name="${key}"]`).get(0);
-        if (element.hasAttribute( 'multiple' )) {
-            data[key] = formData.getAll(key);
+        let element = form.find(
+            `input[name="${key}"], textarea[name="${key}"], select[name="${key}"]`
+        );
+        if (element.length > 1 || element.get(0).hasAttribute( 'multiple' )) {
+            // special case for split date/times
+            if (element.length === 2 && element.get(0).getAttribute('type') === 'date') {
+                if (element.get(0).value) {
+                    data[key] = `${element.get(0).value}T${element.get(1).value || "00:00"}Z`
+                }
+            } else {
+                data[key] = formData.getAll(key);
+            }
         } else {
             data[key] = value;
         }
     });
-    form.find('input:checkbox:not(:checked)').each(function(idx, element) {
+    const checkboxes = new Set();
+    form.find('input:checkbox').each(function(idx, element) {
+        const name = element.getAttribute('name');
+        if (checkboxes.has(name)) {
+            multiples.push(name);
+        }
+        checkboxes.add(name);
+    });
+    let notMult = '';
+    for (const mult of multiples) {
+        notMult += `[name!="${mult}"]`;
+    }
+    form.find(`input:checkbox${notMult}:not(:checked)`).each(function(idx, element) {
         data[element.getAttribute('name')] = 'off';
     });
     return data;

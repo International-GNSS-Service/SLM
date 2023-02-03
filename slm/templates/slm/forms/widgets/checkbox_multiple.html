@@ -1,0 +1,6 @@
+{% load slm %}
+{% with id=widget.attrs.id %}{% with per_col=widget.optgroups|length|div:widget.columns %}<div{% if id %} id="{{ id }}"{% endif %} class="row slm-widget-container{% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">{% for group, options, index in widget.optgroups %}{% if forloop.counter0|divisibleby:per_col %}{% if not forloop.first %}</div>{% endif %}<div class="col">{% endif %}{% if group %}
+  <label>{{ group }}</label>{% endif %}{% for option in options %}<div class="form-check form-switch">
+    {% include option.template_name with widget=option %}{% endfor %}
+  </div>{% endfor %}</div>
+</div>{% endwith %}{% endwith %}

@@ -723,7 +723,9 @@ class SectionViewSet(type):
                                     if not instance.published:
                                         edited_fields.append(field)
                                         if is_many:
-                                            getattr(instance, field).set(new_value)
+                                            getattr(instance, field).set(
+                                                new_value
+                                            )
                                         else:
                                             setattr(instance, field, new_value)
                                     if field in flags:
@@ -732,17 +734,26 @@ class SectionViewSet(type):
                         if update:
                             if instance.published:
                                 validated_data['_flags'] = flags
-                                new_section = super().create(validated_data)
-                                new_section.full_clean()
-                                new_section.save()
-                                instance = new_section
+                                instance.pk = None  # copy the instance
+                                instance.published = False
+                                instance.save()
+                                for param, value in validated_data.items():
+                                    if isinstance(
+                                        instance._meta.get_field(param),
+                                        models.ManyToManyField
+                                    ):
+                                        getattr(instance, param).set(value)
+                                    else:
+                                        setattr(instance, param, value)
+                                instance.full_clean()
+                                instance.save()
                             else:
                                 instance._flags = flags
                                 instance.full_clean()
                                 instance.save()
 
-                            # make sure we use edit timestamp if publish and edit
-                            # are simultaneous
+                            # make sure we use edit timestamp if publish and
+                            # edit are simultaneous
                             update_status = instance.edited
                             slm_signals.section_edited.send(
                                 sender=self,

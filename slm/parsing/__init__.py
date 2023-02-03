@@ -371,7 +371,6 @@ class BaseParser:
                 f'add_finding() expected a {Finding.__class__.__name__} '
                 f'object, was given: {finding.__class__.__name__}.'
             )
-
         self._findings_[finding.lineno] = finding
 
     def __init__(
@@ -406,7 +405,7 @@ def to_antenna(value):
     if len(parts) > 1 and len(antenna) > 16:
         antenna = value.rstrip(parts[-1]).strip()
     try:
-        return Antenna.objects.get(model__iexact=antenna).pk
+        return Antenna.objects.get(model__iexact=antenna).model
     except Antenna.DoesNotExist:
         antennas = '\n'.join(
             [ant.model for ant in Antenna.objects.all()]
@@ -420,7 +419,7 @@ def to_antenna(value):
 def to_radome(value):
     radome = value.strip()
     try:
-        return Radome.objects.get(model__iexact=radome).pk
+        return Radome.objects.get(model__iexact=radome).model
     except Radome.DoesNotExist:
         radomes = '\n'.join(
             [rad.model for rad in Radome.objects.all()]
@@ -434,7 +433,7 @@ def to_radome(value):
 def to_receiver(value):
     receiver = value.strip()
     try:
-        return Receiver.objects.get(model__iexact=receiver).pk
+        return Receiver.objects.get(model__iexact=receiver).model
     except Receiver.DoesNotExist:
         receivers = '\n'.join(
             [rec.model for rec in Receiver.objects.all()]

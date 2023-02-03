@@ -1,0 +1,1 @@
+{% spaceless %}<div id="{{ widget.attrs.id }}" class="row {% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">{% for widget in widget.subwidgets %}<div class="col">{% include widget.template_name %}</div>{% endfor %}</div>{% endspaceless %}

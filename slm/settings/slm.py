@@ -24,8 +24,9 @@ set_default(
 
 set_default(
     'SLM_STATUS_COLORS', {
-        SiteLogStatus.DORMANT: '#3D4543',
-        SiteLogStatus.NASCENT: '#913D88',
+        SiteLogStatus.FORMER: '#3D4543',
+        SiteLogStatus.SUSPENDED: '#E0041A',
+        SiteLogStatus.PROPOSED: '#913D88',
         SiteLogStatus.UPDATED: '#0084BD',
         SiteLogStatus.PUBLISHED: '#0F980F',
         SiteLogStatus.EMPTY: '#D3D3D3'

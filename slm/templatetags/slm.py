@@ -11,6 +11,13 @@ from slm.utils import to_snake_case, build_absolute_url
 register = template.Library()
 
 
+@register.filter(name='div')
+def div(numerator, denominator):
+    if denominator == 0:
+        return None
+    return numerator/denominator
+
+
 @register.filter(name='section_name')
 def section_name(form):
     return form.section_name()
@@ -363,3 +370,16 @@ def params(iterable, parameter):
     return (getattr(obj, parameter) for obj in iterable)
 
 
+@register.filter(name="section_field_classes")
+def section_field_classes(field, form):
+    classes = [
+        {
+            'checkbox': ''#'form-check-input'
+        }.get(getattr(field.field.widget, 'input_type', None), 'form-control')
+    ]
+    if form.flags.get(field.name, None):
+        classes.append('is-invalid')
+    elif form.diff.get(field.name, None):
+        classes.append('is-invalid')
+        classes.append('slm-form-unpublished')
+    return ' '.join(classes)

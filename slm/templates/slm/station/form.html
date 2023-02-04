@@ -4,7 +4,7 @@
 <div class="form-group px-0">
   <form id="site-{{ form_id }}" data-slm-section="{{ section_id }}" {% if form.group_name %}data-slm-group="{{ form.group_name }}"{% endif %} data-slm-site="{{ station }}" data-slm-id="{% if form.instance.id %}{{ form.instance.id }}{% endif %}" data-slm-flags="{{ flag_id }}" class="slm-form" data-slm-method="post" data-slm-api="{{ form.api }}">
       <div class="alert alert-warning slm-form-unpublished" {% if not form.diff%}style="display: none"{% endif %}>{% trans "Changes have been saved but are not public, please "%} <a href="{% url 'slm:review' station=station %}">{% trans "submit to publish!" %}</a></div>
-    <div class="alert alert-warning slm-form-unpublished" {% if not form.instance.is_deleted %}style="display: none"{% endif %}>{% trans "This section has been deleted, please " %}<a href="{% url 'slm:review' station=station %}">{% trans "submit to publish!" %}</a></div>
+    <div class="alert alert-warning slm-form-deleted" {% if not form.instance.is_deleted %}style="display: none"{% endif %}>{% trans "This section has been deleted, please " %}<a href="{% url 'slm:review' station=station %}">{% trans "submit to publish!" %}</a></div>
 
     <div class="alert alert-danger slm-form-error" {% if not form.instance.flags %}style="display: none"{% endif %}>{% trans "This section has errors!" %}</div>
     {% csrf_token %}

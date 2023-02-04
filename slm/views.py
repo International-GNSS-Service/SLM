@@ -444,6 +444,16 @@ class EditView(StationContextView):
                     context['forms'].insert(
                         0, form(initial={'site': self.station})
                     )
+                    context['copy_last_on_add'] = [
+                        field for field in
+                        getattr(
+                            form,
+                            'COPY_LAST_ON_ADD',
+                            []
+                        ) if field not in {'id', 'subsection'}
+                        # guard against these ^ fields being included -
+                        # will break things
+                    ]
                     heading['active'] = heading.get('active', True) | True
                     if subheading:
                         subheading['active'] = True

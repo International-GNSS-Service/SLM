@@ -183,7 +183,7 @@ slm.resetFormErrorsAndWarnings = function(form) {
     //form.find('button[name="publish"]').hide();
 }
 
-slm.initForm = function(form_id, transform= function(data){ return data; }) {
+slm.initForm = function(form_id, initial=null, transform= function(data){ return data; }) {
     const form = typeof form_id === 'string' || form_id instanceof String ? $(form_id) : form_id;
     const form_api = form.data('slmApi');
     const form_url = form.data('slmUrl');
@@ -194,6 +194,9 @@ slm.initForm = function(form_id, transform= function(data){ return data; }) {
         );
     } else {
         form.data('slmErrorFlags', {});
+    }
+    if (initial) {
+        slm.setFormFields(form, initial);
     }
     const handleSubmit = function(action, btn) {
         slm.resetFormErrorsAndWarnings(form);
@@ -805,11 +808,37 @@ slm.updateFileBadges = function(delta) {
     }
 }
 
-slm.formToObject = function(form) {
+slm.setFormFields = function(form, data) {
+    const toBool = function(value) {
+        if (value === 'off' || !value) {
+            return false;
+        }
+        return true;
+    }
+    for (const [field, value] of Object.entries(data)) {
+        if (Array.isArray(value)) {
+            const select = form.find(`select[name="${field}"]`);
+            select.find('option').prop('selected', false);
+            for (const val of value) {
+                select.find(`option[value="${val}"]`).prop('selected', true);
+                form.find(`input:checkbox[name="${field}"][value="${val}"]`).prop('checked', true);
+            }
+        }
+        else {
+            form.find(`input[name="${field}"], textarea[name="${field}"]`).val(value);
+            form.find(`input:checkbox[name="${field}"]`).prop('checked', toBool(value));
+        }
+    }
+}
+
+slm.formToObject = function(form, fields=null) {
     let formData = new FormData(form.get(0));
     let data = {};
     let multiples = [];
     formData.forEach(function(value, key) {
+        if (fields && !fields.includes(key)) {
+            return;
+        }
         let element = form.find(
             `input[name="${key}"], textarea[name="${key}"], select[name="${key}"]`
         );
@@ -839,6 +868,9 @@ slm.formToObject = function(form) {
         notMult += `[name!="${mult}"]`;
     }
     form.find(`input:checkbox${notMult}:not(:checked)`).each(function(idx, element) {
+        if (fields && !fields.includes(element.getAttribute('name'))) {
+            return;
+        }
         data[element.getAttribute('name')] = 'off';
     });
     return data;

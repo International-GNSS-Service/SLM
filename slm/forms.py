@@ -272,6 +272,15 @@ class SiteLocationForm(SectionForm):
 
 class SiteReceiverForm(SubSectionForm):
 
+    COPY_LAST_ON_ADD = [
+        field for field in
+        [
+            *SubSectionForm.Meta.fields,
+            *SiteReceiver.site_log_fields()
+        ]
+        if field not in {'installed', 'removed', 'additional_info'}
+    ]
+
     satellite_system = forms.ModelChoiceField(
         queryset=SatelliteSystem.objects.all(),
         help_text=SiteReceiver._meta.get_field('satellite_system').help_text,
@@ -315,6 +324,15 @@ class SiteReceiverForm(SubSectionForm):
 
 
 class SiteAntennaForm(SubSectionForm):
+
+    COPY_LAST_ON_ADD = [
+        field for field in
+        [
+            *SubSectionForm.Meta.fields,
+            *SiteAntenna.site_log_fields()
+        ]
+        if field not in {'installed', 'removed', 'additional_info'}
+    ]
 
     alignment = forms.FloatField(
         required=SiteAntenna._meta.get_field('alignment').blank,

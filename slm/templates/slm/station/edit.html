@@ -86,7 +86,7 @@ Add new section capability is not functional.
                 {% translate "Add Section" %}
               </button>
           </div>
-          <div class="accordion" id="accordion-{{ section_id }}">
+          <div class="accordion slm-form-stack" id="accordion-{{ section_id }}">
             {% for form in forms %}
                 {% if not forloop.first %}
                     {% with form_inst_id=section_id|to_id:forloop.counter %}
@@ -116,13 +116,23 @@ Add new section capability is not functional.
                 {% endif %}
             {% endfor %}
           </div>
+
+          {{ copy_last_on_add|json_script:"copy-last-on-add" }}
+
           <script>
+            const copyLast = JSON.parse(
+                document.getElementById('copy-last-on-add').textContent
+            );
             if (typeof newIdx === 'undefined') {
                 var newIdx = {{ forms|length }};
             }
             $("#add-{{ section_id }} > button").click(function() {
                 let formId = `{{ section_id }}-new-${newIdx}`;
                 let stack = $("#accordion-{{ section_id }}");
+                let initial = slm.formToObject(
+                    $('form.slm-form').first(),
+                    copyLast
+                );
                 stack.prepend(`
                     <div class="accordion-item">
                         <h2 class="accordion-header">
@@ -137,7 +147,7 @@ Add new section capability is not functional.
                         </div>
                     </div>
                 `.replaceAll('new_form_id', formId));
-                slm.initForm($(`#site-${formId}`));
+                slm.initForm($(`#site-${formId}`), initial);
                 $(`#site-${formId} div.slm-flag`).hide();
                 $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();
                 $(`#site-${formId} a[data-bs-toggle="popover"]`).popover();

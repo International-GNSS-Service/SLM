@@ -393,7 +393,8 @@ fieldset.slm-form-group > legend {
   border-color: #0084BD;
   box-shadow: 0 0 0 0.25rem #0084BD5F;
 }
-.alert-warning.slm-form-unpublished {
+.alert-warning.slm-form-unpublished,
+.alert-warning.slm-form-deleted {
     border-color: #0084BD;
     background-color: #e6f7ff;
     color: #0084BD;

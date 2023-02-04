@@ -400,7 +400,6 @@ fieldset.slm-form-group > legend {
 }
 
 
-
 /*------- Flag CSS -------*/
 .slm-flag-error {
     font-size: large;
@@ -635,9 +634,15 @@ button.nav-link.slm-status-nascent {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
-button.slm-status-dormant,
-button.nav-link.slm-status-dormant  {
+button.slm-status-former,
+button.nav-link.slm-status-former  {
     border-left: 10px solid #3D4543;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+button.slm-status-suspended,
+button.nav-link.slm-status-suspended  {
+    border-left: 10px solid #E0041A;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
@@ -739,3 +744,14 @@ span.time-selected {
     border: 2px solid black;
 }
 /***************************************************/
+
+div.messages > div {
+    border: 1px solid black;
+    width: 75%;
+    padding: 15px;
+}
+
+div.messages > div.info {
+    border-color: #0084BD;
+    background-color: #0084BD6F;
+}

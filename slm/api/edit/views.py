@@ -202,18 +202,18 @@ class StationFilter(AcceptListArguments, FilterSet):
     agency = django_filters.ModelMultipleChoiceFilter(
         field_name='agencies',
         queryset=Agency.objects.all(),
-        distinct=False
+        distinct=True
     )
     network = django_filters.ModelMultipleChoiceFilter(
         field_name='networks',
         queryset=Network.objects.all(),
-        distinct=False
+        distinct=True
     )
     id = MustIncludeThese()
 
     status = django_filters.MultipleChoiceFilter(
         choices=SiteLogStatus.choices,
-        distinct=False
+        distinct=True
     )
 
     alert = django_filters.MultipleChoiceFilter(
@@ -222,7 +222,7 @@ class StationFilter(AcceptListArguments, FilterSet):
             for alert in Alert.objects.site_alerts()
         ],
         method='filter_alerts',
-        distinct=False
+        distinct=True
     )
 
     max_alert = EnumFilter(enum=AlertLevel, field_name='_max_alert')
@@ -452,6 +452,17 @@ class UserProfileViewSet(
     def list(self, request, **kwargs):
         resp = super(UserProfileViewSet, self).list(request, **kwargs)
         resp.data = resp.data[0]
+        return resp
+
+    def update(self, request, *args, **kwargs):
+        from django.contrib import messages
+        resp = super().update(request, *args, **kwargs)
+        if resp.status_code < 300:
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                _('User profile updated successfully.')
+            )
         return resp
 
 

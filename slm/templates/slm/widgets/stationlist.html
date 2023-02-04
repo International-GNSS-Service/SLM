@@ -208,6 +208,35 @@
         const filterInput = $("#apply-filter");
         const filterStations = $("#filter-stations");
         const clearFilter = $('#clear-filter');
+
+        const initFilter = function() {
+            let query = sessionStorage.getItem('stationFilter');
+            if (query && !slm.hasParameters(getQuery())) {
+                query = JSON.parse(query);
+                // if the page didnt set a filter - fetch the last one from
+                // session cache
+                const setPropertyFilter = function(prop) {
+                    if (query.hasOwnProperty(prop)) {
+                        let selectors = [];
+                        for (const val of query[prop]) {
+                            selectors.push(`input[name="${prop}"][value="${val}"]`);
+                        }
+                        stationFilter.find(selectors.join()).prop("checked", true);
+                    }
+                }
+                setPropertyFilter('status');
+                setPropertyFilter('alert');
+                setPropertyFilter('network');
+                setPropertyFilter('agency');
+
+                if (query.hasOwnProperty('max_alert')) {
+                    stationFilter.find(
+                        `input[name="alertLevel"][value="${query.max_alert}"]`
+                    ).prop("checked", true);
+                }
+            }
+        }
+
         function init() {
             slm.initInfiniteScroll(
                 stationList,
@@ -230,7 +259,10 @@
         searchInput.on('input', function() {
             clearTimeout(keyupTimeoutID);
             keyupTimeoutID = setTimeout(function() {
-                stationList.find('button').not(`#select-{{ station }}`).remove();
+                stationList.find('button').remove();
+                // replace below line with above one to keep current station in the
+                // list regardless of filter
+                //stationList.find('button').not(`#select-{{ station }}`).remove();
                 let query = stationList.data('slmQuery') || {};
                 if (searchInput.val()) {
                     query.name = searchInput.val();
@@ -245,8 +277,10 @@
             }, 500);
         });
 
-        const applyFilter = function() {
-            stationList.find('button').not(`#select-{{ station }}`).remove();
+        const getQuery = function() {
+            // replace below line with above one to keep current station in the
+            // list regardless of filter
+            //stationList.find('button').not(`#select-{{ station }}`).remove();
             let query = stationList.data('slmQuery') || {};
             query.status = stationFilter.find('input[name="status"]:checked').map(function () {
                 return this.value;
@@ -265,14 +299,21 @@
             if (typeof query.max_alert === 'undefined' || query.max_alert === null) {
                 delete query.max_alert;
             }
+            return query;
+        }
+        const applyFilter = function() {
+            stationList.find('button').remove();
+            let query = getQuery();
             if (slm.hasParameters(query)) {
                 filterStations.removeClass("btn-outline-primary").addClass("btn-primary");
             } else {
                 filterStations.removeClass("btn-primary").addClass("btn-outline-primary");
             }
-            {% if site %}query.id = [{{site.pk}}];{% endif %}
+            // uncomment to keep current station in the list regardless of filter
+            //{% if site %}query.id = [{{site.pk}}];{% endif %}
             stationList.data('slmPage', 0);
             stationList.data('slmQuery', query);
+            sessionStorage.setItem('stationFilter', JSON.stringify(query));
             init();
         }
         filterInput.click(applyFilter);
@@ -283,6 +324,7 @@
             applyFilter();
         });
 
+        initFilter();
         applyFilter();
     });
 

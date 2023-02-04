@@ -8,6 +8,8 @@
             <h1>{% translate "User Profile" %}</h1>
         </div>
 
+        {% include "slm/messages.html" %}
+
         <div class="container form-group px-0">
           <form id='slm-user-form'>
             {% for field in user_form %}

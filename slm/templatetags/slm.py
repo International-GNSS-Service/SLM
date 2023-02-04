@@ -383,3 +383,14 @@ def section_field_classes(field, form):
         classes.append('is-invalid')
         classes.append('slm-form-unpublished')
     return ' '.join(classes)
+
+
+@register.filter(name='alert_class')
+def alert_class(message):
+    """Get the css class for a Django message"""
+    return {
+        'error': 'danger',
+        'debug': 'secondary',
+        'info': 'primary'
+    }.get(message.level_tag, message.level_tag)
+

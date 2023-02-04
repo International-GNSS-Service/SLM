@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 import os
 from pathlib import Path
-
+from django.contrib.messages import constants as message_constants
 from slm.settings import is_defined, set_default
 from split_settings.tools import include
 
@@ -134,3 +134,6 @@ COMPRESS_URL = STATIC_URL
 
 #Path(STATIC_ROOT).mkdir(parents=True, exist_ok=True)
 #Path(MEDIA_ROOT).mkdir(parents=True, exist_ok=True)
+
+MESSAGE_LEVEL = message_constants.DEBUG if DEBUG else message_constants.INFO
+

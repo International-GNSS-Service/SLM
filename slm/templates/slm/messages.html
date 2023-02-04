@@ -1,0 +1,13 @@
+{% load slm %}
+{% if messages %}
+<div class="messages my-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message|alert_class }} d-flex align-items-center" role="alert">
+        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="{{ message.level_tag }}:"><use xlink:href="#{{ message.level_tag }}-msg"/></svg>
+        <div>
+        {{ message }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

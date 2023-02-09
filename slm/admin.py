@@ -44,7 +44,9 @@ from slm.models import (
     Manufacturer,
     SiteFileUpload,
     Network,
-    UserProfile
+    UserProfile,
+    Help,
+    About
 )
 from slm.authentication import permissions
 from polymorphic.admin import (
@@ -204,6 +206,14 @@ class ManufacturerAdmin(admin.ModelAdmin):
     pass
 
 
+class HelpAdmin(admin.ModelAdmin):
+    pass
+
+
+class AboutAdmin(admin.ModelAdmin):
+    pass
+
+
 class SiteFileUploadAdmin(admin.ModelAdmin):
 
     search_fields = ['site__name']
@@ -330,5 +340,7 @@ admin.site.register(Receiver, ReceiverAdmin)
 admin.site.register(Radome, RadomeAdmin)
 admin.site.register(Manufacturer, ManufacturerAdmin)
 admin.site.register(SiteFileUpload, SiteFileUploadAdmin)
+admin.site.register(Help, HelpAdmin)
+admin.site.register(About, AboutAdmin)
 
 admin.autodiscover()

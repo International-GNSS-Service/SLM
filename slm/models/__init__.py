@@ -109,3 +109,5 @@ def get_record_model():
             f'"app_label.ModelClass"'
         ) from ve
 
+from slm.models.help import Help
+from slm.models.about import About

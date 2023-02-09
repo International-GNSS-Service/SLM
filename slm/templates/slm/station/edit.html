@@ -91,12 +91,12 @@ Add new section capability is not functional.
                 {% if not forloop.first %}
                     {% with form_inst_id=section_id|to_id:forloop.counter %}
                         <div class="accordion-item">
-                            <h2 class="accordion-header">
+                            <h2 id="accordionHeading" class="accordion-header">
                                 <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" data-slm-flags={{ form.flags|length }} data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ form.instance.mod_status.value }} aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
                                     <span>{{ form.instance.heading }} <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
                                 </button>
                             </h2>
-                            <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordion-{{ section_id }}">
+                            <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="accordionHeading" data-bs-parent="#accordion-{{ section_id }}">
                               <div class="accordion-body">
                                 {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
                                 {{ form.instance.flags }}

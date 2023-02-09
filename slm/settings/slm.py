@@ -27,19 +27,19 @@ set_default(
         SiteLogStatus.FORMER: '#3D4543',
         SiteLogStatus.SUSPENDED: '#E0041A',
         SiteLogStatus.PROPOSED: '#913D88',
-        SiteLogStatus.UPDATED: '#0084BD',
-        SiteLogStatus.PUBLISHED: '#0F980F',
+        SiteLogStatus.UPDATED: '#0079AD',
+        SiteLogStatus.PUBLISHED: '#0D820D',
         SiteLogStatus.EMPTY: '#D3D3D3'
     }
 )
 
 set_default(
     'SLM_FILE_COLORS', {
-        SiteFileUploadStatus.UNPUBLISHED: '#0084BD',
-        SiteFileUploadStatus.PUBLISHED: '#0F980F',
+        SiteFileUploadStatus.UNPUBLISHED: '#0079AD',
+        SiteFileUploadStatus.PUBLISHED: '#0D820D',
         SiteFileUploadStatus.INVALID: '#8b0000',
         SiteFileUploadStatus.WARNINGS: '#E3AA00',
-        SiteFileUploadStatus.VALID: '#0F980F'
+        SiteFileUploadStatus.VALID: '#0D820D'
     }
 )
 

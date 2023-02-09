@@ -14,55 +14,8 @@ Template for about page.
         </div>
 
         <!-- About Content -->
-        <div>
-            <h2 class="mb-3">What is the Site Log Manager?</h2>
-            <p>
-                The International GNSS Service (IGS) collects, archives, and freely distributes Global Navigation Satellite System (GNSS) observation data sets from over 200 global agencies that make up a network of ground tracking stations. The Site Log Manager (SLM) is a software system designed to allow station operators to securely manage the metadata across the GNSS ground based sites. The SLM is a vital and tremendous service to the global GNSS community. Our primary goal for the Site Log Manager 2.0 is to maximize the reliability, accuracy, and searchability of site log metadata information. This will be achieved through easy moderation and review, automation, structured data, and broad adoption.
-            </p>
-        </div>
-        <div class="my-5">
-            <h2 class="mb-3">What is GeodesyML?</h2>
-            <p>
-                The Geodesy Markup Language (GeodesyML) is a standard way of describing (encoding) and sharing geodetic data and metadata. In the same way people from all over the world speak different languages, so do geodesists. For example, some people use the term ‘GNSS station’ and others use the term ‘GNSS site’. GeodesyML is a common language. By mapping your database to GeodesyML, when your data is shared with others, it is easy for the user to discover and combine with other data. To learn more about GeodesyML, visit the <a href="http://geodesyml.org/">GeodesyML website</a>.
-            </p>
-        </div>
-        <div class="my-5">
-            <h2 class="mb-3">Open Source Information</h2>
-            <p>
-                This system is now open source under the <a href="https://github.com/International-GNSS-Service/SLM/blob/master/LICENSE">MIT License</a>. Please visit the link to the license to learn more. We encourage fellow station operators to utilize the open source Site Log Manager and contribute to it on our <a href="https://github.com/International-GNSS-Service/SLM">GitHub</a>.
-            </p>
-        </div>
-        <div class="my-5">
-            <h2 class="mb-3">GDPR Policy</h2>
-            <p>
-                In order to comply with the <a href="https://gdpr.eu/what-is-gdpr/ ">EU GDPR privacy regulations</a>, as well as to ensure sustainable contact information within our station operator community, the IGS is asking that all station operators switch to neutral, non personally-identifiable email address and organization names on all public-facing site logs. We suggest updating contact information for stations to email aliases that can serve as a more sustainable and private means of contact. For example: station_name at organization.org that can then be directed to the appropriate individuals responsible for the site.
-            </p>
-            <p>
-                The current SLM has a field for “agency contacts” that is separate from the public facing log, and personal information that is provided here will be retained confidentially by the IGS Network Coordinator. Additionally please ensure that your RINEX data files do not contain personal information or personal emails in the OBSERVER / AGENCY field or in any of the file COMMENTS. Please always use generic email aliases so that your organization can appropriately and sustainable redirect internally to the correct individuals responsible for station operations.
-            </p>
-        </div>
-        <div class="my-5">
-            <h2 class="mb-3">Privacy Policy</h2>
-            <p>
-                Read the IGS Privacy Policy here: <a href="https://igs.org/privacy/">Privacy Policy</a>.
-            </p>
-        </div>
-        <div class="my-5">
-            <h2 class="mb-3">Contact</h2>
-            <p>
-                If you have any questions or need assistance, please contact the IGS Central Bureau by filling out the <a href="https://igs.org/contact-us">Contact Us form</a> or emaiing <a href="mailto:cb@igs.org">cb@igs.org</a>
-            </p>
-        </div>
-        <div class="my-5">
-            <h2 class="mb-3">Related Links</h2>
-            <ul>
-                <li>
-                    <a href="https://github.com/international-gnss-service/">GitHub</a>
-                </li>
-                <li>
-                    <a href="https://igs.org">IGS Website</a>
-                </li>
-            </ul>
-        </div>
+        {% autoescape off %}
+            {{ about.content }}
+        {% endautoescape %}
     </div>
 {% endblock %}

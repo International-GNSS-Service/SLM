@@ -45,8 +45,8 @@ class SiteLogStatus {
     
     static FORMER = new SiteLogStatus(1, 'Former', 'slm-status-former', '#3D4543');
     static PROPOSED = new SiteLogStatus(2, 'Proposed', 'slm-status-proposed', '#913D88');
-    static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#0084BD');
-    static PUBLISHED = new SiteLogStatus(4, 'Published', 'slm-status-published', '#0F980F');
+    static UPDATED = new SiteLogStatus(3, 'Updated', 'slm-status-updated', '#0079AD');
+    static PUBLISHED = new SiteLogStatus(4, 'Published', 'slm-status-published', '#0D820D');
     static EMPTY = new SiteLogStatus(5, 'Empty', 'slm-status-empty', '#D3D3D3');
     static SUSPENDED = new SiteLogStatus(6, 'Suspended', 'slm-status-suspended', '#E0041A');
 
@@ -100,11 +100,11 @@ class SiteLogStatus {
 
 class SiteFileUploadStatus {
     
-    static UNPUBLISHED = new SiteFileUploadStatus(1, 'Unpublished File', 'slm-upload-unpublished file', '#0084BD');
-    static PUBLISHED = new SiteFileUploadStatus(2, 'Published File', 'slm-upload-published file', '#0F980F');
+    static UNPUBLISHED = new SiteFileUploadStatus(1, 'Unpublished File', 'slm-upload-unpublished file', '#0079AD');
+    static PUBLISHED = new SiteFileUploadStatus(2, 'Published File', 'slm-upload-published file', '#0D820D');
     static INVALID = new SiteFileUploadStatus(3, 'Invalid Site Log', 'slm-upload-invalid site log', '#8b0000');
     static WARNINGS = new SiteFileUploadStatus(4, 'Warnings Site Log', 'slm-upload-warnings site log', '#E3AA00');
-    static VALID = new SiteFileUploadStatus(5, 'Valid Site Log', 'slm-upload-valid site log', '#0F980F');
+    static VALID = new SiteFileUploadStatus(5, 'Valid Site Log', 'slm-upload-valid site log', '#0D820D');
 
     constructor(val, label, css, color) {
         this.val = val;

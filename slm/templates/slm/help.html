@@ -17,18 +17,19 @@ Template for help/documentation page.
                         <a class="list-group-item list-group-item-action" href="#about-slm" tabindex="0"><span class="ms-3">About SLM 2.0</span></a>
                         <a class="list-group-item list-group-item-action" href="#changes" tabindex="0"><span class="ms-3">What Changed?</span></a>
                         <a class="list-group-item list-group-item-action" href="#phases" tabindex="0"><span class="ms-3">Development Phases</span></a>
-                    <a class="list-group-item list-group-item-action" href="#existing-sites" tabindex="0">Existing Sites</a>
-                    <a class="list-group-item list-group-item-action" href="#new-sites" tabindex="0">New Sites</a>
-                    <a class="list-group-item list-group-item-action" href="#editing-data" tabindex="0">Editing Data</a>
-                        <a class="list-group-item list-group-item-action" href="#data-entry" tabindex="0"><span class="ms-3">Data Entry</span></a>
-                        <a class="list-group-item list-group-item-action" href="#data-upload" tabindex="0"><span class="ms-3">Data Upload</span></a>
-                        <a class="list-group-item list-group-item-action" href="#data-sections" tabindex="0"><span class="ms-3">Data Sections</span></a>
-                        <a class="list-group-item list-group-item-action" href="#data-validation" tabindex="0"><span class="ms-3">Data Validation</span></a>
-                    <a class="list-group-item list-group-item-action" href="#viewdiff" tabindex="0">View/Diff</a>
-                    <a class="list-group-item list-group-item-action" href="#submit" tabindex="0">Submit Data</a>
-                    <a class="list-group-item list-group-item-action" href="#download" tabindex="0">Download Data</a>
-                    <a class="list-group-item list-group-item-action" href="#alerts" tabindex="0">Alerts</a>
-                    <a class="list-group-item list-group-item-action" href="#account-settings" tabindex="0">Account Settings</a>
+                        <a class="list-group-item list-group-item-action" href="#open-source" tabindex="0"><span class="ms-3">Open Source</span></a>
+                        <a class="list-group-item list-group-item-action" href="#gdpr" tabindex="0"><span class="ms-3">GDPR Compliance</span></a>
+                    <a class="list-group-item list-group-item-action" href="#register-login" tabindex="0">Register/Login</a>
+                        <a class="list-group-item list-group-item-action" href="#new-users" tabindex="0"><span class="ms-3">New Users</span></a>
+                        <a class="list-group-item list-group-item-action" href="#existing-users" tabindex="0"><span class="ms-3">Existing Users</span></a>
+                        <a class="list-group-item list-group-item-action" href="#login" tabindex="0"><span class="ms-3">Login</span></a>
+                        <a class="list-group-item list-group-item-action" href="#forgot-pw" tabindex="0"><span class="ms-3">Forgot Password</span></a>
+                    <a class="list-group-item list-group-item-action" href="#layout-menus" tabindex="0">Layout and Menus</a>
+                    <a class="list-group-item list-group-item-action" href="#managing-data" tabindex="0">Managing Station Data</a>
+                        <a class="list-group-item list-group-item-action" href="#making-changes" tabindex="0"><span class="ms-3">Making Changes</span></a>
+                        <a class="list-group-item list-group-item-action" href="#upload-file" tabindex="0"><span class="ms-3">Upload (optional)</span></a>
+                        <a class="list-group-item list-group-item-action" href="#edit-sections" tabindex="0"><span class="ms-3">Edit Sections</span></a>
+                        <a class="list-group-item list-group-item-action" href="#upload-images" tabindex="0"><span class="ms-3">Upload Images</span></a>
                 </div>
             </div>
             <!-- End of Documentation Navigation -->
@@ -36,265 +37,15 @@ Template for help/documentation page.
             <!-- Documentation Content -->
             <div class="col-8">
                 <!-- Title -->
-                <div class="mt-5 pb-3 border-bottom">
+                <div class="mt-5 mb-3 border-bottom">
                     <h1>SLM Documentation</h1>
                 </div>
-                
-                <div id="help" class="position-relative overflow-auto" data-bs-spy="scroll" data-bs-target="#doc-list" data-bs-smooth-scroll="true" tabindex="0" style="max-height: 800px;">
-                    <div id="overview">
-                        <h2 class="pt-4">Overview</h2>
-                        <p>This documentation goes over usage for phase 1 of the new Site Log Manager 2.0 on slmdemo.igs.org. This is the second version of the original IGS SIte Log Manager (slm.igs.org) built in (2007?). Steps in this documentation are subject to change. To use the Site Log Manager 2.0, view the simple 4 step process below.</p>
-                        <div id="process">
-                            <h3 class="pt-4">4 Step Process</h3>
-                            <ol>
-                                <li>
-                                    <strong>Select Station:</strong> Select a station from the list at the left. (If the Station you need is not there you will need to fill out the Propose a New IGS Site form or contact IGS for help)
-                                </li>
-                                <li>
-                                    <strong>Edit Data:</strong> Once you select a station you will then be redirected to the “Edit” tab of the station with forms for each site log section. Select the form you would like to add/update metadata to and fill out the fields.
-                                    <ul>
-                                        <li>
-                                            <strong>Upload Data (Optional):</strong>  There is also the ability to upload files instead of manually entering in data. To upload a file: select “Upload Logs” in the top menu bar and click any of the download options
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <strong>Correct Data:</strong> Once the data is either manually entered or a sitelog file is uploaded, the system will let you know if there are any errors or missing data. This will be indicated by the Error Badge with a description of the error underneath the field. Make any corrections where needed. There are tooltips on the right of each field to help guide you.
-                                </li>
-                                <li>
-                                    <strong>Submit Data:</strong> Once the data has been corrected select the “Review” tab to view your changes and click the “Publish” button at the top of the page. After the data has been visually validated you will receive an email of approval and that the data has been posted to IGS's main databases ready for use.
-                                </li>
-                                <li>
-                                    <strong>Download Data (Optional):</strong> As you wait for the site log to be approved by the network coordinator, you can download your modified site log or download any of the past site logs by going to the “Downloads” tab.
-                                </li>
-                            </ol>
-                        </div>
-                        <div id="about-slm">
-                            <h3 class="pt-4">About SLM</h3>
-                            <p>The IGS Site Log Manager (SLM) is a web based online application designed for the purpose of managing the metadata of IGS GNSS ground-based sites. The SLM utilizes a relational database with a new and improved web-based User Interface that allows for uploading of the traditional IGS ASCII Logs and/or Manual Data Entry. The SLM Validates the data against a set of criteria defined at: Site Log Instructions</p>
-                            <p>With this new version, our primary goal is to maximize the reliability, accuracy, and searchability of site log metadata information. How to get there?</p>
-                            <ul>
-                                <li>Easy Moderation and Review</li>
-                                <li>Automation
-                                    <ul>
-                                        <li>Validation</li>
-                                        <li>Usage (Structured APIs)</li>
-                                    </ul>
-                                </li>
-                                <li>Structured Data
-                                    <ul>
-                                        <li>Self-validating interchange formats (GeodesyML)</li>
-                                        <li>Easy to use renderings (JSON)</li>
-                                    </ul>
-                                </li>
-                                <li>Broad Adoption
-                                    <ul>
-                                        <li>Open Source</li>
-                                        <li>Extendable</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
-                        <div id="changes">
-                            <h3 class="pt-4">What Changed</h3>
-                            <ul>
-                                <li>Brand new user interface
-                                    <ul>
-                                        <li>Colors and fonts were updated to match the IGS Brand.</li>
-                                        <li>Cleaned up old, broken, and duplicate links</li>
-                                        <li>Restructured pages/sections for a better streamlined flow between system features</li>
-                                    </ul>
-                                </li>
-                                <li>Dashboard
-                                    <ul>
-                                        <li>View the latest alerts for all of your stations and take action on any moderator requests</li>
-                                        <li>View recent station updates</li>
-                                    </ul>
-                                </li>
-                                <li>Station Legend
-                                    <ul>
-                                        <li>Colors updated to be more accessible</li>
-                                        <li>
-                                            *Subject to change*
 
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>Alerts [New]
-                                    <ul>
-                                        <li>Get notified when there is an error in your site log that needs correction or any other action is needed.
-                                            <ul>
-                                                <li>Note: You will also receive an email</li>
-                                            </ul>
-                                        </li>
-                                        <li>Alerts will also appear on the dashboard and on the notifications page</li>
-                                    </ul>
-                                </li>
-                                <li>Improved Editing
-                                    <ul>
-                                        <li>Update past sub-sections [New]
-                                            <ul>
-                                                <li>See an error in a past sub-section? Added the ability to update other sub-sections (i.e. antennas, receivers)</li>
-                                            </ul>
-                                        </li>
-                                        <li>Improved Date Picker
-                                            <ul>
-                                                <li>New modern date picker UI</li>
-                                                <li>Allows for manual date/time entry</li>
-                                            </ul>
-                                        </li>
-                                        <li>Keep track of last published data
-                                            <ul>
-                                                <li>When editing a field, a note underneath the field will show the last published data and show an icon on the field indicating it has been updated</li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>Improved Validation/Moderation System
-                                    <ul>
-                                        <li>When updates are saved there will be a flag on each field and an alert on top that lets you know. The colors will also change to unpublished.</li>
-                                        <li>3 main levels of validation flags
-                                            <ul>
-                                                <li><strong>Highest level</strong>- anything that doesn’t match the format whatsoever won’t let you input data in the database, will reject it outright</li>
-                                                <li><strong>Middle level</strong>- won’t let you publish until you fill in a certain field</li>
-                                                <li><strong>Lowest level</strong>- you can still publish it but the flag is there because we encourage you update it</li>
-                                            </ul>
-                                        </li>
-                                        <li>Admin flags
-                                            <ul>
-                                                <li>Admins also have the ability add in flags to review/fix once it goes into moderation</li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>Download
-                                    <ul>
-                                        <li>Modified/Unpublished Log [New]
-                                            <ul>
-                                                <li>Download modified/unpublished .log version of your site log before it gets approved by the Network Coordinator</li>
-                                            </ul>
-                                        </li>
-                                        <li>GeodesyML (Coming Soon)</li>
-                                        <li>JSON (Coming Soon)</li>
-                                    </ul>
-                                </li>
-                                <li>Review and Submit (Previously View/Diff)
-                                    <ul>
-                                        <li>The View/Diff screen is now located in the “Review” tab</li>
-                                        <li>Changes are shown on one page instead of two</li>
-                                        <li>Can use the date picker to view and compare your changes to past site logs</li>
-                                    </ul>
-                                </li>
-                                <li>Activity Log (Previous Change Log)
-                                    <ul>
-                                        <li>View a history of changes/updates to the site all in one page</li>
-                                        <li>Recent station updates can also be viewed on the Dashboard</li>
-                                    </ul>
-                                </li>
-                                <li>Map View [New]
-                                    <ul>
-                                        <li>View stations in an all new interactive map with global view</li>
-                                        <li>See list of stations, key metadata, and links to download options in a table</li>
-                                        <li>Sort/Filter through stations and metadata</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
-                        <div id="phases">
-                            <h3 class="pt-4">Development phases</h3>
-                            <ul>
-                                <li>In order to best meet the needs of IGS Member Agencies and to make the management of the station metadata as easy, accurate and complete as possible the IGS SLM will continue to be developed and improved.</li>
-                                <li>This version is only the first Phase of the new SLM 2.0 and focuses on the core functionality of the old SLM including:
-                                    <ul>
-                                        <li>Edit/Moderation/Publish Functionality</li>
-                                        <li>Automated validation infrastructure</li>
-                                        <li>Basic API functionality</li>
-                                        <li>Site log upload/download</li>
-                                    </ul>
-                                </li>
-                                <li>Additional phases will include improvements and brand new features, including but not limited to:
-                                    <ul>
-                                        <li>More robust automated validation</li>
-                                        <li>Full support for other file formats, such as GeodesyML (.xml) and JSON</li>
-                                        <li>Interoperability between other station metadata editing systems in collaboration with IGS Member Agencies through Fully searchable APIs</li>
-                                    </ul>
-                                </li>
-                                <li>We welcome any comments or suggestions regarding your use of the system. Please submit any comments or suggestions to our contact form</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div id="existing-sites" class="my-5">
-                        <h2 class="pt-4">Existing Sites</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="new-sites" class="my-5">
-                        <h2 class="pt-4">New Sites</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="editing-data" class="my-5">
-                        <h2 class="pt-4">Editing Data</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="data-entry" class="my-5">
-                        <h3 class="pt-4">Data Entry</h3>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="data-upload" cclass="my-5">
-                        <h3 lass="pt-4">Data Upload</h3>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="data-sections" class="my-5">
-                        <h3 class="pt-4">Data Sections</h3>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="data-validation" class="my-5">
-                        <h3 class="pt-4">Data Validation</h3>
-                        <p>
-                           Information to be added
-                        </p>
-                    </div>
-                    <div id="viewdiff" class="my-5">
-                        <h2 class="pt-4">View/Diff</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="submit" class="my-5">
-                        <h2 class="pt-4">Submit Data</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="download" class="my-5">
-                        <h2 class="pt-4">Download Data</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="alerts" class="my-5">
-                        <h2 class="pt-4">Alerts</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
-                    <div id="account-settings" class="my-5">
-                        <h2 class="pt-4">Account Settings</h2>
-                        <p>
-                           Information to be added.
-                        </p>
-                    </div>
+                <!-- Content -->
+                <div id="help" class="position-relative overflow-auto" data-bs-spy="scroll" data-bs-target="#doc-list" data-bs-smooth-scroll="true" tabindex="0" style="max-height: 750px;">
+                    {% autoescape off %}
+                        {{ help.content }}
+                    {% endautoescape %}
                 </div>
             </div>
             <!-- End of Documentation Content -->

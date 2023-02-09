@@ -67,6 +67,8 @@ from slm.models import (
     SiteFileUpload,
     SiteLocation,
     SiteSubSection,
+    Help,
+    About,
 )
 from django.template import Template
 from django.template.exceptions import TemplateDoesNotExist
@@ -704,3 +706,21 @@ def download_site_attachment(request, site=None, pk=None, thumbnail=False):
         return HttpResponseNotFound(
             f'File {pk} for station {site} was not found.'
         )
+
+class HelpView(SLMView):
+    template_name = 'slm/help.html'
+    
+    def get_context_data(self, **kwargs):
+        return {
+            **super().get_context_data(**kwargs),
+            'help': Help.load()
+        }
+
+class AboutView(SLMView):
+    template_name = 'slm/about.html'
+    
+    def get_context_data(self, **kwargs):
+        return {
+            **super().get_context_data(**kwargs),
+            'about': About.load()
+        }

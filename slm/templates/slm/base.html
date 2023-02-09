@@ -145,13 +145,16 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
 
     {% block page_content %}{% endblock %}
 
-  <div id="footer" class="container-fluid bg-igs-blue mt-auto">
-    <footer class="d-flex flex-wrap justify-content-end align-items-center py-2 border-top">
-      <div class="col-md-4 d-flex align-items-center justify-content-end pe-4">
-        <a href="/" class="mb-3 me-2 mb-md-0">
-          <a href="{% url "slm:home" %}" class="navbar-brand"><img id="footer-logo" src="{% static 'slm/img/slm-logo.svg' %}" alt="SLM">
-        </a>
-          <span class="mb-3 mb-md-0 text-light"><a href="https://igs.org" target="_blank" style="color: whitesmoke; text-decoration: none">Powered by International GNSS Service</a></span>
+  <div id="footer" class="container-fluid bg-igs-blue mt-auto ps-4">
+    <footer class="d-flex flex-wrap justify-content-between align-items-center py-2 border-top">
+      <div class="col-md-4 d-flex align-items-center pe-4">
+        <a href="{% url "slm:home" %}" class="navbar-brand mb-3 me-2 mb-md-0"><img id="footer-logo" src="{% static 'slm/img/slm-logo.svg' %}" alt="SLM">
+        <span class="mb-3 mb-md-0 text-light"><a href="https://igs.org" target="_blank" style="color: whitesmoke; text-decoration: none">Powered by International GNSS Service</a></span>
+      </div>
+      <div id="footer-links" class="d-flex flex-row justify-content-end">
+        <a href="https://igs.org/contact-us" class="footer-link me-4">Contact Us</a>
+        <a href="https://igs.org/privacy-policy" class="footer-link me-4">Privacy Policy</a>
+        <a href="{% url 'slm:help' %}" class="footer-link me-4">Help</a>
       </div>
     </footer>
   </div>

@@ -409,6 +409,12 @@ class Alert(PolymorphicModel):
         default='',
         help_text=_('Longer description containing details of the alert.')
     )
+    detail = RichTextUploadingField(
+        blank=True,
+        null=False,
+        default='',
+        help_text=_('Longer description containing details of the alert.')
+    )
 
     level = EnumField(
         AlertLevel,

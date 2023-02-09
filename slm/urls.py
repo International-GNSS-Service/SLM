@@ -18,6 +18,8 @@ from slm.views import (
     UserActivityLogView,
     UserProfileView,
     download_site_attachment,
+    HelpView,
+    AboutView,
 )
 
 api = {
@@ -177,12 +179,8 @@ urlpatterns = [
         name='review'
     ),
     path('log/<station:station>', LogView.as_view(), name='log'),
-    path(
-        'about/',
-        SLMView.as_view(template_name='slm/about.html'),
-        name='about'
-    ),
-    path('help/', SLMView.as_view(template_name='slm/help.html'), name='help'),
+    path('about/', AboutView.as_view(), name='about'),
+    path('help/', HelpView.as_view(), name='help'),
     path('activity/', UserActivityLogView.as_view(), name='user_activity'),
     path(
         'activity/<int:log_user>',

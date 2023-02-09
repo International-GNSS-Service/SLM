@@ -37,12 +37,12 @@ Template for View/Diff page.
             id="slm-review-backward"
             class="d-flex justify-content-between"
         >
-            <button class="btn btn-primary mx-1" name="back"><i class="bi bi-skip-backward"></i></button>
+            <button class="btn btn-primary mx-1" name="back" aria-label="Skip Backward"><i class="bi bi-skip-backward"></i></button>
             <div class="d-flex justify-content-center form-group">
                 <label for="slm-review-backward-input" style="display: none">Backward</label>
                 <input class="form-control" type="datetime-local" id="slm-review-backward-input" name="back">
             </div>
-            <button class="btn btn-primary mx-1" name="forward"><i class="bi bi-skip-forward"></i></button>
+            <button class="btn btn-primary mx-1" name="forward" aria-label="Skip Forward"><i class="bi bi-skip-forward"></i></button>
         </div>
         <div class="form-group d-flex justify-space-between align-items-center">
             <label for="slm-review-format-input" style="display: none">Site Log Format:</label>
@@ -76,7 +76,7 @@ Template for View/Diff page.
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="filter-label">{% trans "Why are you rejecting these updates?" %}</h1>
+                <label for="id_text" class="modal-title fs-5" id="filter-label">{% trans "Why are you rejecting these updates?" %}</label>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body d-flex justify-content-center">

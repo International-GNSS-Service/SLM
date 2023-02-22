@@ -2,17 +2,19 @@ if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
 
 slm.time24Init = function(inputs = null) {
 
-    inputs = inputs || $('div.time-24hr');
+    inputs = inputs || $('fieldset.time-24hr');
 
     inputs.click(function() {
-        const timeSelect = $(this).siblings('div.time-select');
+        //const timeSelect = $(this).siblings('div.time-select');
+        const timeSelect = $(this).find('div.time-select');
         if (timeSelect.css('display') !== 'none') {
             toggleTimeSelectDropDown(timeSelect);
         }
     });
 
     inputs.keydown(function( event ) {
-        let timeSelect = $(this).siblings('div.time-select');
+        //let timeSelect = $(this).siblings('div.time-select');
+        let timeSelect = $(this).find('div.time-select');
         let selected = $(this).find('span.time-input-selected');
         let currentTime = timeSelect.find('span.time-selected');
         let isMinutes = selected.hasClass('minutes');
@@ -99,16 +101,16 @@ slm.time24Init = function(inputs = null) {
             timeSelect.css('display', 'none');
         }
     }
-    inputs.find('div svg.clock-icon').click(function() {
-        const timeInput = $(this).closest('.time-24hr');
-        toggleTimeSelectDropDown(
-            timeInput.siblings('.time-select')
-        );
+    inputs.find('svg.clock-icon').click(function() {
+        const timeInput = $(this).closest('fieldset.time-24hr');
+        toggleTimeSelectDropDown(timeInput.find('.time-select'));
+        //toggleTimeSelectDropDown(timeInput.siblings('.time-select'));
         timeInput.focus();
         return false;
     });
 
-    inputs.siblings('div.time-select').find(
+    //inputs.siblings('div.time-select').find(
+    inputs.find('div.time-select').find(
         'div.hour-scroll > span, div.minute-scroll > span'
     ).click(function() {selectTime($(this))});
 
@@ -117,7 +119,8 @@ slm.time24Init = function(inputs = null) {
             $(this).focus();
             return false;
         }
-        let selectDiv = $(this).siblings('div.time-select');
+        //let selectDiv = $(this).siblings('div.time-select');
+        let selectDiv = $(this).find('div.time-select');
         selectDiv.css('display', 'none');
         selectDiv.find('span.time-selected').removeClass('time-selected');
         $(this).find('span.hours').data('keyState', null);
@@ -171,7 +174,8 @@ slm.time24Init = function(inputs = null) {
     const selectTime = function(timeSpan) {
         if (!timeSpan.length) { return; }
         const timeSelect = timeSpan.closest('div.time-select');
-        const timeInput = timeSelect.siblings('div.time-24hr');
+        //const timeInput = timeSelect.siblings('div.time-24hr');
+        const timeInput = timeSelect.closest('fieldset.time-24hr');
         const column = timeSpan.closest('div.time-scroll');
         timeSpan.siblings('span.time-set').removeClass('time-set');
         timeSpan.addClass('time-set');
@@ -196,7 +200,8 @@ slm.time24Init = function(inputs = null) {
     inputs.find('input[type="time"]').each(function() {
        let value = $(this).val().split(':');
        if (value[0]) {
-           const timeSelect = $(this).closest('div.time-24hr').siblings('div.time-select');
+           //const timeSelect = $(this).closest('fieldset.time-24hr').siblings('div.time-select');
+           const timeSelect = $(this).closest('fieldset.time-24hr').find('div.time-select');
            selectTime(timeSelect.find(`div.hour-scroll > span:contains('${value[0]}')`));
            selectTime(timeSelect.find(`div.minute-scroll > span:contains('${value[1]}')`));
        }

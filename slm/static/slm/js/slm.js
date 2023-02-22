@@ -322,7 +322,7 @@ slm.initForm = function(form_id, initial=null, transform= function(data){ return
             slm.flagsUpdated(form);
         }
     });
-    slm.time24Init(form.find('div.time-24hr'));
+    slm.time24Init(form.find('fieldset.time-24hr'));
     slm.initAutoCompletes(form.find('input[data-slm-autocomplete]'));
 }
 

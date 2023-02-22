@@ -732,12 +732,26 @@ button.nav-link.slm-upload-valid  {
 
 /***************************************************/
 /* styling to make custom 24 hour time widget work */
+fieldset.time-24hr:disabled * {
+    pointer-events: none;
+}
+fieldset.time-24hr:disabled > div {
+    background-color: #E9ECEF;
+}
+
+fieldset.time-24hr {
+    position: relative;
+}
+
 div.time-select {
     border: 1px solid rgba(0,0,0,0.2);
     background-color: white;
     box-shadow: 0 2px 10px 2px rgba(0,0,0,0.2);
     padding: 5px;
     position: absolute;
+    top: 38px;
+    left: 0;
+    z-index: 99;
 }
 
 div.time-select > div::-webkit-scrollbar {

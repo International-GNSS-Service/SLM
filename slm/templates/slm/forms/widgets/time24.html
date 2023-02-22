@@ -1,14 +1,14 @@
-<div>
-    {% with id=widget.attrs.id %}<div {% if id %} id="{{ id }}"{% endif %} tabindex=0 style="display: flex; justify-content: space-between; align-items: center" {% include "django/forms/widgets/attrs.html" %} name="{{ widget.name }}" class="time-24hr form-control">{% endwith %}
+<fieldset {% include "django/forms/widgets/attrs.html" %} tabindex=0 style="display: flex; justify-content: space-between; align-items: center" name="{{ widget.name }}" class="time24-hr form-control">
+    <!--<div tabindex=0 style="display: flex; justify-content: space-between; align-items: center" name="{{ widget.name }}" class="time-24hr">-->
         <span class="time"><span style="cursor: default; user-select: all;" class="hours">--</span>:<span style="cursor: default; user-select: all;" class="minutes">--</span></span>
-        <div style="padding-right: 3px">
+        <!--<div style="padding-right: 3px">-->
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock clock-icon" viewBox="-2 -2 20 20">
                 <path stroke="black" stroke-width="3%" d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
                 <path stroke="black" stroke-width="3%" d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
             </svg>
-        </div>
-        <input id='time24-1' name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="time" style="display: none">
-    </div>
+        <!--</div>-->
+        <input name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="time" style="display: none">
+    <!--</div>-->
     <div class="time-select" tabindex="0" style="width: 130px; height: 250px; overflow-y: hidden; display: none; justify-content: space-evenly;">
         <div class="hour-scroll time-scroll" tabindex="0" style="width: 65px; overflow-y: scroll;">
             <span class="time-set">00</span><span>01</span><span>02</span><span>03</span>
@@ -36,4 +36,4 @@
             <span>56</span><span>57</span><span>58</span><span>59</span>
         </div>
     </div>
-</div>
+</fieldset>

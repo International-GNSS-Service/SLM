@@ -2,16 +2,16 @@ if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
 
 slm.time24Init = function(inputs = null) {
 
-    const allTimeInputs = inputs === null ? $('div.time-24hr') : inputs;
+    inputs = inputs || $('div.time-24hr');
 
-    allTimeInputs.click(function() {
+    inputs.click(function() {
         const timeSelect = $(this).siblings('div.time-select');
         if (timeSelect.css('display') !== 'none') {
             toggleTimeSelectDropDown(timeSelect);
         }
     });
 
-    allTimeInputs.keydown(function( event ) {
+    inputs.keydown(function( event ) {
         let timeSelect = $(this).siblings('div.time-select');
         let selected = $(this).find('span.time-input-selected');
         let currentTime = timeSelect.find('span.time-selected');
@@ -99,7 +99,7 @@ slm.time24Init = function(inputs = null) {
             timeSelect.css('display', 'none');
         }
     }
-    allTimeInputs.find('div svg.clock-icon').click(function() {
+    inputs.find('div svg.clock-icon').click(function() {
         const timeInput = $(this).closest('.time-24hr');
         toggleTimeSelectDropDown(
             timeInput.siblings('.time-select')
@@ -108,14 +108,11 @@ slm.time24Init = function(inputs = null) {
         return false;
     });
 
-    allTimeInputs.find('div.hour-scroll > span').click(function(event) {
-        selectTime($(this))
-    });
-    allTimeInputs.find('div.minute-scroll > span').click(function(event) {
-        selectTime($(this));
-    });
+    inputs.siblings('div.time-select').find(
+        'div.hour-scroll > span, div.minute-scroll > span'
+    ).click(function() {selectTime($(this))});
 
-    allTimeInputs.blur(function(event) {
+    inputs.blur(function(event) {
         if ($(event.relatedTarget).parents('div.time-select').length > 0) {
             $(this).focus();
             return false;
@@ -129,7 +126,7 @@ slm.time24Init = function(inputs = null) {
         window.getSelection().removeAllRanges();
     });
 
-    allTimeInputs.focusin(function(event) {
+    inputs.focusin(function() {
         selectSpanText($(this).find('span.hours'));
     });
 
@@ -196,7 +193,7 @@ slm.time24Init = function(inputs = null) {
         }
     }
 
-    allTimeInputs.find('input[type="time"]').each(function() {
+    inputs.find('input[type="time"]').each(function() {
        let value = $(this).val().split(':');
        if (value[0]) {
            const timeSelect = $(this).closest('div.time-24hr').siblings('div.time-select');

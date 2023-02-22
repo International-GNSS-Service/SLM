@@ -410,9 +410,8 @@ fieldset.slm-form-group > legend {
 .alert-warning.slm-form-deleted {
     border-color: #0079AD;
     background-color: #e6f7ff;
-    color: white;
+    color: #0079AD;
 }
-
 
 
 /*------- Flag CSS -------*/

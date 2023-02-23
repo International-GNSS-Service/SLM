@@ -194,6 +194,12 @@ class SLMConfig(AppConfig):
 
     def ready(self):
 
+        # https://github.com/carltongibson/django-filter/issues/1537
+        # monkey patch out django-filters crispy form rendering:
+        from django_filters import compat
+        compat.is_crispy = lambda: False
+        ############################################################
+
         from slm import signals as slm_signals
         from slm.models import Site, Alert
         from django.contrib.auth import get_user_model
@@ -210,11 +216,17 @@ class SLMConfig(AppConfig):
             # publishing may be tracked through a status update or if the
             # last_publish timestamp changes
 
-            instance._slm_pre_status = instance.status
-            instance._slm_last_publish = instance.last_publish
-            if instance.pk is None:
-                instance._slm_pre_status = None
-                instance._slm_last_publish = None
+            # an infinite recursion loop is triggered if you access a deferred
+            # field in a model's init(). We guard against that case here, which
+            # can happen when related fields are deleted. Such cases should
+            # not involve a status update
+            deferred = instance.get_deferred_fields()
+            if 'status' not in deferred and 'last_publish' not in deferred:
+                instance._slm_pre_status = instance.status
+                instance._slm_last_publish = instance.last_publish
+                if instance.pk is None:
+                    instance._slm_pre_status = None
+                    instance._slm_last_publish = None
 
         @receiver(post_save, sender=Site)
         def site_save(

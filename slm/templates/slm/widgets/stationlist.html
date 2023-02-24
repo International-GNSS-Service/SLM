@@ -1,11 +1,11 @@
-{% load i18n %}
+{% load i18n crispy_forms_tags %}
 
 <div id="slm-station-container" class="slm-scroll-container p-2">
     
     <div class="pt-3 px-3">
         <div class="d-flex flex-wrap justify-content-between align-items-center"> 
             <h5 class="text-center mb-0"><b><span id="slm-num-stations">{{ num_sites }}</span></b> Stations</h5>
-            <a id="filter-stations" class="btn btn{% if not station_filter %}-outline{% endif %}-primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#filter" data-backdrop="false">
+            <a id="filter-stations" class="btn btn-{% if not station_filter %}outline-{% endif %}primary filter-popover" role="button" tabindex="0" data-bs-toggle="modal" data-bs-target="#filter" data-backdrop="false">
                 Filter <i class="bi bi-filter"></i>
             </a>
         </div>
@@ -59,8 +59,9 @@
                 <h1 class="modal-title fs-5" id="filter-label">Filter Station List</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="slm-station-filter">
+            <div class="modal-body ui-front">
+                {% crispy filter_form %}
+                <!--<form id="slm-station-filter">
                     <div id="filter-station-options" class="row px-3 pb-3">
                         <div class="col-4">
                             <fieldset>
@@ -100,7 +101,7 @@
                         </div>
                         <div class="col-4">
                             <fieldset>
-                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Neworks:" %}</span></legend>
+                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Networks:" %}</span></legend>
                                 <div class="overflow-auto" style="max-height: 400px;">
                                     {% for network in networks %}
                                     <div class="form-check">
@@ -131,7 +132,7 @@
                             </fieldset>
                         </div>
                     </div>
-                </form>
+                </form>-->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
@@ -146,6 +147,12 @@
 
 {% compress js inline %}
 <script>
+
+    {% if station_filter %}
+    // there was a filter in the link, clear the session storage
+    sessionStorage.removeItem('stationFilter');
+    {% endif %}
+
     let keyupTimeoutID = 0;
     const stationFilter = $('#slm-station-filter');
     function drawStations(position, data, filtered, total) {
@@ -203,6 +210,7 @@
         }
     }
     $(document).ready(function() {
+
         const stationList = $("#slm-station-list");
         const searchInput = $('#station-search');
         const filterInput = $("#apply-filter");
@@ -215,25 +223,24 @@
                 query = JSON.parse(query);
                 // if the page didnt set a filter - fetch the last one from
                 // session cache
-                const setPropertyFilter = function(prop) {
-                    if (query.hasOwnProperty(prop)) {
-                        let selectors = [];
-                        for (const val of query[prop]) {
-                            selectors.push(`input[name="${prop}"][value="${val}"]`);
+                for (const [prop, values] of Object.entries(query)) {
+                    if (slm.isIterable(values)) {
+                        for (const val of values) {
+                            stationFilter.find(`input[name="${prop}"][value="${val}"]`).prop('checked', true);
+                            stationFilter.find(`select[name="${prop}"] option[value="${val}"]`).prop('selected', true);
                         }
-                        stationFilter.find(selectors.join()).prop("checked", true);
+                    } else {
+                        stationFilter.find(`input[name="${prop}"]`).val(values);
                     }
                 }
-                setPropertyFilter('status');
-                setPropertyFilter('alert');
-                setPropertyFilter('network');
-                setPropertyFilter('agency');
-
-                if (query.hasOwnProperty('max_alert')) {
-                    stationFilter.find(
-                        `input[name="alertLevel"][value="${query.max_alert}"]`
-                    ).prop("checked", true);
-                }
+                // if we have any more complicated widgets like the autocomplete widget, revive them
+                stationFilter.find('fieldset').each(
+                    (idx, field) => {
+                        if ($(field).data('widget')) {
+                            $(field).data('widget').revive();
+                        }
+                    }
+                );
             }
         }
 
@@ -281,23 +288,9 @@
             // replace below line with above one to keep current station in the
             // list regardless of filter
             //stationList.find('button').not(`#select-{{ station }}`).remove();
-            let query = stationList.data('slmQuery') || {};
-            query.status = stationFilter.find('input[name="status"]:checked').map(function () {
-                return this.value;
-            }).get();
-            query.alert = stationFilter.find('input[name="alert"]:checked').map(function () {
-                return this.value;
-            }).get();
-            query.network = stationFilter.find('input[name="network"]:checked').map(function () {
-                return this.value;
-            }).get();
-            query.agency = stationFilter.find('input[name="agency"]:checked').map(function () {
-                return this.value;
-            }).get();
-
-            query.max_alert = stationFilter.find('input[name="alertLevel"]:checked').val();
-            if (typeof query.max_alert === 'undefined' || query.max_alert === null) {
-                delete query.max_alert;
+            const query = slm.formToObject($('#slm-station-filter'));
+            if (query.hasOwnProperty('csrfmiddlewaretoken')) {
+                delete query['csrfmiddlewaretoken'];
             }
             return query;
         }
@@ -314,6 +307,11 @@
             stationList.data('slmPage', 0);
             stationList.data('slmQuery', query);
             sessionStorage.setItem('stationFilter', JSON.stringify(query));
+            stationFilter.find('fieldset').each((idx, field) => {
+                if ($(field).data('widget')) {
+                    $(field).data('widget').persist();
+                }
+            });
             init();
         }
         filterInput.click(applyFilter);
@@ -321,6 +319,17 @@
         clearFilter.on('click', function() {
             stationFilter.find("input[type='checkbox']:checked").prop("checked", false);
             stationFilter.find("input[type='radio']:checked").prop("checked", false);
+            stationFilter.find("input[type='text']").val('');
+            stationFilter.find('fieldset').each(
+                (idx, field) => {
+                    if ($(field).data('widget')) {
+                        $(field).data('widget').clear();
+                        $(field).data('widget').persist();
+                    }
+                }
+            );
+            const query = stationList.data('slmQuery');
+            stationList.data('slmQuery', query.hasOwnProperty('name') ? {name: query.name} : {} );
             applyFilter();
         });
 

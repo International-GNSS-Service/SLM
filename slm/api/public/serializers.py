@@ -63,20 +63,22 @@ class RadomeSerializer(serializers.ModelSerializer):
         ]
 
 
-class EmbeddedAgencySerializer(serializers.ModelSerializer):
+class AgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Agency
         fields = [
+            'id',
             'name',
             'shortname',
             'country'
         ]
 
 
-class EmbeddedNetworkSerializer(serializers.ModelSerializer):
+class NetworkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Network
         fields = [
+            'id',
             'name'
         ]
 
@@ -85,8 +87,8 @@ class StationListSerializer(serializers.ModelSerializer):
 
     name = serializers.CharField(source='site.name')
     last_publish = serializers.CharField(source='site.last_publish')
-    agencies = EmbeddedAgencySerializer(source='site.agencies', many=True)
-    networks = EmbeddedNetworkSerializer(source='site.networks', many=True)
+    agencies = AgencySerializer(source='site.agencies', many=True)
+    networks = NetworkSerializer(source='site.networks', many=True)
     antenna_type = serializers.CharField(
         source='antenna.model',
         allow_null=True

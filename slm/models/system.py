@@ -36,9 +36,33 @@ class AgencyQuerySet(models.QuerySet):
 
     def membership(self, user):
         """Get the agency(s) this user is a member of."""
-        if user.is_superuser:
+        if user.is_authenticated:
+            if user.is_superuser:
+                return self
+            return user.agencies.all()
+        return self.none()
+
+    def public(self):
+        """
+        Public agencies show up in all unauthenticated interfaces and APIs.
+        The must be both active and public.
+        :return:
+        """
+        return self.filter(active=True, public=True)
+
+    def visible_to(self, user):
+        """
+        If authenticated and superuser return everything. If not authenticated
+        return only public stations, if not super user and authenticated return
+        all public agencies and any non-public agencies the user is a member
+        of.
+
+        :param user: The user object associated with the request.
+        :return:
+        """
+        if user.is_authenticated and user.is_superuser:
             return self
-        return user.agencies.all()
+        return self.public() | self.membership(user)
 
 
 class Agency(models.Model):
@@ -49,7 +73,13 @@ class Agency(models.Model):
         null=True,
         db_index=True
     )
-    shortname = models.CharField(max_length=20, blank=True, null=True)
+    shortname = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        db_index=True
+    )
+
     address = models.CharField(max_length=50, blank=True, null=True)
     address2 = models.CharField(max_length=50, blank=True, null=True)
     city = models.CharField(max_length=50, blank=True, null=True)
@@ -108,6 +138,21 @@ class SatelliteSystem(models.Model):
         ordering = ('order',)
 
 
+class NetworkManager(models.Manager):
+    pass
+
+
+class NetworkQuerySet(models.QuerySet):
+
+    def public(self):
+        return self.filter(public=True)
+
+    def visible_to(self, user):
+        if user.is_authenticated and user.is_superuser:
+            return self
+        return self.public()
+
+
 class Network(models.Model):
 
     name = models.CharField(
@@ -117,7 +162,20 @@ class Network(models.Model):
         db_index=True
     )
 
+    public = models.BooleanField(
+        null=False,
+        default=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            'If false, this network will not appear in publicly facing data,'
+            'interfaces and APIs.'
+        )
+    )
+
     sites = models.ManyToManyField('slm.Site', related_name='networks')
+
+    objects = NetworkManager.from_queryset(NetworkQuerySet)()
 
     def __str__(self):
         return self.name

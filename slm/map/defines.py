@@ -15,12 +15,12 @@ class MapBoxStyle(
     _symmetric_builtins_ = ['name', 'label', 'uri']
 
     # name             value    label                slug           version
-    STREETS           =  1,   _('Streets'),           'streets',           11
-    OUTDOORS          =  2,   _('Outdoors'),          'outdoors',          11
-    LIGHT             =  3,   _('Light'),             'light',             10
-    DARK              =  4,   _('Dark'),              'dark',              10
+    STREETS           =  1,   _('Streets'),           'streets',           12
+    OUTDOORS          =  2,   _('Outdoors'),          'outdoors',          12
+    LIGHT             =  3,   _('Light'),             'light',             11
+    DARK              =  4,   _('Dark'),              'dark',              11
     SATELLITE         =  5,   _('Satellite'),         'satellite',          9
-    SATELLITE_STREETS =  6,   _('Satellite Streets'), 'satellite-streets', 11
+    SATELLITE_STREETS =  6,   _('Satellite Streets'), 'satellite-streets', 12
     NAVIGATION_DAY    =  7,   _('Navigation Day'),    'navigation-day',     1
     NAVIGATION_NIGHT  =  8,   _('Navigation Night'),  'navigation-night',   1
 

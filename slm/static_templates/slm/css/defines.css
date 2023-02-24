@@ -1,0 +1,26 @@
+div.slm-status input + label:before {
+    font-family: 'Bootstrap-icons';
+    content: '\F582';
+    border: 1px solid #000;
+    border-radius: 4px;
+}
+{% for status in SiteLogStatus %}
+div.slm-status input[value='{{ status.value }}'] + label:before {
+    color: {{ status.color }};
+}
+.slm-bg-{{ status.name|lower }} {
+    background-color: {{ status.color }};
+}
+.slm-text-{{ status.name|lower }} {
+    color: {{ status.color }};
+}
+{% endfor %}
+
+div.slm-alert-level input + label:before {
+    font-family: 'Bootstrap-icons';
+    content: '\F189';
+}
+{% for level in AlertLevel %}
+div.slm-alert-level input[value='{{ level.value }}'] + label:before {
+    color: {{ level.color }};
+}{% endfor %}

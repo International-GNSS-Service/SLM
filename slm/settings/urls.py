@@ -2,33 +2,53 @@
 SLM URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+    https://docs.djangoproject.com/en/stable/topics/http/urls/
 
-NOTES: 
-This file handles mapping URLs to views.  Django makes it very easy
-and straightforward.  Since SLM is the only app in this project,
-the second statement in urlpatterns just directs us to the urls.py within
-SLM.  Notice there are two urls.py files.  Adding "/admin" to local server
-takes you to admin site which gives easy to use interface for admin controls. 
+Instead of having to define your own urls.py for a deployment of SLM we try to
+do most of the work for you in this default file. If you develop an app and you
+want it to be automatically included in your SLM urls you should add the flag
+SLM_INCLUDE = True to your apps urls.py file. If you do so the urls in your
+app will be included into your deployment at the / mount point. If you wish to
+extend the APIs by providing your own endpoints you may do so by supplying an
+APIS dictionary. For example the slm.map app extends the public API like so:
 
-There are capabilities for URLs to take in parameters (i.e. station name, etc.).
-This is not currently implemented, but it can be done easy.  See below:
-https://docs.djangoproject.com/en/3.2/topics/http/urls/
+.. code-block: python
 
-To access admin site you will need an admin/superuser login.  See documentation
-guide.
+    from django.urls import path
+    from slm.map.api.edit import views as edit_views
+    from slm.map.api.public import views as public_views
+    from slm.map.views import MapView
+
+    SLM_INCLUDE = True
+
+    APIS = {
+        'edit': {
+            'serializer_module': 'slm.map.api.edit.serializers',
+            'endpoints': [
+                ('stations', edit_views.StationListViewSet),
+                ('map', edit_views.StationMapViewSet),
+            ]
+        },
+        'public': {
+            'serializer_module': 'slm.map.api.public.serializers',
+            'endpoints': [
+                ('stations', public_views.StationListViewSet),
+                ('map', public_views.StationMapViewSet),
+            ]
+        }
+    }
+
+Other third party apps may be included at customizable mount points by
+providing a settings.SLM_URL_MOUNTS list. For example to include your app at
+the myapp path you might do this:
+
+.. code-block: python
+
+    SLM_URL_MOUNTS = [
+        ('myapp/', 'myapp.urls')
+    ]
+
 """
-from copy import deepcopy
 from importlib import import_module
 
 from django.conf import settings
@@ -36,7 +56,7 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from slm.utils import SerializerRegistry
+
 
 APIS = {}
 
@@ -57,55 +77,40 @@ class ReregisterableRouter(DefaultRouter):
 
 
 def bring_in_urls(urlpatterns):
-    import warnings
 
     routers = {}
 
     for app in reversed(settings.INSTALLED_APPS):
-        if app.startswith('slm'):
+        try:
             url_module = import_module(f'{app}.urls')
-            if url_module:
-                api = getattr(url_module, 'api', None)
-                if api:
-                    for api, config in api.items():
-                        if api not in routers:
-                            routers[api] = ReregisterableRouter()
-                        router = routers[api]
-                        if 'serializer_module' in config:
-                            SerializerRegistry().add_modules(
-                                api,
-                                config['serializer_module'],
-                                overwrite=True
+            if not getattr(url_module, 'SLM_INCLUDE', False):
+                continue
+            api = getattr(url_module, 'APIS', None)
+            if api:
+                for api, endpoints in api.items():
+                    if api not in routers:
+                        routers[api] = ReregisterableRouter()
+                    router = routers[api]
+                    for endpoint in endpoints:
+                        router.register(
+                            endpoint[0],
+                            endpoint[1],
+                            base_name=(
+                                endpoint[0] if len(endpoint) < 3
+                                else endpoint[2]
                             )
-                        else:
-                            warnings.warn(
-                                f'Expected `serializer_module` in '
-                                f'{url_module.__name__}[api]'
-                            )
-                        if 'endpoints' in config:
-                            for endpoint in config['endpoints']:
-                                router.register(
-                                    endpoint[0],
-                                    endpoint[1],
-                                    base_name=(
-                                        endpoint[0] if len(endpoint) < 3
-                                        else endpoint[2]
-                                    )
-                                )
-                        else:
-                            warnings.warn(
-                                f'Expected `endpoints` in '
-                                f'{url_module.__name__}[api]'
-                            )
+                        )
 
-                if app != 'slm':
-                    urlpatterns.append(
-                        path('', include(f'{app}.urls', namespace=app))
-                    )
+            urlpatterns.append(
+                path('', include(f'{app}.urls', namespace=app))
+            )
 
-                app_add_ons = getattr(url_module, 'add_ons', [])
-                for add_on in app_add_ons:
-                    urlpatterns.append(add_on)
+            app_add_ons = getattr(url_module, 'add_ons', [])
+            for add_on in app_add_ons:
+                urlpatterns.append(add_on)
+
+        except ImportError:
+            pass
 
     for api, router in routers.items():
         # todo how to nest under slm?
@@ -117,15 +122,14 @@ def bring_in_urls(urlpatterns):
         APIS.setdefault(f'{api}_api', []).append(pattern)
 
 
-def api_patterns(api_namespace):
-    return APIS.get(api_namespace, [])
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-    path('', include('slm.urls')),
+    *(
+        path(mount[0], include(mount[1]))
+        for mount in getattr(settings, 'SLM_URL_MOUNTS', [])
+    )
 ]
 
 if getattr(settings, 'DJANGO_DEBUG_TOOLBAR', False):

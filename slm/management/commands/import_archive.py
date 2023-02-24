@@ -214,7 +214,7 @@ class Command(BaseCommand):
         for index, section in bound_log.sections.items():
             if index[0] == 3 and section.contains_values and section.binding:
                 params['receiver'] = Receiver.objects.filter(
-                    pk=section.binding.get('receiver_type', None)
+                    model=section.binding.get('receiver_type', None)
                 ).first()
                 params['serial_number'] = section.binding.get(
                     'serial_number',
@@ -227,10 +227,10 @@ class Command(BaseCommand):
                 )
             if index[0] == 4 and section.contains_values and section.binding:
                 params['antenna'] = Antenna.objects.filter(
-                    pk=section.binding.get('antenna_type', None)
+                    model=section.binding.get('antenna_type', None)
                 ).first()
                 params['radome'] = Radome.objects.filter(
-                    pk=section.binding.get('radome_type', None)
+                    model=section.binding.get('radome_type', None)
                 ).first()
 
             if index[0] == 6 and section.contains_values and section.binding:

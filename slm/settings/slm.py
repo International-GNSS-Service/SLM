@@ -158,8 +158,8 @@ set_default(
     }
 )
 
-set_default(
-    'SLM_AUTOCOMPLETE_LIB',
-    'https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/'
-    '1.4.11/jquery.autocomplete.min.js'
-)
+# slm provides an implementation of urls.py that will load this list into
+# url patterns. This should be a list of 2-tuples where the first tuple is the
+# path stem mount point for the included apps' URLs and the second element is
+# the string that will be passed to django.urls.include
+SLM_URL_MOUNTS = []

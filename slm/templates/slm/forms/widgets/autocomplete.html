@@ -1,1 +1,17 @@
-{% include "django/forms/widgets/text.html" %}
+{% load static %}
+<fieldset class="auto-complete" {% include "django/forms/widgets/attrs.html" %} name="{{ widget.name }}">
+    <div class="form-control search-input" contenteditable="true"></div>
+    <div style="display: none">
+        <select name="{{ widget.name }}" multiple>{% for _1, choices, _2 in widget.optgroups %}
+            {% for option in choices %}{% include option.template_name with widget=option %}{% endfor %}{% endfor %}
+        </select>
+    </div>
+    <div class="select-display">{% for _1, choices, _2 in widget.optgroups %}{% for option in choices %}
+        <div class="autocomplete-selection" data-value="{{ option.value|stringformat:'s' }}">{{ option.label }}<span></span></div>{% endfor %}{% endfor %}
+    </div>
+    <script type="module">
+        import { AutoComplete } from '{% static "slm/js/autocomplete.js" %}';
+        const fieldset = $('fieldset#{{ widget.attrs.id }}');
+        fieldset.data('widget', new AutoComplete({container: fieldset}));
+    </script>
+</fieldset>

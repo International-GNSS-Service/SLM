@@ -10,7 +10,9 @@ from slm.api.public.serializers import (
     ReceiverSerializer,
     AntennaSerializer,
     RadomeSerializer,
-    ArchiveSerializer
+    ArchiveSerializer,
+    AgencySerializer,
+    NetworkSerializer
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.models import (
@@ -19,7 +21,9 @@ from slm.models import (
     Receiver,
     Antenna,
     Radome,
-    ArchivedSiteLog
+    ArchivedSiteLog,
+    Agency,
+    Network
 )
 from slm.api.filter import SLMDateTimeFilter
 from django.http import FileResponse
@@ -36,10 +40,16 @@ class DataTablesListMixin(mixins.ListModelMixin):
     pagination_class = DataTablesPagination
 
 
-class StationListViewSet(DataTablesListMixin, viewsets.GenericViewSet):
+class StationListViewSet(
+    DataTablesListMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
     
     serializer_class = StationListSerializer
     permission_classes = []
+    lookup_field = 'site__name'
+    lookup_url_kwarg = 'station'
 
     class StationFilter(FilterSet):
 
@@ -224,6 +234,65 @@ class RadomeViewSet(
 
     def get_queryset(self):
         return Radome.objects.select_related('manufacturer')
+
+
+class AgencyViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = AgencySerializer
+    permission_classes = []
+
+    class AgencyFilter(FilterSet):
+        name = django_filters.CharFilter(lookup_expr='icontains')
+        abbr = django_filters.CharFilter(
+            lookup_expr='icontains',
+            field_name='short_name'
+        )
+
+        search = django_filters.CharFilter(method='name_or_abbr')
+
+        def name_or_abbr(self, queryset, name, value):
+            return queryset.filter(
+                Q(name__icontains=value) | Q(shortname__icontains=value)
+            )
+
+        class Meta:
+            model = Agency
+            fields = ('name', 'abbr', 'search')
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = AgencyFilter
+    ordering_fields = ('name', 'shortname')
+    ordering = ('name', 'shortname')
+
+    def get_queryset(self):
+        return Agency.objects.visible_to(self.request.user)
+
+
+class NetworkViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = NetworkSerializer
+    permission_classes = []
+
+    class NetworkFilter(FilterSet):
+        name = django_filters.CharFilter(lookup_expr='icontains')
+
+        class Meta:
+            model = Network
+            fields = ('name',)
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = NetworkFilter
+    ordering_fields = ('name',)
+    ordering = ('name',)
+
+    def get_queryset(self):
+        return Network.objects.public()
 
 
 class ArchiveViewSet(

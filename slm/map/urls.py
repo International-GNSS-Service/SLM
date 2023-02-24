@@ -3,21 +3,17 @@ from slm.map.api.edit import views as edit_views
 from slm.map.api.public import views as public_views
 from slm.map.views import MapView
 
-api = {
-    'edit': {
-        'serializer_module': 'slm.map.api.edit.serializers',
-        'endpoints': [
-            ('stations', edit_views.StationListViewSet),
-            ('map', edit_views.StationMapViewSet),
-        ]
-    },
-    'public': {
-        'serializer_module': 'slm.map.api.public.serializers',
-        'endpoints': [
-            ('stations', public_views.StationListViewSet),
-            ('map', public_views.StationMapViewSet),
-        ]
-    }
+SLM_INCLUDE = True
+
+APIS = {
+    'edit': [
+        ('stations', edit_views.StationListViewSet),
+        ('map', edit_views.StationMapViewSet)
+    ],
+    'public': [
+        ('stations', public_views.StationListViewSet),
+        ('map', public_views.StationMapViewSet)
+    ]
 }
 
 app_name = 'slm_map'

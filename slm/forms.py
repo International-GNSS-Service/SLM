@@ -20,16 +20,21 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.urls import reverse_lazy
 from django.db.models.fields import NOT_PROVIDED
+from django_enum.forms import EnumChoiceField
+from django.forms.fields import TypedMultipleChoiceField
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
-from slm.defines import SLMFileType
+from slm.defines import SLMFileType, SiteLogStatus, AlertLevel
 from slm.widgets import (
     AutoComplete,
     SLMCheckboxSelectMultiple,
     SLMDateTimeWidget,
-    DatePicker
+    DatePicker,
+    AutoCompleteSelectMultiple
 )
 from slm.models import (
+    Alert,
     Agency,
+    Network,
     SatelliteSystem,
     Site,
     SiteAntenna,
@@ -52,10 +57,20 @@ from slm.models import (
     SiteSignalObstructions,
     SiteSurveyedLocalTies,
     SiteTemperatureSensor,
-    SiteWaterVaporRadiometer,
+    SiteWaterVaporRadiometer
 )
 from slm.utils import to_snake_case
 from ckeditor.widgets import CKEditorWidget
+from crispy_forms.layout import Layout, Div, Field
+from crispy_forms.helper import FormHelper
+
+
+class EnumMultipleChoiceField(EnumChoiceField, TypedMultipleChoiceField):
+    """
+    The default ``ChoiceField`` will only accept the base enumeration values.
+    Use this field on forms to accept any value mappable to an enumeration
+    including any labels or symmetric properties.
+    """
 
 
 class SLMDateField(forms.DateField):
@@ -76,7 +91,45 @@ class SLMDateTimeField(forms.SplitDateTimeField):
         self.widget.widgets[1].input_type = 'time'
 
 
+class MultiSelectAutoComplete(forms.ModelMultipleChoiceField):
+
+    widget = AutoCompleteSelectMultiple
+
+    def __init__(self, *args, **kwargs):
+        service_url = kwargs.pop('service_url', None)
+        search_param = kwargs.pop('search_param', 'search')
+        value_param = kwargs.pop('value_param', 'id')
+        label_param = kwargs.pop('label_param', search_param)
+        render_suggestion = kwargs.pop('render_suggestion', None)
+        super().__init__(*args, **kwargs)
+        self.widget.attrs.update({
+            'data-service-url': service_url,
+            'data-search-param': search_param,
+            'data-label-param': label_param,
+            'data-value-param': value_param
+        })
+        if render_suggestion:
+            self.widget.attrs['data-render-suggestion'] = render_suggestion
+
+
+class CheckboxEnumChoiceField(EnumMultipleChoiceField):
+
+    widget = forms.CheckboxSelectMultiple
+
+
 class NewSiteForm(forms.ModelForm):
+
+    agencies = MultiSelectAutoComplete(
+        queryset=Agency.objects.all(),
+        help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Agency'),
+        required=False,
+        service_url=reverse_lazy('slm_edit_api:agency-list'),
+        search_param='search',
+        value_param='id',
+        label_param='name',
+        render_suggestion='return `(${obj.shortname}) ${obj.name}`;'
+    )
 
     class Meta:
         model = Site
@@ -627,3 +680,81 @@ class SiteFileForm(forms.ModelForm):
 class RichTextForm(forms.Form):
 
     text = forms.CharField(widget=CKEditorWidget(config_name='richtextinput'))
+
+
+class StationFilterForm(forms.Form):
+    """
+    Todo - how to render help_text as alt or titles?
+    """
+
+    @property
+    def helper(self):
+        helper = FormHelper()
+        helper.form_id = 'slm-station-filter'
+        helper.layout = Layout(
+            Div(
+                Div(
+                    Field('status', css_class='slm-status'),
+                    css_class='col-4'
+                ),
+                Div(
+                    'alert',
+                    Field('alert_level', css_class='slm-alert-level'),
+                    css_class='col-4'
+                ),
+                Div(
+                    'agency',
+                    'network',
+                    css_class='col-4'
+                ),
+                css_class='row'
+            )
+        )
+        return helper
+
+    status = CheckboxEnumChoiceField(
+        SiteLogStatus,
+        # help_text=_('Include stations with these statuses.'),
+        label=_('Site Status'),
+        required=False
+    )
+
+    alert = forms.MultipleChoiceField(
+        choices=(
+            (alert.__name__, alert._meta.verbose_name)
+            for alert in Alert.objects.site_alerts()
+        ),
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+        # help_text=_('Include stations with the following alert types.'),
+    )
+
+    alert_level = CheckboxEnumChoiceField(
+        AlertLevel,
+        # help_text=_('Include stations with alerts at this level.'),
+        label=_('Alert Level'),
+        required=False
+    )
+
+    agency = MultiSelectAutoComplete(
+        queryset=Agency.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Agency'),
+        required=False,
+        service_url=reverse_lazy('slm_edit_api:agency-list'),
+        search_param='search',
+        value_param='id',
+        label_param='name',
+        render_suggestion='return `(${obj.shortname}) ${obj.name}`;'
+    )
+
+    network = MultiSelectAutoComplete(
+        queryset=Network.objects.all(),
+        # help_text=_('Enter the name of an IGS Network.'),
+        label=_('Network'),
+        required=False,
+        service_url=reverse_lazy('slm_edit_api:network-list'),
+        search_param='name',
+        value_param='id',
+        label_param='name'
+    )

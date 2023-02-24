@@ -879,6 +879,8 @@ slm.formToObject = function(form, fields=null) {
 slm.stationFilterCallbacks = [];
 
 slm.stationFilterChanged = function(filterParams) {
+    console.log(filterParams);
+    console.log(slm.stationFilterCallbacks);
     for (const callback of slm.stationFilterCallbacks) {
         callback(filterParams);
     }
@@ -932,4 +934,73 @@ slm.processing = function(btn) {
         $('body').css('cursor', 'default');
         btn.find('span.spinner-border').remove();
     }
+}
+
+/**
+slm.initAutoCompletes = function(inputs = null) {
+    const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;
+    autoInputs.each(function() {
+        $(this).autocomplete({
+            minChars: 0,
+            serviceUrl: $(this).data('serviceUrl'),
+            dataType: 'json',
+            paramName: $(this).data('paramName'),
+            transformResult: function(response) {
+                return {
+                    suggestions: $.map(response, function(dataItem) {
+                        return dataItem.model;
+                    })
+                };
+            }
+        });
+    });
+}
+*/
+
+slm.initAutoCompletes = function(inputs = null) {
+    const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;
+    autoInputs.each(function() {
+        $(this).autocomplete({
+            delay: 250,
+            minLength: 0,
+            source: function(request, response) {
+                const data = {};
+                data[$(this).data('paramName')] = request.term;
+                $.ajax({url: $(this).data('serviceUrl'), data: data}).done(
+                    function(data) {
+                        const suggestions = [];
+                        if ($(this).data('valueParam')) {
+                            for (const suggestion of data) {
+                                suggestions.push({
+                                    label: suggestion[$(this).data('paramName')],
+                                    value: suggestion[$(this).data('valueParam')]
+                                });
+                            }
+                            response(suggestions);
+                        } else {
+                            for (const suggestion of data) {
+                                suggestions.push(suggestion[$(this).data('paramName')]);
+                            }
+                        }
+                        response(suggestions);
+                    }.bind(this)
+                ).fail(function(jqXHR) {console.log(jqXHR);});
+            }.bind(this)
+        });
+    }).bind('focus', function(){ $(this).autocomplete("search"); } )
+        .data("ui-autocomplete")._renderItem = function (ul, item) {
+            const newText = String(item.label).replace(
+                    new RegExp(this.term, "gi"),
+                    "<span class='autocomplete-match'>$&</span>");
+
+                return $('<li></li>')
+                    .data('item.ui-autocomplete', item)
+                    .append(`<div>${newText}</div>`)
+                    .appendTo(ul);
+        };
+}
+
+slm.isIterable = function(input) {
+    if (input === null || input === undefined) { return false; }
+    return typeof input[Symbol.iterator] === 'function';
 }

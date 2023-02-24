@@ -66,11 +66,8 @@
         };
 
         const stationsFiltered = function(queryParams) {
-            let query = Object.assign(
-                scrollDiv.data('slmQuery') || {}, queryParams
-            );
             scrollDiv.data('slmPage', 0);
-            scrollDiv.data('slmQuery', query);
+            scrollDiv.data('slmQuery', queryParams);
             init();
         }
         slm.stationFilterCallbacks.push(stationsFiltered);

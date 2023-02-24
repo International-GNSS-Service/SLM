@@ -41,6 +41,9 @@ STATIC_TEMPLATES = {
         },
         'slm/js/fileIcons.js': {
             'context': get_icon_context
+        },
+        'slm/css/defines.css': {
+            'context': get_enum_context
         }
     }
 }

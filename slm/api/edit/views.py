@@ -28,7 +28,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from slm import signals as slm_signals
-from slm.api.filter import AcceptListArguments, MustIncludeThese
+from slm.api.filter import (
+    AcceptListArguments,
+    StationFilter as BaseStationFilter
+)
 from slm.api.edit.serializers import (
     AlertSerializer,
     LogEntrySerializer,
@@ -36,6 +39,10 @@ from slm.api.edit.serializers import (
     SiteFileUploadSerializer,
     StationSerializer,
     UserSerializer,
+)
+from slm.api.public.views import (
+    AgencyViewSet as PublicAgencyViewSet,
+    NetworkViewSet as PublicNetworkViewSet
 )
 from slm.api.fields import SLMDateTimeField
 from slm.api.serializers import SiteLogSerializer
@@ -52,7 +59,6 @@ from slm.defines import (
     SiteFileUploadStatus,
     SiteLogFormat,
     SLMFileType,
-    AlertLevel,
     SiteLogStatus
 )
 from slm.parsing.legacy.parser import Error
@@ -88,9 +94,13 @@ from slm.models import (
 )
 from django.http import Http404
 from datetime import datetime
-from django.utils.functional import cached_property
-from django_enum.filters import EnumFilter
 from io import BytesIO
+
+
+class StationFilter(BaseStationFilter):
+    """
+    Edit API station filter extensions.
+    """
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -109,6 +119,18 @@ class DataTablesListMixin(mixins.ListModelMixin):
     A mixin for adapting list views to work with the datatables library.
     """
     pagination_class = DataTablesPagination
+
+
+class AgencyViewSet(PublicAgencyViewSet):
+
+    def get_queryset(self):
+        return Agency.objects.membership(self.request.user)
+
+
+class NetworkViewSet(PublicNetworkViewSet):
+
+    def get_queryset(self):
+        return Network.objects.visible_to(self.request.user)
 
 
 class ReviewRequestView(
@@ -161,101 +183,6 @@ class RejectUpdatesView(
         return Site.objects.moderated(
             self.request.user
         ).filter(review_requested__isnull=False).annotate_max_alert()
-
-
-class StationFilter(AcceptListArguments, FilterSet):
-
-    @cached_property
-    def alert_fields(self):
-        """
-        Fetch the mapping of alert names to related fields.
-        """
-        def get_related_field(alert):
-            for obj in Site._meta.related_objects:
-                if obj.related_model is alert:
-                    return obj.name
-        return {
-            alert.__name__.lower(): get_related_field(alert)
-            for alert in Alert.objects.site_alerts()
-        }
-
-    name = django_filters.CharFilter(
-        field_name='name',
-        lookup_expr='istartswith'
-    )
-    published_before = django_filters.CharFilter(
-        field_name='last_publish',
-        lookup_expr='lt'
-    )
-    published_after = django_filters.CharFilter(
-        field_name='last_publish',
-        lookup_expr='gte'
-    )
-    updated_before = django_filters.CharFilter(
-        field_name='last_update',
-        lookup_expr='lt'
-    )
-    updated_after = django_filters.CharFilter(
-        field_name='last_update',
-        lookup_expr='gte'
-    )
-    agency = django_filters.ModelMultipleChoiceFilter(
-        field_name='agencies',
-        queryset=Agency.objects.all(),
-        distinct=True
-    )
-    network = django_filters.ModelMultipleChoiceFilter(
-        field_name='networks',
-        queryset=Network.objects.all(),
-        distinct=True
-    )
-    id = MustIncludeThese()
-
-    status = django_filters.MultipleChoiceFilter(
-        choices=SiteLogStatus.choices,
-        distinct=True
-    )
-
-    alert = django_filters.MultipleChoiceFilter(
-        choices=[
-            (alert.__name__, alert._meta.verbose_name.title())
-            for alert in Alert.objects.site_alerts()
-        ],
-        method='filter_alerts',
-        distinct=True
-    )
-
-    max_alert = EnumFilter(enum=AlertLevel, field_name='_max_alert')
-
-    review_requested = django_filters.BooleanFilter(
-        field_name='review_requested'
-    )
-
-    def filter_alerts(self, queryset, name, value):
-        alert_q = Q()
-        for alert in value:
-            alert_q |= Q(
-                **{f'{self.alert_fields[alert.lower()]}__isnull': False}
-            )
-        return queryset.filter(alert_q)
-
-    class Meta:
-        model = Site
-        fields = (
-            'name',
-            'published_before',
-            'published_after',
-            'updated_before',
-            'updated_after',
-            'agency',
-            'status',
-            'network',
-            'review_requested',
-            'max_alert',
-            'alert',
-            'id'
-        )
-        distinct = True
 
 
 class StationListViewSet(

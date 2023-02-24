@@ -465,31 +465,7 @@ span.slm-parse-error {
 
 /*------- SLM Status Colors CSS -------*/
 /* Status Background Color*/
-.slm-bg-nascent {
-    background-color: #913D88;
-}
-.slm-bg-updated {
-    background-color: #0079AD;
-}
-.slm-bg-former {
-    background-color: #3D4543;
-}
-.slm-bg-published {
-    background-color: #0D820D;
-}
-/* Status Text Color */
-.slm-text-nascent {
-    color: #913D88;
-}
-.slm-text-updated {
-    color: #0079AD;
-}
-.slm-text-former {
-    color: #3D4543;
-}
-.slm-text-published {
-    color: #0D820D;
-}
+
 /* Actvity Log Item Border Colors */
 .slm-log-delete {
     border-left-color: #D3D3D3;
@@ -719,15 +695,7 @@ button.nav-link.slm-upload-valid  {
 }
 
 
-
-/*------- Autocomplete CSS -------*/
-.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
-.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
-.autocomplete-selected { background: #F0F0F0; }
-.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
-.autocomplete-group { padding: 2px 5px; }
-.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
-
+span.autocomplete-match { font-weight: normal; color: #3399FF; }
 
 
 /***************************************************/
@@ -798,4 +766,36 @@ div.messages > div {
 div.messages > div.info {
     border-color: #0079AD;
     background-color: #0079AD6F;
+}
+
+
+fieldset.autocomplete {
+    padding: 0;
+    border: none;
+}
+
+div.autocomplete-selection {
+    background-color: royalblue;
+    color: whitesmoke;
+    padding: 5px 10px 5px 10px;
+    border: 1px solid royalblue;
+    border-radius: 5px;
+    width: fit-content;
+    margin: 5px;
+    text-align: center;
+}
+
+div.autocomplete-selection span {
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+div.autocomplete-selection span:before {
+    font-family: 'Bootstrap-icons';
+    content: '\F623';
+}
+div.autocomplete-selection span:hover:before {
+  font-family: 'Bootstrap-icons';
+  cursor: pointer;
+  content: '\F622';
 }

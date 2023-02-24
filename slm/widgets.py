@@ -1,11 +1,11 @@
-from django.forms.widgets import TextInput, TimeInput, DateInput
+from django.forms.widgets import TextInput, TimeInput, DateInput, SelectMultiple
 from django.conf import settings
 from django.forms import CheckboxSelectMultiple, SplitDateTimeWidget
 
 
 class AutoComplete(TextInput):
 
-    template_name = 'slm/forms/widgets/autocomplete.html'
+    template_name = 'django/forms/widgets/text.html'
 
     def __init__(self, attrs=None):
         if attrs is None:
@@ -13,16 +13,27 @@ class AutoComplete(TextInput):
         attrs.setdefault('data-slm-autocomplete', True)
         super().__init__(attrs=attrs)
 
-    class Media:
-        js = (
-            getattr(
-                settings,
-                'SLM_AUTOCOMPLETE_LIB',
-                'https://cdnjs.cloudflare.com/ajax/libs/'
-                'jquery.devbridge-autocomplete/1.4.11/'
-                'jquery.autocomplete.min.js',
-            ),
+
+class AutoCompleteSelectMultiple(SelectMultiple):
+
+    template_name = 'slm/forms/widgets/autocomplete.html'
+
+    def get_context(self, name, value, attrs):
+        """
+        Override our choices to just include the defaults, so only the initial
+        selections are rendered into the options of select.
+
+        There has to be a more efficient way to do this that doesnt involve
+        iterating over the whole set, but would probably require more invasive
+        alterations to the base class.
+        """
+        values = set(value or [])
+        self.choices = (
+            (choice, label)
+            for choice, label in self.choices
+            if choice.value in values
         )
+        return super().get_context(name, value, attrs)
 
 
 class DatePicker(DateInput):

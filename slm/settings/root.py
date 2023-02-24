@@ -35,6 +35,8 @@ if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
 INSTALLED_APPS = [
     'slm.map',
     'slm',
+    'crispy_forms',
+    'crispy_bootstrap5',
     'ckeditor_uploader',
     'ckeditor',
     'polymorphic',
@@ -53,6 +55,9 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',

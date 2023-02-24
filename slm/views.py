@@ -33,6 +33,7 @@ from slm.defines import (
 )
 from slm.forms import (
     NewSiteForm,
+    StationFilterForm,
     SiteAntennaForm,
     SiteCollocationForm,
     SiteFileForm,
@@ -123,53 +124,56 @@ class StationContextView(SLMView):
 
     def get_station_filter(self):
         station_filter = {}
+
         try:
-            max_alert = self.request.GET.get('max_alert', None)
-            if max_alert is not None:
-                station_filter['max_alert'] = AlertLevel(max_alert)
-        except ValueError:
-            pass
+            if self.request.GET.getlist('status', []):
+                station_filter['status'] = list(set([
+                    SiteLogStatus(status).value
+                    for status in self.request.GET.getlist('status')
+                ]))
 
-        status = set()
-        for stat in self.request.GET.getlist('status', []):
-            try:
-                status.add(SiteLogStatus(stat))
-            except ValueError:
-                pass
-        if status:
-            station_filter['status'] = status
+            if self.request.GET.getlist('alert_level', []):
+                station_filter['alert_level'] = list(set([
+                    AlertLevel(level).value
+                    for level in self.request.GET.getlist('alert_level')
+                ]))
 
-        alerts = self.request.GET.getlist('alert', [])
-        if alerts:
-            station_filter['alert'] = {
-                alrt.lower() for alrt in self.request.GET.getlist('alert', [])
-            }
+            if self.request.GET.getlist('alert', []):
+                alerts = set(
+                    self.request.GET.getlist('alert')
+                )
+                unrecognized = (
+                    alerts - {
+                        alert.__name__ for alert in Alert.objects.site_alerts()
+                    }
+                )
+                if unrecognized:
+                    raise ValueError(f'Invalid alerts: {unrecognized}')
 
-        networks = set()
-        for nwk in self.request.GET.getlist('network', []):
-            try:
+                station_filter['alert'] = list(alerts)
+
+            networks = set()
+            for nwk in self.request.GET.getlist('network', []):
                 if nwk.isdigit():
                     networks.add(Network.objects.get(id=int(nwk)))
                 else:
                     networks.add(Network.objects.get(name__iexact=nwk))
-            except Network.DoesNotExist:
-                continue
-        if networks:
-            station_filter['network'] = networks
+            if networks:
+                station_filter['network'] = networks
 
-        agencies = set()
-        for agy in self.request.GET.getlist('agency', []):
-            try:
+            agencies = set()
+            for agy in self.request.GET.getlist('agency', []):
                 if agy.isdigit():
                     agencies.add(Agency.objects.get(id=int(agy)))
                 else:
                     agencies.add(Agency.objects.get(name__iexact=agy))
-            except Agency.DoesNotExist:
-                continue
-        if agencies:
-            station_filter['agency'] = agencies
 
-        station_filter['agency'] = agencies
+            if agencies:
+                station_filter['agency'] = agencies
+
+        except (ValueError, Agency.DoesNotExist, Network.DoesNotExist):
+            raise Http404('Unrecognized filter parameters.')
+
         return station_filter
 
     @method_decorator(login_required)
@@ -207,6 +211,7 @@ class StationContextView(SLMView):
         ).for_site(self.site).aggregate(Max('level'))['level__max']
         if max_alert is NOT_PROVIDED:
             max_alert = None
+
         context.update({
             'station_filter': station_filter,
             'num_sites': self.sites.count(),
@@ -231,7 +236,8 @@ class StationContextView(SLMView):
             'station_alert_level': (
                 AlertLevel(max_alert) if max_alert else None
             ),
-            'site_alerts': Alert.objects.site_alerts()
+            'site_alerts': Alert.objects.site_alerts(),
+            'filter_form': StationFilterForm(initial=station_filter)
         })
 
         if self.station:

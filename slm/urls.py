@@ -11,7 +11,6 @@ from slm.views import (
     IndexView,
     LogView,
     NewSiteView,
-    SLMView,
     StationAlertsView,
     StationReviewView,
     UploadView,
@@ -22,74 +21,74 @@ from slm.views import (
     AboutView,
 )
 
-api = {
-    'edit': {
-        'serializer_module': 'slm.api.edit.serializers',
-        'endpoints': [
-            ('stations', edit_views.StationListViewSet),
-            ('profile', edit_views.UserProfileViewSet),
-            ('download', edit_views.SiteLogDownloadViewSet),
-            (
-                'files/(?P<site>[^/.]+)',
-                edit_views.SiteFileUploadViewSet,
-                'files'
-            ),
-            ('siteform', edit_views.SiteFormViewSet),
-            ('siteidentification', edit_views.SiteIdentificationViewSet),
-            ('sitelocation', edit_views.SiteLocationViewSet),
-            ('sitereceiver', edit_views.SiteReceiverViewSet),
-            ('siteantenna', edit_views.SiteAntennaViewSet),
-            ('sitesurveyedlocalties', edit_views.SiteSurveyedLocalTiesViewSet),
-            ('sitefrequencystandard', edit_views.SiteFrequencyStandardViewSet),
-            ('sitecollocation', edit_views.SiteCollocationViewSet),
-            ('sitehumiditysensor', edit_views.SiteHumiditySensorViewSet),
-            ('sitepressuresensor', edit_views.SitePressureSensorViewSet),
-            ('sitetemperaturesensor', edit_views.SiteTemperatureSensorViewSet),
-            (
-                'sitewatervaporradiometer',
-                edit_views.SiteWaterVaporRadiometerViewSet
-            ),
-            (
-                'siteotherinstrumentation',
-                edit_views.SiteOtherInstrumentationViewSet
-            ),
-            (
-                'siteradiointerferences',
-                edit_views.SiteRadioInterferencesViewSet
-            ),
-            ('sitemultipathsources', edit_views.SiteMultiPathSourcesViewSet),
-            (
-                'sitesignalobstructions',
-                edit_views.SiteSignalObstructionsViewSet
-            ),
-            (
-                'sitelocalepisodiceffects',
-                edit_views.SiteLocalEpisodicEffectsViewSet
-            ),
-            (
-                'siteoperationalcontact',
-                edit_views.SiteOperationalContactViewSet
-            ),
-            ('siteresponsibleagency', edit_views.SiteResponsibleAgencyViewSet),
-            ('sitemoreinformation', edit_views.SiteMoreInformationViewSet),
-            ('logentries', edit_views.LogEntryViewSet),
-            ('alerts', edit_views.AlertViewSet),
-            ('request_review', edit_views.ReviewRequestView),
-            ('reject_updates', edit_views.RejectUpdatesView),
-        ]
-    },
-    'public': {
-        'serializer_module': 'slm.api.public.serializers',
-        'endpoints': [
-            ('stations', public_views.StationListViewSet),
-            ('receiver', public_views.ReceiverViewSet),
-            ('antenna', public_views.AntennaViewSet),
-            ('radome', public_views.RadomeViewSet),
-            ('download', public_views.SiteLogDownloadViewSet),
-            ('files', public_views.SiteFileUploadViewSet),
-            ('archive', public_views.ArchiveViewSet)
-        ]
-    },
+SLM_INCLUDE = True
+
+APIS = {
+    'edit': [
+        ('stations', edit_views.StationListViewSet),
+        ('profile', edit_views.UserProfileViewSet),
+        ('download', edit_views.SiteLogDownloadViewSet),
+        (
+            'files/(?P<site>[^/.]+)',
+            edit_views.SiteFileUploadViewSet,
+            'files'
+        ),
+        ('siteform', edit_views.SiteFormViewSet),
+        ('siteidentification', edit_views.SiteIdentificationViewSet),
+        ('sitelocation', edit_views.SiteLocationViewSet),
+        ('sitereceiver', edit_views.SiteReceiverViewSet),
+        ('siteantenna', edit_views.SiteAntennaViewSet),
+        ('sitesurveyedlocalties', edit_views.SiteSurveyedLocalTiesViewSet),
+        ('sitefrequencystandard', edit_views.SiteFrequencyStandardViewSet),
+        ('sitecollocation', edit_views.SiteCollocationViewSet),
+        ('sitehumiditysensor', edit_views.SiteHumiditySensorViewSet),
+        ('sitepressuresensor', edit_views.SitePressureSensorViewSet),
+        ('sitetemperaturesensor', edit_views.SiteTemperatureSensorViewSet),
+        (
+            'sitewatervaporradiometer',
+            edit_views.SiteWaterVaporRadiometerViewSet
+        ),
+        (
+            'siteotherinstrumentation',
+            edit_views.SiteOtherInstrumentationViewSet
+        ),
+        (
+            'siteradiointerferences',
+            edit_views.SiteRadioInterferencesViewSet
+        ),
+        ('sitemultipathsources', edit_views.SiteMultiPathSourcesViewSet),
+        (
+            'sitesignalobstructions',
+            edit_views.SiteSignalObstructionsViewSet
+        ),
+        (
+            'sitelocalepisodiceffects',
+            edit_views.SiteLocalEpisodicEffectsViewSet
+        ),
+        (
+            'siteoperationalcontact',
+            edit_views.SiteOperationalContactViewSet
+        ),
+        ('siteresponsibleagency', edit_views.SiteResponsibleAgencyViewSet),
+        ('sitemoreinformation', edit_views.SiteMoreInformationViewSet),
+        ('logentries', edit_views.LogEntryViewSet),
+        ('alerts', edit_views.AlertViewSet),
+        ('request_review', edit_views.ReviewRequestView),
+        ('reject_updates', edit_views.RejectUpdatesView),
+        ('agency', edit_views.AgencyViewSet),
+        ('network', edit_views.NetworkViewSet)
+    ],
+    'public': [
+        ('stations', public_views.StationListViewSet),
+        ('receiver', public_views.ReceiverViewSet),
+        ('antenna', public_views.AntennaViewSet),
+        ('radome', public_views.RadomeViewSet),
+        ('download', public_views.SiteLogDownloadViewSet),
+        ('files', public_views.SiteFileUploadViewSet),
+        ('archive', public_views.ArchiveViewSet),
+        ('agency', public_views.AgencyViewSet),
+        ('network', public_views.NetworkViewSet)
+    ]
 }
 
 

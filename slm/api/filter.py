@@ -10,6 +10,17 @@ from django.forms.utils import from_current_timezone
 from django.core.exceptions import ValidationError
 from dateutil import parser
 from django.utils.translation import gettext as _
+from django.utils.functional import cached_property
+from slm.models import (
+    Site,
+    Agency,
+    Network,
+    Alert
+)
+from django.db.models import Q
+from django_enum.filters import EnumFilter
+from slm.defines import SiteLogStatus, AlertLevel
+import django_filters
 
 
 class AcceptListArguments:
@@ -86,3 +97,98 @@ class InitialValueFilterSet(FilterSet):
                     data[name] = initial() if callable(initial) else initial
 
         super().__init__(data, *args, **kwargs)
+
+
+class StationFilter(AcceptListArguments, FilterSet):
+
+    @cached_property
+    def alert_fields(self):
+        """
+        Fetch the mapping of alert names to related fields.
+        """
+        def get_related_field(alert):
+            for obj in Site._meta.related_objects:
+                if obj.related_model is alert:
+                    return obj.name
+        return {
+            alert.__name__.lower(): get_related_field(alert)
+            for alert in Alert.objects.site_alerts()
+        }
+
+    name = django_filters.CharFilter(
+        field_name='name',
+        lookup_expr='istartswith'
+    )
+    published_before = django_filters.CharFilter(
+        field_name='last_publish',
+        lookup_expr='lt'
+    )
+    published_after = django_filters.CharFilter(
+        field_name='last_publish',
+        lookup_expr='gte'
+    )
+    updated_before = django_filters.CharFilter(
+        field_name='last_update',
+        lookup_expr='lt'
+    )
+    updated_after = django_filters.CharFilter(
+        field_name='last_update',
+        lookup_expr='gte'
+    )
+    agency = django_filters.ModelMultipleChoiceFilter(
+        field_name='agencies',
+        queryset=Agency.objects.all(),
+        distinct=True
+    )
+    network = django_filters.ModelMultipleChoiceFilter(
+        field_name='networks',
+        queryset=Network.objects.all(),
+        distinct=True
+    )
+    id = MustIncludeThese()
+
+    status = django_filters.MultipleChoiceFilter(
+        choices=SiteLogStatus.choices,
+        distinct=True
+    )
+
+    alert = django_filters.MultipleChoiceFilter(
+        choices=[
+            (alert.__name__, alert._meta.verbose_name.title())
+            for alert in Alert.objects.site_alerts()
+        ],
+        method='filter_alerts',
+        distinct=True
+    )
+
+    alert_level = EnumFilter(enum=AlertLevel, field_name='_max_alert')
+
+    review_requested = django_filters.BooleanFilter(
+        field_name='review_requested'
+    )
+
+    def filter_alerts(self, queryset, name, value):
+        alert_q = Q()
+        for alert in value:
+            alert_q |= Q(
+                **{f'{self.alert_fields[alert.lower()]}__isnull': False}
+            )
+        return queryset.filter(alert_q)
+
+    class Meta:
+        model = Site
+        fields = (
+            'name',
+            'published_before',
+            'published_after',
+            'updated_before',
+            'updated_after',
+            'agency',
+            'status',
+            'network',
+            'review_requested',
+            'alert_level',
+            'alert',
+            'id'
+        )
+        distinct = True

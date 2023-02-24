@@ -191,6 +191,7 @@ def satellite_str(satellite_systems):
 @register.filter(name='inspect')
 def inspect(obj):
     from pprint import pprint
+    pprint(f'{obj}:')
     pprint(dir(obj))
 
 

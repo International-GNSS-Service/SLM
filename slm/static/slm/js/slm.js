@@ -879,8 +879,6 @@ slm.formToObject = function(form, fields=null) {
 slm.stationFilterCallbacks = [];
 
 slm.stationFilterChanged = function(filterParams) {
-    console.log(filterParams);
-    console.log(slm.stationFilterCallbacks);
     for (const callback of slm.stationFilterCallbacks) {
         callback(filterParams);
     }
@@ -935,27 +933,6 @@ slm.processing = function(btn) {
         btn.find('span.spinner-border').remove();
     }
 }
-
-/**
-slm.initAutoCompletes = function(inputs = null) {
-    const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;
-    autoInputs.each(function() {
-        $(this).autocomplete({
-            minChars: 0,
-            serviceUrl: $(this).data('serviceUrl'),
-            dataType: 'json',
-            paramName: $(this).data('paramName'),
-            transformResult: function(response) {
-                return {
-                    suggestions: $.map(response, function(dataItem) {
-                        return dataItem.model;
-                    })
-                };
-            }
-        });
-    });
-}
-*/
 
 slm.initAutoCompletes = function(inputs = null) {
     const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;

@@ -1,5 +1,6 @@
 {% load static %}
-<fieldset class="auto-complete" {% include "django/forms/widgets/attrs.html" %} name="{{ widget.name }}">
+<fieldset {% include "django/forms/widgets/attrs.html" %} name="{{ widget.name }}">
+    <legend style="display: none">"{{ field.help_text }}"</legend>
     <div class="form-control search-input" contenteditable="true"></div>
     <div style="display: none">
         <select name="{{ widget.name }}" multiple>{% for _1, choices, _2 in widget.optgroups %}
@@ -7,7 +8,7 @@
         </select>
     </div>
     <div class="select-display">{% for _1, choices, _2 in widget.optgroups %}{% for option in choices %}
-        <div class="autocomplete-selection" data-value="{{ option.value|stringformat:'s' }}">{{ option.label }}<span></span></div>{% endfor %}{% endfor %}
+        <div class="autocomplete-selection" data-value="{{ option.value|stringformat:'s' }}">{{ option.label }}</div>{% endfor %}{% endfor %}
     </div>
     <script type="module">
         import { AutoComplete } from '{% static "slm/js/autocomplete.js" %}';

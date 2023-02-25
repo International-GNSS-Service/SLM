@@ -773,6 +773,10 @@ fieldset.autocomplete {
     padding: 0;
     border: none;
 }
+fieldset.autocompleteselectmultiple {
+    padding: 0;
+    border: none;
+}
 
 div.autocomplete-selection {
     background-color: royalblue;
@@ -785,17 +789,60 @@ div.autocomplete-selection {
     text-align: center;
 }
 
-div.autocomplete-selection span {
+.slm-country div.autocomplete-selection {
+    background-color: transparent;
+    color: initial;
+    padding: 5px 10px 5px 10px;
+    border: 1px solid royalblue;
+    border-radius: 5px;
+    width: fit-content;
+    margin: 5px;
+    text-align: center;
+}
+
+div.autocomplete-selection span:last-child {
     margin-left: 10px;
     vertical-align: middle;
 }
+div.autocomplete-selection span:after {
+    content: " ";
+    white-space: pre;
+}
 
-div.autocomplete-selection span:before {
+div.autocomplete-selection span:last-child:before {
     font-family: 'Bootstrap-icons';
     content: '\F623';
 }
-div.autocomplete-selection span:hover:before {
-  font-family: 'Bootstrap-icons';
-  cursor: pointer;
-  content: '\F622';
+div.autocomplete-selection span:last-child:hover:before {
+    font-family: 'Bootstrap-icons';
+    cursor: pointer;
+    content: '\F622';
 }
+
+.autocompleteselectmultiple span.fi {
+    margin-left: 0;
+    margin-right: 7px;
+    font-size: large;
+}
+
+div.ui-menu-item-wrapper > span.fi {
+    margin-right: 5px;
+}
+
+div.ui-menu-item-wrapper > span.matchable:after {
+    content: " ";
+    white-space: pre;
+}
+
+/* replace default crispy form required asterisk rendering */
+span.asteriskField {
+    color: transparent;
+}
+span.asteriskField:after {
+    font-family: 'Bootstrap-icons';
+    color: red;
+    content: '\F151';
+    display: inline;
+    font-size: small;
+}
+/************************************************************/

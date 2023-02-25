@@ -1,5 +1,5 @@
 {% extends "slm/base.html" %}
-{% load widget_tweaks slm i18n compress %}
+{% load slm i18n compress crispy_forms_tags %}
 
 {% block page_content %}
 <div class="row g-0">
@@ -10,41 +10,17 @@
     </div>
 
     <div class="col-10">
-      <div class="container-fluid m-5">
+      <div class="m-5">
 
           <div class="d-flex flex-column justify-content-left align-items-left my-4">
               <h2>New Site</h2>
-              <hr>
+              <hr/>
           </div>
 
-          <form id='slm-new-site-form'>
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger slm-form-fail"><strong>{{ form.non_field_errors }}</strong></div>
-            {% endif %}
-            {% for field in form %}
-                <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
-                  <div class="col-3">
-                      <label for="id_{{ field.name }}" class="form-label">{{ field.label }}</label>
-                  </div>
-                  <div class="col-6">
-                      {% if field.errors %}
-                        {% render_field field class="form-control is-invalid" %}
-                        {% for error in field.errors %}
-                            <div class="invalid-feedback">{{error}}</div>
-                        {% endfor %}
-                      {% else %}
-                      {% render_field field class="form-control" %}
-                      {% endif %}
-                  </div>
-                  <div class="col-3 align-items-center">
-                      {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}
-                  </div>
-                </div>
-            {% endfor %}
-            <!-- Cancel/Save Buttons -->
-            <br/>
-          </form>
+          <div class="p-5">
+          {% crispy form %}
+          </div>
+
           <div id="update" class="d-grid gap-2 d-flex justify-content-between">
               <button onclick="newSite()" type='submit' name='update' class="btn btn-success">
                 {% trans "Submit" %}
@@ -52,7 +28,6 @@
           </div>
       </div>
     </div>
-
 </div>
 
 <script>
@@ -61,7 +36,7 @@
         let form = $('#slm-new-site-form');
         let data = slm.formToObject(form);
         let agencies = [];
-        for (const agency of data.agencies) {
+        for (const agency of (data.agencies || [])) {
             agencies.push({id: agency});
         }
         data.agencies = agencies;

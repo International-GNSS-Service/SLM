@@ -1,11 +1,11 @@
 from logging import getLogger
 
+from io import BytesIO
 import django_filters
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models, transaction
-from django.db.models import Q, Subquery, Max, OuterRef
 from django.http.response import (
     HttpResponseForbidden,
     HttpResponseNotFound,
@@ -30,7 +30,7 @@ from rest_framework.serializers import ModelSerializer
 from slm import signals as slm_signals
 from slm.api.filter import (
     AcceptListArguments,
-    StationFilter as BaseStationFilter
+    MustIncludeThese
 )
 from slm.api.edit.serializers import (
     AlertSerializer,
@@ -59,7 +59,7 @@ from slm.defines import (
     SiteFileUploadStatus,
     SiteLogFormat,
     SLMFileType,
-    SiteLogStatus
+    ISOCountry
 )
 from slm.parsing.legacy.parser import Error
 from slm.models import (
@@ -67,6 +67,9 @@ from slm.models import (
     LogEntry,
     Network,
     Agency,
+    Receiver,
+    Antenna,
+    Radome,
     Site,
     SiteAntenna,
     SiteCollocation,
@@ -92,15 +95,183 @@ from slm.models import (
     SiteTemperatureSensor,
     SiteWaterVaporRadiometer,
 )
+from django.utils.functional import cached_property
+from django.db.models import Q, Subquery, OuterRef
+from slm.defines import SiteLogStatus, AlertLevel
 from django.http import Http404
 from datetime import datetime
-from io import BytesIO
 
 
-class StationFilter(BaseStationFilter):
+class StationFilter(AcceptListArguments, FilterSet):
     """
     Edit API station filter extensions.
     """
+
+    @cached_property
+    def alert_fields(self):
+        """
+        Fetch the mapping of alert names to related fields.
+        """
+        def get_related_field(alert):
+            for obj in Site._meta.related_objects:
+                if obj.related_model is alert:
+                    return obj.name
+        return {
+            alert.__name__.lower(): get_related_field(alert)
+            for alert in Alert.objects.site_alerts()
+        }
+
+    name = django_filters.CharFilter(
+        field_name='name',
+        lookup_expr='istartswith'
+    )
+
+    agency = django_filters.ModelMultipleChoiceFilter(
+        field_name='agencies',
+        queryset=Agency.objects.all(),
+        distinct=True
+    )
+
+    network = django_filters.ModelMultipleChoiceFilter(
+        field_name='networks',
+        queryset=Network.objects.all(),
+        distinct=True
+    )
+
+    id = MustIncludeThese()
+
+    receiver = django_filters.ModelMultipleChoiceFilter(
+        method='filter_receivers',
+        queryset=Receiver.objects.all(),
+        distinct=True
+    )
+
+    antenna = django_filters.ModelMultipleChoiceFilter(
+        method='filter_antennas',
+        queryset=Antenna.objects.all(),
+        distinct=True
+    )
+
+    radome = django_filters.ModelMultipleChoiceFilter(
+        method='filter_radomes',
+        queryset=Radome.objects.all(),
+        distinct=True
+    )
+
+    published_before = django_filters.CharFilter(
+        field_name='last_publish',
+        lookup_expr='lt'
+    )
+    published_after = django_filters.CharFilter(
+        field_name='last_publish',
+        lookup_expr='gte'
+    )
+    updated_before = django_filters.CharFilter(
+        field_name='last_update',
+        lookup_expr='lt'
+    )
+    updated_after = django_filters.CharFilter(
+        field_name='last_update',
+        lookup_expr='gte'
+    )
+
+    status = django_filters.MultipleChoiceFilter(
+        choices=SiteLogStatus.choices,
+        distinct=True
+    )
+
+    review_requested = django_filters.BooleanFilter(
+        field_name='review_requested'
+    )
+
+    alert = django_filters.MultipleChoiceFilter(
+        choices=[
+            (alert.__name__, alert._meta.verbose_name.title())
+            for alert in Alert.objects.site_alerts()
+        ],
+        method='filter_alerts',
+        distinct=True
+    )
+
+    alert_level = django_filters.MultipleChoiceFilter(
+        choices=[(level.value, level.label) for level in AlertLevel],
+        method='filter_alert_level'
+    )
+
+    country = django_filters.MultipleChoiceFilter(
+        choices=[(country.value, country.label) for country in ISOCountry],
+        field_name='sitelocation__country'
+    )
+
+    def filter_alerts(self, queryset, name, value):
+        alert_q = Q()
+        for alert in value:
+            alert_q |= Q(
+                **{f'{self.alert_fields[alert.lower()]}__isnull': False}
+            )
+        return queryset.filter(alert_q)
+
+    def filter_alert_level(self, queryset, name, value):
+        level_q = Q()
+        for alerts in Site.alert_fields:
+            level_q |= Q(
+                **{f'{alerts}__level__in': value}
+            )
+        return queryset.filter(level_q)
+
+    def filter_receivers(self, queryset, name, value):
+        if value:
+            latest_receiver = SiteReceiver.objects.filter(
+                Q(site=OuterRef('pk')) & Q(is_deleted=False)
+            ).order_by('-edited')
+            return queryset.annotate(
+                receiver=Subquery(latest_receiver.values('receiver_type')[:1])).filter(
+                receiver__in=value
+            )
+        return queryset
+
+    def filter_antennas(self, queryset, name, value):
+        if value:
+            latest_antenna = SiteAntenna.objects.filter(
+                Q(site=OuterRef('pk')) & Q(is_deleted=False)
+            ).order_by('-edited')
+            return queryset.annotate(
+                antenna=Subquery(latest_antenna.values('antenna_type')[:1])).filter(
+                antenna__in=value
+            )
+        return queryset
+
+    def filter_radomes(self, queryset, name, value):
+        if value:
+            latest_antenna = SiteAntenna.objects.filter(
+                Q(site=OuterRef('pk')) & Q(is_deleted=False)
+            ).order_by('-edited')
+            return queryset.annotate(
+                radome=Subquery(latest_antenna.values('radome_type')[:1])).filter(
+                radome__in=value
+            )
+        return queryset
+
+    class Meta:
+        model = Site
+        fields = (
+            'id',
+            'name',
+            'agency',
+            'network',
+            'receiver',
+            'antenna',
+            'radome',
+            'country',
+            'published_before',
+            'published_after',
+            'updated_before',
+            'updated_after',
+            'status',
+            'alert_level',
+            'review_requested'
+        )
+        distinct = True
 
 
 class PassThroughRenderer(renderers.BaseRenderer):

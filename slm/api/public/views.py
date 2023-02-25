@@ -173,7 +173,7 @@ class ReceiverViewSet(
     permission_classes = []
 
     class ReceiverFilter(FilterSet):
-        model = django_filters.CharFilter(lookup_expr='istartswith')
+        model = django_filters.CharFilter(lookup_expr='icontains')
 
         class Meta:
             model = Receiver
@@ -197,7 +197,7 @@ class AntennaViewSet(
     permission_classes = []
 
     class AntennaFilter(FilterSet):
-        model = django_filters.CharFilter(lookup_expr='istartswith')
+        model = django_filters.CharFilter(lookup_expr='icontains')
 
         class Meta:
             model = Antenna
@@ -221,7 +221,7 @@ class RadomeViewSet(
     permission_classes = []
 
     class RadomeFilter(FilterSet):
-        model = django_filters.CharFilter(lookup_expr='istartswith')
+        model = django_filters.CharFilter(lookup_expr='icontains')
 
         class Meta:
             model = Radome

@@ -1,5 +1,5 @@
 {% extends "slm/base.html" %}
-{% load widget_tweaks i18n %}
+{% load i18n crispy_forms_tags %}
 
 {% block page_content %}
     <div class="container mb-5">
@@ -10,48 +10,12 @@
 
         {% include "slm/messages.html" %}
 
-        <div class="container form-group px-0">
-          <form id='slm-user-form'>
-            {% for field in user_form %}
-                <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
-                  <div class="col-3">
-                      <label class="form-label">{{ field.label }}</label>
-                  </div>
-                  <div class="col-6">
-                      {% if field.widget_type == 'checkbox' %}
-                      {% render_field field class="form-check-input" %}
-                      {% else %}
-                      {% render_field field class="form-control" %}
-                      {% endif %}
-                  </div>
-                  <div class="col-3 align-items-center">
-                      {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}
-                  </div>
-                </div>
-            {% endfor %}
-          </form>
+        <div class="form-group px-5 m-5">
 
+            {% crispy user_form %}
             <br/>
             <br/>
-            <form id='slm-user-profile-form'>
-            {% for field in profile_form %}
-                <div {% if field.is_hidden %}style="display: none"{% else %}class="row align-items-center d-flex justify-content-between mb-2 slm-form-input"{% endif %}>
-                  <div class="col-3">
-                      <label class="form-label">{{ field.label }}</label>
-                  </div>
-                  <div class="col-6">
-                      {% if field.widget_type == 'checkbox' %}
-                      {% render_field field class="form-check-input" %}
-                      {% else %}
-                      {% render_field field class="form-control" %}
-                      {% endif %}
-                  </div>
-                  <div class="col-3 align-items-center">
-                      {% if field.help_text %}<a tabindex="0" type="button" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="right" data-bs-content="{{ field.help_text }}"><i class="bi bi-question-circle"></i></a>{% endif %}
-                  </div>
-                </div>
-            {% endfor %}
-            </form>
+            {% crispy profile_form %}
 
             <!-- Cancel/Save Buttons -->
             <br/>

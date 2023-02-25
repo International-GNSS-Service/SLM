@@ -97,6 +97,7 @@ class StationSerializer(serializers.ModelSerializer):
         agencies = Agency.objects.filter(
             pk__in=[acy['id'] for acy in validated_data.pop('agencies', [])]
         )
+        validated_data['last_user'] = self.context['request'].user
         if not self.context['request'].user.can_propose_site(
             agencies=agencies
         ):

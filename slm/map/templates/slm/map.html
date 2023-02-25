@@ -4,8 +4,8 @@
 {% block stylesheets %}
     {{ block.super }}
     {% compress css %}
-        <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
-        <link href='https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css' rel='stylesheet' />
+        <link href='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css' rel='stylesheet' />
+        <link href='https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css' rel='stylesheet' />
         <link rel='stylesheet' type='text/css' media='screen' href='{% static "slm/css/map.css" %}'>
     {% endcompress %}
 {% endblock %}
@@ -14,8 +14,8 @@
     {{ block.super }}
     {% compress js %}
         <script src="{% static 'slm/js/map.js' %}"></script>
-        <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
-        <script src='https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js'></script>
+        <script src='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
+        <script src='https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js'></script>
     {% endcompress %}
 {% endblock %}
 
@@ -275,46 +275,54 @@
                 {
                     data: 'latitude',
                     render: function (lat, type, full, meta) {
-                        if (lat) {
+                        if (lat !== null) {
                             return lat.toFixed(2);
                         }
                         return null;
                     },
+                    defaultContent: "",
                     orderable: true,
                 },
                 {
                     data: 'longitude',
-                    render: function (lon, type, full, meta) {
-                        if (lon) {
-                            return lon.toFixed(2);
+                    render: function (lng, type, full, meta) {
+                        if (lng !== null) {
+                            return lng.toFixed(2);
                         }
                         return null;
                     },
+                    defaultContent: "",
                     orderable: true,
                 },
                 {
                     data: 'last_user',
                     render: function (user, type, full, meta) {
-                        return slm.mailToUser(user);
+                        if (user !== null) {
+                            return slm.mailToUser(user);
+                        }
                     },
+                    defaultContent: '',
                     orderable: false,
                 },
                 {
                     data: 'last_update',
-                    render: function (data, type, full, meta) {
-                        if (data) {
-                            return data.split('T')[0];
+                    render: function (last_update, type, full, meta) {
+                        if (last_update !== null) {
+                            return last_update.split('T')[0];
                         }
                     },
+                    defaultContent: '',
                     orderable: true
                 },
                 {
                     data: 'last_publish',
-                    render: function (data, type, full, meta) {
-                        if (data) {
-                            return data.split('T')[0];
+                    render: function (last_publish, type, full, meta) {
+                        if (last_publish !== null
+                        ) {
+                            return last_publish.split('T')[0];
                         }
                     },
+                    defaultContent: '',
                     orderable: true
                 },
                 {

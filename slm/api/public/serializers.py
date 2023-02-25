@@ -4,6 +4,7 @@ from slm.models import (
     Network,
     SiteFileUpload,
     SiteIndex,
+    Equipment,
     Receiver,
     Antenna,
     Radome,
@@ -12,55 +13,39 @@ from slm.models import (
 from slm.utils import build_absolute_url
 
 
-class AntennaSerializer(serializers.ModelSerializer):
-
+class EquipmentSerializer(serializers.ModelSerializer):
     manufacturer = serializers.CharField(
         source='manufacturer.name',
         allow_null=True
     )
 
     class Meta:
+        model = Equipment
+        fields = [
+            'id',
+            'model',
+            'description',
+            'state',
+            'manufacturer'
+        ]
+
+
+class AntennaSerializer(EquipmentSerializer):
+
+    class Meta(EquipmentSerializer.Meta):
         model = Antenna
-        fields = [
-            'model',
-            'description',
-            'state',
-            'manufacturer'
-        ]
 
 
-class ReceiverSerializer(serializers.ModelSerializer):
+class ReceiverSerializer(EquipmentSerializer):
 
-    manufacturer = serializers.CharField(
-        source='manufacturer.name',
-        allow_null=True
-    )
-
-    class Meta:
+    class Meta(EquipmentSerializer.Meta):
         model = Receiver
-        fields = [
-            'model',
-            'description',
-            'state',
-            'manufacturer'
-        ]
 
 
-class RadomeSerializer(serializers.ModelSerializer):
+class RadomeSerializer(EquipmentSerializer):
 
-    manufacturer = serializers.CharField(
-        source='manufacturer.name',
-        allow_null=True
-    )
-
-    class Meta:
+    class Meta(EquipmentSerializer.Meta):
         model = Radome
-        fields = [
-            'model',
-            'description',
-            'state',
-            'manufacturer'
-        ]
 
 
 class AgencySerializer(serializers.ModelSerializer):

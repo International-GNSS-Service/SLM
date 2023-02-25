@@ -54,6 +54,7 @@ from slm.validators import (
     get_validators
 )
 from functools import lru_cache
+from django.utils.functional import classproperty
 
 
 def bool_condition(*args, **kwargs):
@@ -197,72 +198,6 @@ class SiteQuerySet(models.QuerySet):
         max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
         return self.annotate(
             _max_alert=Subquery(max_alert.values('level')[:1])
-        )
-
-    def meta(self):
-        """
-        It is expensive to query these normalized values on the fly, so we
-        denormalize them onto the Site model. This query can be used to check
-        the denormalized data for accuracy and reset it
-        """
-        qry = self
-        for section in self.model.section_fields():
-            qry = qry.annotate(**{
-                    f'{section}_published': Max(
-                        f'{section}__edited',
-                        filter=Q(**{f'{section}__published': True})
-                    ),
-                    f'{section}_modified': Max(f'{section}__edited')
-                }
-            )
-        for section in self.model.subsection_fields():
-            qry = qry.annotate(**{
-                    f'{section}_published': Max(f'{section}__edited',
-                        filter=Q(**{f'{section}__published': True})
-                    ),
-                    f'{section}_modified': Max(f'{section}__edited')
-                }
-            )
-
-        for section in self.model.section_fields() + \
-                       self.model.subsection_fields():
-            qry = qry.annotate(**{
-                f'{section}_published': Case(
-                    When(
-                        Q(**{f'{section}_published__isnull': True}),
-                        then=Value(NULL_TIME)
-                    ),
-                    default=F(f'{section}_published'),
-                ),
-                f'{section}_modified': Case(
-                    When(
-                        Q(**{f'{section}_modified__isnull': True}),
-                        then=Value(NULL_TIME)
-                    ),
-                    default=F(f'{section}_modified'),
-                )
-            })
-
-        qry = qry.annotate(
-            _last_published=Greatest(*[
-                f'{section}_published'
-                for section in self.model.section_fields() +
-                               self.model.subsection_fields()
-            ]),
-            _last_modified=Greatest(*[
-                f'{section}_modified'
-                for section in self.model.section_fields() +
-                               self.model.subsection_fields()
-            ])
-        )
-
-        return qry.annotate(
-            has_updates=Case(
-                When(
-                    Q(_last_published=F('_last_modified')), then=Value(False)
-                ),
-                default=Value(True)
-            )
         )
 
 
@@ -410,6 +345,15 @@ class Site(models.Model):
         if hasattr(self, '_max_alert'):
             del self._max_alert
         return super().refresh_from_db(**kwargs)
+
+    @classproperty
+    def alert_fields(cls):
+        from slm.models import Alert
+        return [
+            field.get_accessor_name()
+            for field in cls._meta.related_objects
+            if issubclass(field.related_model, Alert)
+        ]
 
     @cached_property
     def moderators(self):

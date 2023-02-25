@@ -22,8 +22,9 @@ from django.urls import reverse_lazy
 from django.db.models.fields import NOT_PROVIDED
 from django_enum.forms import EnumChoiceField
 from django.forms.fields import TypedMultipleChoiceField
+from django.utils.functional import Promise
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
-from slm.defines import SLMFileType, SiteLogStatus, AlertLevel
+from slm.defines import SLMFileType, SiteLogStatus, AlertLevel, ISOCountry
 from slm.widgets import (
     AutoComplete,
     SLMCheckboxSelectMultiple,
@@ -57,12 +58,16 @@ from slm.models import (
     SiteSignalObstructions,
     SiteSurveyedLocalTies,
     SiteTemperatureSensor,
-    SiteWaterVaporRadiometer
+    SiteWaterVaporRadiometer,
+    Receiver,
+    Antenna,
+    Radome
 )
 from slm.utils import to_snake_case
 from ckeditor.widgets import CKEditorWidget
 from crispy_forms.layout import Layout, Div, Field
 from crispy_forms.helper import FormHelper
+import json
 
 
 class EnumMultipleChoiceField(EnumChoiceField, TypedMultipleChoiceField):
@@ -91,25 +96,69 @@ class SLMDateTimeField(forms.SplitDateTimeField):
         self.widget.widgets[1].input_type = 'time'
 
 
-class MultiSelectAutoComplete(forms.ModelMultipleChoiceField):
+class MultiAutoSelectMixin:
 
     widget = AutoCompleteSelectMultiple
 
-    def __init__(self, *args, **kwargs):
-        service_url = kwargs.pop('service_url', None)
-        search_param = kwargs.pop('search_param', 'search')
-        value_param = kwargs.pop('value_param', 'id')
-        label_param = kwargs.pop('label_param', search_param)
-        render_suggestion = kwargs.pop('render_suggestion', None)
+    def __init__(
+            self,
+            *args,
+            value_param='id',
+            label_param=None,
+            render_suggestion=None,
+            **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.widget.attrs.update({
-            'data-service-url': service_url,
-            'data-search-param': search_param,
-            'data-label-param': label_param,
             'data-value-param': value_param
         })
+        self.widget.attrs['data-value-param'] = value_param
+        if label_param:
+            self.widget.attrs['data-label-param'] = label_param
         if render_suggestion:
             self.widget.attrs['data-render-suggestion'] = render_suggestion
+        self.widget.attrs['class'] = ' '.join([
+            '',
+            *self.widget.attrs.get('class', '').split()
+        ])
+
+
+class MultiSelectAutoComplete(
+    MultiAutoSelectMixin,
+    forms.ModelMultipleChoiceField
+):
+
+    def __init__(self, service_url, *args, search_param='search', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget.attrs['data-service-url'] = service_url
+        self.widget.attrs['data-search-param'] = search_param
+
+
+class MultiSelectEnumAutoComplete(
+    MultiAutoSelectMixin,
+    forms.MultipleChoiceField
+):
+
+    class PropertyEncoder(json.JSONEncoder):
+
+        def default(self, obj):
+            if isinstance(obj, Promise):
+                return str(obj)
+            return super().default(obj)
+
+    def __init__(self, enum, *args, properties=None, **kwargs):
+        super().__init__(
+            *args,
+            value_param=kwargs.pop('value_param', 'value'),
+            label_param=kwargs.pop('label_param', 'label'),
+            **kwargs
+        )
+        properties = set(properties or [])
+        properties.update({'value', 'label'})
+        self.widget.attrs['data-source'] = json.dumps([{
+            prop: getattr(en, prop)
+            for prop in properties
+        } for en in enum], cls=MultiSelectEnumAutoComplete.PropertyEncoder)
 
 
 class CheckboxEnumChoiceField(EnumMultipleChoiceField):
@@ -118,6 +167,25 @@ class CheckboxEnumChoiceField(EnumMultipleChoiceField):
 
 
 class NewSiteForm(forms.ModelForm):
+
+    @property
+    def helper(self):
+        helper = FormHelper()
+        helper.form_id = 'slm-new-site-form'
+        helper.layout = Layout(
+            Div(
+                Div(
+                    'name',
+                    css_class='col-3'
+                ),
+                Div(
+                    'agencies',
+                    css_class='col-9'
+                ),
+                css_class='row'
+            )
+        )
+        return helper
 
     agencies = MultiSelectAutoComplete(
         queryset=Agency.objects.all(),
@@ -631,6 +699,18 @@ class SiteMoreInformationForm(SectionForm):
 
 class UserForm(forms.ModelForm):
 
+    @property
+    def helper(self):
+        helper = FormHelper()
+        helper.form_id = 'slm-user-form'
+        helper.layout = Layout(
+            Div(Div('email'), css_class='row'),
+            Div(Div('first_name', css_class='col-6'), Div('last_name', css_class='col-6'), css_class='row'),
+            Div(Div('silence_alerts', css_class='col-6'), Div('html_emails', css_class='col-6'), css_class='row'),
+            Div(Div('agencies'), css_class='row')
+        )
+        return helper
+
     agencies = forms.ModelMultipleChoiceField(
         queryset=Agency.objects.all(),
         required=False,
@@ -650,9 +730,24 @@ class UserForm(forms.ModelForm):
 
 class UserProfileForm(forms.ModelForm):
 
+    @property
+    def helper(self):
+        helper = FormHelper()
+        helper.form_id = 'slm-user-profile-form'
+        helper.layout = Layout(
+            Div(Div('phone1', css_class='col-6'), Div('phone2', css_class='col-6'), css_class='row'),
+            Div(Div('address1'), css_class='row'),
+            Div(Div('address2'), css_class='row'),
+            Div(Div('address3'), css_class='row'),
+            Div(Div('city', css_class='col-6'), Div('state_province', css_class='col-6'), css_class='row'),
+            Div(Div('country', css_class='col-6'), Div('postal_code', css_class='col-6'), css_class='row')
+        )
+        return helper
+
     class Meta:
         model = UserProfileSerializer.Meta.model
         fields = UserProfileSerializer.Meta.fields
+        exclude = ('registration_agency',)
 
 
 class SiteFileForm(forms.ModelForm):
@@ -695,17 +790,21 @@ class StationFilterForm(forms.Form):
             Div(
                 Div(
                     Field('status', css_class='slm-status'),
-                    css_class='col-4'
-                ),
-                Div(
                     'alert',
                     Field('alert_level', css_class='slm-alert-level'),
+                    css_class='col-3'
+                ),
+                Div(
+                    'receiver',
+                    'antenna',
+                    'radome',
                     css_class='col-4'
                 ),
                 Div(
                     'agency',
                     'network',
-                    css_class='col-4'
+                    Field('country', css_class='slm-country'),
+                    css_class='col-5'
                 ),
                 css_class='row'
             )
@@ -736,6 +835,39 @@ class StationFilterForm(forms.Form):
         required=False
     )
 
+    receiver = MultiSelectAutoComplete(
+        queryset=Receiver.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Receiver'),
+        required=False,
+        service_url=reverse_lazy('slm_public_api:receiver-list'),
+        search_param='model',
+        value_param='id',
+        label_param='model'
+    )
+
+    antenna = MultiSelectAutoComplete(
+        queryset=Antenna.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Antenna'),
+        required=False,
+        service_url=reverse_lazy('slm_public_api:antenna-list'),
+        search_param='model',
+        value_param='id',
+        label_param='model'
+    )
+
+    radome = MultiSelectAutoComplete(
+        queryset=Radome.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Radome'),
+        required=False,
+        service_url=reverse_lazy('slm_public_api:radome-list'),
+        search_param='model',
+        value_param='id',
+        label_param='model'
+    )
+
     agency = MultiSelectAutoComplete(
         queryset=Agency.objects.all(),
         # help_text=_('Enter the name or abbreviation of an Agency.'),
@@ -745,7 +877,10 @@ class StationFilterForm(forms.Form):
         search_param='search',
         value_param='id',
         label_param='name',
-        render_suggestion='return `(${obj.shortname}) ${obj.name}`;'
+        render_suggestion=(
+            'return `<span class="matchable">(${obj.shortname})</span>'
+            '<span class="matchable">${obj.name}</span>`;'
+        )
     )
 
     network = MultiSelectAutoComplete(
@@ -757,4 +892,15 @@ class StationFilterForm(forms.Form):
         search_param='name',
         value_param='id',
         label_param='name'
+    )
+
+    country = MultiSelectEnumAutoComplete(
+        # help_text=_('Enter the name of a country or region.'),
+        ISOCountry,
+        label=_('Country/Region'),
+        required=False,
+        render_suggestion=(
+            'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
+            '<span class="matchable">${obj.label}</span>`;'
+        )
     )

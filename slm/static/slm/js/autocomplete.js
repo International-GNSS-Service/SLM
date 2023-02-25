@@ -10,6 +10,9 @@ export class AutoComplete {
      * data-value-param: (optional) The property to use as the value (default: label-param)
      * data-renderSuggestion: (optional) A javascript function body accepting an obj argument and
      *  returning a string label to use for the suggestion.
+     *
+     *  When providing a render suggestion, text that is searchable should be
+     *  wrapped in <span class="matchable"></span>
      */
 
     container;
@@ -20,8 +23,6 @@ export class AutoComplete {
     paramName;
     serviceUrl;
     valueParam;
-    renderSuggestion;
-
     selected;
 
     get persisted() {
@@ -30,6 +31,27 @@ export class AutoComplete {
             return JSON.parse(sessionStorage.getItem(this.container.attr('id')));
         }
         return {}
+    }
+
+    renderSuggestion(suggestion) {
+        return `<span class="matchable">${suggestion[this.labelParam]}</span>`;
+    }
+
+    filterResponse(data) {
+        const suggestions = [];
+        for (const suggestion of data) {
+            if (this.selected.hasOwnProperty(
+                suggestion[this.valueParam].toString()
+            )) {
+                continue;
+            }
+            suggestions.push({
+                label: this.renderSuggestion(suggestion),
+                value: suggestion[this.valueParam],
+                basic: suggestion[this.labelParam]
+            });
+        }
+        return suggestions;
     }
 
     constructor(options) {
@@ -43,36 +65,35 @@ export class AutoComplete {
         );
 
         this.serviceUrl = this.container.data('serviceUrl');
+        this.source = this.container.data('source');
         this.searchParam = this.container.data('searchParam');
         this.labelParam = this.container.data('labelParam') || this.searchParam;
         this.valueParam = this.container.data('valueParam') || this.labelParam;
-        this.renderSuggestion = this.container.data('renderSuggestion') || null;
-        if (this.renderSuggestion) {
-            this.renderSuggestion = new Function('obj', this.renderSuggestion);
+        if (this.container.data('renderSuggestion')) {
+            this.renderSuggestion = new Function(
+                'obj',
+                this.container.data('renderSuggestion')
+            );
         }
 
         this.autocomplete = this.textInput.autocomplete({
             delay: 250,
             minLength: 0,
-            source: function(request, response) {
+            source: this.serviceUrl ? function(request, response) {
                 const data = {};
                 data[this.searchParam] = request.term;
                 $.ajax({url: this.serviceUrl, data: data}).done(
                     function(data) {
-                        const suggestions = [];
-                        for (const suggestion of data) {
-                            if (this.selected.hasOwnProperty(suggestion[this.valueParam].toString())) {
-                                continue;
-                            }
-                            suggestions.push({
-                                label: this.renderSuggestion ? this.renderSuggestion(suggestion) : suggestion[this.labelParam],
-                                value: suggestion[this.valueParam],
-                                basic: suggestion[this.labelParam]
-                            });
-                        }
-                        response(suggestions);
+                        response(this.filterResponse(data));
                     }.bind(this)
                 ).fail(function(jqXHR) {console.log(jqXHR);});
+            }.bind(this) : function(request, response) {
+                const data = $.ui.autocomplete.filter(this.source, request.term);
+                response(
+                    this.filterResponse(
+                        data
+                    )
+                );
             }.bind(this),
             select: function(event, ui) {
                 this.add(ui.item);
@@ -85,13 +106,19 @@ export class AutoComplete {
             }.bind(this)
         }).bind('focus', function() { $(this).autocomplete('search'); } )
             .data('ui-autocomplete')._renderItem = function (ul, item) {
-                const newText = String(item.label).replace(
-                        new RegExp(this.term, 'gi'),
-                        "<span class='autocomplete-match'>$&</span>");
-
+                const label = $(`<div>${item.label}</div>`);
+                if (this.term) {
+                    label.find('span.matchable').each((idx, child) => {
+                        $(child).html(
+                            String($(child).text()).replace(
+                                new RegExp(this.term, 'gi'),
+                            "<span class='autocomplete-match'>$&</span>")
+                        );
+                    });
+                }
                 return $('<li></li>')
                     .data('item.ui-autocomplete', item)
-                    .append(`<div>${newText}</div>`)
+                    .append(label)
                     .appendTo(ul);
             };
 

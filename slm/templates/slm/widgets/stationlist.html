@@ -61,78 +61,6 @@
             </div>
             <div class="modal-body ui-front">
                 {% crispy filter_form %}
-                <!--<form id="slm-station-filter">
-                    <div id="filter-station-options" class="row px-3 pb-3">
-                        <div class="col-4">
-                            <fieldset>
-                                <legend class="form-label px-0"><span class="fs-6 fw-bold">Site Status:</span></legend>
-                                {% for status in SiteLogStatus %}
-                                <div class="form-check">
-                                    <input id="slm-status-{{status.value}}" class="form-check-input" type="checkbox" name="status" value="{{status.value}}" {% if status in station_filter.status %}checked{% endif %}>
-                                    <label class="form-check-label d-flex" for="slm-status-{{status.value}}">
-                                        <i class="bi bi-square-fill me-2" style="font-size: 1rem; color: {{status.color}};"></i>
-                                        <span class="mb-1">{{status.label}}</span>
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </fieldset>
-                            <fieldset class="d-flex flex-column">
-                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Active Alerts" %}</span></legend>
-                                {% for site_alert in site_alerts %}
-                                <div>
-                                    <input id="slm-site-alert-{{ site_alert|class_name }}" class="form-check-input" type="checkbox" name="alert" value="{{ site_alert|class_name }}" {% if alert|lower in station_filter.alerts %}checked{% endif %}>
-                                    <label class="form-check-label" for="slm-site-alert-{{ site_alert|class_name }}">
-                                        <span class="mb-1">{{ site_alert|model_meta:"verbose_name" }}</span>
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </fieldset>
-                            <fieldset class="d-flex flex-column">
-                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Alert Level" %}</span></legend>
-                                {% for level in AlertLevel %}
-                                <div>
-                                    <input id="slm-alert-level-{{ level.label }}" class="form-check-input" type="radio" name="alertLevel" value={{ level.value }} {% if station_filter.max_alert == level %}checked{% endif %}>
-                                    <label class="form-check-label" for="slm-alert-level-{{ level.label }}">
-                                        <span class="mb-1"><i class="bi bi-bell-fill slm-alert-bell {{ level.css }}"></i> {{ level.label }}</span>
-                                    </label>
-                                </div>
-                                {% endfor %}
-                            </fieldset>
-                        </div>
-                        <div class="col-4">
-                            <fieldset>
-                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Networks:" %}</span></legend>
-                                <div class="overflow-auto" style="max-height: 400px;">
-                                    {% for network in networks %}
-                                    <div class="form-check">
-                                        <input id="slm-network-{{network.id}}" class="form-check-input" type="checkbox" name="network" value="{{network.id}}" {% if network in station_filter.network %}checked{% endif %}>
-                                        <label class="form-check-label d-flex" for="slm-network-{{network.id}}">
-                                            <span class="mb-1">{{network.name}}</span>
-                                        </label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </fieldset>
-                        </div>
-                        <div class="col-4">
-                            <fieldset>
-                                <legend class="form-label px-0"><span class="fs-6 fw-bold">{% trans "Agencies:" %}</span></legend>
-                                <div class="overflow-auto" style="max-height: 400px;">
-                                {% for agency in user_agencies %}
-
-                                    <div class="form-check">
-                                        <input id="slm-agency-{{agency.id}}" class="form-check-input" type="checkbox" name="agency" value="{{agency.id}}" {% if agency in station_filter.agency %}checked{% endif %}>
-                                        <label class="form-check-label d-flex" for="slm-agency-{{agency.id}}">
-                                            <span class="mb-1">{{agency.name}}</span>
-                                        </label>
-                                    </div>
-
-                                {% endfor %}
-                                </div>
-                            </fieldset>
-                        </div>
-                    </div>
-                </form>-->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
@@ -285,10 +213,14 @@
         });
 
         const getQuery = function() {
+            // todo - can this completely replace slmQuery storage?
             // replace below line with above one to keep current station in the
             // list regardless of filter
             //stationList.find('button').not(`#select-{{ station }}`).remove();
             const query = slm.formToObject($('#slm-station-filter'));
+            if (searchInput.val()) {
+                query.name = searchInput.val();
+            }
             if (query.hasOwnProperty('csrfmiddlewaretoken')) {
                 delete query['csrfmiddlewaretoken'];
             }

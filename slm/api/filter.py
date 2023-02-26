@@ -10,6 +10,12 @@ from django.forms.utils import from_current_timezone
 from django.core.exceptions import ValidationError
 from dateutil import parser
 from django.utils.translation import gettext as _
+from django_filters import BooleanFilter
+from slm.forms import SLMBooleanField
+
+
+class SLMBooleanFilter(BooleanFilter):
+    field_class = SLMBooleanField
 
 
 class AcceptListArguments:

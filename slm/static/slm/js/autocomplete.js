@@ -69,6 +69,8 @@ export class AutoComplete {
         this.searchParam = this.container.data('searchParam');
         this.labelParam = this.container.data('labelParam') || this.searchParam;
         this.valueParam = this.container.data('valueParam') || this.labelParam;
+        this.queryParams = this.container.data('queryParams') || {};
+
         if (this.container.data('renderSuggestion')) {
             this.renderSuggestion = new Function(
                 'obj',
@@ -80,7 +82,7 @@ export class AutoComplete {
             delay: 250,
             minLength: 0,
             source: this.serviceUrl ? function(request, response) {
-                const data = {};
+                const data = this.queryParams;
                 data[this.searchParam] = request.term;
                 $.ajax({url: this.serviceUrl, data: data}).done(
                     function(data) {

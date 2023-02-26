@@ -174,10 +174,22 @@ class ReceiverViewSet(
 
     class ReceiverFilter(FilterSet):
         model = django_filters.CharFilter(lookup_expr='icontains')
+        in_use = django_filters.BooleanFilter(
+            method='in_use_filter',
+            distinct=True
+        )
+
+        def in_use_filter(self, queryset, name, value):
+            if value:
+                return queryset.filter(
+                    site_receivers__isnull=False
+                ).distinct()
+            return queryset
 
         class Meta:
             model = Receiver
-            fields = ('model',)
+            fields = ('model', 'in_use')
+            distinct = True
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = ReceiverFilter
@@ -198,10 +210,22 @@ class AntennaViewSet(
 
     class AntennaFilter(FilterSet):
         model = django_filters.CharFilter(lookup_expr='icontains')
+        in_use = django_filters.BooleanFilter(
+            method='in_use_filter',
+            distinct=True
+        )
+
+        def in_use_filter(self, queryset, name, value):
+            if value:
+                return queryset.filter(
+                    site_antennas__isnull=False
+                ).distinct()
+            return queryset
 
         class Meta:
             model = Antenna
-            fields = ('model',)
+            fields = ('model', 'in_use')
+            distinct = True
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = AntennaFilter
@@ -222,10 +246,22 @@ class RadomeViewSet(
 
     class RadomeFilter(FilterSet):
         model = django_filters.CharFilter(lookup_expr='icontains')
+        in_use = django_filters.BooleanFilter(
+            method='in_use_filter',
+            distinct=True
+        )
+
+        def in_use_filter(self, queryset, name, value):
+            if value:
+                return queryset.filter(
+                    site_radomes__isnull=False
+                ).distinct()
+            return queryset
 
         class Meta:
             model = Radome
             fields = ('model',)
+            distinct = True
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = RadomeFilter

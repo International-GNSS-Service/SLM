@@ -110,6 +110,8 @@ def bring_in_urls(urlpatterns):
                 urlpatterns.append(add_on)
 
         except ImportError:
+            if app in {'slm', 'slm.map'}:
+                raise
             pass
 
     for api, router in routers.items():

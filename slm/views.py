@@ -11,8 +11,6 @@ MORE INFO:
 https://docs.djangoproject.com/en/3.2/topics/http/views/
 """
 
-from datetime import datetime
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -22,7 +20,6 @@ from django.db.models.fields import NOT_PROVIDED
 from django.http import FileResponse, Http404, HttpResponseNotFound
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
-from slm.api.serializers import SiteLogSerializer
 from slm import defines
 from slm.defines import (
     AlertLevel,
@@ -122,60 +119,6 @@ class StationContextView(SLMView):
     sites = None
     site = None
 
-    def get_station_filter(self):
-        station_filter = {}
-
-        try:
-            if self.request.GET.getlist('status', []):
-                station_filter['status'] = list(set([
-                    SiteLogStatus(status).value
-                    for status in self.request.GET.getlist('status')
-                ]))
-
-            if self.request.GET.getlist('alert_level', []):
-                station_filter['alert_level'] = list(set([
-                    AlertLevel(level).value
-                    for level in self.request.GET.getlist('alert_level')
-                ]))
-
-            if self.request.GET.getlist('alert', []):
-                alerts = set(
-                    self.request.GET.getlist('alert')
-                )
-                unrecognized = (
-                    alerts - {
-                        alert.__name__ for alert in Alert.objects.site_alerts()
-                    }
-                )
-                if unrecognized:
-                    raise ValueError(f'Invalid alerts: {unrecognized}')
-
-                station_filter['alert'] = list(alerts)
-
-            networks = set()
-            for nwk in self.request.GET.getlist('network', []):
-                if nwk.isdigit():
-                    networks.add(Network.objects.get(id=int(nwk)))
-                else:
-                    networks.add(Network.objects.get(name__iexact=nwk))
-            if networks:
-                station_filter['network'] = networks
-
-            agencies = set()
-            for agy in self.request.GET.getlist('agency', []):
-                if agy.isdigit():
-                    agencies.add(Agency.objects.get(id=int(agy)))
-                else:
-                    agencies.add(Agency.objects.get(name__iexact=agy))
-
-            if agencies:
-                station_filter['agency'] = agencies
-
-        except (ValueError, Agency.DoesNotExist, Network.DoesNotExist):
-            raise Http404('Unrecognized filter parameters.')
-
-        return station_filter
-
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -187,7 +130,14 @@ class StationContextView(SLMView):
         self.site = Site.objects.filter(name__iexact=self.station).editable_by(
             self.request.user
         ).first()
-        station_filter = self.get_station_filter()
+        initial = None
+        if self.request.GET:
+            station_filter = StationFilterForm(data=self.request.GET)
+            station_filter.full_clean()
+            if station_filter.errors:
+                raise Http404(station_filter.errors)
+            initial = station_filter.cleaned_data
+        filter_form = StationFilterForm(initial=initial)
         if self.site:
             self.agencies = [
                 agency for agency in self.site.agencies.all()
@@ -202,9 +152,7 @@ class StationContextView(SLMView):
                 self.request.user
             ).filter(status=SiteFileUploadStatus.UNPUBLISHED).count()
         else:
-            self.agencies = [
-                agency for agency in station_filter.get('agency', [])
-            ]
+            self.agencies = filter_form.initial.get('agency', [])
 
         max_alert = Alert.objects.visible_to(
             self.request.user
@@ -213,7 +161,6 @@ class StationContextView(SLMView):
             max_alert = None
 
         context.update({
-            'station_filter': station_filter,
             'num_sites': self.sites.count(),
             'station': self.station if self.station else None,
             'site': self.site if self.site else None,
@@ -237,7 +184,7 @@ class StationContextView(SLMView):
                 AlertLevel(max_alert) if max_alert else None
             ),
             'site_alerts': Alert.objects.site_alerts(),
-            'filter_form': StationFilterForm(initial=station_filter)
+            'filter_form': filter_form
         })
 
         if self.station:

@@ -98,6 +98,7 @@ from slm.models import (
 from django.utils.functional import cached_property
 from django.db.models import Q, Subquery, OuterRef
 from slm.defines import SiteLogStatus, AlertLevel
+from slm.api.filter import SLMBooleanFilter
 from django.http import Http404
 from datetime import datetime
 
@@ -106,6 +107,9 @@ class StationFilter(AcceptListArguments, FilterSet):
     """
     Edit API station filter extensions.
     """
+    @property
+    def current_equipment(self):
+        return self.form.cleaned_data.get('current', None)
 
     @cached_property
     def alert_fields(self):
@@ -180,10 +184,6 @@ class StationFilter(AcceptListArguments, FilterSet):
         distinct=True
     )
 
-    review_requested = django_filters.BooleanFilter(
-        field_name='review_requested'
-    )
-
     alert = django_filters.MultipleChoiceFilter(
         choices=[
             (alert.__name__, alert._meta.verbose_name.title())
@@ -203,6 +203,15 @@ class StationFilter(AcceptListArguments, FilterSet):
         field_name='sitelocation__country'
     )
 
+    current = SLMBooleanFilter(
+        method='noop',
+        distinct=True,
+        field_name='current'
+    )
+
+    def noop(self, queryset, name, value):
+        return queryset
+
     def filter_alerts(self, queryset, name, value):
         alert_q = Q()
         for alert in value:
@@ -221,35 +230,50 @@ class StationFilter(AcceptListArguments, FilterSet):
 
     def filter_receivers(self, queryset, name, value):
         if value:
-            latest_receiver = SiteReceiver.objects.filter(
-                Q(site=OuterRef('pk')) & Q(is_deleted=False)
-            ).order_by('-edited')
-            return queryset.annotate(
-                receiver=Subquery(latest_receiver.values('receiver_type')[:1])).filter(
-                receiver__in=value
-            )
+            if self.current_equipment:
+                latest_receiver = SiteReceiver.objects.filter(
+                    Q(site=OuterRef('pk')) & Q(is_deleted=False)
+                ).order_by('-edited')
+                return queryset.annotate(
+                    receiver=Subquery(
+                        latest_receiver.values('receiver_type')[:1]
+                    )).filter(receiver__in=value).distinct()
+            else:
+                return queryset.filter(
+                    sitereceiver__receiver_type__in=value
+                ).distinct()
         return queryset
 
     def filter_antennas(self, queryset, name, value):
         if value:
-            latest_antenna = SiteAntenna.objects.filter(
-                Q(site=OuterRef('pk')) & Q(is_deleted=False)
-            ).order_by('-edited')
-            return queryset.annotate(
-                antenna=Subquery(latest_antenna.values('antenna_type')[:1])).filter(
-                antenna__in=value
-            )
+            if self.current_equipment:
+                latest_antenna = SiteAntenna.objects.filter(
+                    Q(site=OuterRef('pk')) & Q(is_deleted=False)
+                ).order_by('-edited')
+                return queryset.annotate(
+                    antenna=Subquery(
+                        latest_antenna.values('antenna_type')[:1])
+                ).filter(antenna__in=value).distinct()
+            else:
+                return queryset.filter(
+                    siteantenna__antenna_type__in=value
+                ).distinct()
         return queryset
 
     def filter_radomes(self, queryset, name, value):
         if value:
-            latest_antenna = SiteAntenna.objects.filter(
-                Q(site=OuterRef('pk')) & Q(is_deleted=False)
-            ).order_by('-edited')
-            return queryset.annotate(
-                radome=Subquery(latest_antenna.values('radome_type')[:1])).filter(
-                radome__in=value
-            )
+            if self.current_equipment:
+                latest_antenna = SiteAntenna.objects.filter(
+                    Q(site=OuterRef('pk')) & Q(is_deleted=False)
+                ).order_by('-edited')
+                return queryset.annotate(
+                    radome=Subquery(
+                        latest_antenna.values('radome_type')[:1])
+                ).filter(radome__in=value).distinct()
+            else:
+                return queryset.filter(
+                    siteantenna__radome_type__in=value
+                ).distinct()
         return queryset
 
     class Meta:
@@ -269,7 +293,7 @@ class StationFilter(AcceptListArguments, FilterSet):
             'updated_after',
             'status',
             'alert_level',
-            'review_requested'
+            'current'
         )
         distinct = True
 
@@ -568,7 +592,7 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
 
     class SiteIndexFilter(BaseSiteLogDownloadViewSet.SiteIndexFilter):
 
-        unpublished = django_filters.BooleanFilter(method='get_unpublished')
+        unpublished = SLMBooleanFilter(method='get_unpublished')
         unpublished.help = _(
             'If true, download the published version of the log. If false,'
             'the HEAD version of the log '

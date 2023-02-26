@@ -147,18 +147,19 @@
 
         const initFilter = function() {
             let query = sessionStorage.getItem('stationFilter');
-            if (query && !slm.hasParameters(getQuery())) {
+            if (query && !slm.hasParameters(getQuery(), ['current'])) {
                 query = JSON.parse(query);
                 // if the page didnt set a filter - fetch the last one from
                 // session cache
                 for (const [prop, values] of Object.entries(query)) {
-                    if (slm.isIterable(values)) {
+                    if (slm.isIterable(values) && !(typeof values === 'string' || values instanceof String)) {
                         for (const val of values) {
                             stationFilter.find(`input[name="${prop}"][value="${val}"]`).prop('checked', true);
                             stationFilter.find(`select[name="${prop}"] option[value="${val}"]`).prop('selected', true);
                         }
                     } else {
                         stationFilter.find(`input[name="${prop}"]`).val(values);
+                        stationFilter.find(`input[name="${prop}"]:checkbox`).prop('checked', [true, '1', 'on', 'true'].includes(values) );
                     }
                 }
                 // if we have any more complicated widgets like the autocomplete widget, revive them
@@ -226,10 +227,11 @@
             }
             return query;
         }
+
         const applyFilter = function() {
             stationList.find('button').remove();
             let query = getQuery();
-            if (slm.hasParameters(query)) {
+            if (slm.hasParameters(query, ['current'])) {
                 filterStations.removeClass("btn-outline-primary").addClass("btn-primary");
             } else {
                 filterStations.removeClass("btn-primary").addClass("btn-outline-primary");
@@ -246,10 +248,12 @@
             });
             init();
         }
+
         filterInput.click(applyFilter);
 
         clearFilter.on('click', function() {
-            stationFilter.find("input[type='checkbox']:checked").prop("checked", false);
+            stationFilter.find("[name!='current']:checkbox").prop("checked", false);
+            stationFilter.find("[name='current']:checkbox").prop("checked", true);
             stationFilter.find("input[type='radio']:checked").prop("checked", false);
             stationFilter.find("input[type='text']").val('');
             stationFilter.find('fieldset').each(

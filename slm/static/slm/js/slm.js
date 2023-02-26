@@ -832,9 +832,13 @@ slm.setFormFields = function(form, data) {
 }
 
 slm.formToObject = function(form, fields=null) {
+    /**
+     * Why is it so hard to turn form data into json? FormData is very awkward
+     * to work with fields with multiple selections.
+     */
     let formData = new FormData(form.get(0));
     let data = {};
-    let multiples = [];
+    let multiples = new Set();
     formData.forEach(function(value, key) {
         if (fields && !fields.includes(key)) {
             return;
@@ -859,7 +863,7 @@ slm.formToObject = function(form, fields=null) {
     form.find('input:checkbox').each(function(idx, element) {
         const name = element.getAttribute('name');
         if (checkboxes.has(name)) {
-            multiples.push(name);
+            multiples.add(name);
         }
         checkboxes.add(name);
     });
@@ -867,11 +871,8 @@ slm.formToObject = function(form, fields=null) {
     for (const mult of multiples) {
         notMult += `[name!="${mult}"]`;
     }
-    form.find(`input:checkbox${notMult}:not(:checked)`).each(function(idx, element) {
-        if (fields && !fields.includes(element.getAttribute('name'))) {
-            return;
-        }
-        data[element.getAttribute('name')] = 'off';
+    form.find(`${notMult}:checkbox`).each(function(idx, element) {
+        data[element.getAttribute('name')] = $(element).prop('checked')
     });
     return data;
 }
@@ -884,11 +885,11 @@ slm.stationFilterChanged = function(filterParams) {
     }
 }
 
-slm.hasParameters = function(query){
+slm.hasParameters = function(query, ignored=[]) {
     for (const [key, value] of Object.entries(query)) {
-        if (key === 'start' || key === 'length' || key === 'id') {
-            continue;
-        }
+        if (
+            key === 'start' || key === 'length' || key === 'id' || ignored.includes(key)
+        ) { continue; }
         if (Array.isArray(value)) {
             if (value.length > 0) { return true; }
         } else if (
@@ -936,45 +937,51 @@ slm.processing = function(btn) {
 
 slm.initAutoCompletes = function(inputs = null) {
     const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;
-    autoInputs.each(function() {
-        $(this).autocomplete({
-            delay: 250,
-            minLength: 0,
-            source: function(request, response) {
-                const data = {};
-                data[$(this).data('paramName')] = request.term;
-                $.ajax({url: $(this).data('serviceUrl'), data: data}).done(
-                    function(data) {
-                        const suggestions = [];
-                        if ($(this).data('valueParam')) {
-                            for (const suggestion of data) {
-                                suggestions.push({
-                                    label: suggestion[$(this).data('paramName')],
-                                    value: suggestion[$(this).data('valueParam')]
-                                });
+    if (autoInputs.length > 0) {
+        autoInputs.each(function () {
+            $(this).autocomplete({
+                delay: 250,
+                minLength: 0,
+                source: function (request, response) {
+                    const data = {};
+                    data[$(this).data('paramName')] = request.term;
+                    $.ajax({url: $(this).data('serviceUrl'), data: data}).done(
+                        function (data) {
+                            const suggestions = [];
+                            if ($(this).data('valueParam')) {
+                                for (const suggestion of data) {
+                                    suggestions.push({
+                                        label: suggestion[$(this).data('paramName')],
+                                        value: suggestion[$(this).data('valueParam')]
+                                    });
+                                }
+                                response(suggestions);
+                            } else {
+                                for (const suggestion of data) {
+                                    suggestions.push(suggestion[$(this).data('paramName')]);
+                                }
                             }
                             response(suggestions);
-                        } else {
-                            for (const suggestion of data) {
-                                suggestions.push(suggestion[$(this).data('paramName')]);
-                            }
-                        }
-                        response(suggestions);
-                    }.bind(this)
-                ).fail(function(jqXHR) {console.log(jqXHR);});
-            }.bind(this)
-        });
-    }).bind('focus', function(){ $(this).autocomplete("search"); } )
-        .data("ui-autocomplete")._renderItem = function (ul, item) {
+                        }.bind(this)
+                    ).fail(function (jqXHR) {
+                        console.log(jqXHR);
+                    });
+                }.bind(this)
+            });
+        }).bind('focus', function () {
+            $(this).autocomplete("search");
+        })
+            .data("ui-autocomplete")._renderItem = function (ul, item) {
             const newText = String(item.label).replace(
-                    new RegExp(this.term, "gi"),
-                    "<span class='autocomplete-match'>$&</span>");
+                new RegExp(this.term, "gi"),
+                "<span class='autocomplete-match'>$&</span>");
 
-                return $('<li></li>')
-                    .data('item.ui-autocomplete', item)
-                    .append(`<div>${newText}</div>`)
-                    .appendTo(ul);
+            return $('<li></li>')
+                .data('item.ui-autocomplete', item)
+                .append(`<div>${newText}</div>`)
+                .appendTo(ul);
         };
+    }
 }
 
 slm.isIterable = function(input) {

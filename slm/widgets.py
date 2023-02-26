@@ -1,6 +1,7 @@
 from django.forms.widgets import TextInput, TimeInput, DateInput, SelectMultiple
 from django.conf import settings
 from django.forms import CheckboxSelectMultiple, SplitDateTimeWidget
+from enum import Enum
 
 
 class AutoComplete(TextInput):
@@ -12,6 +13,12 @@ class AutoComplete(TextInput):
             attrs = {}
         attrs.setdefault('data-slm-autocomplete', True)
         super().__init__(attrs=attrs)
+
+
+class EnumSelectMultiple(CheckboxSelectMultiple):
+
+    def format_value(self, value):
+        return [str(val.value) for val in value]
 
 
 class AutoCompleteSelectMultiple(SelectMultiple):
@@ -31,10 +38,16 @@ class AutoCompleteSelectMultiple(SelectMultiple):
         self.choices = (
             (choice, label)
             for choice, label in self.choices
-            if choice.value in values
+            if choice in values
         )
         return super().get_context(name, value, attrs)
 
+
+class AutoCompleteEnumSelectMultiple(AutoCompleteSelectMultiple):
+    """
+    def format_value(self, value):
+        return [str(val.value) for val in value]
+    """
 
 class DatePicker(DateInput):
     input_type = "date"

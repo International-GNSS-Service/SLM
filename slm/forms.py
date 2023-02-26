@@ -20,8 +20,12 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.urls import reverse_lazy
 from django.db.models.fields import NOT_PROVIDED
-from django_enum.forms import EnumChoiceField
-from django.forms.fields import TypedMultipleChoiceField
+from django_enum.forms import EnumChoiceField, Select
+from django.forms.fields import (
+    TypedMultipleChoiceField,
+    BooleanField
+)
+from django.forms.widgets import CheckboxInput
 from django.utils.functional import Promise
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
 from slm.defines import SLMFileType, SiteLogStatus, AlertLevel, ISOCountry
@@ -30,7 +34,9 @@ from slm.widgets import (
     SLMCheckboxSelectMultiple,
     SLMDateTimeWidget,
     DatePicker,
-    AutoCompleteSelectMultiple
+    AutoCompleteSelectMultiple,
+    AutoCompleteEnumSelectMultiple,
+    EnumSelectMultiple
 )
 from slm.models import (
     Alert,
@@ -70,12 +76,70 @@ from crispy_forms.helper import FormHelper
 import json
 
 
+class SLMCheckboxInput(CheckboxInput):
+    """
+    Django's BooleanField/NullBooleanField does not properly handle value ==
+    'on' or value == 'off' which are submitted as form data for checkboxes and
+    switches in certain circumstances. We Provide our own extensions here that
+    do this. This might change in the future and if so these fields can be
+    deleted and replaced by the Django internal ones.
+    """
+
+    def format_value(self, value):
+        if isinstance(value, list):
+            value = value[0]
+        return {
+            'on': 'true',
+            'off': 'false'
+        }.get(
+            value.lower() if isinstance(value, str) else value,
+            super().format_value(value)
+        )
+
+    def value_from_datadict(self, data, files, name):
+        value = data.get(name)
+        if isinstance(value, list):
+            value = value[0]
+        return {
+            'on': True,
+            'off': False
+        }.get(
+            value.lower() if isinstance(value, str) else value,
+            super().value_from_datadict(data, files, name)
+        )
+
+
+class SLMBooleanField(BooleanField):
+
+    widget = SLMCheckboxInput
+
+    def to_python(self, value):
+        if isinstance(value, str) and value.lower() in ('false', '0', 'off'):
+            value = False
+        else:
+            value = bool(value)
+        return super().to_python(value)
+
+
 class EnumMultipleChoiceField(EnumChoiceField, TypedMultipleChoiceField):
     """
     The default ``ChoiceField`` will only accept the base enumeration values.
     Use this field on forms to accept any value mappable to an enumeration
     including any labels or symmetric properties.
     """
+    widget = EnumSelectMultiple
+
+    def __init__(self, *args, **kwargs):
+        coerce = self.coerce
+        super().__init__(*args, **kwargs)
+        self.coerce = coerce
+
+    def coerce(self, value):
+        if isinstance(value, self.enum):
+            return value
+        return [
+            super(EnumMultipleChoiceField, self).coerce(val) for val in value
+        ]
 
 
 class SLMDateField(forms.DateField):
@@ -106,6 +170,7 @@ class MultiAutoSelectMixin:
             value_param='id',
             label_param=None,
             render_suggestion=None,
+            query_params=None,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -117,10 +182,12 @@ class MultiAutoSelectMixin:
             self.widget.attrs['data-label-param'] = label_param
         if render_suggestion:
             self.widget.attrs['data-render-suggestion'] = render_suggestion
-        self.widget.attrs['class'] = ' '.join([
-            '',
-            *self.widget.attrs.get('class', '').split()
-        ])
+        if query_params:
+            self.widget.attrs['data-query-params'] = (
+                query_params
+                if isinstance(query_params, str)
+                else json.dumps(query_params)
+            )
 
 
 class MultiSelectAutoComplete(
@@ -136,8 +203,10 @@ class MultiSelectAutoComplete(
 
 class MultiSelectEnumAutoComplete(
     MultiAutoSelectMixin,
-    forms.MultipleChoiceField
+    EnumMultipleChoiceField
 ):
+
+    widget = AutoCompleteEnumSelectMultiple
 
     class PropertyEncoder(json.JSONEncoder):
 
@@ -146,8 +215,16 @@ class MultiSelectEnumAutoComplete(
                 return str(obj)
             return super().default(obj)
 
-    def __init__(self, enum, *args, properties=None, **kwargs):
+    def __init__(
+            self,
+            enum,
+            *args,
+            properties=None,
+            data_source=None,
+            **kwargs
+    ):
         super().__init__(
+            enum,
             *args,
             value_param=kwargs.pop('value_param', 'value'),
             label_param=kwargs.pop('label_param', 'label'),
@@ -155,15 +232,14 @@ class MultiSelectEnumAutoComplete(
         )
         properties = set(properties or [])
         properties.update({'value', 'label'})
-        self.widget.attrs['data-source'] = json.dumps([{
-            prop: getattr(en, prop)
-            for prop in properties
-        } for en in enum], cls=MultiSelectEnumAutoComplete.PropertyEncoder)
-
-
-class CheckboxEnumChoiceField(EnumMultipleChoiceField):
-
-    widget = forms.CheckboxSelectMultiple
+        self.widget.attrs['data-source'] = json.dumps(sorted(
+            [
+                {prop: getattr(en, prop) for prop in properties}
+                for en in data_source or enum
+            ],
+            key=lambda en: en[self.widget.attrs['data-label-param']]),
+            cls=MultiSelectEnumAutoComplete.PropertyEncoder
+        )
 
 
 class NewSiteForm(forms.ModelForm):
@@ -784,6 +860,7 @@ class StationFilterForm(forms.Form):
 
     @property
     def helper(self):
+        from crispy_forms.layout import Fieldset
         helper = FormHelper()
         helper.form_id = 'slm-station-filter'
         helper.layout = Layout(
@@ -795,9 +872,18 @@ class StationFilterForm(forms.Form):
                     css_class='col-3'
                 ),
                 Div(
-                    'receiver',
-                    'antenna',
-                    'radome',
+                    Fieldset(
+                        _('Equipment Filters'),
+                        Field(
+                            'current',
+                            css_class="form-check-input",
+                            wrapper_class="form-check form-switch"
+                        ),
+                        'receiver',
+                        'antenna',
+                        'radome',
+                        css_class='slm-form-group'
+                    ),
                     css_class='col-4'
                 ),
                 Div(
@@ -811,7 +897,7 @@ class StationFilterForm(forms.Form):
         )
         return helper
 
-    status = CheckboxEnumChoiceField(
+    status = EnumMultipleChoiceField(
         SiteLogStatus,
         # help_text=_('Include stations with these statuses.'),
         label=_('Site Status'),
@@ -828,10 +914,17 @@ class StationFilterForm(forms.Form):
         # help_text=_('Include stations with the following alert types.'),
     )
 
-    alert_level = CheckboxEnumChoiceField(
+    alert_level = EnumMultipleChoiceField(
         AlertLevel,
         # help_text=_('Include stations with alerts at this level.'),
         label=_('Alert Level'),
+        required=False
+    )
+
+    current = SLMBooleanField(
+        label=_('Current'),
+        help_text=_('Only include sites that currently have this equipment.'),
+        initial=True,
         required=False
     )
 
@@ -843,7 +936,8 @@ class StationFilterForm(forms.Form):
         service_url=reverse_lazy('slm_public_api:receiver-list'),
         search_param='model',
         value_param='id',
-        label_param='model'
+        label_param='model',
+        query_params={'in_use': True}
     )
 
     antenna = MultiSelectAutoComplete(
@@ -854,7 +948,8 @@ class StationFilterForm(forms.Form):
         service_url=reverse_lazy('slm_public_api:antenna-list'),
         search_param='model',
         value_param='id',
-        label_param='model'
+        label_param='model',
+        query_params={'in_use': True}
     )
 
     radome = MultiSelectAutoComplete(
@@ -865,7 +960,8 @@ class StationFilterForm(forms.Form):
         service_url=reverse_lazy('slm_public_api:radome-list'),
         search_param='model',
         value_param='id',
-        label_param='model'
+        label_param='model',
+        query_params={'in_use': True}
     )
 
     agency = MultiSelectAutoComplete(
@@ -902,5 +998,6 @@ class StationFilterForm(forms.Form):
         render_suggestion=(
             'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
             '<span class="matchable">${obj.label}</span>`;'
-        )
+        ),
+        data_source=SiteLocation.objects.countries()
     )

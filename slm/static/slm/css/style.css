@@ -773,7 +773,8 @@ fieldset.autocomplete {
     padding: 0;
     border: none;
 }
-fieldset.autocompleteselectmultiple {
+fieldset.autocompleteselectmultiple,
+fieldset.autocompleteenumselectmultiple {
     padding: 0;
     border: none;
 }
@@ -819,7 +820,8 @@ div.autocomplete-selection span:last-child:hover:before {
     content: '\F622';
 }
 
-.autocompleteselectmultiple span.fi {
+.autocompleteselectmultiple span.fi,
+.autocompleteenumselectmultiple span.fi {
     margin-left: 0;
     margin-right: 7px;
     font-size: large;

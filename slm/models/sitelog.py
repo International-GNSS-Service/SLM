@@ -676,6 +676,34 @@ class SiteSectionQueryset(models.QuerySet):
         return self.filter(pub_q).order_by('-edited').first()
 
 
+class SiteLocationManager(SiteSectionManager):
+    pass
+
+
+class SiteLocationQueryset(SiteSectionQueryset):
+
+    def countries(self):
+        """
+        Return the list of unique countries that this queryset of SiteLocations
+        is in.
+
+        .. note::
+
+            Site locations with invalid ISO-3166 ountry codes will not be
+            included.
+
+        :return: A list of ISOCountry enumerations.
+        """
+        return list(set([
+            country
+            for country in self.values_list(
+                'country',
+                flat=True
+            ).distinct().order_by('country')
+            if isinstance(country, ISOCountry)
+        ]))
+
+
 class SiteSection(models.Model):
 
     VALIDATORS = []
@@ -1370,6 +1398,9 @@ class SiteLocation(SiteSection):
            Elevation (m,ellips.)  : (F7.1)
          Additional Information   : (multiple lines)
     """
+
+    objects = SiteLocationManager.from_queryset(SiteLocationQueryset)()
+
     @classmethod
     def structure(cls):
         return [
@@ -1576,7 +1607,8 @@ class SiteReceiver(SiteSubSection):
             'receiver, please notify the IGS Central Bureau. '
             'Format: (A20, from rcvr_ant.tab; see instructions)'
         ),
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='site_receivers'
     )
 
     satellite_system = models.ManyToManyField(
@@ -1736,7 +1768,7 @@ class SiteAntenna(SiteSubSection):
             'horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; '
             'see instructions)'
         ),
-        related_name='antennas'
+        related_name='site_antennas'
     )
 
     serial_number = models.CharField(
@@ -1819,7 +1851,8 @@ class SiteAntenna(SiteSubSection):
             'horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; '
             'see instructions)'
         ),
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='site_radomes'
     )
 
     radome_serial_number = models.CharField(

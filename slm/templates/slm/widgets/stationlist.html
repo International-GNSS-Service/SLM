@@ -1,4 +1,4 @@
-{% load i18n crispy_forms_tags %}
+{% load i18n static crispy_forms_tags %}
 
 <div id="slm-station-container" class="slm-scroll-container p-2">
     
@@ -74,12 +74,11 @@
 {% load compress %}
 
 {% compress js inline %}
-<script>
 
-    {% if station_filter %}
-    // there was a filter in the link, clear the session storage
-    sessionStorage.removeItem('stationFilter');
-    {% endif %}
+<script type="module">
+
+    import { Form } from '{% static "slm/js/form.js" %}';
+    const filterForm = new Form($('div#filter form'));
 
     let keyupTimeoutID = 0;
     const stationFilter = $('#slm-station-filter');
@@ -134,7 +133,7 @@
                     data-slm-status=${status.val}
                     data-slm-alert=${level ? level.val : null}
                     aria-selected="${selected}"><span>${station.name}</span> ${getBadge(station)} ${getAlertBell(station)}</button>`
-                ).insertBefore(pos);
+            ).insertBefore(pos);
         }
     }
     $(document).ready(function() {
@@ -144,34 +143,6 @@
         const filterInput = $("#apply-filter");
         const filterStations = $("#filter-stations");
         const clearFilter = $('#clear-filter');
-
-        const initFilter = function() {
-            let query = sessionStorage.getItem('stationFilter');
-            if (query && !slm.hasParameters(getQuery(), ['current'])) {
-                query = JSON.parse(query);
-                // if the page didnt set a filter - fetch the last one from
-                // session cache
-                for (const [prop, values] of Object.entries(query)) {
-                    if (slm.isIterable(values) && !(typeof values === 'string' || values instanceof String)) {
-                        for (const val of values) {
-                            stationFilter.find(`input[name="${prop}"][value="${val}"]`).prop('checked', true);
-                            stationFilter.find(`select[name="${prop}"] option[value="${val}"]`).prop('selected', true);
-                        }
-                    } else {
-                        stationFilter.find(`input[name="${prop}"]`).val(values);
-                        stationFilter.find(`input[name="${prop}"]:checkbox`).prop('checked', [true, '1', 'on', 'true'].includes(values) );
-                    }
-                }
-                // if we have any more complicated widgets like the autocomplete widget, revive them
-                stationFilter.find('fieldset').each(
-                    (idx, field) => {
-                        if ($(field).data('widget')) {
-                            $(field).data('widget').revive();
-                        }
-                    }
-                );
-            }
-        }
 
         function init() {
             slm.initInfiniteScroll(
@@ -214,11 +185,7 @@
         });
 
         const getQuery = function() {
-            // todo - can this completely replace slmQuery storage?
-            // replace below line with above one to keep current station in the
-            // list regardless of filter
-            //stationList.find('button').not(`#select-{{ station }}`).remove();
-            const query = slm.formToObject($('#slm-station-filter'));
+            const query = filterForm.data;
             if (searchInput.val()) {
                 query.name = searchInput.val();
             }
@@ -231,7 +198,7 @@
         const applyFilter = function() {
             stationList.find('button').remove();
             let query = getQuery();
-            if (slm.hasParameters(query, ['current'])) {
+            if (filterForm.hasChanged()) {
                 filterStations.removeClass("btn-outline-primary").addClass("btn-primary");
             } else {
                 filterStations.removeClass("btn-primary").addClass("btn-outline-primary");
@@ -240,36 +207,25 @@
             //{% if site %}query.id = [{{site.pk}}];{% endif %}
             stationList.data('slmPage', 0);
             stationList.data('slmQuery', query);
-            sessionStorage.setItem('stationFilter', JSON.stringify(query));
-            stationFilter.find('fieldset').each((idx, field) => {
-                if ($(field).data('widget')) {
-                    $(field).data('widget').persist();
-                }
-            });
+            filterForm.persist();
             init();
         }
 
         filterInput.click(applyFilter);
 
         clearFilter.on('click', function() {
-            stationFilter.find("[name!='current']:checkbox").prop("checked", false);
-            stationFilter.find("[name='current']:checkbox").prop("checked", true);
-            stationFilter.find("input[type='radio']:checked").prop("checked", false);
-            stationFilter.find("input[type='text']").val('');
-            stationFilter.find('fieldset').each(
-                (idx, field) => {
-                    if ($(field).data('widget')) {
-                        $(field).data('widget').clear();
-                        $(field).data('widget').persist();
-                    }
-                }
-            );
-            const query = stationList.data('slmQuery');
-            stationList.data('slmQuery', query.hasOwnProperty('name') ? {name: query.name} : {} );
+            filterForm.clear();
             applyFilter();
         });
 
-        initFilter();
+        if (!filterForm.hasChanged()) {
+            /**
+             * If the form differs from its clear state, then url parameters
+             * set values on it and we should not revive it from session
+             * storage.
+             */
+            filterForm.revive();
+        }
         applyFilter();
     });
 

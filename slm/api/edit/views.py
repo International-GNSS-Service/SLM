@@ -1534,7 +1534,6 @@ class SiteFileUploadViewSet(
                                         is_deleted=False
                                 ).head().order_by('subsection')
                             )
-
                         if (
                             len(existing_sections[section.heading_index]) >
                             subsection_number - 1

@@ -160,9 +160,7 @@ class SLMDateTimeField(forms.SplitDateTimeField):
         self.widget.widgets[1].input_type = 'time'
 
 
-class MultiAutoSelectMixin:
-
-    widget = AutoCompleteSelectMultiple
+class AutoSelectMixin:
 
     def __init__(
             self,
@@ -188,12 +186,13 @@ class MultiAutoSelectMixin:
                 if isinstance(query_params, str)
                 else json.dumps(query_params)
             )
+        self.widget.attrs['class'] = ' '.join([
+            *self.widget.attrs.get('class', '').split(' '),
+            'search-input'
+        ])
 
 
-class MultiSelectAutoComplete(
-    MultiAutoSelectMixin,
-    forms.ModelMultipleChoiceField
-):
+class ModelAutoSelectMixin(AutoSelectMixin):
 
     def __init__(self, service_url, *args, search_param='search', **kwargs):
         super().__init__(*args, **kwargs)
@@ -201,12 +200,18 @@ class MultiSelectAutoComplete(
         self.widget.attrs['data-search-param'] = search_param
 
 
-class MultiSelectEnumAutoComplete(
-    MultiAutoSelectMixin,
-    EnumMultipleChoiceField
-):
+class ModelAutoComplete(ModelAutoSelectMixin, forms.ModelChoiceField):
+    widget = AutoComplete
 
-    widget = AutoCompleteEnumSelectMultiple
+
+class ModelMultipleAutoComplete(
+    ModelAutoSelectMixin,
+    forms.ModelMultipleChoiceField
+):
+    widget = AutoCompleteSelectMultiple
+
+
+class EnumAutoSelectMixin(AutoSelectMixin):
 
     class PropertyEncoder(json.JSONEncoder):
 
@@ -242,6 +247,17 @@ class MultiSelectEnumAutoComplete(
         )
 
 
+class MultiSelectEnumAutoComplete(
+    EnumAutoSelectMixin,
+    EnumMultipleChoiceField
+):
+    widget = AutoCompleteEnumSelectMultiple
+
+
+class SelectEnumAutoComplete(EnumAutoSelectMixin, EnumChoiceField):
+    widget = AutoComplete
+
+
 class NewSiteForm(forms.ModelForm):
 
     @property
@@ -263,7 +279,7 @@ class NewSiteForm(forms.ModelForm):
         )
         return helper
 
-    agencies = MultiSelectAutoComplete(
+    agencies = ModelMultipleAutoComplete(
         queryset=Agency.objects.all(),
         help_text=_('Enter the name or abbreviation of an Agency.'),
         label=_('Agency'),
@@ -459,6 +475,16 @@ class SiteIdentificationForm(SectionForm):
 
 class SiteLocationForm(SectionForm):
 
+    country = SelectEnumAutoComplete(
+        ISOCountry,
+        help_text=SiteLocation._meta.get_field('country').help_text,
+        label=SiteLocation._meta.get_field('country').verbose_name,
+        render_suggestion=(
+            'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
+            '<span class="matchable">${obj.label}</span>`;'
+        )
+    )
+
     class Meta:
         model = SiteLocation
         fields = [
@@ -487,15 +513,12 @@ class SiteReceiverForm(SubSectionForm):
         empty_label=None
     )
 
-    receiver_type = forms.CharField(
-        widget=AutoComplete(
-            attrs={
-                'data-service-url': reverse_lazy(
-                    'slm_public_api:receiver-list'
-                ),
-                'data-param-name': 'model'
-            }
-        )
+    receiver_type = ModelAutoComplete(
+        queryset=Receiver.objects.all(),
+        service_url=reverse_lazy('slm_public_api:receiver-list'),
+        search_param='model',
+        value_param='model',
+        label_param='model'
     )
 
     def __init__(self, **kwargs):
@@ -539,26 +562,20 @@ class SiteAntennaForm(SubSectionForm):
         min_value=-180
     )
 
-    antenna_type = forms.CharField(
-        widget=AutoComplete(
-            attrs={
-                'data-service-url': reverse_lazy(
-                    'slm_public_api:antenna-list'
-                ),
-                'data-param-name': 'model'
-            }
-        )
+    antenna_type = ModelAutoComplete(
+        queryset=Antenna.objects.all(),
+        service_url=reverse_lazy('slm_public_api:antenna-list'),
+        search_param='model',
+        value_param='model',
+        label_param='model'
     )
 
-    radome_type = forms.CharField(
-        widget=AutoComplete(
-            attrs={
-                'data-service-url': reverse_lazy(
-                    'slm_public_api:radome-list'
-                ),
-                'data-param-name': 'model'
-            }
-        )
+    radome_type = ModelAutoComplete(
+        queryset=Radome.objects.all(),
+        service_url=reverse_lazy('slm_public_api:radome-list'),
+        search_param='model',
+        value_param='model',
+        label_param='model'
     )
 
     class Meta(SubSectionForm):
@@ -889,12 +906,16 @@ class StationFilterForm(forms.Form):
                 Div(
                     'agency',
                     'network',
-                    Field('country', css_class='slm-country'),
+                    Field('country', css_class='slm-country search-input'),
                     css_class='col-5'
                 ),
                 css_class='row'
             )
         )
+        helper.attrs = {'data_slm_initial': json.dumps({
+            field.name: field.field.initial
+            for field in self if field.field.initial
+        })}
         return helper
 
     status = EnumMultipleChoiceField(
@@ -928,7 +949,7 @@ class StationFilterForm(forms.Form):
         required=False
     )
 
-    receiver = MultiSelectAutoComplete(
+    receiver = ModelMultipleAutoComplete(
         queryset=Receiver.objects.all(),
         # help_text=_('Enter the name or abbreviation of an Agency.'),
         label=_('Receiver'),
@@ -940,7 +961,7 @@ class StationFilterForm(forms.Form):
         query_params={'in_use': True}
     )
 
-    antenna = MultiSelectAutoComplete(
+    antenna = ModelMultipleAutoComplete(
         queryset=Antenna.objects.all(),
         # help_text=_('Enter the name or abbreviation of an Agency.'),
         label=_('Antenna'),
@@ -952,7 +973,7 @@ class StationFilterForm(forms.Form):
         query_params={'in_use': True}
     )
 
-    radome = MultiSelectAutoComplete(
+    radome = ModelMultipleAutoComplete(
         queryset=Radome.objects.all(),
         # help_text=_('Enter the name or abbreviation of an Agency.'),
         label=_('Radome'),
@@ -964,7 +985,7 @@ class StationFilterForm(forms.Form):
         query_params={'in_use': True}
     )
 
-    agency = MultiSelectAutoComplete(
+    agency = ModelMultipleAutoComplete(
         queryset=Agency.objects.all(),
         # help_text=_('Enter the name or abbreviation of an Agency.'),
         label=_('Agency'),
@@ -979,7 +1000,7 @@ class StationFilterForm(forms.Form):
         )
     )
 
-    network = MultiSelectAutoComplete(
+    network = ModelMultipleAutoComplete(
         queryset=Network.objects.all(),
         # help_text=_('Enter the name of an IGS Network.'),
         label=_('Network'),

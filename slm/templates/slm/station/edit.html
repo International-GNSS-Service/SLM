@@ -17,7 +17,7 @@ Add new section capability is not functional.
 
     <!-- Site Log Sections Sidebar Menu -->
     <div class="col-3">
-      <div id='slm-form-menu' class="nav flex-shrink-0 nav-pills" id="sections" role="tablist" aria-orientation="vertical">
+      <div id='slm-form-menu' class="nav flex-shrink-0 nav-pills" role="tablist" aria-orientation="vertical">
         <!-- Section 0 -->
           {% for name, section in sections.items %}
                 <button
@@ -81,81 +81,102 @@ Add new section capability is not functional.
             </div>
         <!-- Section 0 Content -->
         {% if multi %}
-          <div id="add-{{ section_id }}" class="d-grid gap-2 mb-2 d-flex justify-content-between">
-              <button type='submit' name='add' class="btn btn-success">
-                {% translate "Add Section" %}
-              </button>
-          </div>
-          <div class="accordion slm-form-stack" id="accordion-{{ section_id }}">
-            {% for form in forms %}
-                {% if not forloop.first %}
-                    {% with form_inst_id=section_id|to_id:forloop.counter %}
-                        <div class="accordion-item">
-                            <h2 id="accordionHeading" class="accordion-header">
-                                <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" data-slm-flags={{ form.flags|length }} data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ form.instance.mod_status.value }} aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
-                                    <span>{{ form.instance.heading }} <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
-                                </button>
-                            </h2>
-                            <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="accordionHeading" data-bs-parent="#accordion-{{ section_id }}">
-                              <div class="accordion-body">
-                                {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
-                                {{ form.instance.flags }}
-                                {% compress css inline %}
-                                    {{ form.media.css }}
-                                {% endcompress %}
-                                {% compress js inline %}
-                                    {{ form.media.js }}
-                                    {{ form.flags|json_script:flag_id }}
-                                {% endcompress %}
-                                {% include 'slm/station/form.html' with form=form form_id=form_inst_id flag_id=flag_id %}
-                                {% endwith %}
-                              </div>
-                            </div>
-                        </div>
-                    {% endwith %}
-                {% endif %}
-            {% endfor %}
-          </div>
-
-          {{ copy_last_on_add|json_script:"copy-last-on-add" }}
-
-          <script>
-            const copyLast = JSON.parse(
-                document.getElementById('copy-last-on-add').textContent
-            );
-            if (typeof newIdx === 'undefined') {
-                var newIdx = {{ forms|length }};
-            }
-            $("#add-{{ section_id }} > button").click(function() {
-                let formId = `{{ section_id }}-new-${newIdx}`;
-                let stack = $("#accordion-{{ section_id }}");
-                let initial = slm.formToObject(
-                    $('form.slm-form').first(),
-                    copyLast
-                );
-                stack.prepend(`
+        <div id="add-{{ section_id }}" class="d-grid gap-2 mb-2 d-flex justify-content-between">
+          <button type='submit' name='add' class="btn btn-success">
+            {% translate "Add Section" %}
+          </button>
+        </div>
+        <div class="accordion slm-form-stack" id="accordion-{{ section_id }}">
+        {% for form in forms %}
+            {% if not forloop.first %}
+                {% with form_inst_id=section_id|to_id:forloop.counter %}
                     <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ SiteLogStatus.EMPTY.value }} data-bs-target="#accordion-${formId}" aria-expanded="true" aria-controls="accordion-${formId}">
-                                <span>{% translate "New" %} {% if subname %}{{ subname }}{% else %}{{ name }}{% endif %}</span><span class="slm-effective"></span>
+                        <h2 id="heading-{{ form_inst_id }}" class="accordion-header">
+                            <button class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" data-slm-flags={{ form.flags|length }} data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ form.instance.mod_status.value }} aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
+                                <span>{{ form.instance.heading }} <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
                             </button>
                         </h2>
-                        <div id="accordion-${formId}" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordion-{{ section_id }}">
-                            <div class="accordion-body">
-                                {% include 'slm/station/form.html' with form=forms|first form_id='new_form_id' %}
-                            </div>
+                        <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ form_inst_id }}" data-bs-parent="#accordion-{{ section_id }}">
+                          <div class="accordion-body">
+                            {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
+                            {{ form.instance.flags }}
+                            {% compress css inline %}
+                                {{ form.media.css }}
+                            {% endcompress %}
+                            {% compress js inline %}
+                                {{ form.media.js }}
+                                {{ form.flags|json_script:flag_id }}
+                            {% endcompress %}
+                            {% include 'slm/station/form.html' with form=form form_id=form_inst_id flag_id=flag_id %}
+                            {% endwith %}
+                          </div>
                         </div>
                     </div>
-                `.replaceAll('new_form_id', formId));
-                slm.initForm($(`#site-${formId}`), initial);
-                $(`#site-${formId} div.slm-flag`).hide();
-                $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();
-                $(`#site-${formId} a[data-bs-toggle="popover"]`).popover();
-                newIdx += 1;
+                {% endwith %}
+            {% endif %}
+        {% endfor %}
+        </div>
+
+        <div id="new-form" style="display: none">
+            <div class="accordion-item">
+                <h2 id="heading-new_form_id" class="accordion-header">
+                    <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ SiteLogStatus.EMPTY.value }} aria-expanded="true">
+                        <span>{% translate "New" %} {% if subname %}{{ subname }}{% else %}{{ name }}{% endif %}</span><span class="slm-effective"></span>
+                    </button>
+                </h2>
+                <div id="accordion-new_form_id" class="accordion-collapse collapse show" data-bs-parent="#accordion-{{ section_id }}">
+                    <div class="accordion-body">
+                        {% include 'slm/station/form.html' with form=forms|first form_id='new_form_id' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{ copy_last_on_add|json_script:"copy-last-on-add" }}
+
+        <script>
+        const copyLast = JSON.parse(
+            document.getElementById('copy-last-on-add').textContent
+        );
+        if (typeof newIdx === 'undefined') {
+            var newIdx = {{ forms|length }};
+        }
+        $("#add-{{ section_id }} > button").click(function() {
+            let formId = `{{ section_id }}-new-${newIdx}`;
+            let stack = $("#accordion-{{ section_id }}");
+            let initial = slm.formToObject(
+                $('form.slm-form').first(),
+                copyLast
+            );
+            const newForm = $('#new-form').children().first().clone();
+            const script = newForm.find('script');
+            if (script.length > 0) {
+                const newScript = document.createElement('script');
+                newScript.type = 'module';
+                $(newScript).html(script.html().replaceAll('new_form_id', formId));
+                script.replaceWith(newScript);
+            }
+            newForm.find('[id*="new_form_id"]').each(function() {
+                const newId = $(this).attr('id').replace('new_form_id', formId);
+                newForm.find(
+                    `label[for="${$(this).attr('id')}"]`
+                ).attr('for', newId);
+                $(this).attr('id', newId);
             });
-          </script>
-      {% elif forms %}
-          {% with form=forms|first %}
+            const accordionBtn = newForm.find('button.accordion-button');
+            accordionBtn.attr('data-bs-target', `#accordion-${formId}`);
+            accordionBtn.attr('aria-controls', `accordion-${formId}`);
+            newForm.find(`#accordion-${formId}`).attr('aria-labelledby', `heading-${formId}`);
+            stack.prepend(newForm);
+            slm.initForm($(`#site-${formId}`), initial);
+            $(`#site-${formId} div.slm-flag`).hide();
+            $(`#site-${formId} a[data-bs-toggle="tooltip"]`).tooltip();
+            $(`#site-${formId} a[data-bs-toggle="popover"]`).popover();
+            newIdx += 1;
+        });
+        </script>
+        {% elif forms %}
+            {% with form=forms|first %}
               {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
               {% compress css inline %}
                 {{ form.media.css }}
@@ -166,8 +187,8 @@ Add new section capability is not functional.
               {% endcompress %}
               {% include 'slm/station/form.html' with form=form form_id=section_id flag_id=flag_id %}
               {% endwith %}
-          </div>
-          {% endwith %}
+            </div>
+        {% endwith %}
       {% endif %}
     {% else %}
     <div class="row">

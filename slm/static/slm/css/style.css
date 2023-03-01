@@ -790,7 +790,7 @@ div.autocomplete-selection {
     text-align: center;
 }
 
-.slm-country div.autocomplete-selection {
+fieldset[name=country] div.autocomplete-selection {
     background-color: transparent;
     color: initial;
     padding: 5px 10px 5px 10px;
@@ -820,8 +820,7 @@ div.autocomplete-selection span:last-child:hover:before {
     content: '\F622';
 }
 
-.autocompleteselectmultiple span.fi,
-.autocompleteenumselectmultiple span.fi {
+div span.fi {
     margin-left: 0;
     margin-right: 7px;
     font-size: large;

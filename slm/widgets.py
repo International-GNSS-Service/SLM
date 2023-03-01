@@ -1,18 +1,15 @@
-from django.forms.widgets import TextInput, TimeInput, DateInput, SelectMultiple
-from django.conf import settings
+from django.forms.widgets import (
+    TextInput,
+    TimeInput,
+    DateInput,
+    SelectMultiple
+)
 from django.forms import CheckboxSelectMultiple, SplitDateTimeWidget
-from enum import Enum
 
 
 class AutoComplete(TextInput):
 
-    template_name = 'django/forms/widgets/text.html'
-
-    def __init__(self, attrs=None):
-        if attrs is None:
-            attrs = {}
-        attrs.setdefault('data-slm-autocomplete', True)
-        super().__init__(attrs=attrs)
+    template_name = 'slm/forms/widgets/auto_complete.html'
 
 
 class EnumSelectMultiple(CheckboxSelectMultiple):
@@ -23,7 +20,7 @@ class EnumSelectMultiple(CheckboxSelectMultiple):
 
 class AutoCompleteSelectMultiple(SelectMultiple):
 
-    template_name = 'slm/forms/widgets/autocomplete.html'
+    template_name = 'slm/forms/widgets/auto_complete_multiple.html'
 
     def get_context(self, name, value, attrs):
         """
@@ -35,19 +32,25 @@ class AutoCompleteSelectMultiple(SelectMultiple):
         alterations to the base class.
         """
         values = set(value or [])
-        self.choices = (
+        self.choices = [
             (choice, label)
             for choice, label in self.choices
             if choice in values
-        )
+        ]
         return super().get_context(name, value, attrs)
 
 
 class AutoCompleteEnumSelectMultiple(AutoCompleteSelectMultiple):
-    """
-    def format_value(self, value):
-        return [str(val.value) for val in value]
-    """
+
+    def get_context(self, name, value, attrs):
+        values = set(value.value for value in value or [])
+        self.choices = [
+            choice
+            for choice in self.choices
+            if choice[0] in values
+        ]
+        return SelectMultiple.get_context(self, name, value, attrs)
+
 
 class DatePicker(DateInput):
     input_type = "date"

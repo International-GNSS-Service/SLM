@@ -323,7 +323,6 @@ slm.initForm = function(form_id, initial=null, transform= function(data){ return
         }
     });
     slm.time24Init(form.find('fieldset.time-24hr'));
-    slm.initAutoCompletes(form.find('input[data-slm-autocomplete]'));
 }
 
 slm.extractFlags = function(form) {
@@ -932,55 +931,6 @@ slm.processing = function(btn) {
     return function() {
         $('body').css('cursor', 'default');
         btn.find('span.spinner-border').remove();
-    }
-}
-
-slm.initAutoCompletes = function(inputs = null) {
-    const autoInputs = inputs === null ? $('input[data-slm-autocomplete]') : inputs;
-    if (autoInputs.length > 0) {
-        autoInputs.each(function () {
-            $(this).autocomplete({
-                delay: 250,
-                minLength: 0,
-                source: function (request, response) {
-                    const data = {};
-                    data[$(this).data('paramName')] = request.term;
-                    $.ajax({url: $(this).data('serviceUrl'), data: data}).done(
-                        function (data) {
-                            const suggestions = [];
-                            if ($(this).data('valueParam')) {
-                                for (const suggestion of data) {
-                                    suggestions.push({
-                                        label: suggestion[$(this).data('paramName')],
-                                        value: suggestion[$(this).data('valueParam')]
-                                    });
-                                }
-                                response(suggestions);
-                            } else {
-                                for (const suggestion of data) {
-                                    suggestions.push(suggestion[$(this).data('paramName')]);
-                                }
-                            }
-                            response(suggestions);
-                        }.bind(this)
-                    ).fail(function (jqXHR) {
-                        console.log(jqXHR);
-                    });
-                }.bind(this)
-            });
-        }).bind('focus', function () {
-            $(this).autocomplete("search");
-        })
-            .data("ui-autocomplete")._renderItem = function (ul, item) {
-            const newText = String(item.label).replace(
-                new RegExp(this.term, "gi"),
-                "<span class='autocomplete-match'>$&</span>");
-
-            return $('<li></li>')
-                .data('item.ui-autocomplete', item)
-                .append(`<div>${newText}</div>`)
-                .appendTo(ul);
-        };
     }
 }
 

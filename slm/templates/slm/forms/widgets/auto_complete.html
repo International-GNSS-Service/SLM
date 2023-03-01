@@ -1,0 +1,17 @@
+{% load static slm %}
+<fieldset id="{{ widget.attrs.id }}-container" class="autocomplete" name="{{ widget.name }}">
+    <legend style="display: none">"{{ field.help_text }}"</legend>
+    <div {% include "django/forms/widgets/attrs.html" %} contenteditable="true"></div>
+
+    <label for="{{ widget.attrs.id }}-input" style="display: none"></label>
+    <input id="{{ widget.attrs.id }}-input" name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="text" style="display: none">
+
+    <script type="module">
+        import { AutoComplete } from "{% static 'slm/js/autocomplete.js' %}";
+        let widget = new AutoComplete({container: $('fieldset#{{ widget.attrs.id }}-container')});
+        $('fieldset#{{ widget.attrs.id }}-container input').data('widget', widget);
+        {% for value in widget|autocomplete_values %}
+        widget.add(widget.makeSuggestion(JSON.parse('{{ value|safe }}')));
+        {% endfor %}
+    </script>
+</fieldset>

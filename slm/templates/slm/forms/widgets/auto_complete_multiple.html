@@ -1,0 +1,18 @@
+{% load static slm %}
+<fieldset id="{{ widget.attrs.id }}-container" class="autocompleteselectmultiple" name="{{ widget.name }}">
+    <legend style="display: none">"{{ field.help_text }}"</legend>
+    <div {% include "django/forms/widgets/attrs.html" %} contenteditable="true"></div>
+    <div style="display: none">
+        <label for="{{widget.attrs.id}}-select"></label>
+        <select id='{{widget.attrs.id}}-select' name="{{ widget.name }}" multiple></select>
+    </div>
+    <div class="select-display"></div>
+    <script type="module">
+        import { AutoCompleteMultiple } from "{% static 'slm/js/autocomplete.js' %}";
+        let widget = new AutoCompleteMultiple({container: $('fieldset#{{ widget.attrs.id }}-container')});
+        $('fieldset#{{ widget.attrs.id }}-container select').data('widget', widget);
+        {% for value in widget|autocomplete_values %}
+        widget.add(widget.makeSuggestion(JSON.parse('{{ value|safe }}')));
+        {% endfor %}
+    </script>
+</fieldset>

@@ -4,7 +4,8 @@
         <path stroke="black" stroke-width="3%" d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
         <path stroke="black" stroke-width="3%" d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
     </svg>
-    <input name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="time" style="display: none">
+    <label for="{{ widget.attrs.id }}-input" style="display: none"></label>
+    <input id="{{ widget.attrs.id }}-input" name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="time" style="display: none">
     <div class="time-select" tabindex="0" style="width: 130px; height: 250px; overflow-y: hidden; display: none; justify-content: space-evenly;">
         <div class="hour-scroll time-scroll" tabindex="0" style="width: 65px; overflow-y: scroll;">
             <span class="time-set">00</span><span>01</span><span>02</span><span>03</span>

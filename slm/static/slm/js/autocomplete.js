@@ -1,10 +1,12 @@
-// https://github.com/devbridge/jQuery-Autocomplete
+import { FormWidget } from "./formWidget.js";
 
-export class AutoComplete {
+export class AutoComplete extends FormWidget {
     /**
+     * https://api.jqueryui.com/autocomplete/
+     *
      * Expects the following data parameters on the auto complete container:
      *
-     * data-service-url: (required) The url to fetch suggestions from via ajax
+     * data-service-url: (required) The url to fetch suggestions from ajax
      * data-search-param: (required) The url query parameter to use for the search string
      * data-label-param: (optional) The property to use as the label (default: search-param)
      * data-value-param: (optional) The property to use as the value (default: label-param)
@@ -15,29 +17,48 @@ export class AutoComplete {
      *  wrapped in <span class="matchable"></span>
      */
 
-    container;
     textInput;
-    display;
-    select;
+    formField;
 
     paramName;
     serviceUrl;
     valueParam;
     selected;
 
-    get persisted() {
-        const store = sessionStorage.getItem(this.container.attr('id'));
-        if (store) {
-            return JSON.parse(sessionStorage.getItem(this.container.attr('id')));
-        }
-        return {}
-    }
-
     renderSuggestion(suggestion) {
         return `<span class="matchable">${suggestion[this.labelParam]}</span>`;
     }
 
+    inputUpdated() {
+        /**
+         * When a user changes search text, we unset the set value if one is
+         * set, remove any html, reset the search box to the raw search string
+         * and set the cursor to the end.
+         */
+        const label = this.textInput.html();
+        const searchStr = this.textInput.find('.matchable').text();
+        const value = this.formField.val();
+        if (value) {
+            if (label !== this.selected[value]) {
+                this.remove(this.formField.val());
+                this.textInput.html(searchStr);
+                let sel = window.getSelection();
+                sel.selectAllChildren(this.textInput.get(0));
+                sel.collapseToEnd();
+            }
+        }
+    }
+
+    makeSuggestion(suggestion) {
+        return {
+            label: this.renderSuggestion(suggestion),
+            value: suggestion[this.valueParam],
+            basic: suggestion[this.labelParam]
+        }
+    }
+
     filterResponse(data) {
+        this.inputUpdated();
         const suggestions = [];
         for (const suggestion of data) {
             if (this.selected.hasOwnProperty(
@@ -45,36 +66,30 @@ export class AutoComplete {
             )) {
                 continue;
             }
-            suggestions.push({
-                label: this.renderSuggestion(suggestion),
-                value: suggestion[this.valueParam],
-                basic: suggestion[this.labelParam]
-            });
+            suggestions.push(this.makeSuggestion(suggestion));
         }
         return suggestions;
     }
 
     constructor(options) {
-        this.container = options.container;
-        this.textInput = options.container.find('.search-input');
-        this.display = options.container.find('.select-display');
-        this.select = options.container.find('select');
+        super(options.container);
+        this.textInput = this.container.find('.search-input');
+        this.formField = this.container.find('input');
         this.selected = {};
-        this.select.find('option:selected').each(
-            (idx, opt) => { this.selected[$(opt).val()] = $(opt).html(); }
-        );
+        if (this.textInput.val()) {
+            this.selected[this.textInput.val()] = this.textInput.html();
+        }
+        this.serviceUrl = this.textInput.data('serviceUrl');
+        this.source = this.textInput.data('source');
+        this.searchParam = this.textInput.data('searchParam');
+        this.labelParam = this.textInput.data('labelParam') || this.searchParam;
+        this.valueParam = this.textInput.data('valueParam') || this.labelParam;
+        this.queryParams = this.textInput.data('queryParams') || {};
 
-        this.serviceUrl = this.container.data('serviceUrl');
-        this.source = this.container.data('source');
-        this.searchParam = this.container.data('searchParam');
-        this.labelParam = this.container.data('labelParam') || this.searchParam;
-        this.valueParam = this.container.data('valueParam') || this.labelParam;
-        this.queryParams = this.container.data('queryParams') || {};
-
-        if (this.container.data('renderSuggestion')) {
+        if (this.textInput.data('renderSuggestion')) {
             this.renderSuggestion = new Function(
                 'obj',
-                this.container.data('renderSuggestion')
+                this.textInput.data('renderSuggestion')
             );
         }
 
@@ -100,7 +115,6 @@ export class AutoComplete {
             select: function(event, ui) {
                 this.add(ui.item);
                 event.preventDefault();
-                this.textInput.html('');
             }.bind(this),
             focus: function(event, ui) {
                 this.textInput.html(ui.item.basic);
@@ -123,16 +137,84 @@ export class AutoComplete {
                     .append(label)
                     .appendTo(ul);
             };
+    }
 
-        this.display.find(`div.autocomplete-selection span`).click(function(event) {
+    add(item) {
+        this.remove(this.formField.val());
+        this.selected[item.value.toString()] = item.label;
+        this.formField.val(item.value.toString());
+        this.textInput.html(item.label);
+    }
+
+    remove(value) {
+        value = value.toString();
+        if (this.selected.hasOwnProperty(value)) {
+            delete this.selected[value];
+        }
+        this.formField.val('');
+        this.textInput.html('');
+    }
+
+    clear() {
+        for (const value of Object.keys(this.selected)) { this.remove(value); }
+    }
+
+    persist() {
+        this.persisted = this.selected;
+    }
+
+    revive() {
+        if (this.persisted) {
+            this.clear();
+            for (const [value, label] of Object.entries(this.persisted)) {
+                this.add({value: value, label: label});
+            }
+        }
+    }
+
+    changed() {}
+}
+
+export class AutoCompleteMultiple extends AutoComplete {
+    /**
+     * https://github.com/devbridge/jQuery-Autocomplete
+     *
+     * Expects the following data parameters on the auto complete container:
+     *
+     * data-service-url: (required) The url to fetch suggestions from via ajax
+     * data-search-param: (required) The url query parameter to use for the search string
+     * data-label-param: (optional) The property to use as the label (default: search-param)
+     * data-value-param: (optional) The property to use as the value (default: label-param)
+     * data-renderSuggestion: (optional) A javascript function body accepting an obj argument and
+     *  returning a string label to use for the suggestion.
+     *
+     *  When providing a render suggestion, text that is searchable should be
+     *  wrapped in <span class="matchable"></span>
+     */
+
+    display;
+
+    inputUpdated() { };
+
+    constructor(options) {
+        super(options);
+        this.display = this.container.find('.select-display');
+        this.formField = this.container.find('select');
+        this.selected = {};
+        this.formField.find('option:selected').each(
+            (idx, opt) => { this.selected[$(opt).val()] = $(opt).html(); }
+        );
+
+        this.display.find(`div.autocomplete-selection span:last-child`).click(function(event) {
             this.remove($(event.target).closest('div.autocomplete-selection').data('value'));
         }.bind(this));
     }
 
     add(item) {
+        this.textInput.html('');
         this.selected[item.value.toString()] = item.label;
-        if (this.select.find(`option[value="${item.value}"]`).length === 0) {
-            this.select.prepend($(
+        if (this.formField.find(`option[value="${item.value}"]`).length === 0) {
+            this.formField.prepend($(
                 `<option value="${item.value}" selected>${item.label}</option>`
             ));
         }
@@ -141,7 +223,7 @@ export class AutoComplete {
                 `<div class="autocomplete-selection" data-value="${item.value}">${item.label}<span></span></div>`
             );
         }
-        this.display.find(`div.autocomplete-selection[data-value="${item.value}"] span`).click(function() {
+        this.display.find(`div.autocomplete-selection[data-value="${item.value}"] span:last-child`).click(function() {
             this.remove(item.value);
         }.bind(this));
     }
@@ -151,25 +233,21 @@ export class AutoComplete {
         if (this.selected.hasOwnProperty(value)) {
             delete this.selected[value];
         }
-        this.select.find(`option[value="${value}"]`).remove();
+        this.formField.find(`option[value="${value}"]`).remove();
         this.display.find(`div.autocomplete-selection[data-value="${value}"]`).remove();
     }
 
-    clear() {
-        for (const value of Object.keys(this.selected)) { this.remove(value); }
-    }
-
-    persist() {
-        sessionStorage.setItem(
-            `${this.container.attr('id')}`,
-            JSON.stringify(this.selected)
+    changed() {
+        /**
+         * The underlying select has been updated - we must refresh the
+         * component to match it
+         */
+        const selected = this.formField.find('option:selected');
+        if (selected.length === 0) { return this.clear(); }
+        /* todo - only clear case handled above
+        selected.each(
+            (idx, opt) => { this.selected[$(opt).val()] = $(opt).html(); }
         );
-    }
-
-    revive() {
-        this.clear();
-        for (const [value, label] of Object.entries(this.persisted)) {
-            this.add({value: value, label: label});
-        }
+         */
     }
 }

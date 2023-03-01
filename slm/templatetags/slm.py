@@ -2,11 +2,15 @@ import os
 from datetime import date, datetime, timezone
 from enum import Enum
 from html import unescape
+from typing import Iterable
 
 from django import template
 from django.conf import settings
+import json
 from django.utils.translation import gettext as _
 from slm.utils import to_snake_case, build_absolute_url
+from django.urls import resolve
+
 
 register = template.Library()
 
@@ -395,3 +399,45 @@ def alert_class(message):
         'info': 'primary'
     }.get(message.level_tag, message.level_tag)
 
+
+@register.filter(name='autocomplete_values')
+def autocomplete_values(widget):
+    """
+    Return a list of json strings representing the default values of
+    autocomplete fields -see forms. We have to do some snooping around the api
+    and call the serializer directly.
+    """
+    values = widget.get('value', None)
+    if 'optgroups' in widget:
+        values = []
+        for _, choices, _ in widget.get('optgroups'):
+            values.extend([str(choice['value']) for choice in choices])
+
+    items = []
+    if values:
+        if isinstance(values, str) or not isinstance(values, Iterable):
+            values = [values]
+
+        service_url = widget.get('attrs', {}).get('data-service-url')
+        value_map = {
+            item['value']: item
+            for item in json.loads(
+                widget.get('attrs', {}).get('data-source', '[]')
+            )
+        }
+        if value_map:
+            for value in values:
+                if value in value_map:
+                    items.append(json.dumps(value_map[value]))
+
+        elif service_url:
+            view, _, _ = resolve(service_url)
+            Serializer = view.cls.serializer_class
+            serializer = Serializer(
+                Serializer.Meta.model.objects.filter(pk__in=values),
+                many=True
+            )
+            for value in serializer.data:
+                items.append(json.dumps(value))
+
+    return items

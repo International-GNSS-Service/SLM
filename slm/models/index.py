@@ -134,12 +134,14 @@ class SiteIndexManager(models.Manager):
 
 class SiteIndexQuerySet(models.QuerySet):
 
-    def at_epoch(self, epoch=None):
+    @staticmethod
+    def epoch_q(epoch=None):
         if epoch is None:
             epoch = now()
-        return self.filter(
-            Q(begin__lte=epoch) & (Q(end__gt=epoch) | Q(end__isnull=True))
-        )
+        return Q(begin__lte=epoch) &  (Q(end__gt=epoch) | Q(end__isnull=True))
+
+    def at_epoch(self, epoch=None):
+        return self.filter(self.epoch_q(epoch))
 
     def public(self):
         return self.filter(site__agencies__public=True)
@@ -271,7 +273,7 @@ class SiteIndex(models.Model):
 
     domes_number = models.CharField(
         db_index=True,
-        max_length=100,
+        max_length=9,
         blank=True,
         default=''
     )

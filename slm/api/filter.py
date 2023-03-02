@@ -5,6 +5,8 @@ from django_filters import (
     DateTimeFilter,
     FilterSet
 )
+from django_filters import compat
+from django_filters.filterset import BaseFilterSet
 from django.forms import DateTimeField
 from django.forms.utils import from_current_timezone
 from django.core.exceptions import ValidationError
@@ -16,6 +18,47 @@ from slm.forms import SLMBooleanField
 
 class SLMBooleanFilter(BooleanFilter):
     field_class = SLMBooleanField
+
+
+class CrispyFormCompat:
+    """
+    Ensure the given form as a submit button and correct method set!
+    """
+
+    @property
+    def form(self):
+        form = BaseFilterSet.form.fget(self)
+
+        if compat.is_crispy():
+            from crispy_forms.helper import FormHelper
+            from crispy_forms.layout import Layout, Submit
+
+            helper = getattr(form, 'helper', None)
+            if helper:
+                # add on a submit button if one does not exist on the form
+                def has_submit(fields):
+                    for field in fields:
+                        if (
+                            isinstance(field, Submit) or
+                            has_submit(getattr(field, 'fields', []))
+                        ):
+                            return True
+                    return False
+
+                if not has_submit(form.helper.layout.fields):
+                    helper.layout = Layout(
+                        *helper.layout.fields,
+                        Submit('', _('Submit'), css_class='btn btn-primary')
+                    )
+            else:
+                form.helper = FormHelper()
+                form.helper.form_method = 'GET'
+                form.helper.layout = Layout(
+                    *form.fields.keys(),
+                    Submit('', _('Submit'), css_class='btn btn-primary')
+                )
+
+        return form
 
 
 class AcceptListArguments:
@@ -48,7 +91,7 @@ class MustIncludeThese(BaseInFilter, NumberFilter):
         if value:
             qs |= super().filter(qs.model.objects.all(), value)
         return qs
-
+from rest_framework.renderers import BrowsableAPIRenderer
 
 class SLMDateTimeField(DateTimeField):
     """

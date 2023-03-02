@@ -1,5 +1,5 @@
 import django_filters
-from django.db.models import Q
+from django.db.models import Q, Subquery, OuterRef
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, viewsets
 from rest_framework.filters import OrderingFilter
@@ -7,30 +7,163 @@ from slm.api.pagination import DataTablesPagination
 from slm.api.public.serializers import (
     SiteFileUploadSerializer,
     StationListSerializer,
+    StationNameSerializer,
     ReceiverSerializer,
     AntennaSerializer,
     RadomeSerializer,
     ArchiveSerializer,
     AgencySerializer,
-    NetworkSerializer
+    NetworkSerializer,
+    #DOMESSerializer
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.models import (
     SiteFileUpload,
+    Site,
+    SiteIdentification,
     SiteIndex,
     Receiver,
     Antenna,
     Radome,
     ArchivedSiteLog,
     Agency,
-    Network
+    Network,
+    SatelliteSystem
 )
-from slm.api.filter import SLMDateTimeFilter
+from slm.forms import PublicAPIStationFilterForm
+from slm.api.filter import (
+    SLMDateTimeFilter,
+    AcceptListArguments
+)
+from slm.api.filter import SLMBooleanFilter, CrispyFormCompat
 from django.http import FileResponse
-from slm.defines import SiteLogFormat
+from slm.defines import SiteLogFormat, ISOCountry, FrequencyStandardType
 from django_enum.filters import EnumFilter
 from django.utils.translation import gettext as _
 from datetime import datetime
+
+
+class StationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
+
+    def get_form_class(self):
+        return PublicAPIStationFilterForm
+
+    @property
+    def current_equipment(self):
+        return self.form.cleaned_data.get('current', None)
+
+    @property
+    def query_epoch(self):
+        return self.form.cleaned_data.get('epoch', datetime.now())
+
+    epoch = django_filters.DateTimeFilter(
+        field_name='epoch',
+        method='at_epoch'
+    )
+
+    def at_epoch(self, queryset, name, value):
+        return queryset.at_epoch(epoch=value)
+
+    name = django_filters.CharFilter(
+        field_name='site__name',
+        lookup_expr='icontains',
+        distinct=True
+    )
+
+    agency = django_filters.ModelMultipleChoiceFilter(
+        field_name='site__agencies',
+        queryset=Agency.objects.all()
+    )
+
+    network = django_filters.ModelMultipleChoiceFilter(
+        field_name='site__networks',
+        queryset=Network.objects.all()
+    )
+
+    station = django_filters.ModelMultipleChoiceFilter(
+        field_name='site',
+        queryset=Site.objects.all(),
+        method='include_stations',
+        null_value='',
+        null_label=''
+    )
+
+    def include_stations(self, queryset, name, value):
+        value = [val for val in value or [] if val]
+        if value:
+            queryset |= queryset.model.objects.at_epoch(
+                self.query_epoch
+            ).filter(**{f'{name}__in': value})
+        return queryset
+
+    receiver = django_filters.ModelMultipleChoiceFilter(
+        method='filter_equipment',
+        queryset=Receiver.objects.all()
+    )
+
+    antenna = django_filters.ModelMultipleChoiceFilter(
+        method='filter_equipment',
+        queryset=Antenna.objects.all()
+    )
+
+    radome = django_filters.ModelMultipleChoiceFilter(
+        method='filter_equipment',
+        queryset=Radome.objects.all()
+    )
+
+    satellite_system = django_filters.ModelMultipleChoiceFilter(
+        method='filter_equipment',
+        queryset=SatelliteSystem.objects.all()
+    )
+
+    frequency_standard = django_filters.MultipleChoiceFilter(
+        choices=FrequencyStandardType.choices
+    )
+
+    country = django_filters.MultipleChoiceFilter(
+        choices=ISOCountry.choices,
+        distinct=True
+    )
+
+    current = SLMBooleanFilter(
+        method='noop',
+        distinct=True,
+        field_name='current'
+    )
+
+    def noop(self, queryset, name, value):
+        return queryset
+
+    def filter_equipment(self, queryset, name, value):
+        if value:
+            if self.current_equipment:
+                return queryset.filter(
+                    Q(**{f'{name}__in': value}) &
+                    SiteIndex.objects.epoch_q(self.query_epoch)
+                ).distinct()
+            else:
+                return queryset.filter(site__in=Site.objects.filter(
+                    **{f'indexes__{name}__in': value}
+                ).distinct())
+        return queryset
+
+    class Meta:
+        model = SiteIndex
+        fields = (
+            'station',
+            'name',
+            'agency',
+            'network',
+            'receiver',
+            'antenna',
+            'radome',
+            'country',
+            'current',
+            'epoch',
+            'satellite_system',
+            'frequency_standard'
+        )
+        distinct = True
 
 
 class DataTablesListMixin(mixins.ListModelMixin):
@@ -40,71 +173,45 @@ class DataTablesListMixin(mixins.ListModelMixin):
     pagination_class = DataTablesPagination
 
 
+class StationNameViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
+
+    queryset = Site.objects.public()
+    serializer_class = StationNameSerializer
+    permission_classes = []
+
+    class StationNameFilter(CrispyFormCompat, FilterSet):
+        """
+        Todo chain with station filer.
+        """
+
+        name = django_filters.CharFilter(
+            lookup_expr='icontains',
+            distinct=True
+        )
+
+        class Meta:
+            model = Site
+            fields = ('name',)
+            distinct = True
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = StationNameFilter
+    ordering = ('name',)
+
+
 class StationListViewSet(
     DataTablesListMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet
 ):
-    
     serializer_class = StationListSerializer
     permission_classes = []
     lookup_field = 'site__name'
     lookup_url_kwarg = 'station'
-
-    class StationFilter(FilterSet):
-
-        name = django_filters.CharFilter(method='find_by_name')
-        epoch = django_filters.DateTimeFilter(
-            field_name='epoch',
-            method='at_epoch'
-        )
-        agency = django_filters.CharFilter(
-            field_name='agencies__name',
-            lookup_expr='icontains'
-        )
-        search = django_filters.CharFilter(method='search_columns')
-
-        def at_epoch(self, queryset, name, value):
-            return queryset.at_epoch(epoch=value)
-
-        def find_by_name(self, queryset, name, value):
-            names = value.split(',')
-            if len(names) == 1:
-                return queryset.filter(site__name__istartswith=names[0])
-            return queryset.filter(
-                site__name__in=[name.upper() for name in names]
-            )
-
-        def search_columns(self, queryset, name, value):
-            """
-            Search multiple columns for the given value.
-            """
-            return queryset.filter(
-                Q(site__name__istartswith=value) |
-                Q(site__agencies__shortname__icontains=value) |
-                Q(site__agencies__name__icontains=value) |
-                Q(site__networks__name__icontains=value) |
-                Q(city__icontains=value) |
-                Q(country__icontains=value) |
-                Q(antenna__model__icontains=value) |
-                Q(radome__model__icontains=value) |
-                Q(receiver__model__icontains=value) |
-                Q(serial_number__icontains=value) |
-                Q(firmware__icontains=value) |
-                Q(frequency_standard__icontains=value) |
-                Q(domes_number__icontains=value) |
-                Q(satellite_system__name__icontains=value) |
-                Q(data_center__icontains=value)
-            ).distinct()
-
-        class Meta:
-            model = SiteIndex
-            fields = (
-                'name',
-                'epoch',
-                'agency',
-                'search'
-            )
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = StationFilter
@@ -135,7 +242,7 @@ class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     serializer_class = SiteFileUploadSerializer
     permission_classes = []
 
-    class FileFilter(FilterSet):
+    class FileFilter(CrispyFormCompat, FilterSet):
 
         site = django_filters.CharFilter(method='find_by_name')
 
@@ -163,6 +270,40 @@ class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     def get_queryset(self):
         return SiteFileUpload.objects.public().select_related('site')
 
+"""
+todo - waiting on DOMES data model change
+class DOMESViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+
+    serializer_class = DOMESSerializer
+    permission_classes = []
+
+    class DOMESFilter(FilterSet):
+        model = django_filters.CharFilter(lookup_expr='icontains')
+        in_use = django_filters.BooleanFilter(
+            method='in_use_filter',
+            distinct=True
+        )
+
+        def in_use_filter(self, queryset, name, value):
+            if value:
+                return queryset.filter(
+                    site_receivers__isnull=False
+                ).distinct()
+            return queryset
+
+        class Meta:
+            model = Site
+            fields = ('id', 'domes_')
+            distinct = True
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = DOMESFilter
+    ordering_fields = ('model',)
+    ordering = ('model',)
+
+    def get_queryset(self):
+        return Site.objects.select_related('manufacturer')
+"""
 
 class ReceiverViewSet(
     mixins.RetrieveModelMixin,
@@ -172,7 +313,7 @@ class ReceiverViewSet(
     serializer_class = ReceiverSerializer
     permission_classes = []
 
-    class ReceiverFilter(FilterSet):
+    class ReceiverFilter(CrispyFormCompat, FilterSet):
         model = django_filters.CharFilter(lookup_expr='icontains')
         in_use = django_filters.BooleanFilter(
             method='in_use_filter',
@@ -208,7 +349,7 @@ class AntennaViewSet(
     serializer_class = AntennaSerializer
     permission_classes = []
 
-    class AntennaFilter(FilterSet):
+    class AntennaFilter(CrispyFormCompat, FilterSet):
         model = django_filters.CharFilter(lookup_expr='icontains')
         in_use = django_filters.BooleanFilter(
             method='in_use_filter',
@@ -244,7 +385,7 @@ class RadomeViewSet(
     serializer_class = RadomeSerializer
     permission_classes = []
 
-    class RadomeFilter(FilterSet):
+    class RadomeFilter(CrispyFormCompat, FilterSet):
         model = django_filters.CharFilter(lookup_expr='icontains')
         in_use = django_filters.BooleanFilter(
             method='in_use_filter',
@@ -280,7 +421,7 @@ class AgencyViewSet(
     serializer_class = AgencySerializer
     permission_classes = []
 
-    class AgencyFilter(FilterSet):
+    class AgencyFilter(CrispyFormCompat, FilterSet):
         name = django_filters.CharFilter(lookup_expr='icontains')
         abbr = django_filters.CharFilter(
             lookup_expr='icontains',
@@ -315,7 +456,7 @@ class NetworkViewSet(
     serializer_class = NetworkSerializer
     permission_classes = []
 
-    class NetworkFilter(FilterSet):
+    class NetworkFilter(CrispyFormCompat, FilterSet):
         name = django_filters.CharFilter(lookup_expr='icontains')
 
         class Meta:
@@ -339,7 +480,7 @@ class ArchiveViewSet(
     serializer_class = ArchiveSerializer
     permission_classes = []
 
-    class ArchiveFilter(FilterSet):
+    class ArchiveFilter(CrispyFormCompat, FilterSet):
 
         site = django_filters.CharFilter(
             field_name='site__name',

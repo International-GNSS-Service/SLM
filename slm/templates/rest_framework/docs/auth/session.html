@@ -1,0 +1,40 @@
+{% load rest_framework %}
+
+<!-- Modal -->
+<div class="modal fade auth-modal auth-session" id="auth_session_modal" tabindex="-1" role="dialog" aria-labelledby="session authentication modal">
+<div class="modal-dialog modal-md" role="document">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-key mb-1" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/>
+          <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+        </svg>
+        Session Authentication</h3>
+    </div>
+
+    <form class="form-horizontal authentication-session-form">
+    <div class="modal-body">
+
+        {% if user.is_authenticated %}
+          <h4 class="text-center">You are logged in as {{ user.get_username }}.</h4>
+        {% else %}
+
+          <div class="text-center">
+            <h4 class="text-center">You need to {% optional_docs_login request %} to enable Session Authentication.</h4>
+          </div>
+        {% endif %}
+
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      {% if user.is_authenticated %}
+        <button type="submit" class="btn btn-primary">Use Session Authentication</button>
+      {% endif %}
+    </div>
+    </form>
+
+  </div>
+</div>
+</div>

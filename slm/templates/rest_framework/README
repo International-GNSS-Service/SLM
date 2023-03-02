@@ -1,0 +1,16 @@
+django rest frameworks builtin theming uses bootstrap3 which was end-of-lifed in 2019.
+To use the SLM filter theming which uses bootstrap5 template packs we had to replace
+the default rest framework themes with the latest bootstrap5 port from
+https://github.com/encode/django-rest-framework/pull/7411
+
+The above PR has stalled, but presumably it will eventually be integrated. When it is,
+these files should be removed. There are a few exceptions though:
+
+* base.html was modified to include jquery and slm css/javascript static files necessary for
+  form components to render correctly
+* base.html had the page name and branding updated to SLM API and IGS branding
+
+* filters/base.html needs the ui-front class added to the modal-body classed element so the
+  autocomplete drop downs will work inside of the bootstrap modal.
+
+

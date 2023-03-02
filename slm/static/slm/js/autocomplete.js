@@ -74,7 +74,7 @@ export class AutoComplete extends FormWidget {
     constructor(options) {
         super(options.container);
         this.textInput = this.container.find('.search-input');
-        this.formField = this.container.find('input');
+        this.formField = this.container.find(':input').first();
         this.selected = {};
         if (this.textInput.val()) {
             this.selected[this.textInput.val()] = this.textInput.html();
@@ -85,6 +85,7 @@ export class AutoComplete extends FormWidget {
         this.labelParam = this.textInput.data('labelParam') || this.searchParam;
         this.valueParam = this.textInput.data('valueParam') || this.labelParam;
         this.queryParams = this.textInput.data('queryParams') || {};
+        this.menuClass = this.textInput.data('menuClass') || '';
 
         if (this.textInput.data('renderSuggestion')) {
             this.renderSuggestion = new Function(
@@ -92,6 +93,14 @@ export class AutoComplete extends FormWidget {
                 this.textInput.data('renderSuggestion')
             );
         }
+
+        // blur the input when enter is pressed
+        this.textInput.keypress(function(e) {
+            if (e.which === 13) {
+                $(this).blur();
+                $(this).trigger('blur');
+            }
+        });
 
         this.autocomplete = this.textInput.autocomplete({
             delay: 250,
@@ -112,6 +121,9 @@ export class AutoComplete extends FormWidget {
                     )
                 );
             }.bind(this),
+            change: function(event, ui) {
+                this.formField.trigger('change');
+            }.bind(this),
             select: function(event, ui) {
                 this.add(ui.item);
                 event.preventDefault();
@@ -119,24 +131,37 @@ export class AutoComplete extends FormWidget {
             focus: function(event, ui) {
                 this.textInput.html(ui.item.basic);
                 return false;
-            }.bind(this)
-        }).bind('focus', function() { $(this).autocomplete('search'); } )
-            .data('ui-autocomplete')._renderItem = function (ul, item) {
-                const label = $(`<div>${item.label}</div>`);
-                if (this.term) {
-                    label.find('span.matchable').each((idx, child) => {
-                        $(child).html(
-                            String($(child).text()).replace(
-                                new RegExp(this.term, 'gi'),
-                            "<span class='autocomplete-match'>$&</span>")
-                        );
-                    });
-                }
-                return $('<li></li>')
-                    .data('item.ui-autocomplete', item)
-                    .append(label)
-                    .appendTo(ul);
-            };
+            }.bind(this),
+
+        }).bind('focus', function() { $(this).autocomplete('search'); } );
+
+        this.autocomplete.data('ui-autocomplete')._renderItem = function (ul, item) {
+            const label = $(`<div>${item.label}</div>`);
+            if (this.term) {
+                label.find('span.matchable').each((idx, child) => {
+                    $(child).html(
+                        String($(child).text()).replace(
+                            new RegExp(this.term, 'gi'),
+                        "<span class='autocomplete-match'>$&</span>")
+                    );
+                });
+            }
+            return $('<li></li>')
+                .data('item.ui-autocomplete', item)
+                .append(label)
+                .appendTo(ul);
+        };
+
+        if (this.menuClass) {
+            const menuClass = this.menuClass;
+            this.autocomplete.data('ui-autocomplete')._renderMenu = function (ul, items) {
+                const that = this;
+                $.each(items, function (index, item) {
+                    that._renderItemData(ul, item);
+                });
+                $(ul).addClass(menuClass);
+            }
+        }
     }
 
     add(item) {
@@ -156,7 +181,7 @@ export class AutoComplete extends FormWidget {
     }
 
     clear() {
-        for (const value of Object.keys(this.selected)) { this.remove(value); }
+        for (const value of Object.keys(this.selected)) { this.remove(value, false); }
     }
 
     persist() {
@@ -199,7 +224,6 @@ export class AutoCompleteMultiple extends AutoComplete {
     constructor(options) {
         super(options);
         this.display = this.container.find('.select-display');
-        this.formField = this.container.find('select');
         this.selected = {};
         this.formField.find('option:selected').each(
             (idx, opt) => { this.selected[$(opt).val()] = $(opt).html(); }
@@ -210,7 +234,7 @@ export class AutoCompleteMultiple extends AutoComplete {
         }.bind(this));
     }
 
-    add(item) {
+    add(item, trigger=true) {
         this.textInput.html('');
         this.selected[item.value.toString()] = item.label;
         if (this.formField.find(`option[value="${item.value}"]`).length === 0) {
@@ -228,7 +252,7 @@ export class AutoCompleteMultiple extends AutoComplete {
         }.bind(this));
     }
 
-    remove(value) {
+    remove(value, trigger=true) {
         value = value.toString();
         if (this.selected.hasOwnProperty(value)) {
             delete this.selected[value];

@@ -57,3 +57,6 @@ class DataTablesPagination(LimitOffsetPagination):
                 'data': schema,
             },
         }
+
+    def get_results(self, data):
+        return data['data']

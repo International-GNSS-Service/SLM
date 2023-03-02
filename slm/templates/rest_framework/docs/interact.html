@@ -1,0 +1,57 @@
+{% load rest_framework %}
+
+<!-- Modal -->
+<div class="modal fade api-modal" id="{{ section_key }}_{{ link_key|slugify }}_modal" tabindex="-1" role="dialog" aria-labelledby="api explorer modal">
+<div class="modal-dialog modal-lg" role="document">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="toggle-view d-none">
+        <div class="btn-group" role="group">
+          <button type="button" data-display-toggle="data" class="btn btn-sm btn-info">Data</button>
+          <button type="button" data-display-toggle="raw" class="btn btn-sm">Raw</button>
+        </div>
+      </div>
+
+      <h3 class="modal-title">
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="mb-1 bi bi-arrow-left-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10.146 7.646a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L12.793 11l-2.647-2.646a.5.5 0 0 1 0-.708z"/>
+          <path fill-rule="evenodd" d="M2 11a.5.5 0 0 1 .5-.5H13a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 11zm3.854-9.354a.5.5 0 0 1 0 .708L3.207 5l2.647 2.646a.5.5 0 1 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0z"/>
+          <path fill-rule="evenodd" d="M2.5 5a.5.5 0 0 1 .5-.5h10.5a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        {{ link.title|default:link_key }}</h3>
+
+    </div>
+
+    <form data-key='["{{ section_key }}", "{{ link_key }}"]' class="api-interaction">
+    <div class="modal-body">
+      <div class="row">
+        <div class="col-lg-6 request">
+          {% form_for_link link %}
+        </div>
+
+        <hr class="hidden-lg hidden-xl" />
+
+        <div class="col-lg-6 response" id="response">
+          <div class="request-awaiting">Awaiting request</div>
+
+          <div class="meta d-none">
+            <span class="label label-primary request-method"></span>
+            <code class="request-url"></code>
+            <label class="label label-lg response-status-code pull-right"></label>
+          </div>
+
+          <pre class="well response-data d-none"></pre>
+          <pre class="well response-raw d-none"><div class="response-raw-request"></div><div class="response-raw-response"></div></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-bs-dismiss="modal">Close</button>
+      <button type="submit" class="btn btn-primary">Send Request</button>
+    </div>
+    </form>
+
+  </div>
+</div>
+</div>

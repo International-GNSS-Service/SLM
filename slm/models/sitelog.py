@@ -1213,14 +1213,15 @@ class SiteIdentification(SiteSection):
     )
 
     iers_domes_number = models.CharField(
-        max_length=50,
+        max_length=9,
         blank=False,
         verbose_name=_('IERS DOMES Number'),
         help_text=_(
             'This is strictly required. '
-            'See http://itrf.ensg.ign.fr/domes_request.php to obtain one. '
+            'See https://itrf.ign.fr/en/network/domes/request to obtain one. '
             'Format: 9 character alphanumeric (A9)'
-        )
+        ),
+        db_index=True
     )
 
     cdp_number = models.CharField(
@@ -1231,7 +1232,8 @@ class SiteIdentification(SiteSection):
         help_text=_(
             'Enter the NASA CDP identifier if available. '
             'Format: 4 character alphanumeric (A4)'
-        )
+        ),
+        db_index=True
     )
 
     date_installed = models.DateTimeField(
@@ -2012,7 +2014,8 @@ class SiteSurveyedLocalTies(SiteSubSection):
         verbose_name=_('Tied Marker CDP Number'),
         help_text=_(
             'Enter the NASA CDP identifier if available. Format: (A4)'
-        )
+        ),
+        db_index=True
     )
     domes_number = models.CharField(
         max_length=50,
@@ -2021,7 +2024,8 @@ class SiteSurveyedLocalTies(SiteSubSection):
         verbose_name=_('Tied Marker DOMES Number'),
         help_text=_(
             'Enter the tied marker DOMES number if available. Format: (A9)'
-        )
+        ),
+        db_index=True
     )
 
     dx = models.FloatField(

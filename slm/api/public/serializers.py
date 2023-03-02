@@ -4,6 +4,7 @@ from slm.models import (
     Network,
     SiteFileUpload,
     SiteIndex,
+    Site,
     Equipment,
     Receiver,
     Antenna,
@@ -12,6 +13,16 @@ from slm.models import (
 )
 from slm.utils import build_absolute_url
 
+"""
+class DOMESSerializer(serializers.Serializer):
+
+    class Meta:
+        model = Site
+        fields = (
+            'site__id',
+            'domes_number'
+        )
+"""
 
 class EquipmentSerializer(serializers.ModelSerializer):
     manufacturer = serializers.CharField(
@@ -66,6 +77,13 @@ class NetworkSerializer(serializers.ModelSerializer):
             'id',
             'name'
         ]
+
+
+class StationNameSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Site
+        fields = ('id', 'name',)
 
 
 class StationListSerializer(serializers.ModelSerializer):

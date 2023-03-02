@@ -8,7 +8,7 @@ def get_enum_context():
         SiteFileUploadStatus,
         SiteLogFormat,
         SiteLogStatus,
-        SLMFileType,
+        SLMFileType
     )
     return {
         'LogEntryType': LogEntryType,

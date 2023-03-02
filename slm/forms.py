@@ -10,7 +10,6 @@ https://docs.djangoproject.com/en/3.2/topics/forms/
 More info on field types:
 https://docs.djangoproject.com/en/3.2/ref/models/fields/
 """
-
 from django import forms
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import MinValueValidator
@@ -20,15 +19,25 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.urls import reverse_lazy
 from django.db.models.fields import NOT_PROVIDED
-from django_enum.forms import EnumChoiceField, Select
+from django_enum.forms import EnumChoiceField
 from django.forms.fields import (
     TypedMultipleChoiceField,
     BooleanField
 )
-from django.forms.widgets import CheckboxInput
+from django.forms.widgets import (
+    CheckboxInput,
+    CheckboxSelectMultiple,
+    HiddenInput
+)
 from django.utils.functional import Promise
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
-from slm.defines import SLMFileType, SiteLogStatus, AlertLevel, ISOCountry
+from slm.defines import (
+    SLMFileType,
+    SiteLogStatus,
+    AlertLevel,
+    ISOCountry,
+    FrequencyStandardType
+)
 from slm.widgets import (
     AutoComplete,
     SLMCheckboxSelectMultiple,
@@ -69,6 +78,7 @@ from slm.models import (
     Antenna,
     Radome
 )
+from django.utils.functional import SimpleLazyObject
 from slm.utils import to_snake_case
 from ckeditor.widgets import CKEditorWidget
 from crispy_forms.layout import Layout, Div, Field
@@ -169,6 +179,7 @@ class AutoSelectMixin:
             label_param=None,
             render_suggestion=None,
             query_params=None,
+            menu_class=None,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -180,6 +191,8 @@ class AutoSelectMixin:
             self.widget.attrs['data-label-param'] = label_param
         if render_suggestion:
             self.widget.attrs['data-render-suggestion'] = render_suggestion
+        if menu_class:
+            self.widget.attrs['data-menu-class'] = menu_class
         if query_params:
             self.widget.attrs['data-query-params'] = (
                 query_params
@@ -237,14 +250,22 @@ class EnumAutoSelectMixin(AutoSelectMixin):
         )
         properties = set(properties or [])
         properties.update({'value', 'label'})
-        self.widget.attrs['data-source'] = json.dumps(sorted(
-            [
-                {prop: getattr(en, prop) for prop in properties}
-                for en in data_source or enum
-            ],
-            key=lambda en: en[self.widget.attrs['data-label-param']]),
-            cls=MultiSelectEnumAutoComplete.PropertyEncoder
-        )
+
+        def lazy_source():
+            """
+            Data sources might hit the database - so we have to evaluate them
+            lazily at widget render time instead of before django bootstrapping
+            """
+            return json.dumps(sorted(
+                [
+                    {prop: getattr(en, prop) for prop in properties}
+                    for en in data_source() or enum
+                ],
+                key=lambda en: en[self.widget.attrs['data-label-param']]),
+                cls=MultiSelectEnumAutoComplete.PropertyEncoder
+            )
+
+        self.widget.attrs['data-source'] = SimpleLazyObject(lazy_source)
 
 
 class MultiSelectEnumAutoComplete(
@@ -516,6 +537,8 @@ class SiteReceiverForm(SubSectionForm):
     receiver_type = ModelAutoComplete(
         queryset=Receiver.objects.all(),
         service_url=reverse_lazy('slm_public_api:receiver-list'),
+        help_text=SiteReceiver._meta.get_field('receiver_type').help_text,
+        label=SiteReceiver._meta.get_field('receiver_type').verbose_name,
         search_param='model',
         value_param='model',
         label_param='model'
@@ -565,6 +588,8 @@ class SiteAntennaForm(SubSectionForm):
     antenna_type = ModelAutoComplete(
         queryset=Antenna.objects.all(),
         service_url=reverse_lazy('slm_public_api:antenna-list'),
+        help_text=SiteAntenna._meta.get_field('antenna_type').help_text,
+        label=SiteAntenna._meta.get_field('antenna_type').verbose_name,
         search_param='model',
         value_param='model',
         label_param='model'
@@ -573,6 +598,8 @@ class SiteAntennaForm(SubSectionForm):
     radome_type = ModelAutoComplete(
         queryset=Radome.objects.all(),
         service_url=reverse_lazy('slm_public_api:radome-list'),
+        help_text=SiteAntenna._meta.get_field('radome_type').help_text,
+        label=SiteAntenna._meta.get_field('radome_type').verbose_name,
         search_param='model',
         value_param='model',
         label_param='model'
@@ -880,6 +907,7 @@ class StationFilterForm(forms.Form):
         from crispy_forms.layout import Fieldset
         helper = FormHelper()
         helper.form_id = 'slm-station-filter'
+        helper.disable_csrf = True
         helper.layout = Layout(
             Div(
                 Div(
@@ -1020,5 +1048,167 @@ class StationFilterForm(forms.Form):
             'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
             '<span class="matchable">${obj.label}</span>`;'
         ),
-        data_source=SiteLocation.objects.countries()
+        data_source=ISOCountry.with_stations
+    )
+
+
+class PublicAPIStationFilterForm(forms.Form):
+    """
+    Todo - how to render help_text as alt or titles?
+    """
+
+    @property
+    def helper(self):
+        from crispy_forms.layout import Fieldset
+        helper = FormHelper()
+        helper.form_method = 'GET'
+        helper.disable_csrf = True
+        helper.form_id = 'slm-station-filter'
+        helper.layout = Layout(
+            Div(
+                Div(
+                    'station',
+                    Field(
+                        'satellite_system',
+                        wrapper_class="form-switch"
+                    ),
+                    Field(
+                        'frequency_standard',
+                        wrapper_class="form-switch"
+                    ),
+                    css_class='col-3'
+                ),
+                Div(
+                    Fieldset(
+                        _('Equipment Filters'),
+                        Field(
+                            'current',
+                            wrapper_class="form-switch"
+                        ),
+                        'receiver',
+                        'antenna',
+                        'radome',
+                        css_class='slm-form-group'
+                    ),
+                    css_class='col-4'
+                ),
+                Div(
+                    'agency',
+                    'network',
+                    Field('country', css_class='slm-country search-input'),
+                    css_class='col-5'
+                ),
+                css_class='row'
+            )
+        )
+        helper.attrs = {'data_slm_initial': json.dumps({
+            field.name: field.field.initial
+            for field in self if field.field.initial
+        })}
+        return helper
+
+    station = ModelMultipleAutoComplete(
+        queryset=Site.objects.public(),
+        service_url=reverse_lazy('slm_public_api:name-list'),
+        #help_text=Site._meta.get_field('name').help_text,
+        #label=Site._meta.get_field('name').verbose_name,
+        search_param='name',
+        value_param='id',
+        label_param='name',
+        menu_class='station-names',
+        required=False
+    )
+
+    satellite_system = forms.ModelMultipleChoiceField(
+        queryset=SatelliteSystem.objects.all(),
+        label=SiteReceiver._meta.get_field('satellite_system').verbose_name,
+        required=False,
+        widget=CheckboxSelectMultiple()
+    )
+
+    frequency_standard = EnumMultipleChoiceField(
+        FrequencyStandardType,
+        required=False,
+        label=_('Frequency Standard')
+    )
+
+    current = SLMBooleanField(
+        label=_('Current'),
+        help_text=_('Only include sites that currently have this equipment.'),
+        initial=True,
+        required=False
+    )
+
+    receiver = ModelMultipleAutoComplete(
+        queryset=Receiver.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Receiver'),
+        required=False,
+        service_url=reverse_lazy('slm_public_api:receiver-list'),
+        search_param='model',
+        value_param='id',
+        label_param='model',
+        query_params={'in_use': True}
+    )
+
+    antenna = ModelMultipleAutoComplete(
+        queryset=Antenna.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Antenna'),
+        required=False,
+        service_url=reverse_lazy('slm_public_api:antenna-list'),
+        search_param='model',
+        value_param='id',
+        label_param='model',
+        query_params={'in_use': True}
+    )
+
+    radome = ModelMultipleAutoComplete(
+        queryset=Radome.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Radome'),
+        required=False,
+        service_url=reverse_lazy('slm_public_api:radome-list'),
+        search_param='model',
+        value_param='id',
+        label_param='model',
+        query_params={'in_use': True}
+    )
+
+    agency = ModelMultipleAutoComplete(
+        queryset=Agency.objects.all(),
+        # help_text=_('Enter the name or abbreviation of an Agency.'),
+        label=_('Agency'),
+        required=False,
+        service_url=reverse_lazy('slm_edit_api:agency-list'),
+        search_param='search',
+        value_param='id',
+        label_param='name',
+        render_suggestion=(
+            'return `<span class="matchable">(${obj.shortname})</span>'
+            '<span class="matchable">${obj.name}</span>`;'
+        )
+    )
+
+    network = ModelMultipleAutoComplete(
+        queryset=Network.objects.all(),
+        # help_text=_('Enter the name of an IGS Network.'),
+        label=_('Network'),
+        required=False,
+        service_url=reverse_lazy('slm_edit_api:network-list'),
+        search_param='name',
+        value_param='id',
+        label_param='name'
+    )
+
+    country = MultiSelectEnumAutoComplete(
+        # help_text=_('Enter the name of a country or region.'),
+        ISOCountry,
+        label=_('Country/Region'),
+        required=False,
+        render_suggestion=(
+            'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
+            '<span class="matchable">${obj.label}</span>`;'
+        ),
+        data_source=ISOCountry.with_stations
     )

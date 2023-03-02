@@ -1,0 +1,78 @@
+{% load rest_framework %}
+<div class="sidebar">
+    <h3 class="brand"><a href="#">{{ document.title }}</a></h3>
+
+    <svg data-bs-toggle="collapse" data-bs-target="#menu-content" width="2.5em" height="2.5em" viewBox="0 0 16 16" class="toggle-btn bi bi-three-dots-vertical" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+    </svg>
+    <div class="menu-list">
+        <ul id="menu-content" class="menu-content collapse out">
+            {% if document|data %}
+            {% for section_key, section in document|data|items %}
+            <li data-bs-toggle="collapse" data-bs-target="#{{ section_key }}-dropdown" class="collapsed">
+                <a class="d-flex align-items-center">
+                  <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="me-2 ms-2 bi bi-bullseye" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path fill-rule="evenodd" d="M8 13A5 5 0 1 0 8 3a5 5 0 0 0 0 10zm0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12z"/>
+                    <path fill-rule="evenodd" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+                    <path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                  </svg>
+                  {% if section_key %}{{ section_key }}{% else %}API Endpoints{% endif %}
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="ms-auto me-3 bi bi-chevron-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+
+                </a>
+              </li>
+                <ul class="sub-menu {% if section_key %}collapse{% endif %}" id="{{ section_key }}-dropdown">
+                {% for link_key, link in section|schema_links|items %}
+                    <li>
+                      <a href="#{{ section_key }}-{{ link_key|slugify }}">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-right" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                          <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        {{ link.title|default:link_key }}
+                      </a>
+                    </li>
+                {% endfor %}
+                </ul>
+
+            {% endfor %}
+            {% endif %}
+        </ul>
+
+        <ul class="menu-list menu-list-bottom">
+            <li data-bs-toggle="collapse" data-bs-target="#auth-control" class="collapsed">
+                <a>
+                  <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="mb-1 me-2 ms-3 bi bi-person-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                  </svg>
+                  Authentication
+                </a>
+              <span id="selected-authentication">{% if user.is_authenticated %}session{% else %}none{% endif %}</span>
+            </li>
+            <ul class="sub-menu collapse out" id="auth-control">
+                <li {% if not user.is_authenticated %}class="active"{% endif %}><a data-auth="none" href="#">none</a></li>
+                <li><a data-auth="token" data-bs-toggle="modal" data-bs-target="#auth_token_modal" href="#">token</a></li>
+                <li><a data-auth="basic" data-bs-toggle="modal" data-bs-target="#auth_basic_modal" href="#">basic</a></li>
+                <li {% if user.is_authenticated %}class="active"{% endif %}><a data-auth="session" data-bs-toggle="modal" data-bs-target="#auth_session_modal" href="#">session</a></li>
+            </ul>
+
+            <li data-bs-toggle="collapse" data-bs-target="#language-control" class="collapsed">
+                <a>
+                  <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="mb-1 ms-3 me-2 bi bi-code-slash" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0zm-.999-3.124a.5.5 0 0 1 .33.625l-4 13a.5.5 0 0 1-.955-.294l4-13a.5.5 0 0 1 .625-.33z"/>
+                  </svg>
+                  Source Code
+                </a>
+              <span id="selected-language">{{ langs | first }}</span>
+            </li>
+            <ul class="sub-menu collapse out" id="language-control">
+            {% for lang in langs %}
+                <li{% if loop.first %} class="active"{% endif %}><a href="#" data-language="{{ lang }}">{{ lang }}</a></li>
+	    {% endfor %}
+            </ul>
+        </ul>
+
+    </div>
+</div>

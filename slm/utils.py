@@ -1,10 +1,6 @@
-import importlib
-import inspect
-import sys
 from logging import Filter
-from pprint import pformat
-from rest_framework.serializers import Serializer
 from django.conf import settings
+from django.utils.functional import lazy
 
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)

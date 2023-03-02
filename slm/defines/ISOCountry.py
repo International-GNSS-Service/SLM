@@ -2,6 +2,7 @@
 from django.utils.translation import gettext_lazy as _
 from django_enum import TextChoices
 from enum_properties import p, s
+from django.utils.functional import classproperty, lazy
 
 
 class ISOCountry(
@@ -278,3 +279,26 @@ class ISOCountry(
         The string representation of this enum is its alpha-2 country code
         """
         return str(self.value)
+
+    @classmethod
+    def with_stations(cls, objects=None):
+        """
+        Get the list of countries that have ever had stations sited within.
+        The result of this function is should not be read until after
+        Django is initialized.
+
+        :param objects: The model manage for the model with the country field.
+        """
+        if objects is None:
+            from slm.models import SiteLocation
+            objects = SiteLocation.objects
+
+        return list(set([
+            country
+            for country in objects.values_list(
+                'country',
+                flat=True
+            ).distinct().order_by('country')
+            if isinstance(country, cls)
+        ]))
+

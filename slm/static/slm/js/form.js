@@ -12,9 +12,12 @@ export class Form extends Persistable {
     #initial;  // the "clear" state of the form
     fields;
     widgets;  // object keyed on field name where the values are widgets
+    last; // last serialized data
 
     #multi;
     #composite;
+
+    #changeCallbacks;
 
     static ELEMENTS = ['input', 'select', 'textarea'];
 
@@ -62,6 +65,32 @@ export class Form extends Persistable {
             }
         }
         return false;
+    }
+
+    static stripNulls = function(data) {
+        /**
+         * Strip empty arrays and values from the query data.
+         * @type {{}}
+         */
+        const stripped = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (value) { stripped[key] = value;}
+        }
+        return stripped;
+    }
+
+    static toQueryString = function(data) {
+        /**
+         * Convert query data to a url query string. No ? will be added
+         * to the front. This will strip nulls.
+         */
+        const params = [];
+        for (const [key, value] of Object.entries(data)) {
+            if (value) {
+                params.push(`${key}=${value}`);
+            }
+        }
+        return params.join('&');
     }
 
     get excluded() {
@@ -228,6 +257,7 @@ export class Form extends Persistable {
         this.element = element;
         this.#composite = {};
         this.#multi = new Set();
+        this.#changeCallbacks = [];
         this.widgets = {};
         
         // Step one is to determine which names are not unique. These fields are
@@ -259,6 +289,16 @@ export class Form extends Persistable {
         }
 
         this.element.data('slmForm', this);
+
+        this.element.find(':input').on('change', function() {
+            const data = this.data;
+            if (Form.differs(data, this.last)) {
+                for (const changed of this.#changeCallbacks) { changed(this); }
+                this.last = data;
+            }
+        }.bind(this));
+
+        this.last = this.data;
     }
 
     decompose(types, value) {
@@ -354,5 +394,9 @@ export class Form extends Persistable {
         for (const widget of Object.values(this.widgets)) {
             widget.revive();
         }
+    }
+
+    onChange(callback) {
+        this.#changeCallbacks.push(callback);
     }
 }

@@ -194,12 +194,6 @@ class SLMConfig(AppConfig):
 
     def ready(self):
 
-        # https://github.com/carltongibson/django-filter/issues/1537
-        # monkey patch out django-filters crispy form rendering:
-        from django_filters import compat
-        compat.is_crispy = lambda: False
-        ############################################################
-
         from slm import signals as slm_signals
         from slm.models import Site, Alert
         from django.contrib.auth import get_user_model

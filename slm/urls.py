@@ -80,6 +80,7 @@ APIS = {
     ],
     'public': [
         ('stations', public_views.StationListViewSet),
+        ('name', public_views.StationNameViewSet),
         ('receiver', public_views.ReceiverViewSet),
         ('antenna', public_views.AntennaViewSet),
         ('radome', public_views.RadomeViewSet),

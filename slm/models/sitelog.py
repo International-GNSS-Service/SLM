@@ -5,15 +5,13 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import (
-    Case,
     F,
     Max,
     Q,
     Value,
-    When,
     OuterRef,
     Subquery,
-    ExpressionWrapper,
+    ExpressionWrapper
 )
 from django.contrib.auth.models import Permission
 from enum import Enum
@@ -23,7 +21,7 @@ from django.db.models.functions import (
     ExtractDay,
     ExtractMonth,
     ExtractYear,
-    Greatest,
+    Now,
     Lower,
     LPad,
     Substr,
@@ -31,6 +29,7 @@ from django.db.models.functions import (
 from django.utils.functional import cached_property
 from django_enum import EnumField
 from slm.defines import (
+    RinexVersion,
     SiteLogFormat,
     AntennaReferencePoint,
     Aspiration,
@@ -55,6 +54,8 @@ from slm.validators import (
 )
 from functools import lru_cache
 from django.utils.functional import classproperty
+from django.core import serializers
+
 
 
 def bool_condition(*args, **kwargs):
@@ -198,6 +199,28 @@ class SiteQuerySet(models.QuerySet):
         max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
         return self.annotate(
             _max_alert=Subquery(max_alert.values('level')[:1])
+        )
+
+    def availability(self):
+        from slm.models import DataAvailability
+        last_data_avail = DataAvailability.objects.filter(
+            pk=OuterRef('pk')
+        ).order_by('-last')
+        return self.annotate(
+            last_data_time=Subquery(last_data_avail.values('last')[:1]),
+            last_data=Now() - F('last_data_time'),
+            last_rinex2=Subquery(
+                last_data_avail.filter(
+                    RinexVersion(2).major_q()
+                ).values('last')[:1]),
+            last_rinex3=Subquery(
+                last_data_avail.filter(
+                    RinexVersion(3).major_q()
+                ).values('last')[:1]),
+            last_rinex4=Subquery(
+                last_data_avail.filter(
+                    RinexVersion(4).major_q()
+                ).values('last')[:1])
         )
 
 
@@ -638,6 +661,53 @@ class Site(models.Model):
                 )
 
         return sections_published
+
+    @cached_property
+    def equipment_list(self):
+        """
+        Returns a list of equipment pairings in date order:
+
+        [
+            (date, {receiver: <receiver>, antenna: <antenna>}),
+            (date, {receiver: <receiver>, antenna: <antenna>}),
+            (date, {receiver: <receiver>, antenna: <antenna>})
+        ]
+        """
+        equipment = {}
+        self.current()
+        for receiver in self.sitereceiver_set.all():
+            equipment.setdefault(receiver.installed.date(), {})
+            equipment[receiver.installed.date()]['receiver'] = receiver
+        for antenna in self.siteantenna_set.all():
+            equipment.setdefault(antenna.installed.date(), {})
+            equipment[antenna.installed.date()]['antenna'] = antenna
+
+        # build the time ordered list of equipment pairings
+        time_ordered = []
+        dates = sorted(equipment.keys())
+        for idx, eq_date in enumerate(dates):
+            time_ordered.append(
+                (eq_date, {
+                     'receiver': equipment[eq_date].get(
+                         'receiver',
+                         None if idx == 0
+                         else time_ordered[idx-1][1]['receiver']
+                     ),
+                    'antenna': equipment[eq_date].get(
+                        'antenna',
+                        None if idx == 0
+                        else time_ordered[idx - 1][1]['antenna']
+                    ),
+                 }))
+
+        # remove any gaps at the front without full equipment
+        start = 0
+        for idx, eq in enumerate(time_ordered):
+            if eq[1]['receiver'] and eq[1]['antenna']:
+                break
+            start = idx + 1
+
+        return list(reversed(time_ordered[start:]))
 
     def __str__(self):
         return self.name

@@ -26,6 +26,10 @@ from polymorphic.models import PolymorphicModel
 from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
 from slm.models import compat
 from slm.models.sitelog import DefaultToStrEncoder, SiteSection, SiteSubSection
+from slm.utils import get_exif_tags
+from dateutil import parser
+from datetime import datetime
+from django.utils.timezone import is_naive, make_aware, utc
 
 
 class AgencyManager(models.Manager):
@@ -599,10 +603,41 @@ class SiteFileUpload(SiteFile):
 
     objects = SiteFileUploadManager.from_queryset(SiteFileUploadQuerySet)()
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # if this is an image, attempt to pull the real timestamp out of the
+        # meta data
+        if not self.created and self.file_type == SLMFileType.SITE_IMAGE:
+            tags = get_exif_tags(self.file.path)
+            for tag in ['DateTime', 'DateTimeOriginal', 'DateTimeDigitized']:
+                if tag in tags:
+                    try:
+                        self.created = datetime.strptime(
+                            tags[tag],
+                            '%Y:%m:%d %H:%M:%S'
+                        )
+                    except ValueError:
+                        try:
+                            self.created = parser.parse(tags[tag])
+                        except parser.ParserError:
+                            pass
+
+                    if self.created:
+                        if is_naive(self.created):
+                            self.created = make_aware(self.created, utc)
+                        return super().save(*args, **kwargs)
+
     @property
     def link(self):
         return reverse(
             'slm:download_attachment',
+            kwargs={'site': self.site.name, 'pk': self.pk}
+        )
+
+    @property
+    def thumbnail_link(self):
+        return reverse(
+            'slm:download_attachment_thumbnail',
             kwargs={'site': self.site.name, 'pk': self.pk}
         )
 

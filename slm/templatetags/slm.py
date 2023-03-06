@@ -419,10 +419,11 @@ def autocomplete_values(widget):
             values = [values]
 
         service_url = widget.get('attrs', {}).get('data-service-url')
+
         value_map = {
             item['value']: item
             for item in json.loads(
-                widget.get('attrs', {}).get('data-source', '[]')
+                str(widget.get('attrs', {}).get('data-source', '[]'))
             )
         }
         if value_map:

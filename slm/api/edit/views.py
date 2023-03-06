@@ -592,14 +592,11 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
 
     class SiteIndexFilter(BaseSiteLogDownloadViewSet.SiteIndexFilter):
 
-        unpublished = SLMBooleanFilter(method='get_unpublished')
+        unpublished = SLMBooleanFilter(method='noop')
         unpublished.help = _(
             'If true, download the published version of the log. If false,'
             'the HEAD version of the log '
         )
-
-        def get_unpublished(self, queryset, **_):
-            return queryset.none()
 
         class Meta(BaseSiteLogDownloadViewSet.SiteIndexFilter.Meta):
             fields = (

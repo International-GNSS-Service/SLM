@@ -1,5 +1,4 @@
 from django.http import FileResponse
-from django.utils.translation import gettext as _
 from django_filters import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
@@ -8,6 +7,7 @@ from slm.models import ArchivedSiteLog, SiteIndex
 from slm.defines import SiteLogFormat
 from slm.api.filter import SLMDateTimeFilter, InitialValueFilterSet
 from datetime import datetime
+from django.utils.translation import gettext as _
 
 
 class LegacyRenderer(renderers.BaseRenderer):
@@ -17,6 +17,9 @@ class LegacyRenderer(renderers.BaseRenderer):
     media_type = SiteLogFormat.LEGACY.mimetype
     format = SiteLogFormat.LEGACY
 
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return b''
+
 
 class GeodesyMLRenderer(renderers.BaseRenderer):
     """
@@ -25,6 +28,9 @@ class GeodesyMLRenderer(renderers.BaseRenderer):
     media_type = SiteLogFormat.GEODESY_ML.mimetype
     format = SiteLogFormat.GEODESY_ML
 
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return b''
+
 
 class JSONRenderer(renderers.BaseRenderer):
     """
@@ -32,6 +38,9 @@ class JSONRenderer(renderers.BaseRenderer):
     """
     media_type = SiteLogFormat.JSON.mimetype
     format = SiteLogFormat.JSON
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return b''
 
 
 class BaseSiteLogDownloadViewSet(
@@ -76,7 +85,7 @@ class BaseSiteLogDownloadViewSet(
                 (Q(end__isnull=True) | Q(end__gt=value))
             )
 
-        def noop(self, queryset, **_):
+        def noop(self, queryset, _1, _2):
             return queryset
 
         class Meta:

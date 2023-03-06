@@ -13,7 +13,6 @@ class StationMapSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         return {
-            "id": instance.pk,
             "type": "Feature",
             "geometry": {
                 "type": "Point",

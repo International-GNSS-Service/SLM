@@ -1,7 +1,9 @@
 from logging import Filter
 from django.conf import settings
-from django.utils.functional import lazy
-
+from django.core import serializers
+import json
+from PIL import Image, ExifTags
+from datetime import datetime
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
 
@@ -130,3 +132,47 @@ class _Singleton(type):
 
 class Singleton(_Singleton('SingletonMeta', (object,), {})):
     pass
+
+
+class SectionEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        from django.db.models import Model, Manager, QuerySet
+        from slm.models import SiteSection, Equipment, Manufacturer
+        if hasattr(obj, 'isoformat'):
+            return obj.isoformat()
+        if isinstance(obj, SiteSection):
+            return {
+                field: getattr(obj, field) for field in obj.site_log_fields()
+            }
+        if isinstance(obj, Equipment):
+            return {
+                field: getattr(obj, field) for field in [
+                    'model',
+                    'manufacturer'
+                ]
+            }
+        if isinstance(obj, Manufacturer):
+            return {
+                field: getattr(obj, field) for field in ['name']
+            }
+
+        if isinstance(obj, Model):
+            # catch-all
+            return json.loads(serializers.serialize('json', [obj]))[0]
+
+        if isinstance(obj, (Manager, QuerySet)):
+            return [related for related in obj.all()]
+
+        return json.JSONEncoder.default(self, obj)
+
+
+def get_exif_tags(file_path):
+    image_exif = Image.open(file_path)._getexif()
+    if image_exif:
+        exif = {
+            ExifTags.TAGS[k]: v for k, v in image_exif.items()
+            if k in ExifTags.TAGS and type(v) is not bytes
+        }
+        return exif
+    return {}

@@ -259,7 +259,7 @@ class EnumAutoSelectMixin(AutoSelectMixin):
             return json.dumps(sorted(
                 [
                     {prop: getattr(en, prop) for prop in properties}
-                    for en in data_source() or enum
+                    for en in (data_source() if data_source else enum or [])
                 ],
                 key=lambda en: en[self.widget.attrs['data-label-param']]),
                 cls=MultiSelectEnumAutoComplete.PropertyEncoder
@@ -1059,7 +1059,7 @@ class PublicAPIStationFilterForm(forms.Form):
 
     @property
     def helper(self):
-        from crispy_forms.layout import Fieldset
+        from crispy_forms.layout import Fieldset, Submit
         helper = FormHelper()
         helper.form_method = 'GET'
         helper.disable_csrf = True
@@ -1098,8 +1098,9 @@ class PublicAPIStationFilterForm(forms.Form):
                     Field('country', css_class='slm-country search-input'),
                     css_class='col-5'
                 ),
-                css_class='row'
-            )
+                css_class='row',
+            ),
+            Submit('', _('Submit'), css_class='btn btn-primary')
         )
         helper.attrs = {'data_slm_initial': json.dumps({
             field.name: field.field.initial

@@ -1,0 +1,27 @@
+After consideration its been decided that the historical edit record maintained
+in the data model is too complex for almost no real gain and its performance
+impacts have driven some de-normalization which is bad.
+
+Proposed changes:
+
+    Sections:
+
+         Published will remain a date but when a section
+         is published the previous published table row shall be deleted.
+
+         Only two rows per section per site are present at any given time. The
+         updated (unpublished) row and the published row.
+
+        Subsections:
+
+             Only two rows per section per site per subsection identifier are
+             present at any given time. The updated (unpublished) row and the
+             published row.
+
+    SiteIndex:
+
+        All site filtering will be re-normalized from the SiteIndex based
+        queries and all section information fields will be removed.
+
+        The SiteIndex will primarily be used to access serialized log archives
+        and also to determine published/decommission dates.

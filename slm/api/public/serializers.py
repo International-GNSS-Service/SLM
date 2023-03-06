@@ -164,6 +164,7 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
             'site',
             'name',
             'timestamp',
+            'created',
             'download',
             'mimetype',
             'description',

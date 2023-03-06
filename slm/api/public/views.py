@@ -2,7 +2,7 @@ import django_filters
 from django.db.models import Q, Subquery, OuterRef
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, viewsets
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from slm.api.pagination import DataTablesPagination
 from slm.api.public.serializers import (
     SiteFileUploadSerializer,
@@ -213,11 +213,27 @@ class StationListViewSet(
     lookup_field = 'site__name'
     lookup_url_kwarg = 'station'
 
-    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filter_backends = (DjangoFilterBackend, OrderingFilter, SearchFilter)
     filterset_class = StationFilter
     ordering_fields = [
         'site__name', 'country', 'agency', 'latitude', 'longitude', 'elevation'
     ]
+    
+    search_fields = (
+        'site__name',
+        'site__agencies__name',
+        'site__agencies__shortname',
+        'site__networks__name',
+        'city',
+        'antenna__model',
+        'radome__model',
+        'receiver__model',
+        'serial_number',
+        'firmware',
+        'domes_number',
+        'satellite_system__name',
+        'data_center'
+    )
     ordering = ('site__name',)
 
     def get_queryset(self):
@@ -304,6 +320,7 @@ class DOMESViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     def get_queryset(self):
         return Site.objects.select_related('manufacturer')
 """
+
 
 class ReceiverViewSet(
     mixins.RetrieveModelMixin,

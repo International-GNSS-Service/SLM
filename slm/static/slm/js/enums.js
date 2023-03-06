@@ -223,6 +223,7 @@ class SLMFileType {
     }
 }
 
+
 slm.LogEntryType = LogEntryType;
 slm.SiteLogStatus = SiteLogStatus;
 slm.SiteFileUploadStatus = SiteFileUploadStatus;

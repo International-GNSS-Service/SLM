@@ -30,5 +30,9 @@ class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
                 rv.value for rv in RinexVersion if rv.major == self.major
             ]})
 
+    @classmethod
+    def major_versions(cls):
+        return [cls.v2, cls.v3, cls.v4]
+
     def __str__(self):
         return str(self.label)

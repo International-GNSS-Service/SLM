@@ -164,11 +164,6 @@ urlpatterns = [
         name='download'
     ),
     path(
-        'download/<station:station>/<format:format>',
-        DownloadView.as_view(),
-        name='download'
-    ),
-    path(
         'review/<station:station>',
         StationReviewView.as_view(),
         name='review'

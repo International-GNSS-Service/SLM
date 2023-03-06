@@ -434,8 +434,11 @@ def autocomplete_values(widget):
         elif service_url:
             view, _, _ = resolve(service_url)
             Serializer = view.cls.serializer_class
+            field = widget.get('attrs', {}).get('data-value-param', 'pk')
             serializer = Serializer(
-                Serializer.Meta.model.objects.filter(pk__in=values),
+                Serializer.Meta.model.objects.filter(
+                    **{f'{field}__in': values}
+                ),
                 many=True
             )
             for value in serializer.data:

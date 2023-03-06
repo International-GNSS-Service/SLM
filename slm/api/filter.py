@@ -57,7 +57,6 @@ class CrispyFormCompat:
                     *form.fields.keys(),
                     Submit('', _('Submit'), css_class='btn btn-primary')
                 )
-
         return form
 
 
@@ -77,7 +76,9 @@ class AcceptListArguments:
                 if key.endswith('[]'):
                     stripped.setlist(key[0:-2], data.getlist(key))
                 else:
-                    stripped[key] = data.get(key)
+                    stripped.setlist(key, data.getlist(key))
+                    if len(stripped[key]) == 1:
+                        stripped[key] = stripped[key][0]
             data = stripped
         super().__init__(data=data, *args, **kwargs)
 
@@ -89,7 +90,7 @@ class MustIncludeThese(BaseInFilter, NumberFilter):
 
     def filter(self, qs, value):
         if value:
-            qs |= super().filter(qs.model.objects.all(), value)
+            qs |= super().filter(qs.model.objects.all(), value).distinct()
         return qs
 
 

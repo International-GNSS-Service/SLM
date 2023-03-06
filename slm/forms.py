@@ -1114,9 +1114,10 @@ class PublicAPIStationFilterForm(forms.Form):
         #help_text=Site._meta.get_field('name').help_text,
         #label=Site._meta.get_field('name').verbose_name,
         search_param='name',
-        value_param='id',
+        value_param='name',
         label_param='name',
         menu_class='station-names',
+        to_field_name='name',
         required=False
     )
 

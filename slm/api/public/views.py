@@ -81,19 +81,18 @@ class StationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     )
 
     station = django_filters.ModelMultipleChoiceFilter(
-        field_name='site',
+        field_name='site__name',
+        to_field_name='name',
         queryset=Site.objects.all(),
-        method='include_stations',
+        #method='filter_stations',
         null_value='',
         null_label=''
     )
 
-    def include_stations(self, queryset, name, value):
+    def filter_stations(self, queryset, name, value):
         value = [val for val in value or [] if val]
         if value:
-            queryset |= queryset.model.objects.at_epoch(
-                self.query_epoch
-            ).filter(**{f'{name}__in': value})
+            return queryset.filter(**{f'site__in': value}).distinct()
         return queryset
 
     receiver = django_filters.ModelMultipleChoiceFilter(

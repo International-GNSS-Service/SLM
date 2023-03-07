@@ -278,6 +278,9 @@ class MultiSelectEnumAutoComplete(
 class SelectEnumAutoComplete(EnumAutoSelectMixin, EnumChoiceField):
     widget = AutoComplete
 
+    def __init__(self, *args, widget=AutoComplete, **kwargs):
+        super().__init__(*args, widget=widget, **kwargs)
+
 
 class NewSiteForm(forms.ModelForm):
 
@@ -503,7 +506,8 @@ class SiteLocationForm(SectionForm):
         render_suggestion=(
             'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
             '<span class="matchable">${obj.label}</span>`;'
-        )
+        ),
+        strict=False
     )
 
     class Meta:
@@ -945,6 +949,8 @@ class StationFilterForm(forms.Form):
             for field in self if field.field.initial
         })}
         return helper
+
+    name = forms.CharField(required=False)
 
     status = EnumMultipleChoiceField(
         SiteLogStatus,

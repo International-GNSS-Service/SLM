@@ -1,7 +1,7 @@
 {% load static slm %}
 <fieldset id="{{ widget.attrs.id }}-container" class="autocomplete" name="{{ widget.name }}">
     <legend style="display: none">"{{ field.help_text }}"</legend>
-    <div {% include "django/forms/widgets/attrs.html" %} contenteditable="true"></div>
+    <div {% include "django/forms/widgets/attrs.html" %} contenteditable="true">{{ widget.value }}</div>
 
     <label for="{{ widget.attrs.id }}-input" style="display: none"></label>
     <input id="{{ widget.attrs.id }}-input" name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="text" style="display: none">

@@ -29,6 +29,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from slm import signals as slm_signals
 from slm.api.filter import (
+    CrispyFormCompat,
     AcceptListArguments,
     MustIncludeThese
 )
@@ -101,12 +102,17 @@ from slm.defines import SiteLogStatus, AlertLevel
 from slm.api.filter import SLMBooleanFilter
 from django.http import Http404
 from datetime import datetime
+from slm.forms import StationFilterForm
 
 
-class StationFilter(AcceptListArguments, FilterSet):
+class StationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     """
     Edit API station filter extensions.
     """
+
+    def get_form_class(self):
+        return StationFilterForm
+
     @property
     def current_equipment(self):
         return self.form.cleaned_data.get('current', None)
@@ -423,7 +429,7 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     serializer_class = LogEntrySerializer
     permission_classes = (IsAuthenticated,)
 
-    class LogEntryFilter(FilterSet):
+    class LogEntryFilter(CrispyFormCompat, FilterSet):
 
         sites = None
 
@@ -501,7 +507,7 @@ class AlertViewSet(
     serializer_class = AlertSerializer
     permission_classes = (IsAuthenticated, CanDeleteAlert)
 
-    class AlertFilter(FilterSet):
+    class AlertFilter(CrispyFormCompat, FilterSet):
 
         sites = None
 
@@ -526,27 +532,28 @@ class AlertViewSet(
                 **kwargs
             )
 
-        site = django_filters.CharFilter(method='for_site')
-        user = django_filters.CharFilter(method='for_user')
+        site = django_filters.CharFilter(method='for_site', distinct=True)
+        user = django_filters.CharFilter(method='for_user', distinct=True)
 
         def filter_queryset(self, queryset):
             return super().filter_queryset(queryset).concerning_sites(
                 self.sites.qs
-            )
+            ).distinct()
 
         def for_site(self, queryset, name, value):
             return queryset.for_site(
                 Site.objects.filter(name__iexact=value).first()
-            )
+            ).distinct()
 
         def for_user(self, queryset, name, value):
             return queryset.for_user(
                 get_user_model().filter(email__iexact=value)
-            )
+            ).distinct()
 
         class Meta:
             model = Alert
             fields = ('site', 'user',)
+            distinct = True
 
     filter_backends = (DjangoFilterBackend,)
     filterset_class = AlertFilter
@@ -655,7 +662,7 @@ class SectionViewSet(type):
         parents.append(viewsets.GenericViewSet)
         obj = super().__new__(metacls, name, tuple(parents), namespace)
 
-        class ViewSetFilter(FilterSet):
+        class ViewSetFilter(CrispyFormCompat, FilterSet):
             site = django_filters.CharFilter(
                 field_name='site__name',
                 lookup_expr='iexact'
@@ -1308,7 +1315,7 @@ class SiteFileUploadViewSet(
             return section.ordering_id
         return None
 
-    class FileFilter(AcceptListArguments, FilterSet):
+    class FileFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
 
         name = django_filters.CharFilter(
             field_name='name',

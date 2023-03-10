@@ -290,6 +290,14 @@ class Site(models.Model):
         db_index=True
     )
 
+    join_date = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_('The time this site was first published.'),
+        db_index=True
+    )
+
+    # todo, normalize onto log join
     last_user = models.ForeignKey(
         'slm.User',
         null=True,
@@ -299,6 +307,7 @@ class Site(models.Model):
         related_name='recent_sites',
         help_text=_('The last user to make edits to the site log.')
     )
+    ######################################
 
     last_publish = models.DateTimeField(
         null=True,
@@ -316,6 +325,7 @@ class Site(models.Model):
         db_index=True
     )
 
+    # todo - what is this? deprecate
     last_recalc = models.DateTimeField(null=True, blank=True, default=None)
 
     @lru_cache(maxsize=32)
@@ -776,10 +786,10 @@ class SiteLocationQueryset(SiteSectionQueryset):
 
 class SiteSection(models.Model):
 
-    VALIDATORS = []
-
     site = models.ForeignKey('slm.Site', on_delete=models.CASCADE)
+
     edited = models.DateTimeField(auto_now_add=True, db_index=True, null=False)
+
     published = models.BooleanField(default=False, db_index=True)
 
     editor = models.ForeignKey(
@@ -1569,11 +1579,11 @@ class SiteLocation(SiteSection):
         blank=False,
         verbose_name=_('Latitude (N is +)'),
         help_text=_(
-            'Enter the ITRF position to a one meter precision. '
-            'Format: (+/-DDMMSS.SS)'
+            'Enter the ITRF latitude in decimal degrees to a one meter '
+            'precision. Note, legacy site log format is (+/-DDMMSS.SS).'
         ),
         db_index=True,
-        validators=[MaxValueValidator(900000), MinValueValidator(-900000)]
+        validators=[MaxValueValidator(90), MinValueValidator(-90)]
     )
 
     longitude = models.FloatField(
@@ -1581,11 +1591,11 @@ class SiteLocation(SiteSection):
         blank=False,
         verbose_name=_('Longitude (E is +)'),
         help_text=_(
-            'Enter the ITRF position to a one meter precision. '
-            'Format: (+/-DDDMMSS.SS)'
+            'Enter the ITRF longitude in decimal degrees to a one meter '
+            'precision. Note, legacy site log format is (+/-DDDMMSS.SS).'
         ),
         db_index=True,
-        validators=[MaxValueValidator(1800000), MinValueValidator(-1800000)]
+        validators=[MaxValueValidator(180), MinValueValidator(-180)]
     )
 
     elevation = models.FloatField(

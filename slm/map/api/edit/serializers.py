@@ -22,7 +22,7 @@ class StationMapSerializer(serializers.Serializer):
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [instance.longitude / 10000, instance.latitude / 10000],
+                "coordinates": [instance.longitude, instance.latitude],
             },
             "properties": {
                 "name": instance.name,

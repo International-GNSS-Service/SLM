@@ -9,23 +9,27 @@ PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
 
 
 def dddmmssss_to_decimal(dddmmssss):
-    if isinstance(dddmmssss, str):
-        dddmmssss = float(dddmmssss)
-    if dddmmssss > 1000 or dddmmssss < -1000:
-        dddmmssss /= 10000
-    degrees = int(dddmmssss)
-    minutes = (dddmmssss - degrees) * 100
-    seconds = float((minutes - int(minutes)) * 100)
-    return degrees + int(minutes)/60 + seconds/3600
+    if dddmmssss:
+        if isinstance(dddmmssss, str):
+            dddmmssss = float(dddmmssss)
+        if dddmmssss > 1000 or dddmmssss < -1000:
+            dddmmssss /= 10000
+        degrees = int(dddmmssss)
+        minutes = (dddmmssss - degrees) * 100
+        seconds = float((minutes - int(minutes)) * 100)
+        return degrees + int(minutes)/60 + seconds/3600
+    return None
 
 
 def decimal_to_dddmmssss(dec):
-    if isinstance(dec, str):
-        dec = float(dec)
-    degrees = int(dec)
-    minutes = (dec - degrees) * 60
-    seconds = float(minutes - int(minutes)) * 60
-    return degrees*10000 + int(minutes)*100 + seconds
+    if dec:
+        if isinstance(dec, str):
+            dec = float(dec)
+        degrees = int(dec)
+        minutes = (dec - degrees) * 60
+        seconds = float(minutes - int(minutes)) * 60
+        return degrees*10000 + int(minutes)*100 + seconds
+    return None
 
 
 def set_protocol(request):

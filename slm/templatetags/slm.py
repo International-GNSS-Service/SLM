@@ -10,6 +10,7 @@ import json
 from django.utils.translation import gettext as _
 from slm.utils import to_snake_case, build_absolute_url
 from django.urls import resolve
+from slm.utils import decimal_to_dddmmssss, dddmmssss_to_decimal
 
 
 register = template.Library()
@@ -130,19 +131,22 @@ def multi_line(text):
 
 
 @register.filter(name='iso6709')
-def iso6709(lat_lng, padding):
-    if lat_lng:
-        number = f'{lat_lng:.2f}'
+def iso6709(decimal_degrees, padding):
+    if decimal_degrees:
+        dddmmssss = decimal_to_dddmmssss(decimal_degrees)
+        number = f'{dddmmssss:.2f}'
         integer, dec = number.split('.') if '.' in number else (number, None)
         iso_frmt = f"{abs(int(integer)):0{int(padding)}}{'.' if dec else ''}{dec}"
-        return f'{"+" if float(lat_lng) > 0 else "-"}{iso_frmt}'
+        return f'{"+" if float(dddmmssss) > 0 else "-"}{iso_frmt}'
     return ''
 
 
 @register.filter(name='epsg7912')
 def epsg7912(lat_lng, prec=10):
     if lat_lng:
-        return precision(lat_lng/10000, prec)
+        if lat_lng > 1000:
+            lat_lng = dddmmssss_to_decimal(lat_lng)
+        return precision(lat_lng, prec)
     return ''
 
 

@@ -25,3 +25,11 @@ Proposed changes:
 
         The SiteIndex will primarily be used to access serialized log archives
         and also to determine published/decommission dates.
+
+    Deletions, once published will be real deletions.
+
+
+Query Types:
+    - All
+    - At-epoch
+    - In range

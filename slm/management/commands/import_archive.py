@@ -30,6 +30,7 @@ from slm.parsing.legacy import (
 )
 from datetime import datetime
 from django.utils.timezone import utc, make_aware
+from slm.utils import dddmmssss_to_decimal
 
 
 class Command(BaseCommand):
@@ -183,7 +184,7 @@ class Command(BaseCommand):
 
         def lat_lng(lat_lng):
             if lat_lng is not None:
-                return lat_lng / 10000
+                return dddmmssss_to_decimal(lat_lng)
             return None
 
         prep_time = get_param((0, None, None), 'date_prepared')

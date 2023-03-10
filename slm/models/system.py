@@ -377,6 +377,15 @@ class SiteFile(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        self._discover_type()
+        self.generate_thumbnail()
+        if self.file:
+            self.size = self.file.size
+        else:
+            self.size = None
+        return super().save(*args, **kwargs)
+
+    def _discover_type(self):
         if not self.mimetype:
             import mimetypes
             self.mimetype = mimetypes.guess_type(self.file.path)[0]
@@ -385,12 +394,6 @@ class SiteFile(models.Model):
                 self.file,
                 self.mimetype
             )
-        self.generate_thumbnail()
-        if self.file:
-            self.size = self.file.size
-        else:
-            self.size = None
-        return super().save(*args, **kwargs)
 
     @classmethod
     def determine_type(cls, file, mimetype):
@@ -604,11 +607,11 @@ class SiteFileUpload(SiteFile):
     objects = SiteFileUploadManager.from_queryset(SiteFileUploadQuerySet)()
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        self._discover_type()
         # if this is an image, attempt to pull the real timestamp out of the
         # meta data
         if not self.created and self.file_type == SLMFileType.SITE_IMAGE:
-            tags = get_exif_tags(self.file.path)
+            tags = get_exif_tags(self.file.open('rb'))
             for tag in ['DateTime', 'DateTimeOriginal', 'DateTimeDigitized']:
                 if tag in tags:
                     try:
@@ -625,7 +628,8 @@ class SiteFileUpload(SiteFile):
                     if self.created:
                         if is_naive(self.created):
                             self.created = make_aware(self.created, utc)
-                        return super().save(*args, **kwargs)
+                        break
+        return super().save(*args, **kwargs)
 
     @property
     def link(self):

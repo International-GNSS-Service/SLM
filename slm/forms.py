@@ -1220,3 +1220,9 @@ class PublicAPIStationFilterForm(forms.Form):
         ),
         data_source=ISOCountry.with_stations
     )
+
+    def clean_current(self):
+        # todo mixin that does this
+        if not self['current'].html_name in self.data:
+            return self.fields['current'].initial
+        return self.cleaned_data['current']

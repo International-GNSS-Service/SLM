@@ -215,7 +215,7 @@ class StationListViewSet(
     filter_backends = (DjangoFilterBackend, OrderingFilter, SearchFilter)
     filterset_class = StationFilter
     ordering_fields = [
-        'site__name', 'country', 'agency', 'latitude', 'longitude', 'elevation'
+        'site__name', 'latitude', 'longitude', 'elevation', 'last_data'
     ]
     
     search_fields = (

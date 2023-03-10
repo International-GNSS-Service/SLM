@@ -3,9 +3,29 @@ from django.conf import settings
 from django.core import serializers
 import json
 from PIL import Image, ExifTags
-from datetime import datetime
+
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
+
+
+def dddmmssss_to_decimal(dddmmssss):
+    if isinstance(dddmmssss, str):
+        dddmmssss = float(dddmmssss)
+    if dddmmssss > 1000 or dddmmssss < -1000:
+        dddmmssss /= 10000
+    degrees = int(dddmmssss)
+    minutes = (dddmmssss - degrees) * 100
+    seconds = float((minutes - int(minutes)) * 100)
+    return degrees + int(minutes)/60 + seconds/3600
+
+
+def decimal_to_dddmmssss(dec):
+    if isinstance(dec, str):
+        dec = float(dec)
+    degrees = int(dec)
+    minutes = (dec - degrees) * 60
+    seconds = float(minutes - int(minutes)) * 60
+    return degrees*10000 + int(minutes)*100 + seconds
 
 
 def set_protocol(request):
@@ -168,7 +188,8 @@ class SectionEncoder(json.JSONEncoder):
 
 
 def get_exif_tags(file_path):
-    image_exif = Image.open(file_path)._getexif()
+    # not all images have exif, (e.g. gifs)
+    image_exif = getattr(Image.open(file_path), '_getexif', lambda: None)()
     if image_exif:
         exif = {
             ExifTags.TAGS[k]: v for k, v in image_exif.items()

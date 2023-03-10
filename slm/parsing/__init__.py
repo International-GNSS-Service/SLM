@@ -7,6 +7,7 @@ from slm.models import (
     SatelliteSystem
 )
 from dateutil.parser import parse as parse_date
+from slm.utils import dddmmssss_to_decimal
 
 
 SPECIAL_CHARACTERS = '().,-_[]{}<>+%'
@@ -510,6 +511,15 @@ def to_numeric(numeric_type, value):
 
 def to_float(value):
     return to_numeric(numeric_type=float, value=value)
+
+
+def to_decimal_degrees(value):
+    """
+    Converts ISO6709 degrees minutes seconds into decimal degrees.
+    :param value:
+    :return:
+    """
+    return dddmmssss_to_decimal(to_float(value))
 
 
 def to_int(value):

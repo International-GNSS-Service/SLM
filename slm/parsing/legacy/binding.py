@@ -22,6 +22,7 @@ from slm.parsing import (
     to_int,
     to_enum,
     to_float,
+    to_decimal_degrees,
     to_date,
     to_radome,
     to_antenna,
@@ -230,8 +231,8 @@ class SiteLogBinder(BaseBinder):
                 ('X coordinate', ('x', to_float)),
                 ('Y coordinate', ('y', to_float)),
                 ('Z coordinate', ('z', to_float)),
-                ('Latitude', ('latitude', to_float)),
-                ('Longitude', ('longitude', to_float)),
+                ('Latitude', ('latitude', to_decimal_degrees)),
+                ('Longitude', ('longitude', to_decimal_degrees)),
                 ('Elevation', ('elevation', to_float)),
 
                 ('X coordinate (m)', ('x', to_float)),

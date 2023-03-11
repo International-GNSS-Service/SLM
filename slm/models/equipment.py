@@ -153,7 +153,6 @@ class AntCal(models.Model):
 
     calibration = EnumField(
         AntennaCalibration,
-        max_length=11,
         blank=True,
         null=True,
         db_index=True
@@ -163,4 +162,5 @@ class AntCal(models.Model):
     zen = models.FloatField(blank=True, null=True, db_index=True)
 
     class Meta:
-        index_together = (('antenna', 'dome'),)
+        index_together = (('antenna', 'radome'),)
+        unique_together = (('antenna', 'radome'),)

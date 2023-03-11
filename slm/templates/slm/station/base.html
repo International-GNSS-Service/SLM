@@ -36,7 +36,7 @@
 
                         <!-- Links -->
                         <ul class="nav nav-pills align-items-center">
-                            {% with station_name=site.fourid %}
+                            {% with station_name=site.four_id %}
                                 {% with url_name=request.resolver_match.url_name %}
                                 <li class="nav-item {% if url_name == 'alerts' %}active{% endif %}">
                                     <a href="{% if station %}{% url 'slm:alerts' station=station %}{% else %}{% url 'slm:alerts' %}{% endif %}" class="nav-link"><i class="bi bi-bell{% if station_alert_level %}-fill {{ station_alert_level.css }}{% endif %} slm-alert-bell"></i> {% trans "Alerts" %}</a>

@@ -325,9 +325,6 @@ class Site(models.Model):
         db_index=True
     )
 
-    # todo - what is this? deprecate
-    last_recalc = models.DateTimeField(null=True, blank=True, default=None)
-
     @lru_cache(maxsize=32)
     def is_moderator(self, user):
         if user.is_superuser:
@@ -609,7 +606,7 @@ class Site(models.Model):
             )
 
     @property
-    def fourid(self):
+    def four_id(self):
         return self.name[:4]
 
     def publish(self, request=None, silent=False, timestamp=None):

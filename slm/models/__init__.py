@@ -29,16 +29,19 @@ from slm.models.sitelog import (
     SiteTemperatureSensor,
     SiteWaterVaporRadiometer,
 )
-from slm.models.system import (
+from slm.models.equipment import (
     Equipment,
-    Agency,
     Antenna,
-    LogEntry,
     Manufacturer,
-    Network,
-    Radome,
     Receiver,
-    SatelliteSystem,
+    Radome,
+    AntennaCalibration,
+    SatelliteSystem
+)
+from slm.models.system import (
+    Agency,
+    LogEntry,
+    Network,
     SiteFile,
     SiteFileUpload
 )

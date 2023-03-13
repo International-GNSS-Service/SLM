@@ -25,6 +25,12 @@ export class AutoComplete extends FormWidget {
     valueParam;
     selected;
 
+    // if theres a full match on the first suggestion when the field is
+    // defocused (enter or click away) we set the value to that first match.
+    newResponse; // toggle used to only check the first menu item
+    fullMatch;
+    firstSuggestion;
+
     renderSuggestion(suggestion) {
         return `<span class="matchable">${suggestion[this.labelParam]}</span>`;
     }
@@ -60,6 +66,13 @@ export class AutoComplete extends FormWidget {
     filterResponse(data) {
         this.inputUpdated();
         const suggestions = [];
+        this.newResponse = true;
+        this.fullMatch = false;
+        if (data.length > 0) {
+            this.firstSuggestion = this.makeSuggestion(data[0]);
+        } else {
+            this.firstSuggestion = null;
+        }
         for (const suggestion of data) {
             if (this.selected.hasOwnProperty(
                 suggestion[this.valueParam].toString()
@@ -97,15 +110,20 @@ export class AutoComplete extends FormWidget {
         // blur the input when enter is pressed
         this.textInput.keypress(function(e) {
             if (e.which === 13) {
-                $(this).blur();
                 $(this).trigger('blur');
+            }
+        });
+
+        this.textInput.blur(() => {
+            if (this.fullMatch && this.firstSuggestion) {
+                this.add(this.firstSuggestion);
             }
         });
 
         this.autocomplete = this.textInput.autocomplete({
             delay: 250,
             minLength: 0,
-            source: this.serviceUrl ? function(request, response) {
+            source: this.serviceUrl ? (request, response) => {
                 const data = this.queryParams;
                 data[this.searchParam] = request.term;
                 $.ajax({url: this.serviceUrl, data: data}).done(
@@ -113,14 +131,14 @@ export class AutoComplete extends FormWidget {
                         response(this.filterResponse(data));
                     }.bind(this)
                 ).fail(function(jqXHR) {console.log(jqXHR);});
-            }.bind(this) : function(request, response) {
+            }: (request, response) => {
                 const data = $.ui.autocomplete.filter(this.source, request.term);
                 response(
                     this.filterResponse(
                         data
                     )
                 );
-            }.bind(this),
+            },
             change: function(event, ui) {
                 this.formField.trigger('change');
             }.bind(this),
@@ -135,10 +153,34 @@ export class AutoComplete extends FormWidget {
 
         }).bind('focus', function() { $(this).autocomplete('search'); } );
 
+        const checkFullMatch = function(text, term) {
+            this.fullMatch |= text.toUpperCase() === term.toUpperCase();
+            if (!this.fullMatch) {
+                // special case for (text)
+                if (text.startsWith('(')) {
+                    text = text.substring(1);
+                }
+                if (text.endsWith(')')) {
+                    text = text.substring(0, text.length-1);
+                }
+                this.fullMatch |= text.toUpperCase() === term.toUpperCase();
+            }
+        }.bind(this);
+
+        const newResponse = function(newResponse=null) {
+            if (newResponse !== null) {
+                this.newResponse = newResponse;
+            }
+            return this.newResponse;
+        }.bind(this)
+
         this.autocomplete.data('ui-autocomplete')._renderItem = function (ul, item) {
             const label = $(`<div>${item.label}</div>`);
             if (this.term) {
                 label.find('span.matchable').each((idx, child) => {
+                    if (newResponse()) {
+                        checkFullMatch($(child).text(), this.term);
+                    }
                     $(child).html(
                         String($(child).text()).replace(
                             new RegExp(this.term, 'gi'),
@@ -146,6 +188,7 @@ export class AutoComplete extends FormWidget {
                     );
                 });
             }
+            newResponse(false);
             return $('<li></li>')
                 .data('item.ui-autocomplete', item)
                 .append(label)

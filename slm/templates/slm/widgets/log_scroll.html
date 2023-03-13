@@ -15,45 +15,48 @@
 
 {% compress js inline %}
 <script>
-    slm.drawLogs = function(position, data) {
-        function getName(entry) {
-            if (entry.hasOwnProperty('user') && entry.user !== null) {
-                return slm.mailToUser(entry.user);
-            }
-            return '';
-        }
-        for (const entry of data) {
-            const type = slm.LogEntryType.get(entry.type);
-            const timestamp = new Date(entry.timestamp);
-            const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site}});
-            $(`<div class="slm-log-item d-flex py-2 mt-1 ${type.css}" aria-current="true" tabindex="0" onclick="window.location='${diffUrl}'">` +
-                    `<div class="d-flex w-100 justify-content-between align-items-center">` +
-                        `<div class="d-flex justify-content-evenly align-items-center">` +
-                            `<span class="m-0 me-2 p-0 mono fw-bold"><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site}})}">${entry.site}</a></span>` +
-                            `<span class="badge ${type.css} me-2">${type.label}</span>` +
-                            `<span><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site, section: entry.target.toLowerCase().replaceAll(" ", "")}})}">${entry.target}</a></span>` +
-                        `</div>` +
-                        `<div class="d-flex justify-content-evenly align-items-center">` +
-                            `<div class="opacity-75 me-2">${getName(entry)}</div>` +
-                            `<small class="text-nowrap opacity-75">${timestamp.toLocaleString()}</small>` +
-                            // `<small class="d-flex justify-content-end">${entry.ip ? entry.ip : ''}</small>` +
-                        `<div/>` +
-                    `</div>` +
-                `</div>`
-            ).insertBefore(position);
-        }
-        let div = $("#slm-log-scroll");
-        if (data.length === 0 && div.data('slmPage') === 0) { 
-            $(`<h3 class="text-center text-secondary">No Recent Activity</h3>`
-            ).insertBefore(position);
-        }
-    }
-    
     $(document).ready(function() {
-        let scrollDiv = $("#slm-log-scroll");
+        const scrollDiv = $("#slm-log-scroll");
+        const drawLogs = function(position, data, reinitialize=false) {
+            if (reinitialize) {
+                scrollDiv.find('.slm-log-item').remove();
+                scrollDiv.find('h3').remove();
+            }
+            function getName(entry) {
+                if (entry.hasOwnProperty('user') && entry.user !== null) {
+                    return slm.mailToUser(entry.user);
+                }
+                return '';
+            }
+            for (const entry of data) {
+                const type = slm.LogEntryType.get(entry.type);
+                const timestamp = new Date(entry.timestamp);
+                const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site}});
+                $(`<div class="slm-log-item d-flex py-2 mt-1 ${type.css}" aria-current="true" tabindex="0" onclick="window.location='${diffUrl}'">` +
+                        `<div class="d-flex w-100 justify-content-between align-items-center">` +
+                            `<div class="d-flex justify-content-evenly align-items-center">` +
+                                `<span class="m-0 me-2 p-0 mono fw-bold"><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site}})}">${entry.site}</a></span>` +
+                                `<span class="badge ${type.css} me-2">${type.label}</span>` +
+                                `<span><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site, section: entry.target.toLowerCase().replaceAll(" ", "")}})}">${entry.target}</a></span>` +
+                            `</div>` +
+                            `<div class="d-flex justify-content-evenly align-items-center">` +
+                                `<div class="opacity-75 me-2">${getName(entry)}</div>` +
+                                `<small class="text-nowrap opacity-75">${timestamp.toLocaleString()}</small>` +
+                                // `<small class="d-flex justify-content-end">${entry.ip ? entry.ip : ''}</small>` +
+                            `<div/>` +
+                        `</div>` +
+                    `</div>`
+                ).insertBefore(position);
+            }
+            let div = $("#slm-log-scroll");
+            if (data.length === 0 && div.data('slmPage') === 0) {
+                $(`<h3 class="text-center text-secondary">No Recent Activity</h3>`
+                ).insertBefore(position);
+            }
+        }
+
         const init = function() {
-            scrollDiv.find('.slm-log-item').remove();
-            scrollDiv.find('h3').remove();
+            reinitialize = true;
             slm.initInfiniteScroll(
                 scrollDiv,
                 scrollDiv,
@@ -61,7 +64,7 @@
                 "slm_edit_api:logentries-list",
                 {},
                 {% if station %}{site: '{{ station }}'}{% elif log_user %}{user: '{{ log_user.email }}'}{% else %}{}{% endif %},
-                slm.drawLogs
+                (position, data) => { drawLogs(position, data, true); }
             );
         };
 
@@ -70,6 +73,10 @@
             scrollDiv.data('slmQuery', queryParams);
             init();
         }
+        /* todo this is a little clunky - results in double init when station
+         * filter is present on the page
+         */
+        init();
         slm.stationFilterCallbacks.push(stationsFiltered);
     });
 </script>

@@ -452,7 +452,7 @@ slm.mailToUser = function(user) {
     return '';
 }
 
-slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, draw) {
+slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, draw, cache=false) {
     div = $(div);
     scrollDiv = scrollDiv === null ? $(window) : scrollDiv;
     const atBottom = $.isWindow(scrollDiv.get(0)) ? slm.windowAtBottom : slm.scrollAtBottom;
@@ -460,42 +460,54 @@ slm.initInfiniteScroll = function(div, scrollDiv, loader, api, kwargs, query, dr
     if (loader === null) {
         loader = position;
     }
-    let fetchPage = function() {
+    const drawPage = function(data) {
+        loader.hide();
+        if (data.next) {
+            scrollDiv.scroll(function() {
+                if (atBottom(scrollDiv.get(0))) {
+                    fetchPage();
+                }
+            });
+        }
+        draw(
+            position,
+            data.hasOwnProperty('results') ?
+                data.results : data.hasOwnProperty('data') ?
+                data.data : data,
+            data.hasOwnProperty('recordsFiltered') ? data.recordsFiltered : null,
+            data.hasOwnProperty('recordsTotal') ? data.recordsTotal : null
+        );
+        div.data('slmPage', div.data('slmPage') + query.length);
+    };
+    const fetchPage = function() {
         loader.show();
         scrollDiv.off( 'scroll' );
-        const pageQuery = div.data('slmQuery') || {};
-        pageQuery.start = div.data('slmPage');
-        pageQuery.length = div.data('slmPageSize');
-        $.ajax({
-            url: slm.urls.reverse(api, kwargs, [], query),
-            method: 'GET',
-            data: pageQuery
-        }).done(
-            function(data, status, jqXHR) {
-                loader.hide();
-                if (data.next) {
-                    scrollDiv.scroll(function() {
-                        if (atBottom(scrollDiv.get(0))) {
-                            fetchPage();
-                        }
-                    });
+        query = Object.assign(
+            query,
+            Object.assign(
+                div.data('slmQuery') || {},
+                {
+                    start: div.data('slmPage'),
+                    length: div.data('slmPageSize')
                 }
-                draw(
-                    position,
-                    data.hasOwnProperty('results') ?
-                        data.results : data.hasOwnProperty('data') ?
-                        data.data : data,
-                    data.hasOwnProperty('recordsFiltered') ? data.recordsFiltered : null,
-                    data.hasOwnProperty('recordsTotal') ? data.recordsTotal : null
-                );
-                div.data('slmPage', div.data('slmPage') + pageQuery.length);
-            }
-        ).fail(
-            function(data, status, jqXHR) {
-                alert(`Failed to fetch log entries: ${status}`);
-                console.log(jqXHR);
-            }
+            )
         );
+        const queryUrl = slm.urls.reverse(api, kwargs, [], query);
+        const cached = sessionStorage.getItem(queryUrl);
+        if (cached) {
+            drawPage(JSON.parse(cached));
+        } else {
+            $.ajax({url: queryUrl}).done(
+                (data) => {
+                    if (cache) {
+                        sessionStorage.setItem(queryUrl, JSON.stringify(data));
+                    }
+                    drawPage(data);
+                }
+            ).fail((jqXHR) => {
+                console.log(jqXHR);
+            });
+        }
     }
     fetchPage(); 
 }

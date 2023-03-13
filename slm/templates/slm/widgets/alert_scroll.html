@@ -15,8 +15,6 @@
 
 {% compress js inline %}
 <script>
-
-    const includeTargets = {% if exclude_targets %}false{% else %}true{% endif %};
     const deleteAlert = function(alertId) {
         this.event.stopPropagation();
         $.ajax({
@@ -47,60 +45,64 @@
         );
     }
 
-    function drawAlerts(position, data) {
-        for (const alert of data) {
-            const level = slm.AlertLevel.get(alert.level);
-            const timestamp = new Date(alert.timestamp);
-            let siteUrl = null;
-            if (alert.site) {
-                siteUrl = slm.urls.reverse('slm:edit', {kwargs: {'station': alert.site}});
+    $(document).ready(function() {
+        const scrollDiv = $("#slm-alert-scroll");
+        const includeTargets = {% if exclude_targets %}false{% else %}true{% endif %};
+
+        function drawAlerts(position, data, reinitialize=false) {
+            if (reinitialize) {
+                scrollDiv.find('.slm-alert-item').remove();
+                scrollDiv.find('h3').remove();
             }
-            const deleteButton = function() {
-                if (alert.sticky) {
+            for (const alert of data) {
+                const level = slm.AlertLevel.get(alert.level);
+                const timestamp = new Date(alert.timestamp);
+                let siteUrl = null;
+                if (alert.site) {
+                    siteUrl = slm.urls.reverse('slm:edit', {kwargs: {'station': alert.site}});
+                }
+                const deleteButton = function() {
+                    if (alert.sticky) {
+                        return '';
+                    }
+                    return `<div class="slm-alert-close" style="cursor: pointer" onclick="deleteAlert(${alert.id})" title='{% trans "Dismiss alert" %}'><i class="bi bi-trash3 text-danger"></i></div>`;
+                }
+                const targetButton = function() {
+                    if (alert.target && includeTargets) {
+                        return `<a class="btn btn-outline ${level.css}" tabindex= "0" href='${ alert.target.link }' type="button">${alert.target.name}</a>`;
+                    }
                     return '';
                 }
-                return `<div class="slm-alert-close" style="cursor: pointer" onclick="deleteAlert(${alert.id})" title='{% trans "Dismiss alert" %}'><i class="bi bi-trash3 text-danger"></i></div>`;
-            }
-            const targetButton = function() {
-                if (alert.target && includeTargets) {
-                    return `<a class="btn btn-outline ${level.css}" tabindex= "0" href='${ alert.target.link }' type="button">${alert.target.name}</a>`;
+                const alertQuery = function() {
+                    if (alert.target && alert.target.type === 'Agency') {
+                        return `?agency=${alert.target.id}`;
+                    }
+                    return '';
                 }
-                return '';
-            }
-            const alertQuery = function() {
-                if (alert.target && alert.target.type === 'Agency') {
-                    return `?agency=${alert.target.id}`;
-                }
-                return '';
-            }
-            $(`<div id="alert-${alert.id}" class="slm-alert-item ${level.css} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id}>` +
-                    `<div class="d-flex gap-2 w-100 justify-content-between">` +
-                        `<div>` +
-                            `<h3 class="mb-2 slm-alert-header"><a href="${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}${alertQuery()}">${alert.header}</a></h3>` +
-                            `<div class="opacity-75 slm-alert-detail">${alert.detail}</div>` +
-                            targetButton() +
+                $(`<div id="alert-${alert.id}" class="slm-alert-item ${level.css} d-flex gap-3 py-3 mt-1" aria-current="true" data-slm-alert=${alert.id}>` +
+                        `<div class="d-flex gap-2 w-100 justify-content-between">` +
+                            `<div>` +
+                                `<h3 class="mb-2 slm-alert-header"><a href="${slm.urls.reverse('slm:alert', {kwargs: {alert: alert.id}})}${alertQuery()}">${alert.header}</a></h3>` +
+                                `<div class="opacity-75 slm-alert-detail">${alert.detail}</div>` +
+                                targetButton() +
+                            `</div>` +
                         `</div>` +
-                    `</div>` +
-                    `<div class="opacity-75 slm-alert-time">` +
-                        `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
-                    `</div>` +
-                    deleteButton() +
-                `</div>`
-            ).insertBefore(position);
+                        `<div class="opacity-75 slm-alert-time">` +
+                            `<small class="text-nowrap">${timestamp.toLocaleString()}</small>` +
+                        `</div>` +
+                        deleteButton() +
+                    `</div>`
+                ).insertBefore(position);
+            }
+            let div = $("#slm-alert-scroll");
+            if (data.length === 0 && div.data('slmPage') === 0 ) {
+                $(
+                    `<h3 class="text-center text-secondary">{% trans 'No Alerts' %}</h3>`
+                ).insertBefore(position);
+            }
         }
-        let div = $("#slm-alert-scroll");
-        if (data.length === 0 && div.data('slmPage') === 0 ) { 
-            $(
-                `<h3 class="text-center text-secondary">{% trans 'No Alerts' %}</h3>`
-            ).insertBefore(position);
-        }
-    }
 
-    $(document).ready(function() {
-        let scrollDiv = $("#slm-alert-scroll");
         const init = function() {
-            scrollDiv.find('.slm-alert-item').remove();
-            scrollDiv.find('h3').remove();
             slm.initInfiniteScroll(
                 scrollDiv,
                 scrollDiv,
@@ -108,7 +110,7 @@
                 "slm_edit_api:alerts-list",
                 {},
                 {% if station %}{site: '{{ station|safe }}'}{% else %}{}{% endif %},
-                drawAlerts
+                (position, data) => { drawAlerts(position, data, true); }
             );
         }
         const stationsFiltered = function(queryParams) {
@@ -116,6 +118,10 @@
             scrollDiv.data('slmQuery', queryParams);
             init();
         }
+        /* todo this is a little clunky - results in double init when station
+         * filter is present on the page
+         */
+        init();
         slm.stationFilterCallbacks.push(stationsFiltered);
     });
 </script>

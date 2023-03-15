@@ -1,20 +1,3 @@
-"""
-The Site Log models contain edit histories and a tree-like structure that
-make complex queries (potentially) very slow. To remedy this the best and
-really only option is to denormalize the data. All searchable site log fields
-should be defined and indexed here.
-
-Think of this record as a Materialized View that's defined in code to make
-it RDBMS independent.
-
-Denormalization introduces the potential for data inconsistency. If updates are
-published and a corresponding SiteIndex is not created, search results will be
-incorrect. This will not however break editing or site log serialization. In
-the context of the rest of the software - this table should be treated as
-a read-only index.
-
-Extensions... todo
-"""
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import F, OuterRef, Q, Subquery, Value
@@ -30,26 +13,16 @@ from django.db.models.functions import (
     ExtractDay
 )
 from django.utils.timezone import now
-from django_enum import EnumField
 from slm.defines import (
-    FrequencyStandardType,
-    ISOCountry,
     RinexVersion,
     SiteLogFormat,
-    SLMFileType,
-    GeodesyMLVersion
+    SLMFileType
 )
 from slm.models.data import DataAvailability
-from slm.models.system import (
-    Antenna,
-    Radome,
-    Receiver,
-    SatelliteSystem,
-    SiteFile,
-)
+from slm.models.system import SiteFile
 
 
-class SiteIndexManager(models.Manager):
+class ArchiveIndexManager(models.Manager):
 
     def add_index(self, site):
         existing = self.filter(site=site, begin=site.last_publish).first()
@@ -58,43 +31,11 @@ class SiteIndexManager(models.Manager):
 
         self.close_index(site)
 
-        location = site.sitelocation_set.current(published=True)
-        identification = site.siteidentification_set.current(published=True)
-        antenna = site.siteantenna_set.current(published=True).filter(
-            removed__isnull=True
-        ).order_by('-installed').first()
-        receiver = site.sitereceiver_set.current(published=True).filter(
-            removed__isnull=True
-        ).order_by('-installed').first()
-        frequency = site.sitefrequencystandard_set.current(
-            published=True
-        ).filter(
-            effective_end__isnull=True
-        ).order_by('-effective_start').first()
-        more_info = site.sitemoreinformation_set.current(published=True)
-
         new_index = self.create(
             site=site,
             begin=site.last_publish,
-            end=None,
-            latitude=location.latitude if location else None,
-            longitude=location.longitude if location else None,
-            elevation=location.elevation if location else None,
-            city=location.city if location else '',
-            country=location.country if location else '',
-            antenna=antenna.antenna_type if antenna else None,
-            radome=antenna.radome_type if antenna else None,
-            receiver=receiver.receiver_type if receiver else None,
-            serial_number=receiver.serial_number if receiver else '',
-            firmware=receiver.firmware if receiver else '',
-            frequency_standard=frequency.standard_type if frequency else None,
-            domes_number=(
-                identification.iers_domes_number if identification else None
-            ),
-            data_center=more_info.primary
+            end=None
         )
-        if receiver:
-            new_index.satellite_system.set(receiver.satellite_system.all())
 
         for log_format in SiteLogFormat:
             if log_format in {SiteLogFormat.JSON}:
@@ -132,7 +73,7 @@ class SiteIndexManager(models.Manager):
         return self.create(begin=begin, **kwargs)
 
 
-class SiteIndexQuerySet(models.QuerySet):
+class ArchiveIndexQuerySet(models.QuerySet):
 
     @staticmethod
     def epoch_q(epoch=None):
@@ -213,7 +154,7 @@ class SiteIndexQuerySet(models.QuerySet):
         )
 
 
-class SiteIndex(models.Model):
+class ArchiveIndex(models.Model):
 
     site = models.ForeignKey(
         'slm.Site',
@@ -228,66 +169,7 @@ class SiteIndex(models.Model):
     # the point in time at which this record stops being valid
     end = models.DateTimeField(null=True, db_index=True)
 
-    latitude = models.FloatField(db_index=True, null=True)
-    longitude = models.FloatField(db_index=True, null=True)
-    elevation = models.FloatField(db_index=True, null=True)
-
-    city = models.CharField(
-        default='',
-        db_index=True,
-        max_length=100,
-        blank=True
-    )
-    country = EnumField(
-        ISOCountry,
-        null=True,
-        db_index=True,
-        max_length=255,
-        strict=False
-    )
-
-    antenna = models.ForeignKey(Antenna, on_delete=models.PROTECT, null=True)
-    radome = models.ForeignKey(Radome, on_delete=models.PROTECT, null=True)
-    receiver = models.ForeignKey(Receiver, on_delete=models.PROTECT, null=True)
-
-    serial_number = models.CharField(
-        db_index=True,
-        max_length=100,
-        blank=True,
-        default=''
-    )
-    firmware = models.CharField(
-        db_index=True,
-        max_length=100,
-        blank=True,
-        default=''
-    )
-
-    frequency_standard = EnumField(
-        FrequencyStandardType,
-        null=True,
-        db_index=True,
-        strict=False,
-        max_length=100
-    )
-
-    domes_number = models.CharField(
-        db_index=True,
-        max_length=9,
-        blank=True,
-        default=''
-    )
-
-    satellite_system = models.ManyToManyField(SatelliteSystem)
-
-    data_center = models.CharField(
-        db_index=True,
-        max_length=100,
-        blank=True,
-        default=''
-    )
-
-    objects = SiteIndexManager.from_queryset(SiteIndexQuerySet)()
+    objects = ArchiveIndexManager.from_queryset(ArchiveIndexQuerySet)()
 
     class Meta:
         ordering = ('-begin',)
@@ -334,7 +216,7 @@ class ArchivedSiteLogManager(models.Manager):
         return None
 
     def from_site(self, site, log_format=SiteLogFormat.LEGACY, epoch=None):
-        index = SiteIndex.objects.filter(
+        index = ArchiveIndex.objects.filter(
             site=site
         ).at_epoch(epoch=epoch).first()
         if index:
@@ -395,7 +277,7 @@ class ArchivedSiteLog(SiteFile):
     SUB_DIRECTORY = 'archive'
 
     index = models.ForeignKey(
-        SiteIndex,
+        ArchiveIndex,
         on_delete=models.CASCADE,
         related_name='files'
     )

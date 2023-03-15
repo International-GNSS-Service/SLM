@@ -13,10 +13,7 @@ from django.utils.translation import gettext as _
 from django_enum import EnumField
 from PIL import Image
 from slm.defines import (
-    AntennaFeatures,
-    AntennaReferencePoint,
     CardinalDirection,
-    EquipmentState,
     LogEntryType,
     SiteFileUploadStatus,
     SiteLogFormat,

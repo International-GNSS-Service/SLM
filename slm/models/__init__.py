@@ -3,7 +3,7 @@ from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from slm.models.data import DataAvailability
-from slm.models.index import ArchivedSiteLog, SiteIndex
+from slm.models.index import ArchivedSiteLog, ArchiveIndex
 from slm.models.sitelog import (
     Site,
     SiteAntenna,

@@ -237,7 +237,9 @@ export class Form extends Persistable {
                         this.element.find(`[name="${field}"]:checkbox`).not(checked).prop('checked', false);
                         break;
                     default:
-                        throw TypeError(`Array given for form data type: ${ipt.prop('type')}`);
+                        if (ipt.length > 0) {
+                            throw TypeError(`Array given for form data type: ${ipt.prop('type')}`);
+                        }
                 }
             } else if (ipt.length > 1) {
                 const types = [];

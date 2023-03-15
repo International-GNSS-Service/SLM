@@ -1,7 +1,8 @@
 from django.db.models import OuterRef, Q, Subquery
-from rest_framework import status
+from rest_framework import pagination
 from rest_framework.response import Response
 from slm.api.public import views as slm_views
+from slm.models import Site
 from slm.map.api.public.serializers import (
     StationListSerializer,
     StationMapSerializer,
@@ -21,26 +22,56 @@ class StationListViewSet(slm_views.StationListViewSet):
         return super().get_queryset()
 
 
-# todo we could use geodjango and gis drf extensions to do this automatically - but that produces a large dependency
-#   overhead for a pretty basic task - revisit this if polygonal queries are deemed useful or other reasons to integrate
-#   GIS features arise
+class FeatureCollectionPagination(pagination.BasePagination):
+    """
+    We implement geojson wrapper as a special type of pagination even though
+    no paging is done. This method fits neatly into how the base classes
+    generate and process response objects. Doing this directly in list()
+    on the view breaks filter form rendering in the browsable renderers.
+    """
+
+    def paginate_queryset(self, queryset, request, view=None):
+        return queryset
+
+    def to_html(self):
+        return None
+
+    def get_results(self, data):
+        return data['features']
+
+    def get_paginated_response(self, data):
+        return Response({
+            'type': 'FeatureCollection',
+            'features':  data
+        })
+
+    def get_paginated_response_schema(self, schema):
+        return {
+            'type': 'object',
+            'properties': {
+                'type': {
+                    'type': 'string',
+                    'example': 'FeatureCollection',
+                },
+                'features': schema,
+            },
+        }
+
+
 class StationMapViewSet(StationListViewSet):
     """
     A view for returning a site list as a geojson set of point features.
     """
 
     serializer_class = StationMapSerializer
-    pagination_class = None
-
-    def list(self, request, **kwargs):
-        return Response({
-            'type': 'FeatureCollection',
-            'features':  self.get_serializer(
-                self.filter_queryset(self.get_queryset()), many=True
-            ).data
-        }, status=status.HTTP_200_OK)
+    pagination_class = FeatureCollectionPagination
 
     def get_queryset(self):
-        return super().get_queryset().filter(
-            Q(latitude__isnull=False) & Q(longitude__isnull=False)
+        location = SiteLocation.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
         )
+        return Site.objects.annotate(
+            latitude=Subquery(location.values('latitude')[:1]),
+            longitude=Subquery(location.values('longitude')[:1]),
+            elevation=Subquery(location.values('elevation')[:1])
+        ).public().availability()

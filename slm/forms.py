@@ -545,7 +545,8 @@ class SiteReceiverForm(SubSectionForm):
         label=SiteReceiver._meta.get_field('receiver_type').verbose_name,
         search_param='model',
         value_param='model',
-        label_param='model'
+        label_param='model',
+        to_field_name='model'
     )
 
     def __init__(self, **kwargs):
@@ -596,7 +597,8 @@ class SiteAntennaForm(SubSectionForm):
         label=SiteAntenna._meta.get_field('antenna_type').verbose_name,
         search_param='model',
         value_param='model',
-        label_param='model'
+        label_param='model',
+        to_field_name='model'
     )
 
     radome_type = ModelAutoComplete(
@@ -606,7 +608,8 @@ class SiteAntennaForm(SubSectionForm):
         label=SiteAntenna._meta.get_field('radome_type').verbose_name,
         search_param='model',
         value_param='model',
-        label_param='model'
+        label_param='model',
+        to_field_name='model'
     )
 
     class Meta(SubSectionForm):
@@ -902,53 +905,6 @@ class RichTextForm(forms.Form):
 
 
 class StationFilterForm(forms.Form):
-    """
-    Todo - how to render help_text as alt or titles?
-    """
-
-    @property
-    def helper(self):
-        from crispy_forms.layout import Fieldset
-        helper = FormHelper()
-        helper.form_id = 'slm-station-filter'
-        helper.disable_csrf = True
-        helper.layout = Layout(
-            Div(
-                Div(
-                    Field('status', css_class='slm-status'),
-                    'alert',
-                    Field('alert_level', css_class='slm-alert-level'),
-                    css_class='col-3'
-                ),
-                Div(
-                    Fieldset(
-                        _('Equipment Filters'),
-                        Field(
-                            'current',
-                            css_class="form-check-input",
-                            wrapper_class="form-check form-switch"
-                        ),
-                        'receiver',
-                        'antenna',
-                        'radome',
-                        css_class='slm-form-group'
-                    ),
-                    css_class='col-4'
-                ),
-                Div(
-                    'agency',
-                    'network',
-                    Field('country', css_class='slm-country search-input'),
-                    css_class='col-5'
-                ),
-                css_class='row'
-            )
-        )
-        helper.attrs = {'data_slm_initial': json.dumps({
-            field.name: field.field.initial
-            for field in self if field.field.initial
-        })}
-        return helper
 
     name = forms.CharField(required=False)
 
@@ -975,144 +931,6 @@ class StationFilterForm(forms.Form):
         label=_('Alert Level'),
         required=False
     )
-
-    current = SLMBooleanField(
-        label=_('Current'),
-        help_text=_('Only include sites that currently have this equipment.'),
-        initial=True,
-        required=False
-    )
-
-    receiver = ModelMultipleAutoComplete(
-        queryset=Receiver.objects.all(),
-        # help_text=_('Enter the name or abbreviation of an Agency.'),
-        label=_('Receiver'),
-        required=False,
-        service_url=reverse_lazy('slm_public_api:receiver-list'),
-        search_param='model',
-        value_param='id',
-        label_param='model',
-        query_params={'in_use': True}
-    )
-
-    antenna = ModelMultipleAutoComplete(
-        queryset=Antenna.objects.all(),
-        # help_text=_('Enter the name or abbreviation of an Agency.'),
-        label=_('Antenna'),
-        required=False,
-        service_url=reverse_lazy('slm_public_api:antenna-list'),
-        search_param='model',
-        value_param='id',
-        label_param='model',
-        query_params={'in_use': True}
-    )
-
-    radome = ModelMultipleAutoComplete(
-        queryset=Radome.objects.all(),
-        # help_text=_('Enter the name or abbreviation of an Agency.'),
-        label=_('Radome'),
-        required=False,
-        service_url=reverse_lazy('slm_public_api:radome-list'),
-        search_param='model',
-        value_param='id',
-        label_param='model',
-        query_params={'in_use': True}
-    )
-
-    agency = ModelMultipleAutoComplete(
-        queryset=Agency.objects.all(),
-        # help_text=_('Enter the name or abbreviation of an Agency.'),
-        label=_('Agency'),
-        required=False,
-        service_url=reverse_lazy('slm_edit_api:agency-list'),
-        search_param='search',
-        value_param='id',
-        label_param='name',
-        render_suggestion=(
-            'return `<span class="matchable">(${obj.shortname})</span>'
-            '<span class="matchable">${obj.name}</span>`;'
-        )
-    )
-
-    network = ModelMultipleAutoComplete(
-        queryset=Network.objects.all(),
-        # help_text=_('Enter the name of an IGS Network.'),
-        label=_('Network'),
-        required=False,
-        service_url=reverse_lazy('slm_edit_api:network-list'),
-        search_param='name',
-        value_param='id',
-        label_param='name'
-    )
-
-    country = MultiSelectEnumAutoComplete(
-        # help_text=_('Enter the name of a country or region.'),
-        ISOCountry,
-        label=_('Country/Region'),
-        required=False,
-        render_suggestion=(
-            'return `<span class="fi fi-${obj.value.toLowerCase()}"></span>'
-            '<span class="matchable">${obj.label}</span>`;'
-        ),
-        data_source=ISOCountry.with_stations
-    )
-
-
-class PublicAPIStationFilterForm(forms.Form):
-    """
-    Todo - how to render help_text as alt or titles?
-    """
-
-    @property
-    def helper(self):
-        from crispy_forms.layout import Fieldset, Submit
-        helper = FormHelper()
-        helper.form_method = 'GET'
-        helper.disable_csrf = True
-        helper.form_id = 'slm-station-filter'
-        helper.layout = Layout(
-            Div(
-                Div(
-                    'station',
-                    Field(
-                        'satellite_system',
-                        wrapper_class="form-switch"
-                    ),
-                    Field(
-                        'frequency_standard',
-                        wrapper_class="form-switch"
-                    ),
-                    css_class='col-3'
-                ),
-                Div(
-                    Fieldset(
-                        _('Equipment Filters'),
-                        Field(
-                            'current',
-                            wrapper_class="form-switch"
-                        ),
-                        'receiver',
-                        'antenna',
-                        'radome',
-                        css_class='slm-form-group'
-                    ),
-                    css_class='col-4'
-                ),
-                Div(
-                    'agency',
-                    'network',
-                    Field('country', css_class='slm-country search-input'),
-                    css_class='col-5'
-                ),
-                css_class='row',
-            ),
-            Submit('', _('Submit'), css_class='btn btn-primary')
-        )
-        helper.attrs = {'data_slm_initial': json.dumps({
-            field.name: field.field.initial
-            for field in self if field.field.initial
-        })}
-        return helper
 
     station = ModelMultipleAutoComplete(
         queryset=Site.objects.public(),

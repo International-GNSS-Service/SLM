@@ -15,7 +15,7 @@ import re
 from slm.models import (
     Site,
     ArchivedSiteLog,
-    SiteIndex,
+    ArchiveIndex,
     Receiver,
     Antenna,
     Radome
@@ -116,29 +116,18 @@ class Command(BaseCommand):
                             else:
                                 no_prep += 1
 
-                            sat_sys = params.pop('satellite_system', [])
-                            to_long = set()
-                            for param, value in params.items():
-                                if value and isinstance(value, str):
-                                    field = SiteIndex._meta.get_field(param)
-                                    if len(value) > getattr(
-                                        field, 'max_length', 999999
-                                    ):
-                                        #print(
-                                        #    f'Value too long: [{param}]: '
-                                        #    f'{value}'
-                                        #)
-                                        to_long.add(param)
-                            index = SiteIndex.objects.insert_index(
+                            if (
+                                log_time and
+                                site.join_date is None or
+                                site.join_date > log_time.date()
+                            ):
+                                site.join_date = log_time.date()
+                                site.save()
+
+                            index = ArchiveIndex.objects.insert_index(
                                 site=site,
-                                begin=log_time,
-                                **{
-                                    param: val for param, val in params.items()
-                                    if param not in to_long
-                                }
+                                begin=log_time
                             )
-                            if sat_sys:
-                                index.satellite_system.set(sat_sys)
 
                             ArchivedSiteLog.objects.create(
                                 site=site,

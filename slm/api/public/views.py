@@ -1,8 +1,8 @@
 import django_filters
-from django.db.models import Q, Subquery, OuterRef
+from django.db.models import Q, Subquery, OuterRef, Prefetch
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, viewsets
-from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.filters import OrderingFilter
 from slm.api.pagination import DataTablesPagination
 from slm.api.public.serializers import (
     SiteFileUploadSerializer,
@@ -21,7 +21,11 @@ from slm.models import (
     SiteFileUpload,
     Site,
     SiteIdentification,
-    SiteIndex,
+    SiteLocation,
+    SiteAntenna,
+    SiteReceiver,
+    SiteFrequencyStandard,
+    SiteMoreInformation,
     Receiver,
     Antenna,
     Radome,
@@ -30,139 +34,88 @@ from slm.models import (
     Network,
     SatelliteSystem
 )
-from slm.forms import PublicAPIStationFilterForm
 from slm.api.filter import (
     SLMDateTimeFilter,
-    AcceptListArguments
+    AcceptListArguments,
+    SiteSearchFilter
 )
-from slm.api.filter import SLMBooleanFilter, CrispyFormCompat
+from slm.api.filter import (
+    SLMBooleanFilter,
+    CrispyFormCompat,
+    BaseStationFilter
+)
 from django.http import FileResponse
 from slm.defines import SiteLogFormat, ISOCountry, FrequencyStandardType
+from slm.forms import StationFilterForm as BaseStationFilterForm
 from django_enum.filters import EnumFilter
 from django.utils.translation import gettext as _
 from datetime import datetime
+from crispy_forms.layout import Layout, Div, Field, Fieldset, Submit
+from crispy_forms.helper import FormHelper
+import json
 
 
-class StationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
+class StationFilterForm(BaseStationFilterForm):
+
+    @property
+    def helper(self):
+        helper = FormHelper()
+        helper.form_method = 'GET'
+        helper.disable_csrf = True
+        helper.form_id = 'slm-station-filter'
+        helper.layout = Layout(
+            Div(
+                Div(
+                    'station',
+                    Field(
+                        'satellite_system',
+                        wrapper_class="form-switch"
+                    ),
+                    Field(
+                        'frequency_standard',
+                        wrapper_class="form-switch"
+                    ),
+                    css_class='col-3'
+                ),
+                Div(
+                    Fieldset(
+                        _('Equipment Filters'),
+                        Field(
+                            'current',
+                            wrapper_class="form-switch"
+                        ),
+                        'receiver',
+                        'antenna',
+                        'radome',
+                        css_class='slm-form-group'
+                    ),
+                    css_class='col-4'
+                ),
+                Div(
+                    'agency',
+                    'network',
+                    Field('country', css_class='slm-country search-input'),
+                    css_class='col-5'
+                ),
+                css_class='row',
+            ),
+            Submit('', _('Submit'), css_class='btn btn-primary')
+        )
+        helper.attrs = {'data_slm_initial': json.dumps({
+            field.name: field.field.initial
+            for field in self if field.field.initial
+        })}
+        return helper
+
+
+class StationFilter(BaseStationFilter):
 
     def get_form_class(self):
-        return PublicAPIStationFilterForm
+        return StationFilterForm
 
     @property
-    def current_equipment(self):
-        return self.form.cleaned_data.get('current', None)
-
-    @property
-    def query_epoch(self):
-        return self.form.cleaned_data.get('epoch', datetime.now())
-
-    epoch = django_filters.DateTimeFilter(
-        field_name='epoch',
-        method='at_epoch'
-    )
-
-    def at_epoch(self, queryset, name, value):
-        return queryset.at_epoch(epoch=value)
-
-    name = django_filters.CharFilter(
-        field_name='site__name',
-        lookup_expr='icontains',
-        distinct=True
-    )
-
-    agency = django_filters.ModelMultipleChoiceFilter(
-        field_name='site__agencies',
-        queryset=Agency.objects.all()
-    )
-
-    network = django_filters.ModelMultipleChoiceFilter(
-        field_name='site__networks',
-        queryset=Network.objects.all()
-    )
-
-    station = django_filters.ModelMultipleChoiceFilter(
-        field_name='site__name',
-        to_field_name='name',
-        queryset=Site.objects.all(),
-        #method='filter_stations',
-        null_value='',
-        null_label=''
-    )
-
-    def filter_stations(self, queryset, name, value):
-        value = [val for val in value or [] if val]
-        if value:
-            return queryset.filter(**{f'site__in': value}).distinct()
-        return queryset
-
-    receiver = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=Receiver.objects.all()
-    )
-
-    antenna = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=Antenna.objects.all()
-    )
-
-    radome = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=Radome.objects.all()
-    )
-
-    satellite_system = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=SatelliteSystem.objects.all()
-    )
-
-    frequency_standard = django_filters.MultipleChoiceFilter(
-        choices=FrequencyStandardType.choices
-    )
-
-    country = django_filters.MultipleChoiceFilter(
-        choices=ISOCountry.choices,
-        distinct=True
-    )
-
-    current = SLMBooleanFilter(
-        method='noop',
-        distinct=True,
-        field_name='current'
-    )
-
-    def noop(self, queryset, name, value):
-        return queryset
-
-    def filter_equipment(self, queryset, name, value):
-        if value:
-            if self.current_equipment:
-                return queryset.filter(
-                    Q(**{f'{name}__in': value}) &
-                    SiteIndex.objects.epoch_q(self.query_epoch)
-                ).distinct()
-            else:
-                return queryset.filter(site__in=Site.objects.filter(
-                    **{f'indexes__{name}__in': value}
-                ).distinct())
-        return queryset
-
-    class Meta:
-        model = SiteIndex
-        fields = (
-            'station',
-            'name',
-            'agency',
-            'network',
-            'receiver',
-            'antenna',
-            'radome',
-            'country',
-            'current',
-            'epoch',
-            'satellite_system',
-            'frequency_standard'
-        )
-        distinct = True
+    def restrict_published(self):
+        return True
 
 
 class DataTablesListMixin(mixins.ListModelMixin):
@@ -209,42 +162,103 @@ class StationListViewSet(
 ):
     serializer_class = StationListSerializer
     permission_classes = []
-    lookup_field = 'site__name'
+    lookup_field = 'name'
     lookup_url_kwarg = 'station'
 
-    filter_backends = (DjangoFilterBackend, OrderingFilter, SearchFilter)
+    filter_backends = (
+        DjangoFilterBackend,
+        OrderingFilter,
+        SiteSearchFilter
+    )
+
     filterset_class = StationFilter
     ordering_fields = [
-        'site__name', 'latitude', 'longitude', 'elevation', 'last_data'
+        'name', 'latitude', 'longitude', 'elevation', 'last_data'
     ]
-    
+
+    # if you update these you have to also update
     search_fields = (
-        'site__name',
-        'site__agencies__name',
-        'site__agencies__shortname',
-        'site__networks__name',
-        'city',
-        'antenna__model',
-        'radome__model',
-        'receiver__model',
-        'serial_number',
-        'firmware',
-        'domes_number',
-        'satellite_system__name',
-        'data_center'
+        'name',
+        'agencies__name',
+        'agencies__shortname',
+        'networks__name',
+        'sitelocation__city',
+        'sitereceiver__serial_number',
+        'sitereceiver__firmware',
+        'siteidentification__iers_domes_number',
+        'sitemoreinformation__primary',
+        'siteantenna__antenna_type__model',
+        'siteantenna__radome_type__model',
+        'sitereceiver__receiver_type__model'
     )
-    ordering = ('site__name',)
+    ordering = ('name',)
 
     def get_queryset(self):
-        return SiteIndex.objects.select_related(
-            'site',
-            'receiver',
-            'antenna',
-            'radome'
-        ).prefetch_related(
-            'site__agencies',
-            'site__networks'
-        ).public().at_epoch().availability()
+        location = SiteLocation.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        identification = SiteIdentification.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        antenna = SiteAntenna.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        receiver = SiteReceiver.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        info = SiteMoreInformation.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        freq = SiteFrequencyStandard.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+
+        annotations = {
+            'latitude': Subquery(location.values('latitude')[:1]),
+            'longitude': Subquery(location.values('longitude')[:1]),
+            'elevation': Subquery(location.values('elevation')[:1]),
+            'city': Subquery(location.values('city')[:1]),
+            'state': Subquery(location.values('state')[:1]),
+            'country': Subquery(location.values('country')[:1]),
+            'domes_number': Subquery(
+                identification.values('iers_domes_number')[:1]
+            ),
+            'cdp_number': Subquery(
+                identification.values('cdp_number')[:1]
+            ),
+            'antenna_type': Subquery(
+                antenna.values('antenna_type__model')[:1]
+            ),
+            'radome_type': Subquery(
+                antenna.values('radome_type__model')[:1]
+            ),
+            'receiver_type': Subquery(
+                receiver.values('receiver_type__model')[:1]
+            ),
+            'serial_number': Subquery(
+                receiver.values('serial_number')[:1]
+            ),
+            'firmware': Subquery(
+                receiver.values('firmware')[:1]
+            ),
+            'frequency_standard': Subquery(
+                freq.values('standard_type')[:1]
+            ),
+            'data_center': Subquery(
+                info.values('primary')[:1]
+            )
+        }
+
+        return Site.objects.prefetch_related(
+            'agencies',
+            'networks',
+            Prefetch(
+                'sitereceiver_set',
+                queryset=SiteReceiver.objects.current(
+                    published=True
+                ).prefetch_related('satellite_system')
+            )
+        ).annotate(**annotations).public().availability()
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

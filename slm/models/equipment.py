@@ -15,13 +15,15 @@ class SatelliteSystem(models.Model):
         primary_key=True,
         max_length=16,
         null=False,
-        blank=False
+        blank=False,
+        db_index=True
     )
 
     order = models.IntegerField(
         null=False,
         default=0,
-        blank=True
+        blank=True,
+        db_index=True
     )
 
     def __str__(self):
@@ -34,7 +36,7 @@ class SatelliteSystem(models.Model):
 
 class Manufacturer(models.Model):
 
-    name = models.CharField(max_length=45, unique=True)
+    name = models.CharField(max_length=45, unique=True, db_index=True)
 
     def __str__(self):
         return self.name
@@ -101,7 +103,8 @@ class Antenna(Equipment):
             'equivalent to ARP for your antenna. Contact the Central Bureau if'
             ' your antenna does not appear. Format: (BPA/BCR/XXX from '
             'antenna.gra; see instr.)'
-        )
+        ),
+        db_index=True
     )
 
     features = EnumField(
@@ -110,7 +113,8 @@ class Antenna(Equipment):
         default=None,
         null=True,
         verbose_name=_('Antenna Features'),
-        help_text=_('NOM/RXC/XXX from "antenna.gra"; see NRP abbreviations.')
+        help_text=_('NOM/RXC/XXX from "antenna.gra"; see NRP abbreviations.'),
+        db_index=True
     )
 
     verified = models.BooleanField(

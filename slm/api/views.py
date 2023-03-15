@@ -3,7 +3,7 @@ from django_filters import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from rest_framework import mixins, viewsets, renderers
-from slm.models import ArchivedSiteLog, SiteIndex
+from slm.models import ArchivedSiteLog, ArchiveIndex
 from slm.defines import SiteLogFormat
 from slm.api.filter import SLMDateTimeFilter, InitialValueFilterSet
 from datetime import datetime
@@ -54,9 +54,9 @@ class BaseSiteLogDownloadViewSet(
     lookup_field = 'site__name'
     lookup_url_kwarg = 'site'
 
-    queryset = SiteIndex.objects.all()
+    queryset = ArchiveIndex.objects.all()
 
-    class SiteIndexFilter(InitialValueFilterSet):
+    class ArchiveIndexFilter(InitialValueFilterSet):
 
         epoch = SLMDateTimeFilter(
             method='at_epoch',
@@ -89,11 +89,11 @@ class BaseSiteLogDownloadViewSet(
             return queryset
 
         class Meta:
-            model = SiteIndex
+            model = ArchiveIndex
             fields = ['name_len', 'epoch', 'lower_case']
 
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = SiteIndexFilter
+    filterset_class = ArchiveIndexFilter
 
     def get_format_suffix(self, **kwargs):
         return SiteLogFormat(super().get_format_suffix(**kwargs))

@@ -6,7 +6,7 @@ import logging
 from django.core.management import BaseCommand
 from django.db import transaction
 from django.utils.translation import gettext as _
-from slm.models import Site, SiteIndex
+from slm.models import Site, ArchiveIndex
 from slm.defines import SiteLogStatus
 from tqdm import tqdm
 
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                     'be undone if you do not have an external archive! '
                     'Proceed? (Y/N): '
                 ))):
-                    SiteIndex.objects.all().delete()
+                    ArchiveIndex.objects.all().delete()
                 else:
                     return
 
@@ -73,5 +73,5 @@ class Command(BaseCommand):
             ) as p_bar:
                 for site in sites:
                     p_bar.set_postfix({'site': site.name})
-                    SiteIndex.objects.add_index(site=site)
+                    ArchiveIndex.objects.add_index(site=site)
                     p_bar.update(n=1)

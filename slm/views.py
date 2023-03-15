@@ -28,9 +28,9 @@ from slm.defines import (
     SiteLogStatus,
     SLMFileType,
 )
+from slm.api.edit.views import StationFilterForm
 from slm.forms import (
     NewSiteForm,
-    StationFilterForm,
     SiteAntennaForm,
     SiteCollocationForm,
     SiteFileForm,

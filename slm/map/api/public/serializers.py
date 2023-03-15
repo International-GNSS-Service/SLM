@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from slm.api.public import serializers as slm_serializers
-from slm.utils import dddmmssss_to_decimal
 
 
 class StationListSerializer(slm_serializers.StationListSerializer):
@@ -18,14 +17,13 @@ class StationMapSerializer(serializers.Serializer):
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    dddmmssss_to_decimal(instance.longitude),
-                    dddmmssss_to_decimal(instance.latitude)
+                    instance.longitude,
+                    instance.latitude
                 ],
             },
             "properties": {
-                "name": instance.site.name,
-                "publish": instance.begin,
-                'status': instance.site.status,
+                "name": instance.name,
+                'status': instance.status,
                 "last_data": (
                     max(0, instance.last_data.days)
                     if instance.last_data else None

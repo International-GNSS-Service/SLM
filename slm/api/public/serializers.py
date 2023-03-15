@@ -3,13 +3,13 @@ from slm.models import (
     Agency,
     Network,
     SiteFileUpload,
-    SiteIndex,
     Site,
     Equipment,
     Receiver,
     Antenna,
     Radome,
-    ArchivedSiteLog
+    ArchivedSiteLog,
+    SatelliteSystem
 )
 from slm.utils import build_absolute_url
 
@@ -86,30 +86,54 @@ class StationNameSerializer(serializers.ModelSerializer):
         fields = ('id', 'name',)
 
 
+class SatelliteSystemSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SatelliteSystem
+        fields = ('name',)
+
+
 class StationListSerializer(serializers.ModelSerializer):
 
-    name = serializers.CharField(source='site.name')
-    last_publish = serializers.CharField(source='site.last_publish')
-    agencies = AgencySerializer(source='site.agencies', many=True)
-    networks = NetworkSerializer(source='site.networks', many=True)
-    antenna_type = serializers.CharField(
-        source='antenna.model',
-        allow_null=True
-    )
-    radome_type = serializers.CharField(
-        source='radome.model',
-        allow_null=True
-    )
-    receiver_type = serializers.CharField(
-        source='receiver.model',
-        allow_null=True
-    )
-    registered = serializers.DateTimeField(source='site.created')
+    agencies = AgencySerializer(many=True)
+    networks = NetworkSerializer(many=True)
+    satellite_system = serializers.SerializerMethodField()
+
+    antenna_type = serializers.CharField()
+    radome_type = serializers.CharField()
+    receiver_type = serializers.CharField()
+
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+    elevation = serializers.FloatField()
+
+    city = serializers.CharField()
+    state = serializers.CharField()
+    country = serializers.CharField()
+
+    serial_number = serializers.CharField()
+    firmware = serializers.CharField()
+    domes_number = serializers.CharField()
+    frequency_standard = serializers.CharField()
+
+    data_center = serializers.CharField()
+
     last_rinex2 = serializers.DateTimeField()
     last_rinex3 = serializers.DateTimeField()
     last_rinex4 = serializers.DateTimeField()
     last_data_time = serializers.DateTimeField()
     last_data = serializers.SerializerMethodField()
+
+    def get_satellite_system(self, obj):
+        """
+        This should produce no additional queries b/c of the prefetching.
+        """
+        for receiver in reversed(obj.sitereceiver_set.all()):
+            return [
+                sys.name
+                for sys in receiver.satellite_system.all()
+            ]
+        return []
 
     def get_last_data(self, obj):
         if obj.last_data:
@@ -117,16 +141,17 @@ class StationListSerializer(serializers.ModelSerializer):
         return None
 
     class Meta:
-        model = SiteIndex
+        model = Site
         fields = [
             'name',
             'agencies',
             'networks',
-            'registered',
+            'join_date',
             'last_publish',
             'latitude',
             'longitude',
             'city',
+            'state',
             'country',
             'elevation',
             'antenna_type',

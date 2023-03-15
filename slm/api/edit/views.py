@@ -99,13 +99,65 @@ from slm.models import (
 from django.utils.functional import cached_property
 from django.db.models import Q, Subquery, OuterRef
 from slm.defines import SiteLogStatus, AlertLevel
-from slm.api.filter import SLMBooleanFilter
+from slm.api.filter import SLMBooleanFilter, BaseStationFilter
 from django.http import Http404
 from datetime import datetime
-from slm.forms import StationFilterForm
+from slm.forms import StationFilterForm as BaseStationFilterForm
+from crispy_forms.layout import Layout, Div, Field, Fieldset, Submit
+from crispy_forms.helper import FormHelper
+import json
 
 
-class StationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
+class StationFilterForm(BaseStationFilterForm):
+
+    @property
+    def helper(self):
+        """
+        Todo - how to render help_text as alt or titles?
+        """
+        helper = FormHelper()
+        helper.form_id = 'slm-station-filter'
+        helper.disable_csrf = True
+        helper.layout = Layout(
+            Div(
+                Div(
+                    Field('status', css_class='slm-status'),
+                    'alert',
+                    Field('alert_level', css_class='slm-alert-level'),
+                    css_class='col-3'
+                ),
+                Div(
+                    Fieldset(
+                        _('Equipment Filters'),
+                        Field(
+                            'current',
+                            css_class="form-check-input",
+                            wrapper_class="form-check form-switch"
+                        ),
+                        'receiver',
+                        'antenna',
+                        'radome',
+                        css_class='slm-form-group'
+                    ),
+                    css_class='col-4'
+                ),
+                Div(
+                    'agency',
+                    'network',
+                    Field('country', css_class='slm-country search-input'),
+                    css_class='col-5'
+                ),
+                css_class='row'
+            )
+        )
+        helper.attrs = {'data_slm_initial': json.dumps({
+            field.name: field.field.initial
+            for field in self if field.field.initial
+        })}
+        return helper
+
+
+class StationFilter(BaseStationFilter):
     """
     Edit API station filter extensions.
     """
@@ -116,192 +168,6 @@ class StationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     @property
     def current_equipment(self):
         return self.form.cleaned_data.get('current', None)
-
-    @cached_property
-    def alert_fields(self):
-        """
-        Fetch the mapping of alert names to related fields.
-        """
-        def get_related_field(alert):
-            for obj in Site._meta.related_objects:
-                if obj.related_model is alert:
-                    return obj.name
-        return {
-            alert.__name__.lower(): get_related_field(alert)
-            for alert in Alert.objects.site_alerts()
-        }
-
-    name = django_filters.CharFilter(
-        field_name='name',
-        lookup_expr='istartswith'
-    )
-
-    agency = django_filters.ModelMultipleChoiceFilter(
-        field_name='agencies',
-        queryset=Agency.objects.all(),
-        distinct=True
-    )
-
-    network = django_filters.ModelMultipleChoiceFilter(
-        field_name='networks',
-        queryset=Network.objects.all(),
-        distinct=True
-    )
-
-    id = MustIncludeThese()
-
-    receiver = django_filters.ModelMultipleChoiceFilter(
-        method='filter_receivers',
-        queryset=Receiver.objects.all(),
-        distinct=True
-    )
-
-    antenna = django_filters.ModelMultipleChoiceFilter(
-        method='filter_antennas',
-        queryset=Antenna.objects.all(),
-        distinct=True
-    )
-
-    radome = django_filters.ModelMultipleChoiceFilter(
-        method='filter_radomes',
-        queryset=Radome.objects.all(),
-        distinct=True
-    )
-
-    published_before = django_filters.CharFilter(
-        field_name='last_publish',
-        lookup_expr='lt'
-    )
-    published_after = django_filters.CharFilter(
-        field_name='last_publish',
-        lookup_expr='gte'
-    )
-    updated_before = django_filters.CharFilter(
-        field_name='last_update',
-        lookup_expr='lt'
-    )
-    updated_after = django_filters.CharFilter(
-        field_name='last_update',
-        lookup_expr='gte'
-    )
-
-    status = django_filters.MultipleChoiceFilter(
-        choices=SiteLogStatus.choices,
-        distinct=True
-    )
-
-    alert = django_filters.MultipleChoiceFilter(
-        choices=[
-            (alert.__name__, alert._meta.verbose_name.title())
-            for alert in Alert.objects.site_alerts()
-        ],
-        method='filter_alerts',
-        distinct=True
-    )
-
-    alert_level = django_filters.MultipleChoiceFilter(
-        choices=[(level.value, level.label) for level in AlertLevel],
-        method='filter_alert_level'
-    )
-
-    country = django_filters.MultipleChoiceFilter(
-        choices=[(country.value, country.label) for country in ISOCountry],
-        field_name='sitelocation__country'
-    )
-
-    current = SLMBooleanFilter(
-        method='noop',
-        distinct=True,
-        field_name='current'
-    )
-
-    def noop(self, queryset, name, value):
-        return queryset
-
-    def filter_alerts(self, queryset, name, value):
-        alert_q = Q()
-        for alert in value:
-            alert_q |= Q(
-                **{f'{self.alert_fields[alert.lower()]}__isnull': False}
-            )
-        return queryset.filter(alert_q)
-
-    def filter_alert_level(self, queryset, name, value):
-        level_q = Q()
-        for alerts in Site.alert_fields:
-            level_q |= Q(
-                **{f'{alerts}__level__in': value}
-            )
-        return queryset.filter(level_q)
-
-    def filter_receivers(self, queryset, name, value):
-        if value:
-            if self.current_equipment:
-                latest_receiver = SiteReceiver.objects.filter(
-                    Q(site=OuterRef('pk')) & Q(is_deleted=False)
-                ).order_by('-edited')
-                return queryset.annotate(
-                    receiver=Subquery(
-                        latest_receiver.values('receiver_type')[:1]
-                    )).filter(receiver__in=value).distinct()
-            else:
-                return queryset.filter(
-                    sitereceiver__receiver_type__in=value
-                ).distinct()
-        return queryset
-
-    def filter_antennas(self, queryset, name, value):
-        if value:
-            if self.current_equipment:
-                latest_antenna = SiteAntenna.objects.filter(
-                    Q(site=OuterRef('pk')) & Q(is_deleted=False)
-                ).order_by('-edited')
-                return queryset.annotate(
-                    antenna=Subquery(
-                        latest_antenna.values('antenna_type')[:1])
-                ).filter(antenna__in=value).distinct()
-            else:
-                return queryset.filter(
-                    siteantenna__antenna_type__in=value
-                ).distinct()
-        return queryset
-
-    def filter_radomes(self, queryset, name, value):
-        if value:
-            if self.current_equipment:
-                latest_antenna = SiteAntenna.objects.filter(
-                    Q(site=OuterRef('pk')) & Q(is_deleted=False)
-                ).order_by('-edited')
-                return queryset.annotate(
-                    radome=Subquery(
-                        latest_antenna.values('radome_type')[:1])
-                ).filter(radome__in=value).distinct()
-            else:
-                return queryset.filter(
-                    siteantenna__radome_type__in=value
-                ).distinct()
-        return queryset
-
-    class Meta:
-        model = Site
-        fields = (
-            'id',
-            'name',
-            'agency',
-            'network',
-            'receiver',
-            'antenna',
-            'radome',
-            'country',
-            'published_before',
-            'published_after',
-            'updated_before',
-            'updated_after',
-            'status',
-            'alert_level',
-            'current'
-        )
-        distinct = True
 
 
 class PassThroughRenderer(renderers.BaseRenderer):
@@ -597,7 +463,7 @@ class UserProfileViewSet(
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
 
-    class SiteIndexFilter(BaseSiteLogDownloadViewSet.SiteIndexFilter):
+    class ArchiveIndexFilter(BaseSiteLogDownloadViewSet.ArchiveIndexFilter):
 
         unpublished = SLMBooleanFilter(method='noop')
         unpublished.help = _(
@@ -605,13 +471,13 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
             'the HEAD version of the log '
         )
 
-        class Meta(BaseSiteLogDownloadViewSet.SiteIndexFilter.Meta):
+        class Meta(BaseSiteLogDownloadViewSet.ArchiveIndexFilter.Meta):
             fields = (
                 'unpublished',
-                *BaseSiteLogDownloadViewSet.SiteIndexFilter.Meta.fields
+                *BaseSiteLogDownloadViewSet.ArchiveIndexFilter.Meta.fields
             )
 
-    filterset_class = SiteIndexFilter
+    filterset_class = ArchiveIndexFilter
 
     def retrieve(self, request, *args, **kwargs):
         if request.GET.get('unpublished', False):
@@ -751,7 +617,8 @@ class SectionViewSet(type):
                     3. Flag Update
                         * Issue fields_flagged or flags_cleared event.
                     4. Publish
-                        * Set instance (old or added) to published and issue
+                        * Delete the previously published instance and set
+                        instance (old or added) to published and issue
                         site_published event.
                     5. Any combination of 1, 2, 3 and 4
 
@@ -984,6 +851,15 @@ class SectionViewSet(type):
 
             class Meta:
                 model = ModelClass
+
+                # prevent UniqueTogetherValidator from being attached
+                # subsection and section ids are attached after the data
+                # validation process and uniqueness qualities are enforced
+                # by the code, it should be impossible for a user to use the
+                # api in a way that would trigger the database to violate
+                # this constraint
+                validators = []
+
                 fields = [
                     'site',
                     'id',
@@ -1032,7 +908,7 @@ class SectionViewSet(type):
         def get_queryset(self):
             return ModelClass.objects.editable_by(
                 self.request.user
-            ).select_related('site', 'editor')
+            ).select_related('site')
 
         def create(self, request, *args, **kwargs):
             serializer = self.get_serializer(data=request.data)
@@ -1065,6 +941,20 @@ class SectionViewSet(type):
             )
 
         def perform_destroy(self, instance):
+            """
+            Deletes must happen on head:
+
+            1) If head is published, the delete will copy to an unpublished
+                record with the is_deleted flag marked.
+            2) If head is unpublished, the is_deleted flag will be set
+
+            Records will be fully deleted when an unpublished record with the
+            is_deleted flag set is published or if a section with no previously
+            published records is deleted.
+
+            :param self: view class instance
+            :param instance: The section or subsection instance
+            """
             with transaction.atomic():
                 section = ModelClass.objects.select_for_update().get(
                     pk=instance.pk
@@ -1106,12 +996,13 @@ class SectionViewSet(type):
                     return None
 
                 if not section.is_deleted:
-                    # if it has been published before we copy and save it with
-                    # the is_deleted flag set to True
-                    section.pk = None  # this is how you copy a model
+                    # if it is currently published before we copy and save it
+                    # with the is_deleted flag set to True
                     section.is_deleted = True
-                    section.published = False
-                    section.editor = self.request.user
+                    if section.published:
+                        section.pk = None  # this is how you copy a model
+                        section.published = False
+
                     section.save()
                     slm_signals.section_deleted.send(
                         sender=self,

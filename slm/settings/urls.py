@@ -110,7 +110,7 @@ def bring_in_urls(urlpatterns):
                 urlpatterns.append(add_on)
 
         except ImportError:
-            if app in {'slm', 'slm.map'}:
+            if app in {'slm', 'slm.map', 'network_map'}:
                 raise
             pass
 

@@ -135,6 +135,20 @@ Add new section capability is not functional.
         {{ copy_last_on_add|json_script:"copy-last-on-add" }}
 
         <script>
+
+        // initialize photo gallery
+       $('#photo-container [data-fancybox="gallery"]').fancybox({
+            buttons: [
+                'download',
+                'thumbs',
+                'zoom',
+                'fullScreen',
+                'close'
+            ],
+            loop: false,
+            protect: true
+        });
+
         const copyLast = JSON.parse(
             document.getElementById('copy-last-on-add').textContent
         );
@@ -205,21 +219,23 @@ Add new section capability is not functional.
     <div class="row my-5">
         {% block station_images %}
         {% if station_images %}
+
+        {% load slm static compress i18n %}
+
         <div class="col-12">
             <h2>{% trans "Images" %}</h2>
             <hr/>
-            {% for img_row in station_images|split_rows:3 %}
-                <div class="row my-2">
-                    {% for img in img_row %}
-                    <div class="col-4 my-2">
-                        <a href="{{img.link}}" download>
-                            <img class="img-fluid justify-self-center" src="{% url 'slm:download_attachment_thumbnail' site=station pk=img.pk %}"/>
+            <div id="photo-container">
+                {% for photo in station_images %}
+                <div class="card">
+                    <div class="card-image">
+                        <a href="{{ photo.link }}" data-fancybox="gallery" data-caption="{{ photo.description|default:photo.name }} - {{ photo.created.date|default:photo.timestamp.date }}">
+                            <img src="{{ photo.thumbnail_link }}" alt="Photos">
                         </a>
-                            <div><p>{{img.name}}{% if img.direction %} ({{img.direction.label}}){% endif %}</p></div>
                     </div>
-                    {% endfor %}
                 </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
         {% endblock %}

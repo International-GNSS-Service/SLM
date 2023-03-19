@@ -6,6 +6,7 @@ from functools import partial
 from django.conf import settings
 from django.dispatch import receiver
 from slm import signals as slm_signals
+from slm.models import Site
 
 
 logger = logging.getLogger(f'{__name__}')
@@ -70,3 +71,8 @@ for alert, config in getattr(settings, 'SLM_AUTOMATED_ALERTS', {}).items():
 def send_alert_emails(sender, alert, **kwargs):
     if alert.send_email:
         alert.send(request=kwargs.get('request', None))
+
+    if hasattr(alert, 'site') and isinstance(alert.site, Site):
+        Site.objects.filter(
+            pk=alert.site.pk
+        ).synchronize_denormalized_metrics()

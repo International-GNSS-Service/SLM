@@ -609,3 +609,66 @@ class LogEntry(PolymorphicModel):
             models.Index(fields=["site_log_type", "site_log_id"]),
         ]
         ordering = ('-timestamp',)
+
+
+class TideGauge(models.Model):
+
+    name = models.CharField(
+        max_length=128,
+        blank=True,
+        null=False,
+        db_index=True
+    )
+
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    sonel_id = models.IntegerField(blank=True, null=True, db_index=True)
+
+    sites = models.ManyToManyField(
+        'slm.Site',
+        through='slm.SiteTideGauge',
+        through_fields=('gauge', 'site'),
+        related_name='tide_gauges'
+    )
+
+    @property
+    def sonel_link(self):
+        if self.sonel_id:
+            return f'http://www.sonel.org/spip.php?page=maregraphe' \
+                   f'&idStation={self.sonel_id}'
+        return ''
+
+    @property
+    def link(self):
+        return self.sonel_link  # or ...
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Tide Gauge'
+        verbose_name_plural = 'Tide Gauges'
+        ordering = ('name',)
+
+
+class SiteTideGauge(models.Model):
+
+    site = models.ForeignKey(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        related_name='tide_gauge_distances'
+    )
+    gauge = models.ForeignKey(
+        TideGauge,
+        on_delete=models.CASCADE,
+        related_name='site_distances'
+    )
+
+    distance = models.IntegerField(blank=True, null=False, db_index=True)
+
+    def __str__(self):
+        return f'{self.site.name} {self.gauge.name}'
+
+    class Meta:
+        ordering = ('site', 'distance')

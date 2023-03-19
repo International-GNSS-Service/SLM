@@ -39,6 +39,7 @@ from slm.defines import (
     ISOCountry,
     SiteLogStatus,
     TectonicPlates,
+    AlertLevel
 )
 from slm.models import compat
 from slm.utils import date_to_str
@@ -51,6 +52,43 @@ from slm.validators import get_validators
 from functools import lru_cache
 from django.utils.functional import classproperty
 from django.db import transaction
+from django.db.models import Func
+from collections import namedtuple
+
+
+# a named tuple used as meta information to dynamically determine what the
+# section models are and how to access them from the Site model
+Section = namedtuple(
+    'Section',
+    [
+        'field',      # the name of the section for database queries
+        'accessor',   # the section manager attribute on Site instances
+        'cls',      # the section's python model class
+        'subsection'  # true if this is a subsection (i.e. multiple instances)
+    ]
+)
+
+
+class JSONLength(Func):
+    """
+    TODO compat for Postgres
+    """
+    function = 'JSON_LENGTH'
+    output_field = models.IntegerField()
+
+
+class SubquerySum(Subquery):
+    """
+    The django ORM is still really clunky around aggregating subqueries.
+    https://code.djangoproject.com/ticket/28296
+    """
+    output_field = models.IntegerField()
+
+    def __init__(self, *args, **kwargs):
+        self.template = (
+            f'(SELECT COALESCE(SUM({kwargs.pop("field")}), 0) FROM (%(subquery)s) _sum)'
+        )
+        super().__init__(*args, **kwargs)
 
 
 def bool_condition(*args, **kwargs):
@@ -70,16 +108,7 @@ class DefaultToStrEncoder(json.JSONEncoder):
 
 
 class SiteManager(models.Manager):
-
-    def current(self, epoch=None, published=False):
-        """
-        if epoch:
-            return self.filter(published=True).order_by('-edited').filter(
-                edited__lte=epoch
-            ).first()
-        return self.filter(published=True).order_by('-edited').first()
-        """
-
+    pass
 
 class SiteQuerySet(models.QuerySet):
 
@@ -159,10 +188,10 @@ class SiteQuerySet(models.QuerySet):
             ~Q(status__in=[
                 SiteLogStatus.FORMER,
                 SiteLogStatus.SUSPENDED,
-                SiteLogStatus.PROPOSED
+                SiteLogStatus.PROPOSED,
+                SiteLogStatus.EMPTY
             ])
             & Q(agencies__public=True)
-            & Q(agencies__active=True)
             & Q(last_publish__isnull=False)
         ).distinct()
 
@@ -189,12 +218,51 @@ class SiteQuerySet(models.QuerySet):
                 return self.filter(agencies__in=user.agencies.all()).distinct()
         return self.none()
 
-    def annotate_max_alert(self):
+    def synchronize_denormalized_metrics(self):
+        """
+        Some metrics are denormalized and cached onto site records to speed up
+        reads. This ensures those denormalized metrics
+        (max_alert, num_flags and status) accurately reflect the normal data.
+        :return:
+        """
         from slm.models import Alert
+
         max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
-        return self.annotate(
+        self.annotate(
             _max_alert=Subquery(max_alert.values('level')[:1])
-        )
+        ).update(max_alert=F('_max_alert'))
+
+        aggregate = None
+        qry = self
+        mod_q = Q()
+        for idx, section in enumerate(self.model.sections()):
+            section_qry = section.cls.objects.filter(
+                site=OuterRef('pk')
+            )._current().annotate_flag_count()
+
+            mod_qry = section.cls.objects.filter(
+                site=OuterRef('pk')
+            )._current(published=False)
+
+            qry = qry.annotate(
+                **{
+                    f'_num_flags{idx}': SubquerySum(
+                        section_qry,
+                        field='_num_flags'
+                    ),
+                    f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])
+                }
+            )
+            mod_q |= Q(**{f'_mod{idx}__isnull': False})
+            if aggregate is None:
+                aggregate = F(f'_num_flags{idx}')
+            else:
+                aggregate += F(f'_num_flags{idx}')
+
+        qry.annotate(_num_flags=aggregate).update(num_flags=F('_num_flags'))
+        qry.public().filter(mod_q).update(status=SiteLogStatus.UPDATED)
+        qry.public().filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
+
 
     def availability(self):
         from slm.models import DataAvailability
@@ -264,6 +332,9 @@ class Site(models.Model):
         on_delete=models.SET_NULL
     )
 
+    # Denormalized data ###########################
+    # These fields are cached onto the site table to speed up lookups, issues
+    # can arise if they get out of synch with the data
     num_flags = models.PositiveSmallIntegerField(
         default=0,
         blank=True,
@@ -272,6 +343,18 @@ class Site(models.Model):
         ),
         db_index=True
     )
+
+    max_alert = EnumField(
+        AlertLevel,
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            'The number of flags the most recent site log version has.'
+        ),
+        db_index=True
+    )
+    ##############################################
 
     # todo deprecated
     preferred = models.IntegerField(default=0, blank=True)
@@ -356,17 +439,6 @@ class Site(models.Model):
             f'{epoch.day:02}.{log_format.ext}'
         )
 
-    @property
-    def max_alert(self):
-        if hasattr(self, '_max_alert'):
-            return self._max_alert
-        from slm.models import Alert
-        return getattr(
-            Alert.objects.for_site(self).order_by('-level').first(),
-            'level',
-            None
-        )
-
     def refresh_from_db(self, **kwargs):
         if hasattr(self, '_max_alert'):
             del self._max_alert
@@ -420,76 +492,18 @@ class Site(models.Model):
         if hasattr(cls, 'sections_'):
             return cls.sections_
 
-        cls.sections_ = {
-            section.related_model.section_number(): section.name
-            if SiteSubSection not in section.related_model.__mro__
-            else {}
-            for section in Site._meta.get_fields()
-            if section.related_model and
-               SiteSection in section.related_model.__mro__
-        }
-
-        for subsection in Site._meta.get_fields():
-            if (
-                subsection.related_model and
-                SiteSubSection in subsection.related_model.__mro__
-            ):
-                cls.sections_[subsection.related_model.section_number()][
-                    subsection.related_model.subsection_number()
-                ] = subsection.name
+        cls.sections_ = [
+            Section(
+                field=section.name,
+                accessor=section.get_accessor_name(),
+                cls=section.related_model,
+                subsection=SiteSubSection in section.related_model.__mro__
+            ) for section in Site._meta.get_fields()
+            if section.related_model and (
+                SiteSection in section.related_model.__mro__
+            )
+        ]
         return cls.sections_
-
-    @classmethod
-    def section_fields(cls):
-        if hasattr(cls, 'section_fields_'):
-            return cls.section_fields_
-
-        cls.section_fields_ = [
-            section.name for section in Site._meta.get_fields()
-            if section.related_model and (
-                    SiteSection in section.related_model.__mro__ and
-                    SiteSubSection not in section.related_model.__mro__
-            )
-        ]
-        return cls.section_fields_
-
-    @classmethod
-    def subsection_fields(cls):
-        if hasattr(cls, 'subsection_fields_'):
-            return cls.subsection_fields_
-
-        cls.subsection_fields_ = [
-            section.name for section in Site._meta.get_fields()
-            if section.related_model and
-               SiteSubSection in section.related_model.__mro__
-        ]
-        return cls.subsection_fields_
-
-    @classmethod
-    def section_accessors(cls):
-        if hasattr(cls, 'section_accessors_'):
-            return cls.section_accessors_
-
-        cls.section_accessors_ = [
-            section.get_accessor_name() for section in Site._meta.get_fields()
-            if section.related_model and (
-                    SiteSection in section.related_model.__mro__ and
-                    SiteSubSection not in section.related_model.__mro__
-            )
-        ]
-        return cls.section_accessors_
-
-    @classmethod
-    def subsection_accessors(cls):
-        if hasattr(cls, 'subsection_accessors_'):
-            return cls.subsection_accessors_
-
-        cls.subsection_accessors_ = [
-            section.get_accessor_name() for section in Site._meta.get_fields()
-            if section.related_model and
-               SiteSubSection in section.related_model.__mro__
-        ]
-        return cls.subsection_accessors_
 
     def can_publish(self, user):
         """
@@ -510,22 +524,17 @@ class Site(models.Model):
             return user.agencies.filter(pk__in=self.agencies.all()).count() > 0
         return False
 
-    def update_status(self, save=True, head=True, user=None, timestamp=None):
+    def update_status(self, save=True, user=None, timestamp=None):
         """
         Update the denormalized data that is too expensive to query on the
         fly. This includes flag count, moderation status and DateTimes.
 
         :param save:
-        :param head: False if status update should be done on the most recent
-            published version of the site log.
         :param user: The user responsible for a status update check
         :param timestamp: The time at which the status update is triggered
         :return:
         """
-        if head:
-            self.head()
-        else:
-            self.current()
+        self.head()
 
         if not timestamp:
             timestamp = now()
@@ -537,23 +546,26 @@ class Site(models.Model):
 
         self.num_flags = 0
         status = SiteLogStatus.PUBLISHED
-        for section in self.section_fields():
-            section_inst = getattr(self, section, None)
-            if section_inst:
-                self.num_flags += len(getattr(section_inst, '_flags') or {})
-                status = status.merge(
-                    getattr(
-                        section_inst,
-                        'mod_status',
-                        SiteLogStatus.PUBLISHED
+
+        for section in self.sections():
+            if section.subsection:
+                for subsection in getattr(self, section.field):
+                    if subsection.published and subsection.is_deleted:
+                        continue
+                    self.num_flags += len(subsection._flags or {})
+                    status = status.merge(subsection.mod_status)
+            else:
+                section_inst = getattr(self, section.field, None)
+                if section_inst:
+                    self.num_flags += len(
+                        getattr(section_inst, '_flags') or {})
+                    status = status.merge(
+                        getattr(
+                            section_inst,
+                            'mod_status',
+                            SiteLogStatus.PUBLISHED
+                        )
                     )
-                )
-        for subsections in self.subsection_fields():
-            for subsection in getattr(self, subsections):
-                if subsection.published and subsection.is_deleted:
-                    continue
-                self.num_flags += len(subsection._flags or {})
-                status = status.merge(subsection.mod_status)
 
         # if in either of these two states - status update must come from
         # a global publish of the site log, not from this which can be
@@ -576,29 +588,24 @@ class Site(models.Model):
             self.save()
 
     def published(self, epoch=None):
-        return self.current(epoch=epoch, published=True)
+        return self._current(epoch=epoch, published=True)
 
     def head(self, epoch=None):
-        return self.current(epoch=epoch, published=None)
+        return self._current(epoch=epoch, published=None)
 
-    def current(self, epoch=None, published=None):
-        for section in self.section_fields():
+    def _current(self, epoch=None, published=None):
+        for section in self.sections():
             setattr(
                 self,
-                section,
-                getattr(self, f'{section}_set').current(
+                section.field,
+                getattr(self, section.accessor)._current(
                     epoch=epoch,
                     published=published
-                )
-            )
-        for subsection in self.subsection_fields():
-            setattr(
-                self,
-                subsection,
-                getattr(self, f'{subsection}_set').current(
+                ) if section.subsection else
+                getattr(self, section.accessor)._current(
                     epoch=epoch,
                     published=published
-                )
+                ).first()
             )
 
     @property
@@ -620,30 +627,28 @@ class Site(models.Model):
             timestamp = now()
 
         sections_published = 0
-        for section_name in self.section_fields():
-            current = getattr(self, f'{section_name}_set').current()
-            if current:
-                sections_published += int(
-                    current.publish(
-                        request=request,
-                        silent=True,
-                        timestamp=timestamp,
-                        update_site=False
+        for section in self.sections():
+            if section.subsection:
+                for subsection in getattr(self, section.accessor).head():
+                    sections_published += int(
+                        subsection.publish(
+                            request=request,
+                            silent=True,
+                            timestamp=timestamp,
+                            update_site=False
+                        )
                     )
-                )
-
-        for subsection_name in self.subsection_fields():
-            for subsection in getattr(
-                self, f'{subsection_name}_set'
-            ).current():
-                sections_published += int(
-                    subsection.publish(
-                        request=request,
-                        silent=True,
-                        timestamp=timestamp,
-                        update_site=False
+            else:
+                current = getattr(self, section.accessor).head()
+                if current:
+                    sections_published += int(
+                        current.publish(
+                            request=request,
+                            silent=True,
+                            timestamp=timestamp,
+                            update_site=False
+                        )
                     )
-                )
 
         # this might be an initial PUBLISH when we're in PROPOSED or FORMER
         if sections_published or self.status != SiteLogStatus.PUBLISHED:
@@ -668,7 +673,7 @@ class Site(models.Model):
     @cached_property
     def equipment_list(self):
         """
-        Returns a list of equipment pairings in date order:
+        Returns a list of published equipment pairings in date order:
 
         [
             (date, {receiver: <receiver>, antenna: <antenna>}),
@@ -677,7 +682,7 @@ class Site(models.Model):
         ]
         """
         equipment = {}
-        self.current()
+        self.published()
         for receiver in self.sitereceiver_set.all():
             equipment.setdefault(receiver.installed.date(), {})
             equipment[receiver.installed.date()]['receiver'] = receiver
@@ -717,7 +722,15 @@ class Site(models.Model):
 
 
 class SiteSectionManager(models.Manager):
-    pass
+
+    def published(self, epoch=None):
+        return self.get_queryset().published(epoch=epoch)
+
+    def head(self, epoch=None):
+        return self.get_queryset().head(epoch=epoch)
+
+    def _current(self, epoch=None, published=None):
+        return self.get_queryset()._current(epoch=epoch, published=published)
 
 
 class SiteSectionQueryset(models.QuerySet):
@@ -733,20 +746,23 @@ class SiteSectionQueryset(models.QuerySet):
         return self.filter(site=station)
 
     def published(self, epoch=None):
-        return self.current(epoch=epoch, published=True)
+        return self._current(epoch=epoch, published=True).first()
 
     def head(self, epoch=None):
-        return self.current(epoch=epoch, published=None)
+        return self._current(epoch=epoch, published=None).first()
 
-    def current(self, epoch=None, published=None):
+    def annotate_flag_count(self):
+        return self.annotate(_num_flags=JSONLength('_flags', default=0))
+
+    def _current(self, epoch=None, published=None):
         pub_q = Q()
         if published is not None:
             pub_q = Q(published=published)
         if epoch and hasattr(self.model, 'valid_time'):
             return self.filter(pub_q).order_by('-edited').filter(
                 {f'{self.model.valid_time}__lte': epoch}
-            ).first()
-        return self.filter(pub_q).order_by('-edited').first()
+            )
+        return self.filter(pub_q).order_by('-edited')
 
 
 class SiteLocationManager(SiteSectionManager):
@@ -874,7 +890,7 @@ class SiteSection(models.Model):
             occurred.
         """
         errors = {}
-        for field in self._meta.fields:
+        for field in [*self._meta.fields, *self._meta.many_to_many]:
             for validator in get_validators(self._meta.label, field.name):
                 try:
                     validator(self, field, getattr(self, field.name, None))
@@ -1017,12 +1033,12 @@ class SiteSubSectionManager(SiteSectionManager):
 class SiteSubSectionQuerySet(SiteSectionQueryset):
 
     def published(self, subsection=None, epoch=None):
-        return self.current(subsection=subsection, epoch=epoch, published=True)
+        return self._current(subsection=subsection, epoch=epoch, published=True)
 
     def head(self, subsection=None, epoch=None):
-        return self.current(subsection=subsection, epoch=epoch, published=None)
+        return self._current(subsection=subsection, epoch=epoch, published=None)
 
-    def current(self, subsection=None, epoch=None, published=None):
+    def _current(self, subsection=None, epoch=None, published=None):
         """
         Fetch the subsection stack that matches the parameters.
 
@@ -1730,7 +1746,7 @@ class SiteReceiver(SiteSubSection):
     satellite_system = models.ManyToManyField(
         'slm.SatelliteSystem',
         verbose_name=_('Satellite System'),
-        blank=False,
+        blank=True,
         help_text=_('Check all GNSS systems that apply')
     )
 

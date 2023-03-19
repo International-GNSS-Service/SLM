@@ -16,7 +16,7 @@ only on syntax.
 """
 import re
 from datetime import date, datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 from slm.parsing import (
     Ignored,
     Warn,

@@ -30,8 +30,7 @@ from rest_framework.serializers import ModelSerializer
 from slm import signals as slm_signals
 from slm.api.filter import (
     CrispyFormCompat,
-    AcceptListArguments,
-    MustIncludeThese
+    AcceptListArguments
 )
 from slm.api.edit.serializers import (
     AlertSerializer,
@@ -96,9 +95,7 @@ from slm.models import (
     SiteTemperatureSensor,
     SiteWaterVaporRadiometer,
 )
-from django.utils.functional import cached_property
-from django.db.models import Q, Subquery, OuterRef
-from slm.defines import SiteLogStatus, AlertLevel
+from slm.defines import SiteLogStatus
 from slm.api.filter import SLMBooleanFilter, BaseStationFilter
 from django.http import Http404
 from datetime import datetime
@@ -224,7 +221,7 @@ class ReviewRequestView(
             self.request.user
         ).filter(review_requested__isnull=True).filter(
             status__in=SiteLogStatus.unpublished_states()
-        ).annotate_max_alert()
+        )
 
 
 class RejectUpdatesView(
@@ -249,7 +246,7 @@ class RejectUpdatesView(
     def get_queryset(self):
         return Site.objects.moderated(
             self.request.user
-        ).filter(review_requested__isnull=False).annotate_max_alert()
+        ).filter(review_requested__isnull=False)
 
 
 class StationListViewSet(
@@ -286,8 +283,9 @@ class StationListViewSet(
             'owner',
             'last_user',
             'review_requested',
-            'updates_rejected'
-        ).annotate_max_alert()
+            'updates_rejected',
+            'import_alert'
+        )
 
 
 class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
@@ -318,7 +316,7 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
             # stations
             self.sites = StationFilter(
                 data=data,
-                queryset=Site.objects.annotate_max_alert(),
+                queryset=Site.objects.all(),
                 request=request,
                 **kwargs
             )
@@ -393,7 +391,7 @@ class AlertViewSet(
             )
             self.sites = StationFilter(
                 data=data,
-                queryset=Site.objects.annotate_max_alert(),
+                queryset=Site.objects.all(),
                 request=request,
                 **kwargs
             )
@@ -727,9 +725,15 @@ class SectionViewSet(type):
                                     if not instance.published:
                                         edited_fields.append(field)
                                         if is_many:
-                                            getattr(instance, field).set(
-                                                new_value
-                                            )
+                                            if new_value:
+                                                getattr(instance, field).set(
+                                                    new_value
+                                                )
+                                            else:
+                                                getattr(
+                                                    instance,
+                                                    field
+                                                ).clear()
                                         else:
                                             setattr(instance, field, new_value)
                                     if field in flags:
@@ -746,7 +750,10 @@ class SectionViewSet(type):
                                         instance._meta.get_field(param),
                                         models.ManyToManyField
                                     ):
-                                        getattr(instance, param).set(value)
+                                        if value:
+                                            getattr(instance, param).set(value)
+                                        else:
+                                            getattr(instance, param).clear()
                                     else:
                                         setattr(instance, param, value)
                                 instance.full_clean()

@@ -86,30 +86,23 @@ class SiteLogSerializer(serializers.BaseSerializer):
         return {
             'site': self.site,
             **{
-                self.section_name(name): getattr(self.site, accessor).current(
-                    epoch=self.epoch_param,
-                    published=self.published_param
-                )
-                for name, accessor in zip(
-                    Site.section_fields(),
-                    Site.section_accessors()
-                )
-            },
-            **{
-                self.section_name(name): getattr(self.site, accessor).current(
-                    epoch=self.epoch_param,
-                    published=self.published_param
-                ).filter(is_deleted=False)
-                for name, accessor in zip(
-                    Site.subsection_fields(),
-                    Site.subsection_accessors()
-                )
+                self.section_name(section.field):
+                    getattr(self.site, section.accessor).published(
+                        epoch=self.epoch_param
+                    ) if self.published_param else
+                    getattr(self.site, section.accessor).head(
+                        epoch=self.epoch_param
+                    )
+                    for section in Site.sections()
             },
             'graphic': getattr(
-                self.site.siteantenna_set.current(
-                    epoch=self.epoch_param,
-                    published=self.published_param
-                ).filter(is_deleted=False).last(),
+                self.site.siteantenna_set.published(
+                    epoch=self.epoch_param
+                ).filter(is_deleted=False)
+                if self.published_param else
+                self.site.siteantenna_set.head(
+                    epoch=self.epoch_param
+                ).filter(is_deleted=False),
                 'graphic',
                 ''
             ),

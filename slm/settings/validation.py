@@ -14,7 +14,9 @@ from slm.validators import (
     EnumValidator,
     TimeRangeValidator,
     FieldRequiredToPublish,
-    ARPValidator
+    ARPValidator,
+    NonEmptyValidator,
+    VerifiedEquipmentValidator
 )
 
 # toggling this off will prevent any validation configured to block edit saves
@@ -31,6 +33,12 @@ SLM_DATA_VALIDATORS = {
         'tectonic': [EnumValidator()]
     },
     'slm.SiteReceiver': {
+        'receiver_type': [
+            VerifiedEquipmentValidator()
+        ],
+        'satellite_system': [
+            NonEmptyValidator()
+        ],
         'installed': [
             FieldRequiredToPublish(),
             TimeRangeValidator(end_field='removed')
@@ -40,6 +48,12 @@ SLM_DATA_VALIDATORS = {
         ]
     },
     'slm.SiteAntenna': {
+        'antenna_type': [
+            VerifiedEquipmentValidator()
+        ],
+        'radome_type': [
+            VerifiedEquipmentValidator()
+        ],
         'reference_point': [ARPValidator(), EnumValidator()],
         'installed': [
             FieldRequiredToPublish(),

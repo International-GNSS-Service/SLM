@@ -120,6 +120,24 @@ class EnumValidator(FieldPreferred):
                 self.throw_error(self.statement, instance, field)
 
 
+class VerifiedEquipmentValidator(SLMValidator):
+
+    statement = _('This equipment has not been verified.')
+
+    def __call__(self, instance, field, value):
+        if not value.verified:
+            self.throw_error(self.statement, instance, field)
+
+
+class NonEmptyValidator(SLMValidator):
+
+    statement = _('More than zero selections should be made.')
+
+    def __call__(self, instance, field, value):
+        if not value.all():
+            self.throw_error(self.statement, instance, field)
+
+
 class FourIDValidator(SLMValidator):
 
     regex_val = RegexValidator(regex=r'[A-Z0-9]{4}')

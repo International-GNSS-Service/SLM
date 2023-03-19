@@ -789,7 +789,7 @@ class AgencyPOCForm(SectionForm):
     class Meta(SectionForm.Meta):
         fields = SectionForm.Meta.fields
         widgets = {
-            'agency': forms.Textarea(attrs={'rows': 1}),
+            'agency': forms.Textarea(attrs={'rows': 2}),
             'mailing_address': forms.Textarea(attrs={'rows': 4})
         }
 
@@ -832,8 +832,16 @@ class UserForm(forms.ModelForm):
         helper.form_id = 'slm-user-form'
         helper.layout = Layout(
             Div(Div('email'), css_class='row'),
-            Div(Div('first_name', css_class='col-6'), Div('last_name', css_class='col-6'), css_class='row'),
-            Div(Div('silence_alerts', css_class='col-6'), Div('html_emails', css_class='col-6'), css_class='row'),
+            Div(
+                Div('first_name', css_class='col-6'),
+                Div('last_name', css_class='col-6'),
+                css_class='row'
+            ),
+            Div(
+                Div('silence_alerts', css_class='col-6'),
+                Div('html_emails', css_class='col-6'),
+                css_class='row'
+            ),
             Div(Div('agencies'), css_class='row')
         )
         return helper
@@ -862,12 +870,24 @@ class UserProfileForm(forms.ModelForm):
         helper = FormHelper()
         helper.form_id = 'slm-user-profile-form'
         helper.layout = Layout(
-            Div(Div('phone1', css_class='col-6'), Div('phone2', css_class='col-6'), css_class='row'),
+            Div(
+                Div('phone1', css_class='col-6'),
+                Div('phone2', css_class='col-6'),
+                css_class='row'
+            ),
             Div(Div('address1'), css_class='row'),
             Div(Div('address2'), css_class='row'),
             Div(Div('address3'), css_class='row'),
-            Div(Div('city', css_class='col-6'), Div('state_province', css_class='col-6'), css_class='row'),
-            Div(Div('country', css_class='col-6'), Div('postal_code', css_class='col-6'), css_class='row')
+            Div(
+                Div('city', css_class='col-6'),
+                Div('state_province', css_class='col-6'),
+                css_class='row'
+            ),
+            Div(
+                Div('country', css_class='col-6'),
+                Div('postal_code', css_class='col-6'),
+                css_class='row'
+            )
         )
         return helper
 

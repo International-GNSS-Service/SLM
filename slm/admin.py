@@ -46,7 +46,9 @@ from slm.models import (
     Network,
     UserProfile,
     Help,
-    About
+    About,
+    TideGauge,
+    SiteTideGauge
 )
 from slm.authentication import permissions
 from polymorphic.admin import (
@@ -55,6 +57,7 @@ from polymorphic.admin import (
     PolymorphicChildModelFilter
 )
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 
 admin.site.unregister(Group)
@@ -62,6 +65,16 @@ admin.site.unregister(Group)
 
 class UserAgencyInline(admin.TabularInline):
     model = Agency.users.through
+    extra = 0
+
+
+class TideGaugeInline(admin.TabularInline):
+    model = TideGauge.sites.through
+    extra = 0
+
+
+class SiteTGInline(admin.TabularInline):
+    model = Site.tide_gauges.through
     extra = 0
 
 
@@ -171,7 +184,7 @@ class SiteAgencyInline(admin.TabularInline):
 class SiteAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
-    inlines = [SiteAgencyInline, NetworkInline]
+    inlines = [SiteAgencyInline, NetworkInline, TideGaugeInline]
     exclude = ['agencies']
 
 
@@ -191,15 +204,36 @@ class SatelliteSystemAdmin(admin.ModelAdmin):
 
 
 class AntennaAdmin(admin.ModelAdmin):
-    pass
+
+    search_fields = ('name',)
+    list_filter = ('verified',)
 
 
 class ReceiverAdmin(admin.ModelAdmin):
-    pass
+
+    search_fields = ('name',)
+    list_filter = ('verified',)
 
 
 class RadomeAdmin(admin.ModelAdmin):
-    pass
+
+    search_fields = ('name',)
+    list_filter = ('verified',)
+
+
+class TideGaugeAdmin(admin.ModelAdmin):
+
+    search_fields = ('name', 'sonel_id')
+    list_display = ('name', 'sonel_link')
+    inlines = [SiteTGInline]
+
+    def sonel_link(self,obj):
+        return mark_safe(
+            f'<a href="{obj.sonel_link}" target="_blank">{obj.sonel_link}</a>'
+        )
+
+    def get_queryset(self, request):
+        return self.model.objects.prefetch_related('sites')
 
 
 class ManufacturerAdmin(admin.ModelAdmin):
@@ -297,14 +331,12 @@ class AlertAdmin(AlertAdminMixin, PolymorphicParentModelAdmin):
     )
     list_filter = (PolymorphicChildModelFilter,)
 
-
+"""
 class SLMAdminSite(admin.AdminSite):
 
     def get_app_list(self, request, app_label=None):
-        """
-        Return a sorted list of all the installed apps that have been
-        registered in this site.
-        """
+        #Return a sorted list of all the installed apps that have been
+        #registered in this site.
         ret = super().get_app_list(request, app_label=app_label)
 
         # force group all alerts together
@@ -327,13 +359,14 @@ class SLMAdminSite(admin.AdminSite):
 
         ret.insert(1, spoofed_alerts_app)
         return ret
-
+"""
 
 #admin.site = SLMAdminSite()
 
 admin.site.register(get_user_model(), UserAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(Agency, AgencyAdmin)
+admin.site.register(TideGauge, TideGaugeAdmin)
 admin.site.register(SatelliteSystem, SatelliteSystemAdmin)
 admin.site.register(Antenna, AntennaAdmin)
 admin.site.register(Receiver, ReceiverAdmin)

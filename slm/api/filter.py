@@ -6,9 +6,6 @@ from django_filters import (
     FilterSet
 )
 from django.db.models import Q
-from functools import reduce
-import operator
-from rest_framework.compat import distinct
 from django_filters import compat
 from django_filters.filterset import BaseFilterSet
 from django.forms import DateTimeField
@@ -440,20 +437,24 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
         )
 
     def filter_alerts(self, queryset, name, value):
-        alert_q = Q()
-        for alert in value:
-            alert_q |= Q(
-                **{f'{self.alert_fields[alert.lower()]}__isnull': False}
-            )
-        return queryset.filter(alert_q)
+        if value:
+            alert_q = Q()
+            for alert in value:
+                alert_q |= Q(
+                    **{f'{self.alert_fields[alert.lower()]}__isnull': False}
+                )
+            return queryset.filter(alert_q)
+        return queryset
 
     def filter_alert_level(self, queryset, name, value):
-        level_q = Q()
-        for alerts in Site.alert_fields:
-            level_q |= Q(
-                **{f'{alerts}__level__in': value}
-            )
-        return queryset.filter(level_q)
+        if value:
+            level_q = Q()
+            for alerts in Site.alert_fields:
+                level_q |= Q(
+                    **{f'{alerts}__level__in': value}
+                )
+            return queryset.filter(level_q)
+        return queryset
 
     def filter_equipment(self, queryset, name, value):
         if value:

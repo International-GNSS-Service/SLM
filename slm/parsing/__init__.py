@@ -448,7 +448,7 @@ def to_receiver(value):
 def to_satellites(value):
     sats = []
     bad_sats = set()
-    for sat in value.split('+'):
+    for sat in [sat for sat in value.split('+') if sat]:
         try:
             sats.append(SatelliteSystem.objects.get(name__iexact=sat).pk)
         except SatelliteSystem.DoesNotExist:

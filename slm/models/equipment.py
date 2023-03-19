@@ -60,6 +60,8 @@ class Equipment(models.Model):
 
     description = models.CharField(
         max_length=500,
+        default='',
+        blank=True,
         help_text=_('The equipment characteristics.')
     )
 
@@ -76,6 +78,11 @@ class Equipment(models.Model):
         default=None,
         blank=True,
         help_text=_('The manufacturing organization.')
+    )
+
+    verified = models.BooleanField(
+        default=False,
+        help_text=_('Has this equipment been verified to be accurate?')
     )
 
     def __str__(self):
@@ -117,11 +124,6 @@ class Antenna(Equipment):
         db_index=True
     )
 
-    verified = models.BooleanField(
-        default=False,
-        help_text=_('Has this antenna type been verified to be accurate?')
-    )
-
     @property
     def full(self):
         return f'{self.model} {self.reference_point.label} ' \
@@ -145,14 +147,16 @@ class AntCal(models.Model):
         Antenna,
         blank=False,
         null=False,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='calibrations'
     )
 
     radome = models.ForeignKey(
         Radome,
         blank=False,
         null=True,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='calibrations'
     )
 
     calibration = EnumField(

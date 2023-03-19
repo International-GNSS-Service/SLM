@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union, Any
 
 from slm.defines import (
     AntennaReferencePoint,
@@ -10,6 +10,8 @@ from slm.defines import (
     ISOCountry,
     TectonicPlates,
 )
+from slm.models import SatelliteSystem
+from slm.parsing import Finding
 from slm.parsing.legacy.parser import (
     Error,
     ParsedSection,
@@ -32,6 +34,7 @@ from slm.parsing import (
     to_str,
     BaseBinder
 )
+
 
 TEMP_RANGE_REGEX = re.compile(
     r'(\d+(?:[.]\d*)?)[\s()°degrsDEGRSCc]*(?:(?:-)|(?:to))\s*'
@@ -127,6 +130,22 @@ def effective_end(value):
         ) from ve
 
 
+def no_sat_warning(line_no, parser, satellites):
+    if not satellites:
+        good_sats = '  \n'.join(
+            [sat.name for sat in SatelliteSystem.objects.all()]
+        )
+        return [
+            Warn(
+                line_no,
+                parser,
+                f"Expected constellation list delineated by '+' "
+                f"(e.g. GPS+GLO). Must be one of \n{good_sats}"
+            )
+        ]
+    return []
+
+
 class SiteLogBinder(BaseBinder):
 
     EFFECTIVE_DATES = [
@@ -182,7 +201,17 @@ class SiteLogBinder(BaseBinder):
             str,
             Union[
                 Tuple[str, Callable],
-                List[Tuple[str, Callable]]
+                List[Tuple[str, Callable]],
+                Tuple[
+                    str,
+                    Callable,
+                    Callable[[int, SiteLogParser, Any], List[Finding]]
+                ],
+                List[Tuple[
+                    str,
+                    Callable,
+                    Callable[[int, SiteLogParser, Any], List[Finding]]
+                ]]
             ]
         ]
     ] = {
@@ -238,8 +267,8 @@ class SiteLogBinder(BaseBinder):
                 ('X coordinate (m)', ('x', to_float)),
                 ('Y coordinate (m)', ('y', to_float)),
                 ('Z coordinate (m)', ('z', to_float)),
-                ('Latitude (N is +)', ('latitude', to_float)),
-                ('Longitude (E is +)', ('longitude', to_float)),
+                ('Latitude (N is +)', ('latitude', to_decimal_degrees)),
+                ('Longitude (E is +)', ('longitude', to_decimal_degrees)),
                 ('Elevation (m,ellips.)', ('elevation', to_float)),
     
                 ('Additional Information', ('additional_information', to_str))
@@ -248,7 +277,9 @@ class SiteLogBinder(BaseBinder):
         3: {
             reg(log_name, 3, bindings): bindings for log_name, bindings in [
                 ('Receiver Type', ('receiver_type', to_receiver)),
-                ('Satellite System', ('satellite_system', to_satellites)),
+                ('Satellite System', 
+                    ('satellite_system', to_satellites, no_sat_warning)
+                ),
                 ('Serial Number', ('serial_number', to_str)),
                 ('Firmware Version', ('firmware', to_str)),
                 ('Elevation Cutoff Setting', ('elevation_cutoff', to_float)),
@@ -456,7 +487,17 @@ class SiteLogBinder(BaseBinder):
                 str,
                 Union[
                     Tuple[str, Callable],
-                    List[Tuple[str, Callable]]
+                    List[Tuple[str, Callable]],
+                    Tuple[
+                        str,
+                        Callable,
+                        Callable[[int, SiteLogParser, Any], List[Finding]]
+                    ],
+                    List[Tuple[
+                        str,
+                        Callable,
+                        Callable[[int, SiteLogParser, Any], List[Finding]]
+                    ]]
                 ]
             ]
     ) -> None:
@@ -464,11 +505,11 @@ class SiteLogBinder(BaseBinder):
         expected = set()
         binding_errors = set()
         for _, bindings in translations.items():
-            for param, _ in (
+            for param in (
                 bindings if isinstance(bindings, list)
                 else [bindings]
             ):
-                expected.add(param)
+                expected.add(param[0])
 
         for norm_name, parameter in section.parameters.items():
             translation = translations.get(norm_name, None)
@@ -490,16 +531,29 @@ class SiteLogBinder(BaseBinder):
                 )
                 continue
 
-            for param, parse in (
+            for param in (
                 translation if isinstance(translation, list)
                 else [translation]
             ):
+                value_check = (
+                    param[2] if len(param) > 2 else lambda l, p, v: []
+                )
+                parse = param[1]
+                param = param[0]
                 try:
-                    parameter.bind(
-                        param,
-                        parse('') if parameter.is_placeholder else
+                    value = (
+                        parse('')
+                        if parameter.is_placeholder else
                         parse(parameter.value)
                     )
+                    parameter.bind(param, value)
+                    for finding in value_check(
+                        parameter.line_no,
+                        self.parsed,
+                        value
+                    ):
+                        self.parsed.add_finding(finding)
+                    
                 except Exception as err:
                     binding_errors.add(param)
                     for line_no in range(

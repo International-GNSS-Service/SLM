@@ -13,7 +13,8 @@ from tqdm import tqdm
 
 class Command(BaseCommand):
     help = 'Update the site index from the current data or rebuild from ' \
-           'archives.'
+           'archives. Note - this will generate new serialized files for all' \
+           'published data that is not up to date in the archive.'
 
     logger = logging.getLogger(__name__ + '.Command')
 

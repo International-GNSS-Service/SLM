@@ -9,7 +9,8 @@ from slm.models import (
     Antenna,
     Radome,
     ArchivedSiteLog,
-    SatelliteSystem
+    SatelliteSystem,
+    SiteTideGauge
 )
 from slm.utils import build_absolute_url
 
@@ -93,15 +94,34 @@ class SatelliteSystemSerializer(serializers.ModelSerializer):
         fields = ('name',)
 
 
+class SiteTideGaugeSerializer(serializers.ModelSerializer):
+
+    name = serializers.SerializerMethodField()
+    link = serializers.URLField(source='gauge.link')
+
+    def get_name(self, obj):
+        return obj.gauge.name
+
+    class Meta:
+        model = SiteTideGauge
+        fields = ('name', 'link', 'distance')
+
+
 class StationListSerializer(serializers.ModelSerializer):
 
     agencies = AgencySerializer(many=True)
     networks = NetworkSerializer(many=True)
+    tide_gauges = SiteTideGaugeSerializer(
+        source='tide_gauge_distances',
+        many=True
+    )
+
     satellite_system = serializers.SerializerMethodField()
 
     antenna_type = serializers.CharField()
     radome_type = serializers.CharField()
     receiver_type = serializers.CharField()
+    antcal = serializers.CharField()
 
     latitude = serializers.FloatField()
     longitude = serializers.FloatField()
@@ -156,12 +176,14 @@ class StationListSerializer(serializers.ModelSerializer):
             'elevation',
             'antenna_type',
             'radome_type',
+            'antcal',
             'receiver_type',
             'serial_number',
             'firmware',
             'frequency_standard',
             'domes_number',
             'satellite_system',
+            'tide_gauges',
             'data_center',
             'last_rinex2',
             'last_rinex3',

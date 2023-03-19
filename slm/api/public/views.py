@@ -32,7 +32,9 @@ from slm.models import (
     ArchivedSiteLog,
     Agency,
     Network,
-    SatelliteSystem
+    SatelliteSystem,
+    SiteTideGauge,
+    AntCal
 )
 from slm.api.filter import (
     SLMDateTimeFilter,
@@ -194,6 +196,10 @@ class StationListViewSet(
     ordering = ('name',)
 
     def get_queryset(self):
+        antcal = AntCal.objects.filter(
+            Q(antenna=OuterRef('antenna_type')) &
+            Q(radome=OuterRef('radome_type'))
+        )
         location = SiteLocation.objects.filter(
             Q(site=OuterRef('pk')) & Q(published=True)
         )
@@ -202,7 +208,8 @@ class StationListViewSet(
         )
         antenna = SiteAntenna.objects.filter(
             Q(site=OuterRef('pk')) & Q(published=True)
-        )
+        ).annotate(calibration=Subquery(antcal.values('calibration')[:1]))
+
         receiver = SiteReceiver.objects.filter(
             Q(site=OuterRef('pk')) & Q(published=True)
         )
@@ -232,6 +239,9 @@ class StationListViewSet(
             'radome_type': Subquery(
                 antenna.values('radome_type__model')[:1]
             ),
+            'antcal': Subquery(
+                antenna.values('calibration')[:1]
+            ),
             'receiver_type': Subquery(
                 receiver.values('receiver_type__model')[:1]
             ),
@@ -254,9 +264,15 @@ class StationListViewSet(
             'networks',
             Prefetch(
                 'sitereceiver_set',
-                queryset=SiteReceiver.objects.current(
-                    published=True
-                ).prefetch_related('satellite_system')
+                queryset=SiteReceiver.objects.published().prefetch_related(
+                    'satellite_system'
+                )
+            ),
+            Prefetch(
+                'tide_gauge_distances',
+                queryset=SiteTideGauge.objects.prefetch_related(
+                    'gauge'
+                ).order_by('-distance')
             )
         ).annotate(**annotations).public().availability()
 

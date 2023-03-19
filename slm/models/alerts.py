@@ -409,12 +409,6 @@ class Alert(PolymorphicModel):
         default='',
         help_text=_('Longer description containing details of the alert.')
     )
-    detail = RichTextUploadingField(
-        blank=True,
-        null=False,
-        default='',
-        help_text=_('Longer description containing details of the alert.')
-    )
 
     level = EnumField(
         AlertLevel,
@@ -446,7 +440,8 @@ class Alert(PolymorphicModel):
             'The priority ordering for this alert. Alerts are shown by '
             'decreasing priority order first then by decreasing timestamp '
             'order.'
-        )
+        ),
+        db_index=True
     )
 
     expires = models.DateTimeField(
@@ -600,6 +595,38 @@ class UserAlert(Alert):
     class Meta:
         verbose_name_plural = ' Alerts: User'
         verbose_name = 'User Alert'
+
+
+class ImportAlert(Alert):
+    """
+    An alert reserved for issue when issues arise during import of data
+    into the system.
+    """
+
+    DEFAULT_PRIORITY = 1
+
+    site = models.OneToOneField(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        help_text=_(
+            'Only users with access to this site will see this alert.'
+        ),
+        related_name='import_alert',
+        null=False
+    )
+
+    @property
+    def target(self):
+        return self.site
+
+    def __str__(self):
+        if self.site:
+            return f'{self.site.name}: {super().__str__()}'
+        return super().__str__()
+
+    class Meta:
+        verbose_name_plural = ' Alerts: Import'
+        verbose_name = 'Import Alert'
 
 
 class AgencyAlert(Alert):
@@ -761,7 +788,7 @@ class GeodesyMLInvalid(AutomatedAlertMixin, SiteFile, Alert):
 
     site = models.OneToOneField(
         'slm.Site',
-        null=True,
+        null=False,
         default=None,
         blank=True,
         on_delete=models.CASCADE,
@@ -878,7 +905,7 @@ class ReviewRequested(AutomatedAlertMixin, Alert):
 
     site = models.OneToOneField(
         'slm.Site',
-        null=True,
+        null=False,
         default=None,
         blank=True,
         on_delete=models.CASCADE,
@@ -985,7 +1012,7 @@ class UpdatesRejected(AutomatedAlertMixin, Alert):
 
     site = models.OneToOneField(
         'slm.Site',
-        null=True,
+        null=False,
         default=None,
         blank=True,
         on_delete=models.CASCADE,

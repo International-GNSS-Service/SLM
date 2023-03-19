@@ -20,11 +20,6 @@ class Command(BaseCommand):
 
     logger = logging.getLogger(__name__ + '.Command')
 
-    SECTIONS = {
-        *Site.section_accessors(),
-        *Site.subsection_accessors(),
-    }
-
     def add_arguments(self, parser):
 
         parser.add_argument(
@@ -88,8 +83,8 @@ class Command(BaseCommand):
             ) as p_bar:
                 for site in sites:
                     p_bar.set_postfix({'site': site.name})
-                    for section in self.SECTIONS:
-                        head = getattr(site, section).head()
+                    for section in Site.sections():
+                        head = getattr(site, section.accessor).head()
                         if not hasattr(head, '__iter__'):
                             head = [head]
                         for obj in head:
@@ -105,8 +100,10 @@ class Command(BaseCommand):
                         else:
                             valid += 1
 
-                    site.update_status(save=True)
+                    #site.update_status(save=True)
                     p_bar.update(n=1)
+
+            Site.objects.synchronize_denormalized_metrics()
 
         if options['schema']:
             print(

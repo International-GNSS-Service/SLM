@@ -32,6 +32,7 @@ from slm.models import (
     Site,
     Alert,
     UserAlert,
+    AntCal,
     SiteReceiver,
     GeodesyMLInvalid,
     ReviewRequested,
@@ -206,19 +207,19 @@ class SatelliteSystemAdmin(admin.ModelAdmin):
 class AntennaAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
-    list_filter = ('verified',)
+    list_filter = ('state',)
 
 
 class ReceiverAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
-    list_filter = ('verified',)
+    list_filter = ('state',)
 
 
 class RadomeAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
-    list_filter = ('verified',)
+    list_filter = ('state',)
 
 
 class TideGaugeAdmin(admin.ModelAdmin):
@@ -234,6 +235,18 @@ class TideGaugeAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return self.model.objects.prefetch_related('sites')
+
+
+class AntennaCalibrationAdmin(admin.ModelAdmin):
+    search_fields = ('antenna__model', 'radome__model')
+    list_display = ('antenna', 'radome', 'method_label', 'calibrated')
+    list_filter = ('method',)
+
+    def method_label(self, obj):
+        return str(obj.method.label)
+
+    def get_queryset(self, request):
+        return self.model.objects.select_related('antenna', 'radome')
 
 
 class ManufacturerAdmin(admin.ModelAdmin):
@@ -375,5 +388,6 @@ admin.site.register(Manufacturer, ManufacturerAdmin)
 admin.site.register(SiteFileUpload, SiteFileUploadAdmin)
 admin.site.register(Help, HelpAdmin)
 admin.site.register(About, AboutAdmin)
+admin.site.register(AntCal, AntennaCalibrationAdmin)
 
 admin.autodiscover()

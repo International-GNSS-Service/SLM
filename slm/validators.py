@@ -5,6 +5,7 @@ from slm.defines import FlagSeverity
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+from slm.defines import EquipmentState
 
 
 # we can't use actual nulls for times because it breaks things like
@@ -125,7 +126,7 @@ class VerifiedEquipmentValidator(SLMValidator):
     statement = _('This equipment has not been verified.')
 
     def __call__(self, instance, field, value):
-        if not value.verified:
+        if value.state == EquipmentState.UNVERIFIED:
             self.throw_error(self.statement, instance, field)
 
 

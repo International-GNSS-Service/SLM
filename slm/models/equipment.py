@@ -5,7 +5,7 @@ from slm.defines import (
     AntennaReferencePoint,
     AntennaFeatures,
     EquipmentState,
-    AntennaCalibration
+    AntennaCalibrationMethod
 )
 
 
@@ -44,10 +44,28 @@ class Manufacturer(models.Model):
     class Meta:
         ordering = ('name',)
 
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        managed = True
+
+
+class EquipmentManager(models.Manager):
+    pass
+
+
+class EquipmentQuerySet(models.QuerySet):
+
+    def public(self):
+        return self.filter(state=EquipmentState.ACTIVE)
+
 
 class Equipment(models.Model):
 
     API_RELATED_FIELD = 'model'
+
+    objects = EquipmentManager.from_queryset(EquipmentQuerySet)()
 
     model = models.CharField(
         max_length=50,
@@ -67,8 +85,11 @@ class Equipment(models.Model):
 
     state = EnumField(
         EquipmentState,
+        default=EquipmentState.UNVERIFIED,
         db_index=True,
-        help_text=_('Is this equipment in active production?')
+        help_text=_(
+            'Has this equipment been verified and is it in active production?'
+        )
     )
 
     manufacturer = models.ForeignKey(
@@ -78,11 +99,6 @@ class Equipment(models.Model):
         default=None,
         blank=True,
         help_text=_('The manufacturing organization.')
-    )
-
-    verified = models.BooleanField(
-        default=False,
-        help_text=_('Has this equipment been verified to be accurate?')
     )
 
     def __str__(self):
@@ -159,16 +175,42 @@ class AntCal(models.Model):
         related_name='calibrations'
     )
 
-    calibration = EnumField(
-        AntennaCalibration,
+    method = EnumField(
+        AntennaCalibrationMethod,
         blank=True,
         null=True,
-        db_index=True
+        db_index=True,
+        help_text=_('The method of calibration.')
     )
 
-    dazi = models.FloatField(blank=True, null=True, db_index=True)
-    zen = models.FloatField(blank=True, null=True, db_index=True)
+    calibrated = models.DateField(
+        blank=True,
+        null=True,
+        db_index=True,
+        help_text=_('The date the calibration was done.')
+    )
+
+    num_antennas = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
+        help_text=_('The number of antennas that were calibrated.')
+    )
+
+    agency = models.CharField(
+        blank=True,
+        default='',
+        null=False,
+        help_text=_('The agency performing the calibration.'),
+        max_length=50
+    )
+
+    dazi = models.FloatField(blank=True, null=True)
+    zen1 = models.FloatField(blank=True, null=True)
+    zen2 = models.FloatField(blank=True, null=True)
+    dzen = models.FloatField(blank=True, null=True)
 
     class Meta:
         index_together = (('antenna', 'radome'),)
         unique_together = (('antenna', 'radome'),)
+        verbose_name = 'Antenna Calibration'
+        verbose_name_plural = 'Antenna Calibrations'

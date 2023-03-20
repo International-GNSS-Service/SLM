@@ -11,7 +11,7 @@ def load_satellitesystems(apps, schema_editor):
         {'name': 'QZSS', 'order': 4},
         {'name': 'IRNSS', 'order': 5},
         {'name': 'SBAS', 'order': 6},
-        {'name': 'WAAS', 'order': 7}
+        #{'name': 'WAAS', 'order': 7}
     ]:
         SatelliteSystem.objects.create(**system)
 

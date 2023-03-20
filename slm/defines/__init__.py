@@ -1,5 +1,5 @@
 from slm.defines.AlertLevel import AlertLevel
-from slm.defines.AntennaCalibration import AntennaCalibration
+from slm.defines.AntennaCalibration import AntennaCalibrationMethod
 from slm.defines.AntennaFeatures import AntennaFeatures
 from slm.defines.AntennaReferencePoint import AntennaReferencePoint
 from slm.defines.Aspiration import Aspiration

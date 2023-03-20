@@ -208,7 +208,7 @@ class StationListViewSet(
         )
         antenna = SiteAntenna.objects.filter(
             Q(site=OuterRef('pk')) & Q(published=True)
-        ).annotate(calibration=Subquery(antcal.values('calibration')[:1]))
+        ).annotate(method=Subquery(antcal.values('method')[:1]))
 
         receiver = SiteReceiver.objects.filter(
             Q(site=OuterRef('pk')) & Q(published=True)
@@ -240,7 +240,7 @@ class StationListViewSet(
                 antenna.values('radome_type__model')[:1]
             ),
             'antcal': Subquery(
-                antenna.values('calibration')[:1]
+                antenna.values('method')[:1]
             ),
             'receiver_type': Subquery(
                 receiver.values('receiver_type__model')[:1]
@@ -384,7 +384,7 @@ class ReceiverViewSet(
     ordering = ('model',)
 
     def get_queryset(self):
-        return Receiver.objects.select_related('manufacturer')
+        return Receiver.objects.public().select_related('manufacturer')
 
 
 class AntennaViewSet(
@@ -420,7 +420,7 @@ class AntennaViewSet(
     ordering = ('model',)
 
     def get_queryset(self):
-        return Antenna.objects.select_related('manufacturer')
+        return Antenna.objects.public().select_related('manufacturer')
 
 
 class RadomeViewSet(
@@ -456,7 +456,7 @@ class RadomeViewSet(
     ordering = ('model',)
 
     def get_queryset(self):
-        return Radome.objects.select_related('manufacturer')
+        return Radome.objects.public().select_related('manufacturer')
 
 
 class AgencyViewSet(

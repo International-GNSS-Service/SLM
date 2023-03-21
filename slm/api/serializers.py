@@ -98,11 +98,11 @@ class SiteLogSerializer(serializers.BaseSerializer):
             'graphic': getattr(
                 self.site.siteantenna_set.published(
                     epoch=self.epoch_param
-                ).filter(is_deleted=False)
+                ).filter(is_deleted=False).first()
                 if self.published_param else
                 self.site.siteantenna_set.head(
                     epoch=self.epoch_param
-                ).filter(is_deleted=False),
+                ).filter(is_deleted=False).first(),
                 'graphic',
                 ''
             ),

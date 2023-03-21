@@ -21,4 +21,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         with transaction.atomic():
-            Site.objects.synchronize_denormalized_metrics()
+            Site.objects.synchronize_denormalized_state()

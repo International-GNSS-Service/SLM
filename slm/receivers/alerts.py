@@ -75,4 +75,4 @@ def send_alert_emails(sender, alert, **kwargs):
     if hasattr(alert, 'site') and isinstance(alert.site, Site):
         Site.objects.filter(
             pk=alert.site.pk
-        ).synchronize_denormalized_metrics()
+        ).synchronize_denormalized_state()

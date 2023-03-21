@@ -466,11 +466,13 @@ def to_satellites(value):
     return sats
 
 
-def to_enum(enum_cls, value, blank=None):
+def to_enum(enum_cls, value, strict=True, blank=None):
     if value:
         try:
             return enum_cls(value).value
         except ValueError as ve:
+            if not strict:
+                return value.strip()
             valid_list = "  \n".join(en.label for en in enum_cls)
             raise ValueError(
                 f'Invalid value {value} must be one of:\n'

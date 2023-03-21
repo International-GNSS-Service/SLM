@@ -86,7 +86,10 @@ class Command(BaseCommand):
                     for section in Site.sections():
                         head = getattr(site, section.accessor).head()
                         if not hasattr(head, '__iter__'):
-                            head = [head]
+                            if head:
+                                head = [head]
+                            else:
+                                head = []
                         for obj in head:
                             if options['clear']:
                                 obj._flags = {}
@@ -103,7 +106,7 @@ class Command(BaseCommand):
                     #site.update_status(save=True)
                     p_bar.update(n=1)
 
-            Site.objects.synchronize_denormalized_metrics()
+            Site.objects.synchronize_denormalized_state()
 
         if options['schema']:
             print(

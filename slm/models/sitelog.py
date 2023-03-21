@@ -54,6 +54,7 @@ from django.utils.functional import classproperty
 from django.db import transaction
 from django.db.models import Func
 from collections import namedtuple
+from datetime import datetime, timezone
 
 
 # a named tuple used as meta information to dynamically determine what the
@@ -86,7 +87,8 @@ class SubquerySum(Subquery):
 
     def __init__(self, *args, **kwargs):
         self.template = (
-            f'(SELECT COALESCE(SUM({kwargs.pop("field")}), 0) FROM (%(subquery)s) _sum)'
+            f'(SELECT COALESCE(SUM({kwargs.pop("field")}), 0) '
+            f'FROM (%(subquery)s) _sum)'
         )
         super().__init__(*args, **kwargs)
 
@@ -109,6 +111,7 @@ class DefaultToStrEncoder(json.JSONEncoder):
 
 class SiteManager(models.Manager):
     pass
+
 
 class SiteQuerySet(models.QuerySet):
 
@@ -218,11 +221,12 @@ class SiteQuerySet(models.QuerySet):
                 return self.filter(agencies__in=user.agencies.all()).distinct()
         return self.none()
 
-    def synchronize_denormalized_metrics(self):
+    def synchronize_denormalized_state(self):
         """
-        Some metrics are denormalized and cached onto site records to speed up
-        reads. This ensures those denormalized metrics
-        (max_alert, num_flags and status) accurately reflect the normal data.
+        Some state is denormalized and cached onto site records to speed up
+        reads. This ensures this denormalized state
+        (max_alert, num_flags, status, and some site form fields) accurately
+        reflect the normal data.
         :return:
         """
         from slm.models import Alert
@@ -263,6 +267,17 @@ class SiteQuerySet(models.QuerySet):
         qry.public().filter(mod_q).update(status=SiteLogStatus.UPDATED)
         qry.public().filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
 
+        # this is the longest operation - there might be a way to squash it
+        # into a single query
+        for site in qry.filter(mod_q):
+            form = site.siteform_set.head()
+            if form.published:
+                form.pk = None
+                form.published = False
+                form.save()
+
+            form.modified_section = ', '.join(site.modified_sections)
+            form.save()
 
     def availability(self):
         from slm.models import DataAvailability
@@ -608,6 +623,28 @@ class Site(models.Model):
                 ).first()
             )
 
+    @cached_property
+    def modified_sections(self):
+        modified_sections = []
+        for section in self.sections():
+            if section.cls is SiteForm:
+                continue
+            if section.subsection:
+                idx = 0
+                for subsection in getattr(self, section.accessor).head():
+                    idx += 1
+                    if not subsection.published:
+                        dot_index = f'{subsection.section_number()}'
+                        if subsection.subsection_number():
+                            dot_index += f'.{subsection.subsection_number()}'
+                        dot_index += f'.{idx}'
+                        modified_sections.append(dot_index)
+            else:
+                modified = getattr(self, section.accessor).head()
+                if modified and not modified.published:
+                    modified_sections.append(str(modified.section_number()))
+        return modified_sections
+
     @property
     def four_id(self):
         return self.name[:4]
@@ -625,6 +662,11 @@ class Site(models.Model):
         """
         if timestamp is None:
             timestamp = now()
+
+        form = self.siteform_set.head()
+        if form.published:
+            form.pk = None
+            form.save()
 
         sections_published = 0
         for section in self.sections():
@@ -809,6 +851,10 @@ class SiteSection(models.Model):
     )
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
+
+    @property
+    def dot_index(self):
+        return self.section_number()
 
     def publish(
         self,
@@ -1052,11 +1098,7 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
         :return:
         """
         section_q = Q()
-        order_field = (
-            self.model.valid_time
-            if self.model.valid_time
-            else 'subsection'
-        )
+
         if epoch and self.model.valid_time is not None:
             section_q &= Q(**{f'{self.model.valid_time}__lte': epoch})
 
@@ -1067,13 +1109,16 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
             return self.filter(Q(subsection=subsection) & section_q).first()
 
         if published is not None:
-            return self.filter(section_q).order_by(order_field)
+            return self.filter(section_q).order_by(self.model.order_field)
 
         unpub = self.filter(section_q & Q(published=False))
         return (
             unpub | self.filter(
-            section_q & Q(published=True) & ~Q(pk__in=unpub)
-        )).order_by(order_field)
+                section_q &
+                Q(published=True) &
+                ~Q(subsection__in=unpub.values('subsection'))
+            )
+        ).order_by(self.model.order_field)
 
 
 class SiteSubSection(SiteSection):
@@ -1085,6 +1130,31 @@ class SiteSubSection(SiteSection):
     inserted = models.DateTimeField(default=now, db_index=True)
 
     objects = SiteSubSectionManager.from_queryset(SiteSubSectionQuerySet)()
+
+    @property
+    def dot_index(self, published=False):
+        """
+        Get the published dot index of this subsection. (e.g. 8.1.2). This
+        performs a query - it's usually best to compute these indexes during
+        serialization or inline when subsections are iterated over.
+        """
+        dot_index = f'{self.section_number()}'
+        if self.subsection_number():
+            dot_index += f'.{self.subsection_number()}'
+
+        # ordering gets tricky because some legacy data might have nulls in the
+        # expected order field
+        ordering = (self.order_field, getattr(self, self.order_field))
+        if ordering[1] is None:
+            ordering = ('subsection', getattr(self, 'subsection'))
+
+        list_idx = self.__class__.objects.filter(
+                site=self.site
+            ).published().filter(
+                **{f'{ordering[0]}__lt': ordering[1]}
+            ).count() + 1
+        dot_index += f'.{list_idx}'
+        return dot_index
 
     @classproperty
     def valid_time(cls):
@@ -1101,6 +1171,10 @@ class SiteSubSection(SiteSection):
         raise NotImplementedError(
             f'{cls} must implement valid_time()'
         )
+
+    @classproperty
+    def order_field(cls):
+        return cls.valid_time if cls.valid_time else 'subsection'
 
     @property
     def heading(self):
@@ -1163,9 +1237,6 @@ class SiteSubSection(SiteSection):
 
 class SiteForm(SiteSection):
     """
-    TODO - this can be reconstituted on the fly
-        (i.e. this is denormalized data - with the exception of prepared by?) - get rid of it?
-
     0.   Form
 
          Prepared by (full name)  :
@@ -1195,13 +1266,13 @@ class SiteForm(SiteSection):
 
     prepared_by = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
         verbose_name=_('Prepared by (full name)'),
         help_text=_('Enter the name of who prepared this site log')
     )
     date_prepared = models.DateField(
         null=True,
-        blank=False,
+        blank=True,
         verbose_name=_('Date Prepared'),
         help_text=_('Enter the date the site log was prepared (CCYY-MM-DD).'),
         db_index=True
@@ -1215,19 +1286,41 @@ class SiteForm(SiteSection):
         help_text=_('Enter type of report. Example: (UPDATE).')
     )
 
-    # todo change to foreign key to archiveindex
-    previous_log = models.CharField(
-        max_length=50,
+    previous = models.ForeignKey(
+        'slm.ArchiveIndex',
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        default='',
-        verbose_name=_('Previous Site Log'),
-        help_text=_(
-            'Enter previous site log in this format: ssss_CCYYMMDD.log '
-            'Format: (ssss = 4 character site name). If the site already has '
-            'a log at the IGS Central Bureau, enter the filename currently '
-            'found under https://files.igs.org/pub/station/log/'
-        )
+        default=None
     )
+
+    @property
+    def previous_log(self):
+        return self.site.get_filename(
+            log_format=SiteLogFormat.LEGACY,
+            name_len=4,
+            lower_case=True,
+            epoch=self.previous.begin
+        )
+
+    @property
+    def previous_xml(self):
+        return self.site.get_filename(
+            log_format=SiteLogFormat.GEODESY_ML,
+            name_len=4,
+            lower_case=True,
+            epoch=self.previous.begin
+        )
+
+    @property
+    def previous_json(self):
+        return self.site.get_filename(
+            log_format=SiteLogFormat.JSON,
+            name_len=4,
+            lower_case=True,
+            epoch=self.previous.begin
+        )
+
     modified_section = models.TextField(
         blank=True,
         default='',
@@ -1237,6 +1330,34 @@ class SiteForm(SiteSection):
             'of the log. Example: (3.2, 4.2)'
         )
     )
+
+    def save(self, *args, **kwargs):
+        from slm.models import ArchiveIndex
+        if not self.published:
+            self.previous = ArchiveIndex.objects.filter(site=self.site).first()
+            self.modified_section = kwargs.pop(
+                'modified_section', ', '.join(self.site.modified_sections)
+            )
+            self.date_prepared = datetime.now(timezone.utc).date()
+            if self.previous:
+                self.report_type = 'UPDATE'
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    def publish(
+        self,
+        request=None,
+        silent=False,
+        timestamp=None,
+        update_site=True
+    ):
+        self.date_prepared = datetime.now(timezone.utc).date()
+        return super().publish(
+            request=request,
+            silent=silent,
+            timestamp=timestamp,
+            update_site=update_site
+        )
 
 
 class SiteIdentification(SiteSection):
@@ -1698,8 +1819,9 @@ class SiteReceiver(SiteSubSection):
             'elevation_cutoff',
             'installed',
             'removed',
-            'temp',
-            'temp_stab',
+            'temp_stabilized',
+            'temp_nominal',
+            'temp_deviation',
             'additional_info'
         ]
 
@@ -1809,11 +1931,24 @@ class SiteReceiver(SiteSubSection):
         db_index=True
     )
 
-    temp = models.FloatField(
+    temp_stabilized = models.BooleanField(
+        null=True,
+        default=None,
+        blank=True,
+        verbose_name=_('Temperature Stabilized'),
+        help_text=_(
+            'If null (default) the temperature stabilization status is '
+            'unknown. If true the receiver is in a temperature stabilized '
+            'environment, if false the receiver is not in a temperature '
+            'stabilized environment.'
+        )
+    )
+
+    temp_nominal = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Temperature'),
+        verbose_name=_('Nominal Temperature (°C)'),
         help_text=_(
             'If the receiver is in a temperature controlled environment, '
             'please enter the approximate temperature of that environment. '
@@ -1822,15 +1957,15 @@ class SiteReceiver(SiteSubSection):
         db_index=True
     )
     # this field is a string in GeodesyML - therefore leaving it as character
-    temp_stab = models.FloatField(
+    temp_deviation = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Temperature Stabiliz.'),
+        verbose_name=_('Temperature Deviation (± °C)'),
         help_text=_(
             'If the receiver is in a temperature controlled environment, '
-            'please enter the approximate temperature range of that '
-            'environment. Format: (± °C)'
+            'please enter the expected temperature deviation from nominal of '
+            'that environment. Format: (± °C)'
         ),
         db_index=True
     )

@@ -13,6 +13,7 @@ from slm.defines import (
 from slm.models import SatelliteSystem
 from slm.parsing import Finding
 from slm.parsing.legacy.parser import (
+    Ignored,
     Error,
     ParsedSection,
     SiteLogParser,
@@ -34,6 +35,7 @@ from slm.parsing import (
     to_str,
     BaseBinder
 )
+from django.utils.translation import gettext as _
 
 
 TEMP_RANGE_REGEX = re.compile(
@@ -218,10 +220,10 @@ class SiteLogBinder(BaseBinder):
         0: {
             reg(log_name, 0, bindings): bindings for log_name, bindings in [
                 ('Prepared by (full name)', ('prepared_by', to_str)),
-                ('Date Prepared', ('date_prepared', to_date)),
-                ('Report Type', ('report_type', to_str)),
-                ('Previous Site Log', ('previous_log', to_str)),
-                ('Modified/Added Sections', ('modified_section', to_str))
+                ('Date Prepared', ('date_prepared', ignored)),
+                ('Report Type', ('report_type', ignored)),
+                ('Previous Site Log', ('previous_log', ignored)),
+                ('Modified/Added Sections', ('modified_section', ignored))
             ]
         },
         1: {
@@ -253,7 +255,9 @@ class SiteLogBinder(BaseBinder):
             reg(log_name, 2, bindings): bindings for log_name, bindings in [
                 ('City or Town', ('city', to_str)),
                 ('State or Province', ('state', to_str)),
-                ('Country', ('country', partial(to_enum, ISOCountry))),
+                ('Country', (
+                    'country', partial(to_enum, ISOCountry, strict=False))
+                 ),
                 ('Tectonic Plate',
                     ('tectonic', partial(to_enum, TectonicPlates))),
 
@@ -504,7 +508,8 @@ class SiteLogBinder(BaseBinder):
 
         expected = set()
         binding_errors = set()
-        for _, bindings in translations.items():
+        ignored = set()
+        for _1, bindings in translations.items():
             for param in (
                 bindings if isinstance(bindings, list)
                 else [bindings]
@@ -546,13 +551,24 @@ class SiteLogBinder(BaseBinder):
                         if parameter.is_placeholder else
                         parse(parameter.value)
                     )
-                    parameter.bind(param, value)
-                    for finding in value_check(
-                        parameter.line_no,
-                        self.parsed,
-                        value
-                    ):
-                        self.parsed.add_finding(finding)
+                    if value == _Ignored:
+                        self.parsed.add_finding(
+                            Ignored(
+                                parameter.line_no,
+                                self.parsed,
+                                _('Parameter is ignored'),
+                                section=section
+                            )
+                        )
+                        ignored.add(param)
+                    else:
+                        parameter.bind(param, value)
+                        for finding in value_check(
+                            parameter.line_no,
+                            self.parsed,
+                            value
+                        ):
+                            self.parsed.add_finding(finding)
                     
                 except Exception as err:
                     binding_errors.add(param)
@@ -573,7 +589,9 @@ class SiteLogBinder(BaseBinder):
         # of them as an error to the relevant header line
         missing = [
             param for param in expected
-            if not section.get_param(param) and param not in binding_errors
+            if not section.get_param(param)
+            and param not in binding_errors
+            and param not in ignored
         ]
         if missing and not self.parsed.findings.get(section.line_no):
             missing = '\n'.join({

@@ -459,11 +459,31 @@ class SubSectionForm(SectionForm):
 
 class SiteFormForm(SectionForm):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in ['report_type', 'modified_section', 'date_prepared']:
+            self.fields[field].required = False
+            self.fields[field].widget.attrs['disabled'] = 'disabled'
+
+    # we only include this for legacy purposes - this is not an editable value
+    previous_log = forms.CharField(
+        label=_('Previous Site Log'),
+        help_text=_(
+            'Previous site log in this format: ssss_CCYYMMDD.log '
+            'Format: (ssss = 4 character site name). If the site already has '
+            'a log at the IGS Central Bureau it can be found at'
+            'https://files.igs.org/pub/station/log/'
+        ),
+        disabled=True,
+        required=False
+    )
+
     class Meta(SectionForm.Meta):
         model = SiteForm
         fields = [
             *SectionForm.Meta.fields,
-            *SiteForm.site_log_fields()
+            *SiteForm.site_log_fields(),
+            'previous_log'
         ]
         widgets = {
             'date_prepared': DatePicker

@@ -589,6 +589,8 @@ slm.showDiff = function(head, ancestor, display, mode='char') {
     dmp.diff_cleanupSemantic(diffs);
     if (mode !== 'char') {
         dmp.diff_charsToLines_(diffs, lineArray);
+        console.log(diffs);
+        console.log(lineArray);
     }
     //dmp.diff_cleanupEfficiency(0);
     //display.html(dmp.diff_prettyHtml(diffs));

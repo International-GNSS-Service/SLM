@@ -680,6 +680,16 @@ class SectionViewSet(type):
                             new_section.full_clean()
                             new_section.save()
                             update_status = new_section.edited
+                            if not isinstance(new_section, SiteForm):
+                                form = new_section.site.siteform_set.head()
+                                if form.published:
+                                    form.pk = None
+                                    form.published = False
+                                if self.context['request'].user.full_name:
+                                    form.prepared_by = (
+                                        self.context['request'].user.full_name
+                                    )
+                                form.save()
                             slm_signals.section_added.send(
                                 sender=self,
                                 site=site,
@@ -701,7 +711,6 @@ class SectionViewSet(type):
                                         'Refresh and try again.'
                                     )
                                 )
-
 
                         # if not new - does this section have edits?
                         update = False
@@ -766,6 +775,16 @@ class SectionViewSet(type):
                             # make sure we use edit timestamp if publish and
                             # edit are simultaneous
                             update_status = instance.edited
+                            if not isinstance(instance, SiteForm):
+                                form = instance.site.siteform_set.head()
+                                if form.published:
+                                    form.pk = None
+                                    form.published = False
+                                if self.context['request'].user.full_name:
+                                    form.prepared_by = (
+                                        self.context['request'].user.full_name
+                                    )
+                                form.save()
                             slm_signals.section_edited.send(
                                 sender=self,
                                 site=site,
@@ -791,10 +810,26 @@ class SectionViewSet(type):
 
                         if do_publish:
                             update_status = update_status or now()
+                            if not isinstance(instance, SiteForm):
+                                form = instance.site.siteform_set.head()
+                                if form.published:
+                                    form.pk = None
+                                    form.published = False
+                                    if self.context['request'].user.full_name:
+                                        form.prepared_by = self.context[
+                                            'request'
+                                        ].user.full_name
+                                form.save(modified_section=instance.dot_index)
+                                form.publish(
+                                    request=self.context.get('request', None),
+                                    silent=True,
+                                    timestamp=update_status,
+                                    update_site=False
+                                )
                             instance.publish(
                                 request=self.context.get('request', None),
                                 timestamp=update_status,
-                                update_site=False
+                                update_site=False  # this is done below
                             )
                             instance.refresh_from_db()
 
@@ -1011,6 +1046,13 @@ class SectionViewSet(type):
                         section.published = False
 
                     section.save()
+                    form = section.site.siteform_set.head()
+                    if form.published:
+                        form.pk = None
+                        form.published = False
+                    if self.request.uesr.full_name:
+                        form.prepared_by = self.request.user.full_name
+                    form.save()
                     slm_signals.section_deleted.send(
                         sender=self,
                         site=section.site,

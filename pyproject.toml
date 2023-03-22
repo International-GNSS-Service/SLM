@@ -78,6 +78,7 @@ Jinja2 = "^3.1.2"
 django-ckeditor = "^6.5.1"
 django-crispy-forms = "^2.0"
 crispy-bootstrap5 = "^0.7"
+psycopg2 = "^2.9.5"
 
 [tool.poetry.group.dev.dependencies]
 django-extensions = "^3.1.5"

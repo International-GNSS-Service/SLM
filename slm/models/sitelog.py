@@ -71,10 +71,8 @@ Section = namedtuple(
 
 
 class JSONLength(Func):
-    """
-    TODO compat for Postgres
-    """
-    function = 'JSON_LENGTH'
+    #function = 'JSON_LENGTH'  # mysql
+    function = 'jsonb_array_length'
     output_field = models.IntegerField()
 
 
@@ -242,7 +240,7 @@ class SiteQuerySet(models.QuerySet):
         for idx, section in enumerate(self.model.sections()):
             section_qry = section.cls.objects.filter(
                 site=OuterRef('pk')
-            )._current().annotate_flag_count()
+            )._current()
 
             mod_qry = section.cls.objects.filter(
                 site=OuterRef('pk')
@@ -252,7 +250,7 @@ class SiteQuerySet(models.QuerySet):
                 **{
                     f'_num_flags{idx}': SubquerySum(
                         section_qry,
-                        field='_num_flags'
+                        field='num_flags'
                     ),
                     f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])
                 }
@@ -793,9 +791,6 @@ class SiteSectionQueryset(models.QuerySet):
     def head(self, epoch=None):
         return self._current(epoch=epoch, published=None).first()
 
-    def annotate_flag_count(self):
-        return self.annotate(_num_flags=JSONLength('_flags', default=0))
-
     def _current(self, epoch=None, published=None):
         pub_q = Q()
         if published is not None:
@@ -850,7 +845,17 @@ class SiteSection(models.Model):
         encoder=DefaultToStrEncoder
     )
 
+    num_flags = models.PositiveSmallIntegerField(
+        default=0,
+        null=False,
+        db_index=True
+    )
+
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
+
+    def save(self, *args, **kwargs):
+        self.num_flags = len(self._flags) if self._flags else 0
+        super().save(*args, **kwargs)
 
     @property
     def dot_index(self):
@@ -944,12 +949,6 @@ class SiteSection(models.Model):
                     errors[field.name] = val_err.error_list
         if errors:
             raise ValidationError(errors)
-
-    @property
-    def num_flags(self):
-        if self._flags:
-            return len(self._flags)
-        return 0
 
     @property
     def mod_status(self):

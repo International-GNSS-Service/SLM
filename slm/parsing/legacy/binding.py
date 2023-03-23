@@ -67,10 +67,12 @@ def ignored(value):
 def to_temp_stab(value):
 
     value = value.replace('º', '') if value else value
+    if value.strip().lower() == 'none':
+        return False, None, None
 
     def get_tuple():
-        temp = None
-        stab = None
+        nominal = None
+        deviation = None
         if value:
             range_mtch = TEMP_RANGE_REGEX.match(value)
             if range_mtch:
@@ -78,32 +80,36 @@ def to_temp_stab(value):
                 v2 = float(range_mtch.group(2))
                 return (v1 + v2) / 2, abs(v1 - v2) / 2
 
-            stab_mtch = TEMP_STAB_REGEX.match(value)
-            if stab_mtch:
-                temp = (
-                    float(stab_mtch.group(1))
-                    if stab_mtch.group(1)
+            deviation_mtch = TEMP_STAB_REGEX.match(value)
+            if deviation_mtch:
+                nominal = (
+                    float(deviation_mtch.group(1))
+                    if deviation_mtch.group(1)
                     else None
                 )
-                stab = (
-                    float(stab_mtch.group(2))
-                    if stab_mtch.group(2)
+                deviation = (
+                    float(deviation_mtch.group(2))
+                    if deviation_mtch.group(2)
                     else None
                 )
 
-        if stab is None and temp is not None and temp <= 10:
-            stab = temp
-            temp = None
+        if deviation is None and nominal is not None and nominal <= 10:
+            deviation = nominal
+            nominal = None
 
-        return temp, stab
+        return (
+            (nominal is not None or deviation is not None) or None,
+            nominal,
+            deviation
+        )
 
-    temp, stab = get_tuple()
-    if value and temp is None and stab is None:
+    stabilized, nominal, deviation = get_tuple()
+    if value and stabilized is None and nominal is None and deviation is None:
         raise ValueError(
             f'Unable to parse "{value}" into a temperature stabilization. '
             f'format: deg C +/- deg C'
         )
-    return temp, stab
+    return stabilized, nominal, deviation
 
 
 def effective_start(value):
@@ -290,8 +296,9 @@ class SiteLogBinder(BaseBinder):
                 ('Date Installed', ('installed', to_datetime)),
                 ('Date Removed', ('removed', to_datetime)),
                 ('Temperature Stabiliz.', [
-                    ('temp', lambda val: to_temp_stab(val)[0]),
-                    ('temp_stab', lambda val: to_temp_stab(val)[1])
+                    ('temp_stabilized', lambda val: to_temp_stab(val)[0]),
+                    ('temp_nominal', lambda val: to_temp_stab(val)[1]),
+                    ('temp_deviation', lambda val: to_temp_stab(val)[2])
                 ]),
                 ('Additional Information', ('additional_info', to_str))
             ]

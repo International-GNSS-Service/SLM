@@ -12,8 +12,7 @@ def dddmmssss_to_decimal(dddmmssss):
     if dddmmssss:
         if isinstance(dddmmssss, str):
             dddmmssss = float(dddmmssss)
-        if dddmmssss > 1000 or dddmmssss < -1000:
-            dddmmssss /= 10000
+        dddmmssss /= 10000
         degrees = int(dddmmssss)
         minutes = (dddmmssss - degrees) * 100
         seconds = float((minutes - int(minutes)) * 100)

@@ -10,7 +10,7 @@ import json
 from django.utils.translation import gettext as _
 from slm.utils import to_snake_case, build_absolute_url
 from django.urls import resolve
-from slm.utils import decimal_to_dddmmssss, dddmmssss_to_decimal
+from slm.utils import decimal_to_dddmmssss
 
 
 register = template.Library()
@@ -143,11 +143,7 @@ def iso6709(decimal_degrees, padding):
 
 @register.filter(name='epsg7912')
 def epsg7912(lat_lng, prec=10):
-    if lat_lng:
-        if lat_lng > 1000:
-            lat_lng = dddmmssss_to_decimal(lat_lng)
-        return precision(lat_lng, prec)
-    return ''
+    return precision(lat_lng, prec)
 
 
 @register.filter(name='precision')

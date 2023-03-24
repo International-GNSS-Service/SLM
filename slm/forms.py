@@ -27,7 +27,9 @@ from django.forms.fields import (
 from django.forms.widgets import (
     CheckboxInput,
     CheckboxSelectMultiple,
-    HiddenInput
+    HiddenInput,
+    Select,
+    NullBooleanSelect
 )
 from django.utils.functional import Promise
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
@@ -129,6 +131,30 @@ class SLMBooleanField(BooleanField):
         else:
             value = bool(value)
         return super().to_python(value)
+
+
+class SLMNullBooleanSelect(NullBooleanSelect):
+
+    def __init__(self, attrs=None):
+        choices = (
+            ('', _('Unknown')),
+            ('true', _('Yes')),
+            ('false', _('No')),
+        )
+        # skip NullBooleanSelect init
+        Select.__init__(self, attrs, choices)
+
+    def format_value(self, value):
+        if value in [None, '', 'None']:
+            return ['']
+        return [super().format_value(value)]
+
+    def value_from_datadict(self, data, files, name):
+        value = data.get(name)
+        return {
+            None: None,
+            '': None
+        }.get(value, super().value_from_datadict(data, files, name))
 
 
 class EnumMultipleChoiceField(EnumChoiceField, TypedMultipleChoiceField):
@@ -567,6 +593,12 @@ class SiteReceiverForm(SubSectionForm):
         value_param='model',
         label_param='model',
         to_field_name='model'
+    )
+
+    temp_stabilized = forms.NullBooleanField(
+        help_text=SiteReceiver._meta.get_field('temp_stabilized').help_text,
+        label=SiteReceiver._meta.get_field('temp_stabilized').verbose_name,
+        widget=SLMNullBooleanSelect()
     )
 
     def __init__(self, **kwargs):

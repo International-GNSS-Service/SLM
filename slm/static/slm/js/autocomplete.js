@@ -55,6 +55,27 @@ export class AutoComplete extends FormWidget {
         }
     }
 
+    getSuggestion(value) {
+        /**
+         * Return the suggestion exactly matching the value.
+         */
+        const query = {};
+        query[this.valueParam] = value;
+        let suggestion = null;
+        $.ajax({
+            url: this.serviceUrl,
+            data: query,
+            async: false
+        }).done(
+            function(data) {
+                if (data.length > 0) {
+                    suggestion = this.makeSuggestion(data[0]);
+                }
+            }.bind(this)
+        ).fail(function(jqXHR) {console.log(jqXHR);});
+        return suggestion;
+    }
+
     makeSuggestion(suggestion) {
         return {
             label: this.renderSuggestion(suggestion),

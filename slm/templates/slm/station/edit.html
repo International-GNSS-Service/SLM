@@ -163,13 +163,12 @@ Add new section capability is not functional.
                 copyLast
             );
             const newForm = $('#new-form').children().first().clone();
-            const script = newForm.find('script');
-            if (script.length > 0) {
+            newForm.find('script').each(function() {
                 const newScript = document.createElement('script');
                 newScript.type = 'module';
-                $(newScript).html(script.html().replaceAll('new_form_id', formId));
-                script.replaceWith(newScript);
-            }
+                $(newScript).html($(this).html().replaceAll('new_form_id', formId));
+                $(this).replaceWith(newScript);
+            });
             newForm.find('[id*="new_form_id"]').each(function() {
                 const newId = $(this).attr('id').replace('new_form_id', formId);
                 newForm.find(

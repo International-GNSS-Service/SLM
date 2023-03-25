@@ -822,6 +822,7 @@ slm.updateFileBadges = function(delta) {
 }
 
 slm.setFormFields = function(form, data) {
+    // todo swap this with Form class - its much more robust.
     const toBool = function(value) {
         if (value === 'off' || !value) {
             return false;
@@ -829,15 +830,18 @@ slm.setFormFields = function(form, data) {
         return true;
     }
     for (const [field, value] of Object.entries(data)) {
-        if (Array.isArray(value)) {
-            const select = form.find(`select[name="${field}"]`);
-            select.find('option').prop('selected', false);
-            for (const val of value) {
+        const select = form.find(`select[name="${field}"]`);
+        select.find('option').prop('selected', false);
+        const multiCheck = form.find(`input:checkbox[name="${field}"]`);
+        if (select.length > 0) {
+            for (const val of Array.isArray(value) ? value : [value]) {
                 select.find(`option[value="${val}"]`).prop('selected', true);
+            }
+        } else if (multiCheck.length > 1) {
+            for (const val of Array.isArray(value) ? value : [value]) {
                 form.find(`input:checkbox[name="${field}"][value="${val}"]`).prop('checked', true);
             }
-        }
-        else {
+        } else {
             form.find(`input[name="${field}"], textarea[name="${field}"]`).val(value);
             form.find(`input:checkbox[name="${field}"]`).prop('checked', toBool(value));
         }

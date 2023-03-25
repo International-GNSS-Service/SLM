@@ -1021,7 +1021,8 @@ class SiteSection(models.Model):
                 'custom_graphic',
                 'deleted',
                 '_flags',
-                'inserted'
+                'inserted',
+                'num_flags'
             }
         ]
 

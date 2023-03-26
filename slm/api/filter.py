@@ -37,9 +37,10 @@ from slm.models import (
     SiteIdentification,
     SiteMoreInformation
 )
-from django.utils.timezone import now
+from django.utils.timezone import now, is_naive, make_aware
 from django.utils.functional import cached_property
 from collections import namedtuple
+from dateutil import parser
 
 
 class SiteSearchFilter(SearchFilter):
@@ -68,85 +69,108 @@ class SiteSearchFilter(SearchFilter):
         This strategy could be sped up more by doing the individual table
         searches asynchronously.
         """
-        search_term = self.get_search_terms(request)
-        if search_term:
-            search_term = search_term[0]
+        terms = [
+            term.lstrip(',').rstrip(',').strip()
+            for term in self.get_search_terms(request)
+        ]
+        searched = Q()
+        if terms:
+            try:
+                epoch = parser.parse(request.GET.get('epoch', None)) or now()
+            except (parser.ParserError, TypeError, ValueError):
+                epoch = now()
 
-            site_ids = set(
-                Site.objects.filter(
-                    name__icontains=search_term
-                ).order_by().values_list('pk', flat=True)
-            )
+            for search_term in terms:
 
-            site_ids.update(
-                Site.objects.filter(
-                    networks__in=Network.objects.filter(
+                site_ids = set(
+                    Site.objects.filter(
                         name__icontains=search_term
-                    )
-                ).order_by().distinct().values_list('pk', flat=True)
-            )
-
-            site_ids.update(
-                Site.objects.filter(
-                    agencies__in=Agency.objects.filter(
-                        Q(name__icontains=search_term) |
-                        Q(shortname__icontains=search_term)
-                    )
-                ).order_by().distinct().values_list('pk', flat=True)
-            )
-
-            site_receivers = SiteReceiver.objects.filter(
-                Q(published=True) & (
-                    Q(receiver_type__in=Receiver.objects.filter(
-                        model__icontains=search_term)
-                    ) |
-                    Q(firmware__icontains=search_term) |
-                    Q(serial_number__icontains=search_term)
+                    ).order_by().values_list('pk', flat=True)
                 )
-            ).order_by()
-            site_antennas = SiteAntenna.objects.filter(
-                Q(published=True) & (
-                    Q(antenna_type__in=Antenna.objects.filter(
-                        model__icontains=search_term
-                    )) |
-                    Q(radome_type__in=Radome.objects.filter(
-                        model__icontains=search_term
-                    ))
+
+                site_ids.update(
+                    Site.objects.filter(
+                        networks__in=Network.objects.filter(
+                            name__icontains=search_term
+                        )
+                    ).order_by().distinct().values_list('pk', flat=True)
                 )
-            ).order_by()
 
-            site_ids.update(Site.objects.filter(
-                siteantenna__in=site_antennas
-            ).order_by().distinct().values_list('pk', flat=True))
+                site_ids.update(
+                    Site.objects.filter(
+                        agencies__in=Agency.objects.filter(
+                            Q(name__icontains=search_term) |
+                            Q(shortname__icontains=search_term)
+                        )
+                    ).order_by().distinct().values_list('pk', flat=True)
+                )
 
-            site_ids.update(
-                Site.objects.filter(
-                    siteidentification__in=
-                    SiteIdentification.objects.filter(
-                        Q(published=True) &
-                        Q(iers_domes_number__icontains=search_term)
-                    ).order_by()
-                ).order_by().values_list('pk', flat=True)
-            )
+                site_receivers = SiteReceiver.objects.filter(
+                    Q(published=True) & (
+                        Q(receiver_type__in=Receiver.objects.filter(
+                            model__icontains=search_term)
+                        ) |
+                        Q(firmware__icontains=search_term) |
+                        Q(serial_number__icontains=search_term) &
+                        (
+                            (Q(installed__lte=epoch) |
+                             Q(installed__isnull=True)) &
+                            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+                        )
+                    )
+                ).order_by()
+                site_antennas = SiteAntenna.objects.filter(
+                    Q(published=True) & (
+                        Q(antenna_type__in=Antenna.objects.filter(
+                            model__icontains=search_term
+                        )) |
+                        Q(radome_type__in=Radome.objects.filter(
+                            model__icontains=search_term
+                        )) &
+                        (
+                            (Q(installed__lte=epoch) |
+                             Q(installed__isnull=True)) &
+                            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+                        )
+                    )
+                ).order_by()
 
-            site_ids.update(
-                Site.objects.filter(
-                    sitemoreinformation__in=
-                    SiteMoreInformation.objects.filter(
-                        Q(published=True) &
-                        Q(primary__icontains=search_term)
-                    ).order_by()
-                ).order_by().values_list('pk', flat=True)
-            )
+                site_ids.update(Site.objects.filter(
+                    siteantenna__in=site_antennas
+                ).order_by().distinct().values_list('pk', flat=True))
 
-            site_ids.update(
-                Site.objects.filter(
-                    sitereceiver__in=site_receivers
-                ).order_by().distinct().values_list('pk', flat=True)
-            )
+                site_ids.update(
+                    Site.objects.filter(
+                        siteidentification__in=
+                        SiteIdentification.objects.filter(
+                            Q(published=True) &
+                            Q(iers_domes_number__icontains=search_term)
+                        ).order_by()
+                    ).order_by().values_list('pk', flat=True)
+                )
 
-            return queryset.filter(Q(pk__in=site_ids))
-        return queryset
+                site_ids.update(
+                    Site.objects.filter(
+                        sitemoreinformation__in=
+                        SiteMoreInformation.objects.filter(
+                            Q(published=True) &
+                            Q(primary__icontains=search_term)
+                        ).order_by()
+                    ).order_by().values_list('pk', flat=True)
+                )
+
+                site_ids.update(
+                    Site.objects.filter(
+                        sitereceiver__in=site_receivers
+                    ).order_by().distinct().values_list('pk', flat=True)
+                )
+
+                if searched:
+                    searched |= queryset.filter(Q(pk__in=site_ids))
+                else:
+                    searched = queryset.filter(Q(pk__in=site_ids))
+
+        return searched or queryset
 
 
 class SLMBooleanFilter(BooleanFilter):

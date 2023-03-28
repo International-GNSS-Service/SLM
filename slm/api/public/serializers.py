@@ -138,10 +138,10 @@ class StationListSerializer(serializers.ModelSerializer):
 
     data_center = serializers.CharField()
 
-    last_rinex2 = serializers.DateTimeField()
-    last_rinex3 = serializers.DateTimeField()
-    last_rinex4 = serializers.DateTimeField()
-    last_data_time = serializers.DateTimeField()
+    last_rinex2 = serializers.DateField()
+    last_rinex3 = serializers.DateField()
+    last_rinex4 = serializers.DateField()
+    last_data_time = serializers.DateField()
     last_data = serializers.SerializerMethodField()
 
     def get_satellite_system(self, obj):

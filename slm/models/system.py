@@ -81,6 +81,8 @@ class Agency(models.Model):
         db_index=True
     )
 
+    url = models.URLField(max_length=255, blank=True, null=True)
+
     address = models.CharField(max_length=50, blank=True, null=True)
     address2 = models.CharField(max_length=50, blank=True, null=True)
     city = models.CharField(max_length=50, blank=True, null=True)

@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
-from slm.models.data import DataAvailability
+from slm.models.data import DataAvailability, DataCenter
 from slm.models.index import ArchivedSiteLog, ArchiveIndex
 from slm.models.sitelog import (
     Site,

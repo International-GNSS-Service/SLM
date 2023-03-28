@@ -49,7 +49,8 @@ from slm.models import (
     Help,
     About,
     TideGauge,
-    SiteTideGauge
+    SiteTideGauge,
+    DataCenter
 )
 from slm.authentication import permissions
 from polymorphic.admin import (
@@ -196,6 +197,11 @@ class NetworkAdmin(admin.ModelAdmin):
 
 
 class AgencyAdmin(admin.ModelAdmin):
+
+    search_fields = ('name',)
+
+
+class DataCenterAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
 
@@ -389,5 +395,6 @@ admin.site.register(SiteFileUpload, SiteFileUploadAdmin)
 admin.site.register(Help, HelpAdmin)
 admin.site.register(About, AboutAdmin)
 admin.site.register(AntCal, AntennaCalibrationAdmin)
+admin.site.register(DataCenter, DataCenterAdmin)
 
 admin.autodiscover()

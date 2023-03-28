@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_filters',
     'compressor',
     'widget_tweaks',
+    #'django.contrib.postgres',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

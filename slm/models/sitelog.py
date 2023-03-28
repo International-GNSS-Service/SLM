@@ -299,6 +299,272 @@ class SiteQuerySet(models.QuerySet):
                 ).values('last')[:1])
         )
 
+    def with_identification_fields(self, *fields, **renamed_fields):
+        """
+        Annotate the given identification fields valid now onto the site
+        objects in this queryset.
+
+        :param fields: The names of the fields to annotate, by default these
+            will include: iers_domes_number, cdp_number
+        :param renamed_fields: Named arguments where the names of the arguments
+            are the field accessors for the fields to annotate and the values
+            are the names to use for the annotated fields.
+        :return: The queryset with the annotations made
+        """
+        fields = {
+            **{field: field for field in fields},
+            **{field: name for field, name in renamed_fields.items()}
+        }
+
+        fields = fields or {
+            **{field: field for field in [
+                'iers_domes_number',
+                'cdp_number'
+            ]}
+        }
+
+        identification = SiteIdentification.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        return self.annotate(**{
+            name: Subquery(identification.values(field)[:1])
+            for field, name in fields.items()
+        })
+
+    def with_location_fields(self, *fields, **renamed_fields):
+        """
+        Annotate the given location fields valid now or at the given epoch
+        onto the site objects in this queryset.
+
+        :param fields: The names of the fields to annotate, by default these
+            will include: latitude, longitude, elevation, city, state, and
+            country
+        :param renamed_fields: Named arguments where the names of the arguments
+            are the field accessors for the fields to annotate and the values
+            are the names to use for the annotated fields.
+        :return: The queryset with the annotations made
+        """
+        fields = {
+            **{field: field for field in fields},
+            **{field: name for field, name in renamed_fields.items()}
+        }
+
+        fields = fields or {
+            **{field: field for field in [
+                'latitude',
+                'longitude',
+                'elevation',
+                'city',
+                'state',
+                'country'
+            ]}
+        }
+
+        location = SiteLocation.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        return self.annotate(**{
+            name: Subquery(location.values(field)[:1])
+            for field, name in fields.items()
+        })
+
+    def with_receiver_fields(
+            self,
+            *fields,
+            epoch=None,
+            **renamed_fields
+    ):
+        """
+        Annotate the given receiver fields valid now or at the given epoch
+        onto the site objects in this queryset. The field names should be
+        the Django ORM field accessor names. For instance the receiver model
+        type would be: receiver_type__model. To use a different name than the
+        accessor for the annotated field you may pass the fields renamed as
+        keyword arguments. For instance to rename serial_number to
+        receiver_serial_number you would pass:
+
+            with_receiver_fields(serial_number='receiver_serial_number')
+
+        :param fields: The names of the fields to annotate, by default these
+            will include:
+                receiver_type__model -> receiver,
+                serial_number -> receiver_sn
+                firmware -> receiver_firmware
+        :param epoch: The point in time at which the receiver information
+            should be valid for, default is now
+        :param renamed_fields: Named arguments where the names of the arguments
+            are the field accessors for the fields to annotate and the values
+            are the names to use for the annotated fields.
+        :return: The queryset with the annotations made
+        """
+        fields = {
+            **{field: field for field in fields},
+            **{field: name for field, name in renamed_fields.items()}
+        }
+
+        fields = fields or {
+            'receiver_type__model': 'receiver',
+            'serial_number': 'receiver_sn',
+            'firmware': 'receiver_firmware'
+        }
+
+        epoch_q = Q() if epoch is None else (
+            (Q(installed__lte=epoch) | Q(installed__isnull=True)) &
+            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+        )
+        receiver = SiteReceiver.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True) & epoch_q
+        ).order_by('-installed')
+
+        return self.annotate(**{
+            name: Subquery(receiver.values(field)[:1])
+            for field, name in fields.items()
+        })
+
+
+    def with_antenna_fields(
+            self,
+            *fields,
+            epoch=None,
+            **renamed_fields
+    ):
+        """
+        Annotate the given antenna fields valid now or at the given epoch
+        onto the site objects in this queryset. The field names should be
+        the Django ORM field accessor names. For instance the receiver model
+        type would be: receiver_type__model. To use a different name than the
+        accessor for the annotated field you may pass the fields renamed as
+        keyword arguments. For instance to rename serial_number to
+        antenna_sn you would pass:
+
+            with_antenna_fields(serial_number='antenna_sn')
+
+        The antenna calibration method is available as the field 'antcal'.
+
+        :param fields: The names of the fields to annotate, by default these
+            will include:
+                antenna_type__model -> antenna,
+                radome_type__model -> radome,
+                antcal -> antcal
+
+        :param epoch: The point in time at which the receiver information
+            should be valid for, default is now
+        :param renamed_fields: Named arguments where the names of the arguments
+            are the field accessors for the fields to annotate and the values
+            are the names to use for the annotated fields.
+        :return: The queryset with the annotations made
+        """
+        from slm.models import AntCal
+        fields = {
+            **{field: field for field in fields},
+            **{field: name for field, name in renamed_fields.items()}
+        }
+
+        fields = fields or {
+            'antenna_type__model': 'antenna',
+            'radome_type__model': 'radome',
+            'antcal': 'antcal'
+        }
+
+        epoch_q = Q() if epoch is None else (
+            (Q(installed__lte=epoch) | Q(installed__isnull=True)) &
+            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+        )
+
+        antenna = SiteAntenna.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True) & epoch_q
+        ).order_by(
+            '-installed'
+        )
+        if 'antcal' in fields:
+            antenna = antenna.annotate(
+                antcal=Subquery(
+                    AntCal.objects.filter(
+                        Q(antenna=OuterRef('antenna_type')) &
+                        Q(radome=OuterRef('radome_type'))
+                    ).values('method')[:1]
+                )
+            )
+
+        return self.annotate(**{
+            name: Subquery(antenna.values(field)[:1])
+            for field, name in fields.items()
+        })
+
+    def with_frequency_standard_fields(
+            self,
+            *fields,
+            epoch=None,
+            **renamed_fields
+    ):
+        """
+        Annotate the given frequency standard fields valid now or at the given
+        epoch onto the site objects in this queryset. The field names should be
+        the Django ORM field accessor names.
+
+        :param fields: The names of the fields to annotate, by default these
+            will include:
+                standard_type -> clock
+        :param epoch: The point in time at which the receiver information
+            should be valid for, default is now
+        :param renamed_fields: Named arguments where the names of the arguments
+            are the field accessors for the fields to annotate and the values
+            are the names to use for the annotated fields.
+        :return: The queryset with the annotations made
+        """
+        fields = {
+            **{field: field for field in fields},
+            **{field: name for field, name in renamed_fields.items()}
+        }
+
+        fields = fields or {
+            'standard_type': 'clock'
+        }
+
+        epoch_q = Q() if epoch is None else (
+            (Q(effective_start__lte=epoch) | Q(effective_start__isnull=True)) &
+            (Q(effective_end__gt=epoch) | Q(effective_end__isnull=True))
+        )
+        freq = SiteFrequencyStandard.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True) & epoch_q
+        ).order_by('-effective_start')
+
+        return self.annotate(**{
+            name: Subquery(freq.values(field)[:1])
+            for field, name in fields.items()
+        })
+
+
+    def with_info_fields(self, *fields, **renamed_fields):
+        """
+        Annotate the given identification fields valid now onto the site
+        objects in this queryset.
+
+        :param fields: The names of the fields to annotate, by default these
+            will include: iers_domes_number, cdp_number
+        :param renamed_fields: Named arguments where the names of the arguments
+            are the field accessors for the fields to annotate and the values
+            are the names to use for the annotated fields.
+        :return: The queryset with the annotations made
+        """
+        fields = {
+            **{field: field for field in fields},
+            **{field: name for field, name in renamed_fields.items()}
+        }
+
+        fields = fields or {
+            'primary': 'primary_datacenter',
+            'secondary': 'secondary_datacenter',
+        }
+
+        more_info = SiteMoreInformation.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=True)
+        )
+        return self.annotate(**{
+            name: Subquery(more_info.values(field)[:1])
+            for field, name in fields.items()
+        })
+
 
 class Site(models.Model):
     """

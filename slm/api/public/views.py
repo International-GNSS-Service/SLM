@@ -196,69 +196,6 @@ class StationListViewSet(
     ordering = ('name',)
 
     def get_queryset(self):
-        antcal = AntCal.objects.filter(
-            Q(antenna=OuterRef('antenna_type')) &
-            Q(radome=OuterRef('radome_type'))
-        )
-        location = SiteLocation.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        )
-        identification = SiteIdentification.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        )
-        antenna = SiteAntenna.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        ).annotate(method=Subquery(antcal.values('method')[:1]))
-
-        receiver = SiteReceiver.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        )
-        info = SiteMoreInformation.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        )
-        freq = SiteFrequencyStandard.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        )
-
-        annotations = {
-            'latitude': Subquery(location.values('latitude')[:1]),
-            'longitude': Subquery(location.values('longitude')[:1]),
-            'elevation': Subquery(location.values('elevation')[:1]),
-            'city': Subquery(location.values('city')[:1]),
-            'state': Subquery(location.values('state')[:1]),
-            'country': Subquery(location.values('country')[:1]),
-            'domes_number': Subquery(
-                identification.values('iers_domes_number')[:1]
-            ),
-            'cdp_number': Subquery(
-                identification.values('cdp_number')[:1]
-            ),
-            'antenna_type': Subquery(
-                antenna.values('antenna_type__model')[:1]
-            ),
-            'radome_type': Subquery(
-                antenna.values('radome_type__model')[:1]
-            ),
-            'antcal': Subquery(
-                antenna.values('method')[:1]
-            ),
-            'receiver_type': Subquery(
-                receiver.values('receiver_type__model')[:1]
-            ),
-            'serial_number': Subquery(
-                receiver.values('serial_number')[:1]
-            ),
-            'firmware': Subquery(
-                receiver.values('firmware')[:1]
-            ),
-            'frequency_standard': Subquery(
-                freq.values('standard_type')[:1]
-            ),
-            'data_center': Subquery(
-                info.values('primary')[:1]
-            )
-        }
-
         return Site.objects.prefetch_related(
             'agencies',
             'networks',
@@ -266,7 +203,7 @@ class StationListViewSet(
                 'sitereceiver_set',
                 queryset=SiteReceiver.objects.published().prefetch_related(
                     'satellite_system'
-                )
+                ).order_by('-installed')
             ),
             Prefetch(
                 'tide_gauge_distances',
@@ -274,7 +211,27 @@ class StationListViewSet(
                     'gauge'
                 ).order_by('-distance')
             )
-        ).annotate(**annotations).public().availability()
+        ).with_location_fields(
+            'city',
+            'state',
+            'country',
+            'latitude',
+            'longitude',
+            'elevation',
+        ).with_identification_fields(
+            'cdp_number',
+            iers_domes_number='domes_number'
+        ).with_antenna_fields(
+            'antcal',
+            antenna_type__model='antenna_type',
+            radome_type__model='radome_type'
+        ).with_receiver_fields(
+            'firmware',
+            'serial_number',
+            receiver_type__model='receiver_type',
+        ).with_frequency_standard_fields(
+            standard_type='frequency_standard'
+        ).with_info_fields(primary='data_center').public().availability()
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

@@ -98,7 +98,8 @@ class Equipment(models.Model):
         null=True,
         default=None,
         blank=True,
-        help_text=_('The manufacturing organization.')
+        help_text=_('The manufacturing organization.'),
+        related_name='%(class)ss'
     )
 
     def __str__(self):
@@ -142,8 +143,11 @@ class Antenna(Equipment):
 
     @property
     def full(self):
-        return f'{self.model} {self.reference_point.label} ' \
-               f'{self.features.label}'
+        return (
+            f'{self.model} '
+            f'{self.reference_point.label if self.reference_point else ""} '
+            f'{self.features.label}'
+        )
 
     def __str__(self):
         return self.model

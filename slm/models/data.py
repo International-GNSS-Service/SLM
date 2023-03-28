@@ -4,18 +4,57 @@ from slm.defines import DataRate, RinexVersion
 
 
 class DataAvailability(models.Model):
+
     site = models.ForeignKey('slm.Site', on_delete=models.CASCADE)
-    rinex_version = EnumField(RinexVersion, null=False, db_index=True)
-    rate = EnumField(DataRate, null=False, db_index=True)
-    last = models.DateTimeField(null=False, db_index=True)
+    rinex_version = EnumField(
+        RinexVersion,
+        null=True,
+        default=True,
+        db_index=True
+    )
+    rate = EnumField(DataRate, null=True, default=True, db_index=True)
+    last = models.DateField(null=False, db_index=True)
+
+    data_centers = models.ManyToManyField('slm.DataCenter', blank=True)
 
     def __str__(self):
         return f'[{self.site}] ({self.rinex_version.label}) ' \
                f'{self.rate.label} {self.last}'
 
     class Meta:
-        """
-        TODO - should this be allowed to be a time series??
-        """
-        unique_together = (('site', 'rinex_version', 'rate'),)
-        index_together = (('site', 'rinex_version', 'rate'),)
+        unique_together = (('site', 'rinex_version', 'rate', 'last'),)
+        index_together = (
+            ('site', 'rinex_version', 'rate', 'last'),
+            ('site', 'rinex_version', 'rate'),
+            ('site', 'rinex_version'),
+            ('site', 'last'),
+            ('site', 'rinex_version', 'last'),
+        )
+
+
+class DataCenter(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    agency = models.ForeignKey(
+        'slm.Agency',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='data_centers'
+    )
+
+    url = models.URLField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+
+    ftp = models.URLField(max_length=255, unique=True)
+    ftp_user = models.CharField(max_length=255, blank=True)
+    ftp_password = models.CharField(max_length=255, blank=True)
+    ftp_root = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name = 'Data Center'
+        verbose_name_plural = 'Data Centers'

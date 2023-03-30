@@ -156,23 +156,24 @@ class SiteQuerySet(models.QuerySet):
         if lower_case:
             name_str = Lower(name_str)
 
-        timestamp = 'last_update'
-        if published:
-            timestamp = 'last_publish'
+        form = SiteForm.objects.filter(
+            Q(site=OuterRef('pk')) & Q(published=published)
+        )
 
         return self.annotate(
+            date_prepared=Subquery(form.values('date_prepared')[:1]),
             **{
                 field_name: Concat(
                     name_str,
                     Value('_'),
-                    Cast(ExtractYear(timestamp), models.CharField()),
+                    Cast(ExtractYear('date_prepared'), models.CharField()),
                     LPad(
-                        Cast(ExtractMonth(timestamp), models.CharField()),
+                        Cast(ExtractMonth('date_prepared'), models.CharField()),
                         2,
                         fill_text=Value('0')
                     ),
                     LPad(
-                        Cast(ExtractDay(timestamp), models.CharField()),
+                        Cast(ExtractDay('date_prepared'), models.CharField()),
                         2,
                         fill_text=Value('0')
                     )

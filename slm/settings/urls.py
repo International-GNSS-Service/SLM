@@ -83,8 +83,6 @@ def bring_in_urls(urlpatterns):
     for app in reversed(settings.INSTALLED_APPS):
         try:
             url_module = import_module(f'{app}.urls')
-            if not getattr(url_module, 'SLM_INCLUDE', False):
-                continue
             api = getattr(url_module, 'APIS', None)
             if api:
                 for api, endpoints in api.items():
@@ -100,14 +98,6 @@ def bring_in_urls(urlpatterns):
                                 else endpoint[2]
                             )
                         )
-
-            urlpatterns.append(
-                path('', include(f'{app}.urls', namespace=app))
-            )
-
-            app_add_ons = getattr(url_module, 'add_ons', [])
-            for add_on in app_add_ons:
-                urlpatterns.append(add_on)
 
         except ImportError:
             if app in {'slm', 'slm.map', 'network_map', 'igs_ext'}:
@@ -128,10 +118,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-    *(
-        path(mount[0], include(mount[1]))
-        for mount in getattr(settings, 'SLM_URL_MOUNTS', [])
-    )
+    path('', include('slm.urls'))
 ]
 
 if getattr(settings, 'DJANGO_DEBUG_TOOLBAR', False):

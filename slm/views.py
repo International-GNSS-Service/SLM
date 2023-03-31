@@ -628,38 +628,6 @@ class AlertView(StationContextView):
         return super().get(request, *args, **kwargs)
 
 
-def download_site_attachment(request, site=None, pk=None, thumbnail=False):
-    """
-    A function view for downloading files that have been uploaded to
-    a site. This allows unathenticated downloads of public files and
-    authenticated download of any file available to the authenticated user.
-
-    :param request: Django request object
-    :param site: The 9-character site name the file is attached to
-    :param pk: The unique ID of the file.
-    :return: Either a 404 or a FileResponse object containing the file.
-    """
-    if site is None or pk is None:
-        return HttpResponseNotFound()
-
-    try:
-        upload = SiteFileUpload.objects.available_to(
-            request.user
-        ).get(site__name=site, pk=pk)
-        file = upload.file
-        if thumbnail and upload.has_thumbnail:
-            file = upload.thumbnail
-
-        return FileResponse(
-            file.open('rb'),
-            filename=upload.name,  # note this might not match the name on disk
-            as_attachment=True
-        )
-    except SiteFileUpload.DoesNotExist:
-        return HttpResponseNotFound(
-            f'File {pk} for station {site} was not found.'
-        )
-
 class HelpView(SLMView):
     template_name = 'slm/help.html'
     

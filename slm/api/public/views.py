@@ -239,7 +239,11 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
     pass
 
 
-class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
+class SiteFileUploadViewSet(
+    DataTablesListMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = SiteFileUploadSerializer
     permission_classes = []
 
@@ -263,6 +267,28 @@ class SiteFileUploadViewSet(DataTablesListMixin, viewsets.GenericViewSet):
                 'mimetype',
                 'file_type'
             )
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        A function view for downloading files that have been uploaded to
+        a site. This allows unathenticated downloads of public files and
+        authenticated download of any file available to the authenticated user.
+
+        :param request: Django request object
+        :return: Either a 404 or a FileResponse object containing the file.
+        """
+
+        file = self.get_object()
+        if request.GET.get('thumbnail', None):
+            file = file.thumbnail
+        else:
+            file = file.file
+        return FileResponse(
+            file.open('rb'),
+            filename=file.name,
+            # note this might not match the name on disk
+            as_attachment=True
+        )
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = FileFilter

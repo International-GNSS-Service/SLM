@@ -34,7 +34,8 @@ STATIC_TEMPLATES = {
         'slm/js/urls.js': {
             'context': {
                 'exclude': ['admin']
-            }
+            },
+            'dest': STATIC_ROOT / 'urls.js'
         },
         'slm/js/enums.js': {
             'context': get_enum_context

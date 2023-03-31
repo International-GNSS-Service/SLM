@@ -507,17 +507,12 @@ class SiteFileUpload(SiteFile):
 
     @property
     def link(self):
-        return reverse(
-            'slm:download_attachment',
-            kwargs={'site': self.site.name, 'pk': self.pk}
-        )
+        return reverse('slm_public_api:files-detail', kwargs={'pk': self.pk})
 
     @property
     def thumbnail_link(self):
-        return reverse(
-            'slm:download_attachment_thumbnail',
-            kwargs={'site': self.site.name, 'pk': self.pk}
-        )
+        lnk = reverse('slm_public_api:files-detail', kwargs={'pk': self.pk})
+        return f'{lnk}?thumbnail=1'
 
     class Meta:
         ordering = ('-timestamp',)

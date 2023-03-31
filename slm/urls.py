@@ -16,7 +16,6 @@ from slm.views import (
     UploadView,
     UserActivityLogView,
     UserProfileView,
-    download_site_attachment,
     HelpView,
     AboutView,
 )
@@ -181,17 +180,6 @@ urlpatterns = [
         'activity/<int:log_user>',
         UserActivityLogView.as_view(),
         name='user_activity'
-    ),
-    path(
-        'files/<station:site>/<int:pk>',
-        download_site_attachment,
-        name='download_attachment'
-    ),
-    path(
-        'files/<station:site>/<int:pk>/thumbnail',
-        download_site_attachment,
-        name='download_attachment_thumbnail',
-        kwargs={'thumbnail': True}
     ),
     path(
         'alert/<int:alert>',

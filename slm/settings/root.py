@@ -116,6 +116,15 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+set_default('SITE_ID', 1)
+
+set_default('STATIC_ROOT', SITE_DIR / 'static')
+
+COMPRESS_OFFLINE = True
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_URL = STATIC_URL
+
+
 include('internationalization.py')
 include('slm.py')
 include('secrets.py')
@@ -131,14 +140,6 @@ include('ckeditor.py')
 #include('security.py')
 include('validation.py')
 
-
-set_default('SITE_ID', 1)
-
-set_default('STATIC_ROOT', SITE_DIR / 'static')
-
-COMPRESS_OFFLINE = True
-COMPRESS_ROOT = STATIC_ROOT
-COMPRESS_URL = STATIC_URL
 
 #Path(STATIC_ROOT).mkdir(parents=True, exist_ok=True)
 #Path(MEDIA_ROOT).mkdir(parents=True, exist_ok=True)

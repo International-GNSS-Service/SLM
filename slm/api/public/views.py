@@ -175,7 +175,7 @@ class StationListViewSet(
 
     filterset_class = StationFilter
     ordering_fields = [
-        'name', 'latitude', 'longitude', 'elevation', 'last_data'
+        'name', 'last_data',  # 'lat', 'lon', 'elev',
     ]
 
     # if you update these you have to also update
@@ -215,9 +215,8 @@ class StationListViewSet(
             'city',
             'state',
             'country',
-            'latitude',
-            'longitude',
-            'elevation',
+            'xyz',
+            'llh'
         ).with_identification_fields(
             'cdp_number',
             iers_domes_number='domes_number'

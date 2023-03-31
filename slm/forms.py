@@ -86,6 +86,8 @@ from ckeditor.widgets import CKEditorWidget
 from crispy_forms.layout import Layout, Div, Field
 from crispy_forms.helper import FormHelper
 import json
+from django.contrib.gis.forms import PointField
+from django.forms.widgets import MultiWidget, NumberInput
 
 
 class SLMCheckboxInput(CheckboxInput):
@@ -194,6 +196,42 @@ class SLMDateTimeField(forms.SplitDateTimeField):
         super().__init__(*args, **kwargs)
         self.widget.widgets[0].input_type = 'date'
         self.widget.widgets[1].input_type = 'time'
+
+
+class PointWidget(MultiWidget):
+
+    template_name = "slm/forms/widgets/inline_multi.html"
+    def __init__(self, attrs=None):
+        widgets = (
+            NumberInput(attrs=attrs),
+            NumberInput(attrs=attrs),
+            NumberInput(attrs=attrs)
+        )
+        super().__init__(widgets, attrs)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        # fix the names so they are all the same
+        for subwidget in context['widget']['subwidgets']:
+            subwidget['name'] = '_'.join(subwidget['name'].split('_')[:-1])
+        return context
+
+    def decompress(self, values):
+        from django.contrib.gis.geos import Point
+        if values is None:
+            return Point(None, None, None)
+        return Point(*values)
+
+
+class SLMPointField(PointField):
+
+    widget = PointWidget
+
+    def __init__(self, *args, attrs=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.widget.attrs is None:
+            self.widget.attrs = {}
+        self.widget.attrs.update(attrs or {})
 
 
 class AutoSelectMixin:
@@ -556,6 +594,19 @@ class SiteLocationForm(SectionForm):
         strict=False
     )
 
+    xyz = SLMPointField(
+        help_text=SiteLocation._meta.get_field('xyz').help_text,
+        label=SiteLocation._meta.get_field('xyz').verbose_name,
+    )
+
+    llh = SLMPointField(
+        help_text=SiteLocation._meta.get_field('llh').help_text,
+        label=SiteLocation._meta.get_field('llh').verbose_name,
+        attrs={
+            'step': 0.0000001
+        }
+    )
+
     class Meta:
         model = SiteLocation
         fields = [
@@ -634,6 +685,11 @@ class SiteAntennaForm(SubSectionForm):
         if field not in {'installed', 'removed', 'additional_info'}
     ]
 
+    marker_enu = SLMPointField(
+        help_text=SiteAntenna._meta.get_field('marker_enu').help_text,
+        label=SiteAntenna._meta.get_field('marker_enu').verbose_name,
+    )
+
     alignment = forms.FloatField(
         required=SiteAntenna._meta.get_field('alignment').blank,
         help_text=SiteAntenna._meta.get_field('alignment').help_text,
@@ -678,6 +734,13 @@ class SiteAntennaForm(SubSectionForm):
 
 class SiteSurveyedLocalTiesForm(SubSectionForm):
 
+    diff_xyz = SLMPointField(
+        help_text=SiteSurveyedLocalTies._meta.get_field('diff_xyz').help_text,
+        label=SiteSurveyedLocalTies._meta.get_field(
+            'diff_xyz'
+        ).verbose_name
+    )
+
     class Meta(SubSectionForm.Meta):
         model = SiteSurveyedLocalTies
         fields = [
@@ -685,7 +748,8 @@ class SiteSurveyedLocalTiesForm(SubSectionForm):
             *SiteSurveyedLocalTies.site_log_fields()
         ]
         field_classes = {
-            'measured': SLMDateTimeField
+            'measured': SLMDateTimeField,
+            'diff_xyz': SLMPointField
         }
 
 

@@ -6,12 +6,12 @@
     <geo:approximatePositionITRF>
         <geo:cartesianPosition>
             <gml:Point gml:id="itrf_cartesian">
-                <gml:pos srsName="EPSG:7789">{{ location.x|precision(4) }} {{ location.y|precision(4) }} {{ location.z|precision(4) }}</gml:pos>
+                <gml:pos srsName="EPSG:7789">{{ location.xyz.0|precision(4) }} {{ location.xyz.1|precision(4) }} {{ location.xyz.2|precision(4) }}</gml:pos>
             </gml:Point>
         </geo:cartesianPosition>
         <geo:geodeticPosition>
             <gml:Point gml:id="itrf_geodetic">
-                <gml:pos srsName="EPSG:7912">{{ location.latitude|epsg7912(10) }} {{ location.longitude|epsg7912(10) }} {{ location.elevation|precision(4) }}</gml:pos>
+                <gml:pos srsName="EPSG:7912">{{ location.llh.0|epsg7912(10) }} {{ location.llh.1|epsg7912(10) }} {{ location.llh2|precision(4) }}</gml:pos>
             </gml:Point>
         </geo:geodeticPosition>
     </geo:approximatePositionITRF>

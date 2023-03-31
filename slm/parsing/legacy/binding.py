@@ -10,6 +10,7 @@ from slm.defines import (
     ISOCountry,
     TectonicPlates,
 )
+from django.contrib.gis.geos import Point
 from slm.models import SatelliteSystem
 from slm.parsing import Finding
 from slm.parsing.legacy.parser import (
@@ -219,7 +220,8 @@ class SiteLogBinder(BaseBinder):
                     str,
                     Callable,
                     Callable[[int, SiteLogParser, Any], List[Finding]]
-                ]]
+                ]],
+                Tuple[Tuple[Tuple[str, ...], str, Callable]]
             ]
         ]
     ] = {
@@ -247,7 +249,9 @@ class SiteLogBinder(BaseBinder):
                 ('Foundation Depth', ('foundation_depth', to_float)),
                 ('Foundation Depth (m)', ('foundation_depth', to_float)),
                 ('Marker Description', ('marker_description', to_str)),
-                ('Geologic Characteristic', ('geologic_characteristic', to_str)),
+                ('Geologic Characteristic', (
+                    'geologic_characteristic', to_str)
+                 ),
                 ('Bedrock Type', ('bedrock_type', to_str)),
                 ('Bedrock Condition', ('bedrock_condition', to_str)),
                 ('Fracture Spacing',
@@ -258,7 +262,7 @@ class SiteLogBinder(BaseBinder):
             ]
         },
         2: {
-            reg(log_name, 2, bindings): bindings for log_name, bindings in [
+            **{reg(log_name, 2, bindings): bindings for log_name, bindings in [
                 ('City or Town', ('city', to_str)),
                 ('State or Province', ('state', to_str)),
                 ('Country', (
@@ -282,7 +286,11 @@ class SiteLogBinder(BaseBinder):
                 ('Elevation (m,ellips.)', ('elevation', to_float)),
     
                 ('Additional Information', ('additional_information', to_str))
-            ]
+            ]},
+            'collations': (
+                (('x', 'y', 'z'), 'xyz', Point),
+                (('latitude', 'longitude', 'elevation'), 'llh', Point)
+            )
         },
         3: {
             reg(log_name, 3, bindings): bindings for log_name, bindings in [
@@ -304,11 +312,13 @@ class SiteLogBinder(BaseBinder):
             ]
         },
         4: {
-            reg(log_name, 4, bindings): bindings for log_name, bindings in [
+            **{reg(log_name, 4, bindings): bindings for log_name, bindings in [
                 ('Antenna Type', ('antenna_type', to_antenna)),
                 ('Serial Number', ('serial_number', to_str)),
-                ('Antenna Reference Point',
-                    ('reference_point', partial(to_enum, AntennaReferencePoint))),
+                ('Antenna Reference Point', (
+                    'reference_point',
+                    partial(to_enum, AntennaReferencePoint))
+                 ),
 
                 ('Marker->ARP Up Ecc.', ('marker_up', to_float)),
                 ('Marker->ARP North Ecc', ('marker_north', to_float)),
@@ -326,10 +336,15 @@ class SiteLogBinder(BaseBinder):
                 ('Date Installed', ('installed', to_datetime)),
                 ('Date Removed', ('removed', to_datetime)),
                 ('Additional Information', ('additional_information', to_str))
-            ]
+            ]},
+            'collations': ((
+                ('marker_east', 'marker_north', 'marker_up'),
+                'marker_enu',
+                Point
+            ),)
         },
         5: {
-            reg(log_name, 5, bindings): bindings for log_name, bindings in [
+            **{reg(log_name, 5, bindings): bindings for log_name, bindings in [
                 ('Tied Marker Name', ('name', to_str)),
                 ('Tied Marker Usage', ('usage', to_str)),
                 ('Tied Marker CDP Number', ('cdp_number', to_str)),
@@ -350,7 +365,10 @@ class SiteLogBinder(BaseBinder):
                 ('Survey method', ('survey_method', to_str)),
                 ('Date Measured', ('measured', to_datetime)),
                 ('Additional Information', ('additional_information', to_str))
-            ]
+            ]},
+            'collations': (
+                (('dx', 'dy', 'dz'), 'diff_xyz', Point),
+            )
         },
         6: {
             reg(log_name, 6, bindings): bindings for log_name, bindings in [
@@ -508,7 +526,8 @@ class SiteLogBinder(BaseBinder):
                         str,
                         Callable,
                         Callable[[int, SiteLogParser, Any], List[Finding]]
-                    ]]
+                    ]],
+                    Tuple[Tuple[Tuple[str, ...], str, Callable]]
                 ]
             ]
     ) -> None:
@@ -517,6 +536,8 @@ class SiteLogBinder(BaseBinder):
         binding_errors = set()
         ignored = set()
         for _1, bindings in translations.items():
+            if _1 == 'collations':
+                continue
             for param in (
                 bindings if isinstance(bindings, list)
                 else [bindings]
@@ -613,3 +634,20 @@ class SiteLogBinder(BaseBinder):
                     section=section
                 )
             )
+
+        # run through collations and adjust bindings
+        if section.binding:
+            for collation in translations.get('collations', []):
+                assert len(collation) == 3
+                if any(param in section.binding for param in collation[0]):
+                    try:
+                        section.binding[collation[1]] = collation[2](*[
+                            section.binding.get(param, None)
+                            for param in collation[0]
+                        ])
+                    except Exception:
+                        # todo
+                        pass
+
+                for param in collation[0]:
+                    section.binding.pop(param, None)

@@ -1,9 +1,10 @@
-from rest_framework.serializers import DateTimeField
+from rest_framework.serializers import DateTimeField, Field
 from dateutil import parser
 from django.utils import timezone
 from datetime import timezone, datetime, date, time
 from django.conf import settings
 from django.utils.translation import gettext as _
+from django.contrib.gis.geos import Point
 
 
 class SLMDateTimeField(DateTimeField):
@@ -67,3 +68,23 @@ class SLMDateTimeField(DateTimeField):
             pass
 
         self.fail('invalid', format='CCYY-MM-DDThh:mmZ')
+
+
+class SLMPointField(Field):
+
+    default_error_messages = {
+        'invalid': _(
+            'Unable to interpret point ({data}), please use format: {format}.'
+        )
+    }
+
+    def to_representation(self, value):
+        return value.coords
+
+    def to_internal_value(self, data):
+        try:
+            return Point(*[
+                float(coord) if coord is not None else None for coord in data]
+            ) or None
+        except (TypeError, ValueError):
+            self.fail('invalid', format='[float, float, float]', data=data)

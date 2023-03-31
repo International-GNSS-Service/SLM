@@ -42,12 +42,12 @@
      Country                  : {{ location.country|enum_str }}
      Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
      Approximate Position (ITRF)
-       X coordinate (m)       : {{ location.x|precision(4) }}
-       Y coordinate (m)       : {{ location.y|precision(4) }}
-       Z coordinate (m)       : {{ location.z|precision(4) }}
-       Latitude (N is +)      : {% if location %}{{ location.latitude|iso6709(6) }}{% else %}(+/-DDMMSS.SS){% endif %}
-       Longitude (E is +)     : {% if location %}{{ location.longitude|iso6709(7) }}{% else %}(+/-DDDMMSS.SS){% endif %}
-       Elevation (m,ellips.)  : {% if location %}{{ location.elevation|precision(4) }}{% else %}(F7.1){% endif %}
+       X coordinate (m)       : {{ location.xyz.0|precision(4) }}
+       Y coordinate (m)       : {{ location.xyz.1|precision(4) }}
+       Z coordinate (m)       : {{ location.xyz.2|precision(4) }}
+       Latitude (N is +)      : {% if location %}{{ location.llh.0|iso6709(6) }}{% else %}(+/-DDMMSS.SS){% endif %}
+       Longitude (E is +)     : {% if location %}{{ location.llh.1|iso6709(7) }}{% else %}(+/-DDDMMSS.SS){% endif %}
+       Elevation (m,ellips.)  : {% if location %}{{ location.llh.2|precision(4) }}{% else %}(F7.1){% endif %}
      Additional Information   : {% if location %}{{ location.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
 
 
@@ -79,9 +79,9 @@
 4.{{ loop.index|rpad_space(3) }}Antenna Type             : {{ ant|antenna_radome }}
      Serial Number            : {{ ant.serial_number }}
      Antenna Reference Point  : {{ ant.reference_point.name }}
-     Marker->ARP Up Ecc. (m)  : {{ ant.marker_up|precision_full(4) }}
-     Marker->ARP North Ecc(m) : {{ ant.marker_north|precision_full(4) }}
-     Marker->ARP East Ecc(m)  : {{ ant.marker_east|precision_full(4) }}
+     Marker->ARP Up Ecc. (m)  : {{ ant.marker_enu.2|precision_full(4) }}
+     Marker->ARP North Ecc(m) : {{ ant.marker_enu.1|precision_full(4) }}
+     Marker->ARP East Ecc(m)  : {{ ant.marker_enu.0|precision_full(4) }}
      Alignment from True N    : {% if ant.alignment is not none %}{{ ant.alignment|precision(1)|pos }} deg{% endif %}
      Antenna Radome Type      : {{ ant.radome_type.model }}
      Radome Serial Number     : {{ ant.radome_serial_number }}
@@ -114,9 +114,9 @@
      Tied Marker CDP Number   : {{ tie.cdp_number }}
      Tied Marker DOMES Number : {{ tie.domes_number }}
      Differential Components from GNSS Marker to the tied monument (ITRS)
-       dx (m)                 : {% if tie.dx is not none %}{{ tie.dx|precision_full(3) }}{% endif %}
-       dy (m)                 : {% if tie.dy is not none %}{{ tie.dy|precision_full(3) }}{% endif %}
-       dz (m)                 : {% if tie.dz is not none %}{{ tie.dz|precision_full(3) }}{% endif %}
+       dx (m)                 : {% if tie.diff_xyz is not none %}{{ tie.diff_xyz.0|precision_full(3) }}{% endif %}
+       dy (m)                 : {% if tie.diff_xyz is not none %}{{ tie.diff_xyz.1|precision_full(3) }}{% endif %}
+       dz (m)                 : {% if tie.diff_xyz is not none %}{{ tie.diff_xyz.2|precision_full(3) }}{% endif %}
      Accuracy (mm)            : {% if tie.accuracy is not none %}{{ tie.accuracy|precision(0) }}{% endif %}
      Survey method            : {{ tie.survey_method }}
      Date Measured            : {% if tie.measured %}{{ tie.measured|iso_utc }}{% else %}(CCYY-MM-DDThh:mmZ){% endif %}

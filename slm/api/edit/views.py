@@ -44,7 +44,7 @@ from slm.api.public.views import (
     AgencyViewSet as PublicAgencyViewSet,
     NetworkViewSet as PublicNetworkViewSet
 )
-from slm.api.fields import SLMDateTimeField
+from slm.api.fields import SLMDateTimeField, SLMPointField
 from slm.api.serializers import SiteLogSerializer
 from slm.api.pagination import DataTablesPagination
 from slm.api.permissions import (
@@ -103,6 +103,7 @@ from slm.forms import StationFilterForm as BaseStationFilterForm
 from crispy_forms.layout import Layout, Div, Field, Fieldset, Submit
 from crispy_forms.helper import FormHelper
 import json
+from django.contrib.gis.db import models as gis_models
 
 
 class StationFilterForm(BaseStationFilterForm):
@@ -546,7 +547,8 @@ class SectionViewSet(type):
 
             serializer_field_mapping = {
                 **ModelSerializer.serializer_field_mapping,
-                models.DateTimeField: SLMDateTimeField
+                models.DateTimeField: SLMDateTimeField,
+                gis_models.PointField: SLMPointField
             }
 
             _diff = serializers.SerializerMethodField(read_only=True)

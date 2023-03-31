@@ -17,8 +17,8 @@ class StationMapSerializer(serializers.Serializer):
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    instance.longitude,
-                    instance.latitude
+                    instance.llh[1],
+                    instance.llh[0]
                 ],
             },
             "properties": {

@@ -123,9 +123,8 @@ class StationListSerializer(serializers.ModelSerializer):
     receiver_type = serializers.CharField()
     antcal = serializers.CharField()
 
-    latitude = serializers.FloatField()
-    longitude = serializers.FloatField()
-    elevation = serializers.FloatField()
+    xyz = serializers.SerializerMethodField()
+    llh = serializers.SerializerMethodField()
 
     city = serializers.CharField()
     state = serializers.CharField()
@@ -143,6 +142,12 @@ class StationListSerializer(serializers.ModelSerializer):
     last_rinex4 = serializers.DateField()
     last_data_time = serializers.DateField()
     last_data = serializers.SerializerMethodField()
+
+    def get_xyz(self, obj):
+        return obj.xyz[0], obj.xyz[1], obj.xyz[2]
+
+    def get_llh(self, obj):
+        return obj.llh[0], obj.llh[1], obj.llh[2]
 
     def get_satellite_system(self, obj):
         """
@@ -168,12 +173,11 @@ class StationListSerializer(serializers.ModelSerializer):
             'networks',
             'join_date',
             'last_publish',
-            'latitude',
-            'longitude',
+            'xyz',
+            'llh',
             'city',
             'state',
             'country',
-            'elevation',
             'antenna_type',
             'radome_type',
             'antcal',

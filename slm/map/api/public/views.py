@@ -1,4 +1,3 @@
-from django.db.models import OuterRef, Q, Subquery
 from rest_framework import pagination
 from rest_framework.response import Response
 from slm.api.public import views as slm_views
@@ -7,7 +6,6 @@ from slm.map.api.public.serializers import (
     StationListSerializer,
     StationMapSerializer,
 )
-from slm.models import SiteLocation
 
 
 class StationListViewSet(slm_views.StationListViewSet):
@@ -67,11 +65,4 @@ class StationMapViewSet(StationListViewSet):
     pagination_class = FeatureCollectionPagination
 
     def get_queryset(self):
-        location = SiteLocation.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
-        )
-        return Site.objects.annotate(
-            latitude=Subquery(location.values('latitude')[:1]),
-            longitude=Subquery(location.values('longitude')[:1]),
-            elevation=Subquery(location.values('elevation')[:1])
-        ).public().availability()
+        return Site.objects.with_location_fields('llh').public().availability()

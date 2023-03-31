@@ -12,6 +12,7 @@ from django.db.models import (
     Subquery,
     ExpressionWrapper
 )
+from django.contrib.gis.db import models as gis_models
 from django.contrib.auth.models import Permission
 from enum import Enum
 from django.db.models.functions import (
@@ -338,7 +339,7 @@ class SiteQuerySet(models.QuerySet):
         onto the site objects in this queryset.
 
         :param fields: The names of the fields to annotate, by default these
-            will include: latitude, longitude, elevation, city, state, and
+            will include: XYZ, LLH, city, state, and
             country
         :param renamed_fields: Named arguments where the names of the arguments
             are the field accessors for the fields to annotate and the values
@@ -352,9 +353,8 @@ class SiteQuerySet(models.QuerySet):
 
         fields = fields or {
             **{field: field for field in [
-                'latitude',
-                'longitude',
-                'elevation',
+                'xyz',
+                'llh',
                 'city',
                 'state',
                 'country'
@@ -1028,7 +1028,7 @@ class Site(models.Model):
         return self.name
 
 
-class SiteSectionManager(models.Manager):
+class SiteSectionManager(gis_models.Manager):
 
     def published(self, epoch=None):
         return self.get_queryset().published(epoch=epoch)
@@ -1040,7 +1040,7 @@ class SiteSectionManager(models.Manager):
         return self.get_queryset()._current(epoch=epoch, published=published)
 
 
-class SiteSectionQueryset(models.QuerySet):
+class SiteSectionQueryset(gis_models.QuerySet):
 
     def editable_by(self, user):
         if user.is_superuser:
@@ -1097,7 +1097,7 @@ class SiteLocationQueryset(SiteSectionQueryset):
         ]))
 
 
-class SiteSection(models.Model):
+class SiteSection(gis_models.Model):
 
     site = models.ForeignKey('slm.Site', on_delete=models.CASCADE)
 
@@ -1252,6 +1252,12 @@ class SiteSection(models.Model):
             ):
                 if value:
                     return '+'.join([str(val) for val in value.all()])
+            elif isinstance(
+                self._meta.get_field(field),
+                gis_models.PointField
+            ):
+                if value:
+                    return value.coords
             return value
 
         for field in self.site_log_fields():
@@ -1922,12 +1928,8 @@ class SiteLocation(SiteSection):
             'country',
             'tectonic',
             (_('Approximate Position (ITRF)'), (
-                'x',
-                'y',
-                'z',
-                'latitude',
-                'longitude',
-                'elevation'
+                'xyz',
+                'llh',
             )),
             'additional_information'
         ]
@@ -1981,71 +1983,34 @@ class SiteLocation(SiteSection):
         db_index=True
     )
 
-    x = models.FloatField(
+    # https://epsg.io/7789
+    xyz = gis_models.PointField(
+        srid=7789,
+        dim=3,
         null=True,
         blank=False,
-        verbose_name=_('X Coordinate (m)'),
+        db_index=True,
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
         ),
-        db_index=True
+        verbose_name=_('Position (X, Y, Z) (m)'),
     )
 
-    y = models.FloatField(
+    #https://epsg.io/4979
+    llh = gis_models.PointField(
+        srid=4979,
+        dim=3,
         null=True,
         blank=False,
-        verbose_name=_('Y Coordinate (m)'),
+        verbose_name=_('Position (Lat, Lon, Elev (m))'),
         help_text=_(
-            'Enter the ITRF position to a one meter precision. Format (m)'
-        ),
-        db_index=True
-    )
-
-    z = models.FloatField(
-        null=True,
-        blank=False,
-        verbose_name=_('Z Coordinate (m)'),
-        help_text=_(
-            'Enter the ITRF position to a one meter precision. Format (m)'
+            'Enter the ITRF latitude and longitude in decimal degrees and '
+            'elevation in meters to one meter precision. Note, legacy site '
+            'log format is (+/-DDMMSS.SS) and elevation may be given to more '
+            'decimal places than F7.1. F7.1 is the minimum for the SINEX '
+            'format.'
         ),
         db_index=True
-    )
-
-    # todo convert these to geodjango native PointField
-    latitude = models.FloatField(
-        null=True,
-        blank=False,
-        verbose_name=_('Latitude (N is +)'),
-        help_text=_(
-            'Enter the ITRF latitude in decimal degrees to a one meter '
-            'precision. Note, legacy site log format is (+/-DDMMSS.SS).'
-        ),
-        db_index=True,
-        validators=[MaxValueValidator(90), MinValueValidator(-90)]
-    )
-
-    longitude = models.FloatField(
-        null=True,
-        blank=False,
-        verbose_name=_('Longitude (E is +)'),
-        help_text=_(
-            'Enter the ITRF longitude in decimal degrees to a one meter '
-            'precision. Note, legacy site log format is (+/-DDDMMSS.SS).'
-        ),
-        db_index=True,
-        validators=[MaxValueValidator(180), MinValueValidator(-180)]
-    )
-
-    elevation = models.FloatField(
-        null=True,
-        verbose_name=_('Elevation (m,ellips.)'),
-        help_text=_(
-            'Enter the ITRF position to a one meter precision. Format: The '
-            'elevation may be given to more decimal places than F7.1. 7.1 is '
-            'a minimum for the SINEX format'
-        ),
-        db_index=True,
-        validators=[MaxValueValidator(9000), MinValueValidator(-500)]
     )
 
     additional_information = models.TextField(
@@ -2337,35 +2302,15 @@ class SiteAntenna(SiteSubSection):
         db_index=True
     )
 
-    marker_up = models.FloatField(
-        blank=False,
-        verbose_name=_('Marker->ARP Up Ecc (m)'),
+    marker_enu = gis_models.PointField(
+        srid=0,  # env is a local reference frame
+        dim=3,
+        verbose_name=_('Marker->ARP ENU Ecc (m)'),
         help_text=_(
-            'Up eccentricity is the antenna height measured to an accuracy of '
-            '1mm and defined as the vertical distance of the ARP from the '
-            'marker described in section 1. Format: (F8.4) Value 0 is OK'
-        ),
-        db_index=True
-    )
-    marker_north = models.FloatField(
-        blank=False,
-        verbose_name=_('Marker->ARP North Ecc (m)'),
-        help_text=_(
-            'North eccentricity is the offset between the ARP and marker '
-            'described in section 1 measured to an accuracy of 1mm. '
-            'Format: (F8.4)'
-        ),
-        db_index=True
-    )
-    marker_east = models.FloatField(
-        blank=False,
-        verbose_name=_('Marker->ARP East Ecc (m)'),
-        help_text=_(
-            'East eccentricity is the offset between the ARP and marker '
-            'described in section 1 measured to an accuracy of 1mm. '
-            'Format: (F8.4)'
-        ),
-        db_index=True
+            'East-North-Up eccentricity is the offset between the ARP and '
+            'marker described in section 1 measured to an accuracy of 1mm. '
+            'Format: (F8.4) Value 0 is OK'
+        )
     )
 
     alignment = models.FloatField(
@@ -2515,9 +2460,7 @@ class SiteSurveyedLocalTies(SiteSubSection):
                 'Differential Components from GNSS Marker to the tied '
                 'monument (ITRS)'
             ), (
-                'dx',
-                'dy',
-                'dz'
+                'diff_xyz',
             )),
             'accuracy',
             'survey_method',
@@ -2587,38 +2530,17 @@ class SiteSurveyedLocalTies(SiteSubSection):
         db_index=True
     )
 
-    dx = models.FloatField(
+    diff_xyz = gis_models.PointField(
+        srid=7789,
+        dim=3,
         null=True,
-        default=None,
-        blank=True,
-        verbose_name=_('dx (m)'),
+        blank=False,
+        db_index=True,
         help_text=_(
             'Enter the differential ITRF coordinates to one millimeter '
-            'precision. Format: (m)'
+            'precision. Format: dx, dy, dz (m)'
         ),
-        db_index=True
-    )
-    dy = models.FloatField(
-        null=True,
-        default=None,
-        blank=True,
-        verbose_name=_('dy (m)'),
-        help_text=_(
-            'Enter the differential ITRF coordinates to one millimeter '
-            'precision. Format: (m)'
-        ),
-        db_index=True
-    )
-    dz = models.FloatField(
-        null=True,
-        default=None,
-        blank=True,
-        verbose_name=_('dz (m)'),
-        help_text=_(
-            'Enter the differential ITRF coordinates to one millimeter '
-            'precision. Format: (m)'
-        ),
-        db_index=True
+        verbose_name=_('Δ XYZ (m)')
     )
 
     accuracy = models.FloatField(

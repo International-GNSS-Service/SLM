@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'polymorphic',
     'rest_framework',
+    'rest_framework_gis',
     'render_static',
     'django_filters',
     'compressor',
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django.contrib.gis',
     'allauth',
     'allauth.account',
 ]

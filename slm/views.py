@@ -145,8 +145,8 @@ class StationContextView(SLMView):
             location = SiteLocation.objects.filter(site=self.site).head()
             if location:
                 context['station_position'] = (
-                    location.latitude,
-                    location.longitude
+                    location.llh[0],
+                    location.llh[1]
                 )
             context['attn_files'] = self.site.sitefileuploads.available_to(
                 self.request.user

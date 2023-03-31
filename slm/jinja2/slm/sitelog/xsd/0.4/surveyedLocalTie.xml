@@ -3,13 +3,13 @@
     <geo:tiedMarkerUsage>{{ tie.usage }}</geo:tiedMarkerUsage>
     <geo:tiedMarkerCDPNumber>{{ tie.cdp_number }}</geo:tiedMarkerCDPNumber>
     <geo:tiedMarkerDOMESNumber>{{ tie.domes_number }}</geo:tiedMarkerDOMESNumber>
-    {% if tie.dx is none or tie.dy is none or tie.dz is none %}
+    {% if tie.diff_xyz is none %}
     <geo:differentialComponentsGNSSMarkerToTiedMonumentITRS xsi:nil="true"/>
     {% else %}
     <geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
-        <geo:dx>{{ tie.dx }}</geo:dx>
-        <geo:dy>{{ tie.dy }}</geo:dy>
-        <geo:dz>{{ tie.dz }}</geo:dz>
+        <geo:dx>{{ tie.diff_xyz.0 }}</geo:dx>
+        <geo:dy>{{ tie.diff_xyz.1 }}</geo:dy>
+        <geo:dz>{{ tie.diff_xyz.2 }}</geo:dz>
     </geo:differentialComponentsGNSSMarkerToTiedMonumentITRS>
     {% endif %}
     <geo:localSiteTiesAccuracy{% if tie.accuracy is none %} xsi:nil="true"{% endif %}>{{ tie.accuracy|precision(1) }}</geo:localSiteTiesAccuracy>

@@ -1,6 +1,7 @@
 from logging import Filter
 from django.conf import settings
 from django.core import serializers
+from django.contrib.gis.geos import Point
 import json
 from PIL import Image, ExifTags
 
@@ -203,6 +204,8 @@ class SectionEncoder(json.JSONEncoder):
         if isinstance(obj, (Manager, QuerySet)):
             return [related for related in obj.all()]
 
+        if isinstance(obj, Point):
+            return obj.coords
         return json.JSONEncoder.default(self, obj)
 
 

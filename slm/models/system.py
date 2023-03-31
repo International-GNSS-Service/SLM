@@ -27,6 +27,7 @@ from slm.utils import get_exif_tags
 from dateutil import parser
 from datetime import datetime
 from django.utils.timezone import is_naive, make_aware, utc
+from django.contrib.gis.db import models as gis_models
 
 
 class AgencyManager(models.Manager):
@@ -613,7 +614,7 @@ class LogEntry(PolymorphicModel):
         ordering = ('-timestamp',)
 
 
-class TideGauge(models.Model):
+class TideGauge(gis_models.Model):
 
     name = models.CharField(
         max_length=128,
@@ -622,8 +623,12 @@ class TideGauge(models.Model):
         db_index=True
     )
 
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    position = gis_models.PointField(
+        null=True,
+        blank=True,
+        srid=4326,
+        geography=True
+    )
 
     sonel_id = models.IntegerField(blank=True, null=True, db_index=True)
 

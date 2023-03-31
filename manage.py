@@ -9,9 +9,7 @@ def main():
 
     # We use a slightly different logger config if we're running
     #   a management command vs serving
-    if len(sys.argv) > 1:
-        subcommand = sys.argv[1]
-        os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
+    os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
     ##################################################
 
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'slm.tests.settings')

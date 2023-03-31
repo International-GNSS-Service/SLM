@@ -28,9 +28,13 @@ from slm.parsing.legacy import (
     SiteLogParser,
     SiteLogBinder
 )
-from datetime import datetime
+from datetime import datetime, date
 from django.utils.timezone import utc, make_aware
 from slm.utils import dddmmssss_to_decimal
+
+
+# this matches fourYYMM.log and four_YYYYMMDD.log styles
+FILE_NAME_REGEX = re.compile(r'^([a-zA-Z\d]{4,9})\D*(\d{4,8}).*log$')
 
 
 class Command(BaseCommand):
@@ -80,44 +84,79 @@ class Command(BaseCommand):
                             continue
                         
                         count += 1
-                        name = os.path.basename(member.name)
-                        if '_' not in name:
+                        archive_name = os.path.basename(member.name)
+
+                        match = FILE_NAME_REGEX.match(archive_name)
+                        if not match:
                             p_bar.update(n=1)
-                            unresolved.add(name)
+                            unresolved.add(archive_name)
                             continue
-                        parts = re.split('[._-]', name)
-                        four_id = parts[0]
-                        try:
-                            log_time = make_aware(parser.parse(parts[1]), utc)
-                        except parser.ParserError:
-                            #print(f'Invalid log name: {name}')
-                            continue
+
+                        four_id = match.group(1)
+                        time_part = match.group(2)
+                        no_day = False
+                        if len(time_part) == 4:
+                            no_day = True
+                            year = int(time_part[:2])
+                            if year > 80:
+                                year += 1900
+                            else:
+                                year += 2000
+                            month = int(time_part[2:])
+                            log_date = date(year=year, month=month, day=1)
+                        else:
+                            log_date = parser.parse(time_part).date()
 
                         try:
                             site = Site.objects.get(name__istartswith=four_id)
-                            
+
+                            """
                             archive_name = f'{site.name.upper()}_' \
-                                           f'{log_time.year}' \
-                                           f'{log_time.month:02}' \
-                                           f'{log_time.day:02}.' \
+                                           f'{log_date.year}' \
+                                           f'{log_date.month:02}' \
+                                           f'{log_date.day:02}.' \
                                            f'{SiteLogFormat.LEGACY.ext}'
+                            """
                             
                             log_str = archive.extractfile(member).read()
-                            params, prep_time = self.log_params(log_str, site)
+                            params, prep_date = self.log_params(log_str, site)
 
-                            if prep_time:
-                                # todo - what is correct when these don't match?
-                                if prep_time < log_time:
+                            log_time = make_aware(datetime(
+                                year=log_date.year,
+                                month=log_date.month,
+                                day=log_date.day,
+                                hour=0,
+                                minute=0,
+                                second=0
+                            ), utc)
+
+                            if prep_date:
+                                # use the prep date if it agrees with a lower
+                                # resolution log_date (i.e. no day - old style)
+                                if (
+                                    prep_date.month == log_time.month and
+                                    prep_date.year == log_time.year and
+                                    no_day
+                                ):
+                                    log_time = make_aware(datetime(
+                                        year=prep_date.year,
+                                        month=prep_date.month,
+                                        day=prep_date.day,
+                                        hour=0,
+                                        minute=0,
+                                        second=0
+                                    ), utc)
+                                if prep_date < log_date:
                                     prep_less += 1
-                                if prep_time == log_time:
+                                if prep_date == log_date:
                                     prep_eq += 1
-                                if prep_time > log_time:
+                                if prep_date > log_date:
                                     prep_more += 1
                             else:
                                 no_prep += 1
 
                             if (
-                                log_time and
+                                log_date and
                                 site.join_date is None or
                                 site.join_date > log_time.date()
                             ):
@@ -129,19 +168,24 @@ class Command(BaseCommand):
                                 begin=log_time
                             )
 
-                            ArchivedSiteLog.objects.create(
-                                site=site,
-                                name=archive_name,
+                            ArchivedSiteLog.objects.get_or_create(
                                 index=index,
-                                file_type=SLMFileType.SITE_LOG,
                                 log_format=SiteLogFormat.LEGACY,
-                                file=ContentFile(log_str, name=archive_name)
+                                defaults={
+                                    'site': site,
+                                    'name': archive_name,
+                                    'file_type': SLMFileType.SITE_LOG,
+                                    'file': ContentFile(
+                                        log_str,
+                                        name=archive_name
+                                    )
+                                }
                             )
 
                         except Site.DoesNotExist:
-                            unresolved.add(name)
+                            unresolved.add(archive_name)
 
-                        p_bar.set_postfix({'log': name})
+                        p_bar.set_postfix({'log': archive_name})
                         p_bar.update(n=1)
 
         print(
@@ -189,6 +233,11 @@ class Command(BaseCommand):
             'latitude': lat_lng(get_param((2, None, None), 'latitude')),
             'longitude': lat_lng(get_param((2, None, None), 'longitude')),
             'elevation': get_param((2, None, None), 'elevation'),
+            # 'llh': (
+            #     lat_lng(get_param((2, None, None), 'latitude')),
+            #     lat_lng(get_param((2, None, None), 'longitude')),
+            #     get_param((2, None, None), 'elevation')
+            # ),
             'city': get_param((2, None, None), 'city', ''),
             'country': get_param((2, None, None), 'country'),
             'antenna': None,

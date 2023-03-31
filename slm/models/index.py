@@ -53,24 +53,31 @@ class ArchiveIndexManager(models.Manager):
             last.end = site.last_publish
             last.save()
 
-    def insert_index(self, begin, **kwargs):
+    def insert_index(self, begin, site, **kwargs):
         """
         Insert a new index into an existing index deck (i.e. between existing
         indexes).
         """
+        existing = self.get_queryset().filter(
+            site=site,
+            begin=begin
+        ).first()
+        if existing:
+            print(site, begin)
+            return existing
         next_index = self.get_queryset().filter(
-            site=kwargs['site'],
+            site=site,
             begin__gt=begin
         ).order_by('begin').first()
         prev_index = self.get_queryset().filter(
-            site=kwargs['site'],
+            site=site,
             begin__lt=begin
         ).order_by('-begin').first()
         kwargs.setdefault('end', next_index.begin if next_index else None)
         if prev_index:
             prev_index.end = begin
             prev_index.save()
-        return self.create(begin=begin, **kwargs)
+        return self.create(begin=begin, site=site, **kwargs)
 
 
 class ArchiveIndexQuerySet(models.QuerySet):
@@ -112,7 +119,8 @@ class ArchiveIndexQuerySet(models.QuerySet):
         self,
         name_len=None,
         field_name='filename',
-        lower_case=False
+        lower_case=False,
+        log_format=None
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -122,6 +130,7 @@ class ArchiveIndexQuerySet(models.QuerySet):
             the first name_len characters of the site name.
         :param field_name: Change the name of the annotated field.
         :param lower_case: Filenames will be lowercase if true.
+        :param log_format: If given, add the extension for the given format
         :return: A queryset with the filename annotation added.
         """
         name_str = F('site__name')
@@ -133,25 +142,25 @@ class ArchiveIndexQuerySet(models.QuerySet):
         if lower_case:
             name_str = Lower(name_str)
 
-        return self.annotate(
-            **{
-                field_name: Concat(
-                    name_str,
-                    Value('_'),
-                    Cast(ExtractYear('begin'), models.CharField()),
-                    LPad(
-                        Cast(ExtractMonth('begin'), models.CharField()),
-                        2,
-                        fill_text=Value('0')
-                    ),
-                    LPad(
-                        Cast(ExtractDay('begin'), models.CharField()),
-                        2,
-                        fill_text=Value('0')
-                    )
-                )
-            }
-        )
+        parts = [
+            name_str,
+            Value('_'),
+            Cast(ExtractYear('begin'), models.CharField()),
+            LPad(
+                Cast(ExtractMonth('begin'), models.CharField()),
+                2,
+                fill_text=Value('0')
+            ),
+            LPad(
+                Cast(ExtractDay('begin'), models.CharField()),
+                2,
+                fill_text=Value('0')
+            )
+        ]
+        if log_format:
+            parts.append(Value(f'.{log_format.ext}'))
+
+        return self.annotate(**{field_name: Concat(*parts)})
 
 
 class ArchiveIndex(models.Model):
@@ -230,7 +239,8 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
         self,
         name_len=None,
         field_name='filename',
-        lower_case=False
+        lower_case=False,
+        log_format=None
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -240,6 +250,7 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
             the first name_len characters of the site name.
         :param field_name: Change the name of the annotated field.
         :param lower_case: Filenames will be lowercase if true.
+        :param log_format: If given, add the extension for the given format
         :return: A queryset with the filename annotation added.
         """
         name_str = F('site__name')
@@ -251,25 +262,24 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
         if lower_case:
             name_str = Lower(name_str)
 
-        return self.annotate(
-            **{
-                field_name: Concat(
-                    name_str,
-                    Value('_'),
-                    Cast(ExtractYear('index__begin'), models.CharField()),
-                    LPad(
-                        Cast(ExtractMonth('index__begin'), models.CharField()),
-                        2,
-                        fill_text=Value('0')
-                    ),
-                    LPad(
-                        Cast(ExtractDay('index__begin'), models.CharField()),
-                        2,
-                        fill_text=Value('0')
-                    )
-                )
-            }
-        )
+        parts = [
+            name_str,
+            Value('_'),
+            Cast(ExtractYear('index__begin'), models.CharField()),
+            LPad(
+                Cast(ExtractMonth('index__begin'), models.CharField()),
+                2,
+                fill_text=Value('0')
+            ),
+            LPad(
+                Cast(ExtractDay('index__begin'), models.CharField()),
+                2,
+                fill_text=Value('0')
+            )
+        ]
+        if log_format:
+            parts.append(Value(f'.{log_format.ext}'))
+        return self.annotate(**{field_name: Concat(*parts)})
 
 
 class ArchivedSiteLog(SiteFile):

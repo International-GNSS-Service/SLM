@@ -16,6 +16,11 @@ from slm.utils import decimal_to_dddmmssss
 register = template.Library()
 
 
+@register.filter(name='pad_diff')
+def pad_diff(int1, int2):
+    return ' ' * (int(int1) - int(int2))
+
+
 @register.filter(name='div')
 def div(numerator, denominator):
     if denominator == 0:

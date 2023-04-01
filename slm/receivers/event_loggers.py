@@ -1,5 +1,5 @@
 import logging
-
+from django.contrib.contenttypes.models import ContentType
 from django.dispatch import receiver
 from ipware import get_client_ip
 from slm import signals as slm_signals
@@ -16,7 +16,8 @@ def log_publish(sender, site, user, timestamp, request, section, **kwargs):
         type=LogEntryType.PUBLISH,
         user=user,
         site=site,
-        site_log_object=section,
+        section=ContentType.objects.get_for_model(section),
+        subsection=getattr(section, 'subsection', None),
         epoch=timestamp,
         ip=get_client_ip(request)[0] if request else None
     )
@@ -28,10 +29,9 @@ def log_propose(sender, site, user, timestamp, request, agencies, **kwargs):
     from slm.models import LogEntry
 
     LogEntry.objects.create(
-        type=LogEntryType.NEW_SITE,
+        type=LogEntryType.SITE_PROPOSED,
         user=user,
         site=site,
-        site_log_object=site,
         epoch=timestamp,
         ip=get_client_ip(request)[0] if request else None
     )
@@ -55,7 +55,8 @@ def log_edit(
         type=LogEntryType.UPDATE,
         user=user,
         site=site,
-        site_log_object=section,
+        section=ContentType.objects.get_for_model(section),
+        subsection=getattr(section, 'subsection', None),
         epoch=timestamp,
         ip=get_client_ip(request)[0] if request else None
     )
@@ -70,7 +71,8 @@ def log_add(sender, site, user, timestamp, request, section, **kwargs):
         type=LogEntryType.ADD,
         user=user,
         site=site,
-        site_log_object=section,
+        section=ContentType.objects.get_for_model(section),
+        subsection=getattr(section, 'subsection', None),
         epoch=timestamp,
         ip=get_client_ip(request)[0] if request else None
     )
@@ -85,7 +87,8 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
         type=LogEntryType.DELETE,
         user=user,
         site=site,
-        site_log_object=section,
+        section=ContentType.objects.get_for_model(section),
+        subsection=getattr(section, 'subsection', None),
         epoch=timestamp,
         ip=get_client_ip(request)[0] if request else None
     )
@@ -93,17 +96,19 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
 
 @receiver(slm_signals.site_file_uploaded)
 def log_file_upload(sender, site, user, timestamp, request, upload, **kwargs):
-    from slm.defines import LogEntryType
+    from slm.defines import LogEntryType, SLMFileType
     from slm.models import LogEntry
 
     LogEntry.objects.create(
-        type=(
-            LogEntryType.LOG_UPLOAD if upload.file_type.SITE_LOG
-            else LogEntryType.FILE_UPLOAD
-        ),
+        type=({
+          SLMFileType.SITE_IMAGE: LogEntryType.IMAGE_UPLOAD,
+          SLMFileType.SITE_LOG: LogEntryType.LOG_UPLOAD,
+          SLMFileType.ATTACHMENT: LogEntryType.ATTACHMENT_UPLOAD
+        }.get(upload.file_type, LogEntryType.LOG_UPLOAD)),
         user=user,
         site=site,
         epoch=timestamp,
+        file=upload,
         ip=get_client_ip(request)[0] if request else None
     )
 

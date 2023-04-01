@@ -474,9 +474,11 @@ class SectionForm(forms.ModelForm):
 
     @classmethod
     def section_name(cls):
-        return to_snake_case(
-            cls.Meta.model.__name__
-        ).replace('_', ' ').replace('site', '').title().strip()
+        return cls.Meta.model.section_name()
+        #
+        # return to_snake_case(
+        #     cls.Meta.model.__name__
+        # ).replace('_', ' ').replace('site', '').title().strip()
 
     @property
     def num_flags(self):

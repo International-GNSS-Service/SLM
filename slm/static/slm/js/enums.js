@@ -2,13 +2,14 @@ if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
 
 class LogEntryType {
     
-    static NEW_SITE = new LogEntryType(1, 'New Site', 'slm-log-new-site');
+    static SITE_PROPOSED = new LogEntryType(1, 'Site Proposed', 'slm-log-site-proposed');
     static ADD = new LogEntryType(2, 'Add', 'slm-log-add');
     static UPDATE = new LogEntryType(3, 'Update', 'slm-log-update');
     static DELETE = new LogEntryType(4, 'Delete', 'slm-log-delete');
     static PUBLISH = new LogEntryType(5, 'Publish', 'slm-log-publish');
     static LOG_UPLOAD = new LogEntryType(6, 'Log Upload', 'slm-log-log-upload');
-    static FILE_UPLOAD = new LogEntryType(7, 'File Upload', 'slm-log-file-upload');
+    static IMAGE_UPLOAD = new LogEntryType(7, 'Image Upload', 'slm-log-image-upload');
+    static ATTACHMENT_UPLOAD = new LogEntryType(8, 'Attachment Upload', 'slm-log-attachment-upload');
 
     constructor(val, label, css) {
         this.val = val;
@@ -23,7 +24,7 @@ class LogEntryType {
     static get(val) {
         switch(val) {
             case 1:
-                return LogEntryType.NEW_SITE;
+                return LogEntryType.SITE_PROPOSED;
             case 2:
                 return LogEntryType.ADD;
             case 3:
@@ -35,7 +36,9 @@ class LogEntryType {
             case 6:
                 return LogEntryType.LOG_UPLOAD;
             case 7:
-                return LogEntryType.FILE_UPLOAD;
+                return LogEntryType.IMAGE_UPLOAD;
+            case 8:
+                return LogEntryType.ATTACHMENT_UPLOAD;
         }
         return null;
     }

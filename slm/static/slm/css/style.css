@@ -477,13 +477,16 @@ span.slm-parse-error {
 .slm-log-publish {
     border-left-color: #0D820D;
 }
-.slm-log-new-site {
+.slm-log-site-proposed {
     border-left-color: #913D88;
 }
 .slm-log-log-upload {
     border-left-color: #006EDB;
 }
-.slm-log-file-upload {
+.slm-log-image-upload {
+    border-left-color: darkblue;
+}
+.slm-log-attachment-upload {
     border-left-color: darkblue;
 }
 /* Download Tab Icons Colors */
@@ -509,7 +512,7 @@ span.badge.slm-log-publish {
     background-color: green;
     color: white;
 }
-span.badge.slm-log-new-site {
+span.badge.slm-log-site-proposed {
     background-color: #913D88;
     color: white;
 }
@@ -521,7 +524,11 @@ span.badge.slm-log-log-upload {
     background-color: #006EDB;
     color: white;
 }
-span.badge.slm-log-file-upload {
+span.badge.slm-log-image-upload {
+    background-color: darkblue;
+    color: white;
+}
+span.badge.slm-log-attachment-upload {
     background-color: darkblue;
     color: white;
 }

@@ -1317,6 +1317,10 @@ class SiteSection(gis_models.Model):
         return cls._meta.verbose_name.replace('site', '').strip().title()
 
     @classmethod
+    def section_slug(cls):
+        return cls.__name__.lower().replace('site', '').strip()
+
+    @classmethod
     def site_log_fields(cls):
         """
         Return the editable fields for the given sitelog section

@@ -263,6 +263,8 @@ class SiteFile(models.Model):
         if not self.mimetype:
             import mimetypes
             self.mimetype = mimetypes.guess_type(self.file.path)[0]
+            if not self.mimetype:
+                self.mimetype = 'application/octet-stream'
         if self.file_type in [SLMFileType.ATTACHMENT, None]:
             self.file_type, self.log_format = self.determine_type(
                 self.file,
@@ -289,7 +291,10 @@ class SiteFile(models.Model):
             return SLMFileType.SITE_LOG, SiteLogFormat.GEODESY_ML
         elif mimetype == SiteLogFormat.JSON.mimetype:
             pass
-        elif mimetype.split('/')[0] == 'image' and 'svg' not in mimetype:
+        elif (
+            mimetype and
+            mimetype.split('/')[0] == 'image' and 'svg' not in mimetype
+        ):
             return SLMFileType.SITE_IMAGE, None
 
         return file_type, log_format
@@ -557,54 +562,76 @@ class LogEntry(PolymorphicModel):
         db_index=True
     )
 
-    type = EnumField(LogEntryType, null=False, blank=False)
+    type = EnumField(LogEntryType, null=False, blank=False, db_index=True)
 
     site = models.ForeignKey(
         'slm.Site',
         on_delete=models.CASCADE,
         null=True,
         default=None,
+        blank=True,
+        related_name='logentries',
+    )
+
+    section = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        null=True,
+        default=None,
+        blank=True,
+        db_index=True,
+        related_name='logentries'
+    )
+    subsection = models.PositiveSmallIntegerField(
+        null=True,
+        default=None,
         blank=True
     )
 
-    site_log_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        related_name='logentries',
+    file = models.ForeignKey(
+        'slm.SiteFileUpload',
         null=True,
         default=None,
-        blank=True
+        on_delete=models.SET_NULL
     )
-    site_log_id = models.PositiveIntegerField(
-        null=True,
-        default=None,
-        blank=True
-    )
-    site_log_object = GenericForeignKey('site_log_type', 'site_log_id')
 
     ip = models.GenericIPAddressField(null=True, default=None, blank=True)
 
     objects = LogEntryManager.from_queryset(LogEntryQuerySet)()
 
     @property
-    def target(self):
-        if self.type == LogEntryType.NEW_SITE:
-            return self.site.name
-        if self.site_log_type:
-            if issubclass(self.site_log_type.model_class(), SiteSubSection):
-                return self.site_log_type.model_class().subsection_name()
-            elif issubclass(self.site_log_type.model_class(), SiteSection):
-                return self.site_log_type.model_class().section_name()
-            return self.site_log_type.verbose_name
-        return ''
+    def link(self):
+        """Return a link to the most relevant view for the log entry."""
+        if hasattr(self, 'section') and self.section:
+            section_link = reverse(
+                'slm:edit',
+                kwargs={
+                    'station': self.site.name,
+                    'section': self.section.model_class().section_slug()
+                }
+            )
+            if self.subsection is not None:
+                section_link += f'#{self.subsection}'
+            return section_link
+        elif hasattr(self, 'file') and self.file:
+            return reverse(
+                'slm:upload',
+                kwargs={'station': self.site.name, 'file': self.file.id}
+            )
+        elif hasattr(self, 'site') and self.site:
+            return reverse('slm:review', kwargs={'station': self.site.name})
+        return None
 
     def __str__(self):
         return f'({self.user.name or self.user.email if self.user else ""}) ' \
-               f'[{self.timestamp}]: {self.type} -> {self.target}'
+               f'[{self.timestamp}]: {self.type} -> ' \
+               f'{self.section or self.file or self.site or ""}'
 
     class Meta:
-        indexes = [
-            models.Index(fields=["site_log_type", "site_log_id"]),
+        index_together = [
+            ('section', 'subsection'),
+            ('site', 'section'),
+            ('site', 'section', 'subsection')
         ]
         ordering = ('-timestamp',)
 

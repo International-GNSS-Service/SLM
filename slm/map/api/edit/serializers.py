@@ -7,7 +7,9 @@ class StationSerializer(slm_serializers.StationSerializer):
     llh = serializers.SerializerMethodField(read_only=True)
 
     def get_llh(self, obj):
-        return obj.llh[0], obj.llh[1], obj.llh[2]
+        if hasattr(obj, 'llh') and obj.llh:
+            return obj.llh[0], obj.llh[1], obj.llh[2]
+        return None
 
     class Meta(slm_serializers.StationSerializer.Meta):
         fields = (

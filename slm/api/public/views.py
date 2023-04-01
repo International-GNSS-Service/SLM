@@ -231,7 +231,7 @@ class StationListViewSet(
             receiver_type__model='receiver_type',
         ).with_frequency_standard_fields(
             standard_type='frequency_standard'
-        ).with_info_fields(primary='data_center').public().availability()
+        ).with_info_fields(primary='data_center').active().availability()
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

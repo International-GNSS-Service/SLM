@@ -65,4 +65,4 @@ class StationMapViewSet(StationListViewSet):
     pagination_class = FeatureCollectionPagination
 
     def get_queryset(self):
-        return Site.objects.with_location_fields('llh').public().availability()
+        return Site.objects.with_location_fields('llh').active().availability()

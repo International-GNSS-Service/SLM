@@ -213,7 +213,7 @@ class EditView(StationContextView):
     template_name = 'slm/station/edit.html'
 
     FORMS = {
-        form.section_name().lower().replace(' ', ''): form
+        form.Meta.model.section_slug(): form
         for form in [
             SiteFormForm,
             SiteIdentificationForm,

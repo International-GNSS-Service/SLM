@@ -358,9 +358,7 @@ class LogEntryViewSet(DataTablesListMixin, viewsets.GenericViewSet):
     def get_queryset(self):
         return LogEntry.objects.for_user(
             self.request.user
-        ).prefetch_related(
-            'site_log_object'
-        )
+        ).select_related('section', 'site', 'file', 'user')
 
 
 class AlertViewSet(

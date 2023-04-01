@@ -13,6 +13,7 @@ from slm.models import (
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
 from slm.utils import build_absolute_url
+from django.urls import reverse
 
 
 class EmbeddedAgencySerializer(serializers.ModelSerializer):
@@ -167,6 +168,14 @@ class LogEntrySerializer(serializers.ModelSerializer):
 
     site = serializers.CharField(source='site.name')
     user = EmbeddedUserSerializer(many=False)
+    section = serializers.SerializerMethodField(required=False)
+
+    link = serializers.URLField(required=False)
+
+    def get_section(self, obj):
+        if hasattr(obj, 'section') and obj.section:
+            return obj.section.model_class().section_name()
+        return None
 
     class Meta:
         model = LogEntry
@@ -175,9 +184,12 @@ class LogEntrySerializer(serializers.ModelSerializer):
             'site',
             'timestamp',
             'user',
-            'target',
             'epoch',
-            'ip'
+            'section',
+            'file',
+            'subsection',
+            'ip',
+            'link'
         ]
         read_only_fields = fields
 

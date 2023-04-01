@@ -50,7 +50,8 @@ from slm.models import (
     About,
     TideGauge,
     SiteTideGauge,
-    DataCenter
+    DataCenter,
+    LogEntry
 )
 from slm.authentication import permissions
 from polymorphic.admin import (
@@ -255,6 +256,18 @@ class AntennaCalibrationAdmin(admin.ModelAdmin):
         return self.model.objects.select_related('antenna', 'radome')
 
 
+class LogEntryAdmin(admin.ModelAdmin):
+    search_fields = ('site__name', 'radome__model')
+    list_display = ('timestamp', 'site', 'type', 'ip')
+    list_filter = ('type', 'section')
+    ordering = ('-timestamp',)
+
+    def get_queryset(self, request):
+        return self.model.objects.select_related(
+            'section', 'file', 'site', 'user'
+        )
+
+
 class ManufacturerAdmin(admin.ModelAdmin):
     pass
 
@@ -396,5 +409,6 @@ admin.site.register(Help, HelpAdmin)
 admin.site.register(About, AboutAdmin)
 admin.site.register(AntCal, AntennaCalibrationAdmin)
 admin.site.register(DataCenter, DataCenterAdmin)
+admin.site.register(LogEntry, LogEntryAdmin)
 
 admin.autodiscover()

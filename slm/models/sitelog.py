@@ -12,6 +12,7 @@ from django.db.models import (
     Subquery,
     ExpressionWrapper
 )
+from django.db.models.functions import Greatest, TruncDate
 from django.contrib.gis.db import models as gis_models
 from django.contrib.auth.models import Permission
 from enum import Enum
@@ -113,6 +114,12 @@ class SiteManager(models.Manager):
 
 
 class SiteQuerySet(models.QuerySet):
+    """
+    A custom queryset for the Site model that adds some useful methods for
+    common annotations. Information about sites is spread across a large number
+    of tables, and it is often useful to annotate a queryset with information
+    from those tables. This queryset provides a few methods to do that.
+    """
 
     def annotate_files(self, log_format=SiteLogFormat.LEGACY, prefix=None):
         from slm.models import ArchivedSiteLog
@@ -182,15 +189,28 @@ class SiteQuerySet(models.QuerySet):
             }
         )
 
+    def active(self):
+        """
+        Active stations include all stations that are public and not former or
+        suspended.
+
+        :return:
+        """
+        return self.public().filter(
+            ~Q(status__in=[
+                SiteLogStatus.FORMER,
+                SiteLogStatus.SUSPENDED
+            ])
+        ).distinct()
+
     def public(self):
         """
-        Return all publicly visible sites.
+        Return all publicly visible sites. This includes sites that are
+        in the former or suspended states.
         :return:
         """
         return self.filter(
             ~Q(status__in=[
-                SiteLogStatus.FORMER,
-                SiteLogStatus.SUSPENDED,
                 SiteLogStatus.PROPOSED,
                 SiteLogStatus.EMPTY
             ])
@@ -282,7 +302,7 @@ class SiteQuerySet(models.QuerySet):
     def availability(self):
         from slm.models import DataAvailability
         last_data_avail = DataAvailability.objects.filter(
-            pk=OuterRef('pk')
+            site=OuterRef('pk')
         ).order_by('-last')
         return self.annotate(
             last_data_time=Subquery(last_data_avail.values('last')[:1]),
@@ -299,6 +319,25 @@ class SiteQuerySet(models.QuerySet):
                 last_data_avail.filter(
                     RinexVersion(4).major_q()
                 ).values('last')[:1])
+        )
+
+    def with_last_info(self):
+        """
+        Adds a datetime field called last_info which should reflect the last
+        time there was any notable public information update for the site. For
+        instance this is useful for search engine indexing.
+        :return: queryset with a last_info field added
+        """
+        from slm.models import DataAvailability
+        last_data_avail = DataAvailability.objects.filter(
+            site=OuterRef('pk')
+        ).order_by(F('last').desc(nulls_last=True))
+        return self.annotate(
+            last_info=Greatest(
+                 Subquery(last_data_avail.values('last')[:1]),
+                 'last_publish',
+                 output_field=models.DateTimeField()
+            )
         )
 
     def with_identification_fields(self, *fields, **renamed_fields):

@@ -5,7 +5,12 @@ from slm.defines import DataRate, RinexVersion
 
 class DataAvailability(models.Model):
 
-    site = models.ForeignKey('slm.Site', on_delete=models.CASCADE)
+    site = models.ForeignKey(
+        'slm.Site',
+        on_delete=models.CASCADE,
+        related_name='data'
+    )
+
     rinex_version = EnumField(
         RinexVersion,
         null=True,

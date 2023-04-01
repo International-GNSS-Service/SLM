@@ -137,7 +137,7 @@ include('rest.py')
 include('debug.py')
 include('uploads.py')
 include('ckeditor.py')
-#include('security.py')
+include('security.py')
 include('validation.py')
 
 

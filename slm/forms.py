@@ -88,6 +88,8 @@ from crispy_forms.helper import FormHelper
 import json
 from django.contrib.gis.forms import PointField
 from django.forms.widgets import MultiWidget, NumberInput
+from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
 
 
 class SLMCheckboxInput(CheckboxInput):
@@ -200,14 +202,16 @@ class SLMDateTimeField(forms.SplitDateTimeField):
 
 class PointWidget(MultiWidget):
 
-    template_name = "slm/forms/widgets/inline_multi.html"
-    def __init__(self, attrs=None):
-        widgets = (
-            NumberInput(attrs=attrs),
-            NumberInput(attrs=attrs),
-            NumberInput(attrs=attrs)
+    dim = 3
+
+    template_name = 'slm/forms/widgets/inline_multi.html'
+
+    def __init__(self, dim=dim, attrs=None):
+        self.dim = dim
+        super().__init__(
+            [NumberInput(attrs=attrs) for _ in range(0, self.dim)],
+            attrs
         )
-        super().__init__(widgets, attrs)
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
@@ -219,19 +223,43 @@ class PointWidget(MultiWidget):
     def decompress(self, values):
         from django.contrib.gis.geos import Point
         if values is None:
-            return Point(None, None, None)
+            return Point(*[None for _ in range(0, self.dim)])
         return Point(*values)
+
+    def value_from_datadict(self, data, files, name):
+        if name in data:
+            return [float(coord) for coord in data.getlist(name)]
+        return None
 
 
 class SLMPointField(PointField):
 
     widget = PointWidget
 
-    def __init__(self, *args, attrs=None, **kwargs):
+    def __init__(self, *args, attrs=None, dim=None, **kwargs):
+        if dim is not None:
+            self.widget = self.widget(dim=dim)
         super().__init__(*args, **kwargs)
         if self.widget.attrs is None:
             self.widget.attrs = {}
         self.widget.attrs.update(attrs or {})
+
+    def clean(self, value):
+        """
+        Raise a ValidationError if the value cannot be
+        instantiated as a Point - otherwise return the Point or None.
+        """
+        if value is None:
+            return value
+
+        # Ensuring that the geometry is of the correct type (indicated
+        # using the OGC string label).
+        if len(value) != self.widget.dim:
+            raise ValidationError(
+                self.error_messages["invalid_geom_type"],
+                code="invalid_geom_type"
+            )
+        return Point(*value) or None
 
 
 class AutoSelectMixin:

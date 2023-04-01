@@ -100,8 +100,8 @@
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'created' }}">Registered</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'agencies' }}">Agencies</th>
                             <th data-bs-toggle="tooltip" title="">Networks</th>
-                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'latitude' }}">Latitude</th>
-                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'longitude' }}">Longitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'llh' }}">Latitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'llh' }}">Longitude</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_user' }}">User</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_update' }}">Updated</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_publish' }}">Published</th>
@@ -116,8 +116,8 @@
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'created' }}">Registered</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'agencies' }}">Agencies</th>
                             <th data-bs-toggle="tooltip" title="">Networks</th>
-                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'latitude' }}">Latitude</th>
-                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'longitude' }}">Longitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'llh' }}">Latitude</th>
+                            <th data-bs-toggle="tooltip" title="{{ SiteLocation|help_text:'llh' }}">Longitude</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_user' }}">User</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_update' }}">Updated</th>
                             <th data-bs-toggle="tooltip" title="{{ Site|help_text:'last_publish' }}">Published</th>
@@ -273,10 +273,10 @@
                     orderable: false,
                 },
                 {
-                    data: 'latitude',
-                    render: function (lat, type, full, meta) {
-                        if (lat !== null) {
-                            return lat.toFixed(2);
+                    data: 'llh',
+                    render: function (llh, type, full, meta) {
+                        if (llh !== null) {
+                            return llh[0].toFixed(2);
                         }
                         return null;
                     },
@@ -284,10 +284,10 @@
                     orderable: true,
                 },
                 {
-                    data: 'longitude',
-                    render: function (lng, type, full, meta) {
-                        if (lng !== null) {
-                            return lng.toFixed(2);
+                    data: 'llh',
+                    render: function (llh, type, full, meta) {
+                        if (llh !== null) {
+                            return llh[1].toFixed(2);
                         }
                         return null;
                     },

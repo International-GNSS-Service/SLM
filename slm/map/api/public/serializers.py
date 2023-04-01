@@ -27,6 +27,6 @@ class StationMapSerializer(serializers.Serializer):
                 "last_data": (
                     max(0, instance.last_data.days)
                     if instance.last_data else None
-                ) or 0  # todo remove this, network map can't handle nulls
+                )
             }
         }

@@ -451,6 +451,17 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
         field_name='current'
     )
 
+    geography = django_filters.CharFilter(
+        method='filter_geography'
+    )
+
+    def filter_geography(self, queryset, name, value):
+        qry = Q()
+        for poly in value:
+            qry |= Q(**{'sitelocation__llh__within': poly})
+        qry &= Q(sitelocation__published=True)
+        return queryset.filter(qry)
+
     def noop(self, queryset, name, value):
         return queryset
 

@@ -20,6 +20,8 @@ from django.utils.translation import gettext as _
 from django.urls import reverse_lazy
 from django.db.models.fields import NOT_PROVIDED
 from django_enum.forms import EnumChoiceField
+from django.contrib.gis.geos import Polygon
+from polyline import polyline
 from django.forms.fields import (
     TypedMultipleChoiceField,
     BooleanField
@@ -87,7 +89,7 @@ from crispy_forms.layout import Layout, Div, Field
 from crispy_forms.helper import FormHelper
 import json
 from django.contrib.gis.forms import PointField
-from django.forms.widgets import MultiWidget, NumberInput
+from django.forms.widgets import MultiWidget, NumberInput, TextInput
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 
@@ -159,6 +161,46 @@ class SLMNullBooleanSelect(NullBooleanSelect):
             None: None,
             '': None
         }.get(value, super().value_from_datadict(data, files, name))
+
+
+class PolylineWidget(TextInput):
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(data, 'getlist'):
+            return data.getlist(name, []) or None
+        return data.get(name, []) or None
+
+
+class PolylineListField(forms.CharField):
+
+    default_error_messages = {
+        'invalid': _(
+            'Unable to decode polyline {poly} - {error}. Bounding boxes '
+            'should be line strings holding (longitude, latitude) tuples '
+            'encoded using Google\'s polyline algorithm'
+        )
+    }
+
+    widget = PolylineWidget
+
+    def clean(self, value):
+        if value is None:
+            return value
+        polygons = []
+        for poly in value:
+            try:
+                linear_ring = polyline.decode(poly)
+                linear_ring.append(linear_ring[0])  # close the ring
+                polygons.append(Polygon(linear_ring))
+            except Exception as exc:
+                raise ValidationError(
+                    self.error_messages['invalid'].format(
+                        poly=poly,
+                        error=str(exc)
+                    ),
+                    code='invalid'
+                )
+        return polygons
 
 
 class EnumMultipleChoiceField(EnumChoiceField, TypedMultipleChoiceField):
@@ -1201,6 +1243,15 @@ class StationFilterForm(forms.Form):
             '<span class="matchable">${obj.label}</span>`;'
         ),
         data_source=ISOCountry.with_stations
+    )
+
+    geography = PolylineListField(
+        required=False,
+        label=_('Geographic Bounds'),
+        help_text=_(
+            'Bounding boxes should be line strings holding (longitude, '
+            'latitude) tuples encoded using Google\'s polyline algorithm.'
+        )
     )
 
     def clean_current(self):

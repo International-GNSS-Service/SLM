@@ -97,6 +97,7 @@ class StationFilterForm(BaseStationFilterForm):
                     'agency',
                     'network',
                     Field('country', css_class='slm-country search-input'),
+                    'geography',
                     css_class='col-5'
                 ),
                 css_class='row',

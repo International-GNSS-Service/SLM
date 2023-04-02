@@ -166,7 +166,7 @@ class ReviewRequestSerializer(StationSerializer):
 
 class LogEntrySerializer(serializers.ModelSerializer):
 
-    site = serializers.CharField(source='site.name')
+    station = serializers.CharField(source='site.name', required=False)
     user = EmbeddedUserSerializer(many=False)
     section = serializers.SerializerMethodField(required=False)
 
@@ -181,7 +181,7 @@ class LogEntrySerializer(serializers.ModelSerializer):
         model = LogEntry
         fields = [
             'type',
-            'site',
+            'station',
             'timestamp',
             'user',
             'section',

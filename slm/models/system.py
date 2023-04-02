@@ -562,7 +562,7 @@ class LogEntry(PolymorphicModel):
         null=True,
         default=None,
         blank=True,
-        related_name='logentries',
+        related_name='edit_history',
     )
 
     section = models.ForeignKey(
@@ -571,9 +571,9 @@ class LogEntry(PolymorphicModel):
         null=True,
         default=None,
         blank=True,
-        db_index=True,
-        related_name='logentries'
+        related_name='edit_history'
     )
+
     subsection = models.PositiveSmallIntegerField(
         null=True,
         default=None,
@@ -623,18 +623,16 @@ class LogEntry(PolymorphicModel):
         return None
 
     def __str__(self):
-        return f'({self.user.name or self.user.email if self.user else ""}) ' \
+        return f'({self.site.name} | ' \
+               f'{self.user.name or self.user.email if self.user else ""}) ' \
                f'[{self.timestamp}]: {self.type} -> ' \
                f'{self.section or self.file or self.site or ""}'
 
     class Meta:
-        index_together = [
-            ('section', 'subsection'),
-            ('site', 'section'),
-            ('site', 'section', 'subsection')
-        ]
         ordering = ('-timestamp',)
         unique_together = (('site', 'type', 'timestamp'),)
+        verbose_name_plural = 'Log Entries'
+        verbose_name = 'Log Entry'
 
 
 class TideGauge(gis_models.Model):

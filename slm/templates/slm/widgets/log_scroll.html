@@ -31,11 +31,11 @@
             for (const entry of data) {
                 const type = slm.LogEntryType.get(entry.type);
                 const timestamp = new Date(entry.timestamp);
-                const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.site}});
+                const diffUrl = slm.urls.reverse('slm:review', {kwargs: {'station': entry.station}});
                 $(`<div class="slm-log-item d-flex py-2 mt-1 ${type.css}" aria-current="true" tabindex="0" onclick="window.location='${entry.link}'">` +
                         `<div class="d-flex w-100 justify-content-between align-items-center">` +
                             `<div class="d-flex justify-content-evenly align-items-center">` +
-                                `<span class="m-0 me-2 p-0 mono fw-bold"><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.site}})}">${entry.site}</a></span>` +
+                                `<span class="m-0 me-2 p-0 mono fw-bold"><a href="${slm.urls.reverse('slm:edit', {kwargs: {station: entry.station}})}">${entry.station}</a></span>` +
                                 `<span class="badge ${type.css} me-2">${type.label}</span>` +
                                 `<span>${entry.hasOwnProperty('section') && entry.section ? entry.section : ''}</span>` +
                             `</div>` +

@@ -257,10 +257,15 @@ class AntennaCalibrationAdmin(admin.ModelAdmin):
 
 
 class LogEntryAdmin(admin.ModelAdmin):
+
     search_fields = ('site__name', 'radome__model')
     list_display = ('timestamp', 'site', 'type', 'ip')
     list_filter = ('type', 'section')
     ordering = ('-timestamp',)
+    readonly_fields = [
+        field.name for field in LogEntry._meta.get_fields()
+        if field.name != 'id'
+    ]
 
     def get_queryset(self, request):
         return self.model.objects.select_related(

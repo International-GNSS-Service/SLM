@@ -184,7 +184,6 @@ class LogEntrySerializer(serializers.ModelSerializer):
             'site',
             'timestamp',
             'user',
-            'epoch',
             'section',
             'file',
             'subsection',

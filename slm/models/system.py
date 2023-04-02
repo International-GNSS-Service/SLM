@@ -28,6 +28,7 @@ from dateutil import parser
 from datetime import datetime
 from django.utils.timezone import is_naive, make_aware, utc
 from django.contrib.gis.db import models as gis_models
+from django.utils.timezone import now
 
 
 class AgencyManager(models.Manager):
@@ -548,15 +549,6 @@ class LogEntry(PolymorphicModel):
     )
 
     timestamp = models.DateTimeField(
-        auto_now_add=True,
-        null=False,
-        blank=True,
-        db_index=True
-    )
-
-    # this is the timestamp of the data change which may be different than
-    # the timestamp on the LogEntry, for instance in the event of a publish
-    epoch = models.DateTimeField(
         null=False,
         blank=True,
         db_index=True
@@ -599,6 +591,11 @@ class LogEntry(PolymorphicModel):
 
     objects = LogEntryManager.from_queryset(LogEntryQuerySet)()
 
+    def save(self, *args, **kwargs):
+        if not self.timestamp:
+            self.timestamp = now()
+        return super().save(*args, **kwargs)
+
     @property
     def link(self):
         """Return a link to the most relevant view for the log entry."""
@@ -610,7 +607,10 @@ class LogEntry(PolymorphicModel):
                     'section': self.section.model_class().section_slug()
                 }
             )
-            if self.subsection is not None:
+            if (
+                self.subsection is not None and
+                self.type != LogEntryType.DELETE
+            ):
                 section_link += f'#{self.subsection}'
             return section_link
         elif hasattr(self, 'file') and self.file:
@@ -634,6 +634,7 @@ class LogEntry(PolymorphicModel):
             ('site', 'section', 'subsection')
         ]
         ordering = ('-timestamp',)
+        unique_together = (('site', 'type', 'timestamp'),)
 
 
 class TideGauge(gis_models.Model):

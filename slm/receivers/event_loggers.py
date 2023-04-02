@@ -3,6 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.dispatch import receiver
 from ipware import get_client_ip
 from slm import signals as slm_signals
+from django.utils.timezone import now
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ def log_publish(sender, site, user, timestamp, request, section, **kwargs):
         site=site,
         section=ContentType.objects.get_for_model(section),
         subsection=getattr(section, 'subsection', None),
-        epoch=timestamp,
+        timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
     )
 
@@ -32,7 +34,7 @@ def log_propose(sender, site, user, timestamp, request, agencies, **kwargs):
         type=LogEntryType.SITE_PROPOSED,
         user=user,
         site=site,
-        epoch=timestamp,
+        timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
     )
 
@@ -57,7 +59,7 @@ def log_edit(
         site=site,
         section=ContentType.objects.get_for_model(section),
         subsection=getattr(section, 'subsection', None),
-        epoch=timestamp,
+        timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
     )
 
@@ -73,7 +75,7 @@ def log_add(sender, site, user, timestamp, request, section, **kwargs):
         site=site,
         section=ContentType.objects.get_for_model(section),
         subsection=getattr(section, 'subsection', None),
-        epoch=timestamp,
+        timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
     )
 
@@ -89,7 +91,7 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
         site=site,
         section=ContentType.objects.get_for_model(section),
         subsection=getattr(section, 'subsection', None),
-        epoch=timestamp,
+        timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
     )
 
@@ -107,7 +109,7 @@ def log_file_upload(sender, site, user, timestamp, request, upload, **kwargs):
         }.get(upload.file_type, LogEntryType.LOG_UPLOAD)),
         user=user,
         site=site,
-        epoch=timestamp,
+        timestamp=timestamp or now(),
         file=upload,
         ip=get_client_ip(request)[0] if request else None
     )

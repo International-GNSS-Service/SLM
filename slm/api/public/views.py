@@ -197,7 +197,7 @@ class StationListViewSet(
     ordering = ('name',)
 
     def get_queryset(self):
-        return Site.objects.active().prefetch_related(
+        return Site.objects.prefetch_related(
             'agencies',
             'networks',
             Prefetch(
@@ -231,7 +231,9 @@ class StationListViewSet(
             receiver_type__model='receiver_type',
         ).with_frequency_standard_fields(
             standard_type='frequency_standard'
-        ).with_info_fields(primary='data_center').active().availability()
+        ).with_info_fields(
+            primary='data_center'
+        ).active().availability().distinct()
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

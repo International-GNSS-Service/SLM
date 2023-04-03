@@ -48,7 +48,7 @@ def get_file_properties(filename):
         (
             re.compile(
                 r'^(?P<station>[A-Z0-9]{9})_(\w{1})_(?P<year>\d{4})'
-                r'(?P<gps_day>\d{3})(\d{4})_(\w{3})_'
+                r'(?P<gps_day>\d{3})(\d{4})_(\w{3})_((\w{3})_)?'
                 r'(?P<constellation>\w{1})(?P<file_type>\w{1})[.]'
                 r'(?P<rinex_Format>(crx)|(rnx))[.](?P<compression>\w*)$'
             ),

@@ -201,7 +201,7 @@ class SiteQuerySet(models.QuerySet):
                 SiteLogStatus.FORMER,
                 SiteLogStatus.SUSPENDED
             ])
-        ).distinct()
+        )
 
     def public(self):
         """
@@ -209,15 +209,17 @@ class SiteQuerySet(models.QuerySet):
         in the former or suspended states.
         :return:
         """
-        return self.filter(
-            ~Q(status__in=[
+        from slm.models import Agency, Network
+        not_public = Site.objects.filter(
+            Q(agencies__in=Agency.objects.filter(public=False)) |
+            Q(networks__in=Network.objects.filter(public=False)) |
+            Q(last_publish__isnull=True) |
+            Q(status__in=[
                 SiteLogStatus.PROPOSED,
                 SiteLogStatus.EMPTY
             ])
-            & Q(agencies__public=True)
-            & Q(networks__public=True)
-            & Q(last_publish__isnull=False)
         ).distinct()
+        return self.filter(~Q(pk__in=not_public))
 
     def editable_by(self, user):
         """

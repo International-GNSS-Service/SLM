@@ -18,7 +18,9 @@ def log_publish(sender, site, user, timestamp, request, section, **kwargs):
         type=LogEntryType.PUBLISH,
         user=user,
         site=site,
-        section=ContentType.objects.get_for_model(section),
+        section=(
+            ContentType.objects.get_for_model(section) if section else None
+        ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
@@ -57,7 +59,9 @@ def log_edit(
         type=LogEntryType.UPDATE,
         user=user,
         site=site,
-        section=ContentType.objects.get_for_model(section),
+        section=(
+            ContentType.objects.get_for_model(section) if section else None
+        ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
@@ -73,7 +77,9 @@ def log_add(sender, site, user, timestamp, request, section, **kwargs):
         type=LogEntryType.ADD,
         user=user,
         site=site,
-        section=ContentType.objects.get_for_model(section),
+        section=(
+            ContentType.objects.get_for_model(section) if section else None
+        ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None
@@ -89,7 +95,9 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
         type=LogEntryType.DELETE,
         user=user,
         site=site,
-        section=ContentType.objects.get_for_model(section),
+        section=(
+            ContentType.objects.get_for_model(section) if section else None
+        ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
         ip=get_client_ip(request)[0] if request else None

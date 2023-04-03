@@ -9,9 +9,10 @@ class DataCenter(
     p('protocol'), s('domain'), p('port'), s('full_name')
 ):
 
-    IGN = 'IGN', 'ftp', 'igs.ign.fr', 21, "Institut National de l'Information Géographique et Forestière"
-    SIO = 'SIO', 'ftp', 'garner.ucsd.edu', 21, 'Scripps Institution of Oceanography'
-    KASI = 'KASI', 'ftp', 'nfs.kasi.re.kr', 21, 'Korea Astronomy and Space Science Institute'
+    IGN   = 'IGN',   'ftp',   'igs.ign.fr',             21,  "Institut National de l'Information Géographique et Forestière"
+    SIO   = 'SIO',   'ftp',   'garner.ucsd.edu',        21,  'Scripps Institution of Oceanography'
+    KASI  = 'KASI',  'ftp',   'nfs.kasi.re.kr',         21,  'Korea Astronomy and Space Science Institute'
+    CDDIS = 'CDDIS', 'https', 'https://cddis.nasa.gov', 443, 'NASA Center for Data and Information Services'
 
     @property
     def label(self):
@@ -49,4 +50,14 @@ class DataCenter(
             path /= f'{day_of_year(date):03d}'
             path /= f'{str(date.year)[2:]}d'
             return str(path)
+        if self == self.CDDIS:
+            path = Path('/archive/gps/data')
+            if data_rate in [DataRate.HOURLY, DataRate.HIGH_RATE]:
+                return None
+            elif data_rate == DataRate.DAILY:
+                path /= 'daily'
+            path /= str(date.year)
+            path /= f'{day_of_year(date):03d}'
+            path /= f'{str(date.year)[2:]}d'
+            return path
         raise NotImplementedError(f'{self} must implement directory()')

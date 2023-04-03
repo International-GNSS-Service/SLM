@@ -1,6 +1,8 @@
 from igs_tools.defines import DataCenter
 from typing import Union, List
 import ftplib
+import requests
+from bs4 import BeautifulSoup
 
 
 class _FTPConnection:
@@ -21,7 +23,34 @@ class _FTPConnection:
 
 
 class _HTTPConnection:
-    pass
+
+    def __init__(self, domain, *args):
+        self.domain = domain
+        self.session = requests.session()
+
+    def list(self, directory: str) -> List[str]:
+        raise NotImplementedError(f'{self} must implement list()')
+
+
+class _CDDISConnection(_HTTPConnection):
+
+    def list(self, directory: str) -> List[str]:
+        try:
+            filenames = []
+            resp = requests.get(
+                f'{self.domain.rstrip("/")}/{directory}'
+            )
+            if resp.status_code >= 400:
+                print(f'Error: {resp.status_code} {resp.reason}')
+                return []
+            soup = BeautifulSoup(resp.content, 'html.parser')
+            links = soup.find_all('a', {'class': 'archiveItemText'})
+            for link in links:
+                filenames.append(link.text)
+            return filenames
+        except Exception as err:
+            print(err)
+            return []
 
 
 class Connection:
@@ -41,8 +70,12 @@ class Connection:
                 self.password
             )
         elif data_center.protocol in ['http', 'https']:
-            # TODO
-            pass
+            if data_center == DataCenter.CDDIS:
+                self._connection = _CDDISConnection(data_center.domain)
+            else:
+                raise NotImplementedError(
+                    f'Connection for {data_center} not implemented.'
+                )
         else:
             raise NotImplementedError(
                 f'Protocol {data_center.protocol} not implemented.'

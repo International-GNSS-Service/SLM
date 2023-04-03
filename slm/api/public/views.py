@@ -197,7 +197,7 @@ class StationListViewSet(
     ordering = ('name',)
 
     def get_queryset(self):
-        return Site.objects.prefetch_related(
+        return Site.objects.active().prefetch_related(
             'agencies',
             'networks',
             Prefetch(

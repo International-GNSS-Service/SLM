@@ -215,6 +215,7 @@ class SiteQuerySet(models.QuerySet):
                 SiteLogStatus.EMPTY
             ])
             & Q(agencies__public=True)
+            & Q(networks__public=True)
             & Q(last_publish__isnull=False)
         ).distinct()
 

@@ -1,10 +1,11 @@
 from datetime import date
-
-from django_enum import IntegerChoices
-from enum_properties import p, s
+from enum_properties import IntEnumProperties, IntFlagProperties, p, s
 
 
-class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
+class RinexVersion(
+    IntEnumProperties,
+    s('label'), s('major'), s('slug'), p('published')
+):
 
     # Minor version not known
 
@@ -33,6 +34,16 @@ class RinexVersion(IntegerChoices, s('major'), s('text'), p('published')):
     @classmethod
     def major_versions(cls):
         return [cls.v2, cls.v3, cls.v4]
+
+    def __str__(self):
+        return str(self.label)
+
+
+class DataRate(IntFlagProperties, s('label'), s('slug', case_fold=True)):
+
+    DAILY     =  2**1, 'Daily',     'daily'
+    HOURLY    =  2**2, 'Hourly',    'hourly'
+    HIGH_RATE =  2**3, 'High Rate', 'high'
 
     def __str__(self):
         return str(self.label)

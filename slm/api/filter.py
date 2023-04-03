@@ -319,6 +319,8 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
         )
     }
 
+    SITE_FILTER = Site.objects.all()
+
     @property
     def restrict_published(self):
         return False
@@ -373,7 +375,7 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     station = django_filters.ModelMultipleChoiceFilter(
         field_name='name',
         to_field_name='name',
-        queryset=Site.objects.public(),
+        queryset=SITE_FILTER,
         #method='filter_stations',
         null_value='',
         null_label=''

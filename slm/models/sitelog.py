@@ -285,8 +285,8 @@ class SiteQuerySet(models.QuerySet):
                 aggregate += F(f'_num_flags{idx}')
 
         qry.annotate(_num_flags=aggregate).update(num_flags=F('_num_flags'))
-        qry.public().filter(mod_q).update(status=SiteLogStatus.UPDATED)
-        qry.public().filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
+        qry.active().filter(mod_q).update(status=SiteLogStatus.UPDATED)
+        qry.active().filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
 
         # this is the longest operation - there might be a way to squash it
         # into a single query

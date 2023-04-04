@@ -71,10 +71,14 @@ from slm.models import (
 from django.template import Template
 from django.template.exceptions import TemplateDoesNotExist
 from enum import Enum
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+
 
 User = get_user_model()
 
 
+@method_decorator(login_required, name='dispatch')
 class SLMView(TemplateView):
 
     DEFINES = {
@@ -636,6 +640,7 @@ class HelpView(SLMView):
             **super().get_context_data(**kwargs),
             'help': Help.load()
         }
+
 
 class AboutView(SLMView):
     template_name = 'slm/about.html'

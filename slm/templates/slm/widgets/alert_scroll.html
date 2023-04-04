@@ -46,14 +46,16 @@
     }
 
     $(document).ready(function() {
+        let reinitialize = true;
         const scrollDiv = $("#slm-alert-scroll");
         const includeTargets = {% if exclude_targets %}false{% else %}true{% endif %};
 
-        function drawAlerts(position, data, reinitialize=false) {
+        function drawAlerts(position, data) {
             if (reinitialize) {
                 scrollDiv.find('.slm-alert-item').remove();
                 scrollDiv.find('h3').remove();
             }
+            reinitialize = false;
             for (const alert of data) {
                 const level = slm.AlertLevel.get(alert.level);
                 const timestamp = new Date(alert.timestamp);
@@ -94,8 +96,7 @@
                     `</div>`
                 ).insertBefore(position);
             }
-            let div = $("#slm-alert-scroll");
-            if (data.length === 0 && div.data('slmPage') === 0 ) {
+            if (data.length === 0 && scrollDiv.data('slmPage') === 0 ) {
                 $(
                     `<h3 class="text-center text-secondary">{% trans 'No Alerts' %}</h3>`
                 ).insertBefore(position);
@@ -103,6 +104,7 @@
         }
 
         const init = function() {
+            reinitialize = true;
             slm.initInfiniteScroll(
                 scrollDiv,
                 scrollDiv,
@@ -110,7 +112,7 @@
                 "slm_edit_api:alerts-list",
                 {},
                 {% if station %}{site: '{{ station|safe }}'}{% else %}{}{% endif %},
-                (position, data) => { drawAlerts(position, data, true); }
+                (position, data) => { drawAlerts(position, data); }
             );
         }
         const stationsFiltered = function(queryParams) {
@@ -118,11 +120,14 @@
             scrollDiv.data('slmQuery', queryParams);
             init();
         }
-        /* todo this is a little clunky - results in double init when station
+        /* this is a little clunky - avoid double init when station
          * filter is present on the page
          */
-        init();
-        slm.stationFilterCallbacks.push(stationsFiltered);
+        if ($('#filter-stations').length === 0) {
+            init();
+        } else {
+            slm.stationFilterCallbacks.push(stationsFiltered);
+        }
     });
 </script>
 {% endcompress %}

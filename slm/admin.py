@@ -92,7 +92,8 @@ class UserAdmin(BaseUserAdmin):
 
     # chooses which fields to display for admin users
     list_display = (
-        'email', 'first_name', 'last_name', 'last_activity', 'is_superuser'
+        'email', 'first_name', 'last_name', 'last_activity', 'is_active',
+        'is_superuser'
     )
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['last_activity', 'date_joined']
@@ -100,7 +101,9 @@ class UserAdmin(BaseUserAdmin):
     inlines = [UserAgencyInline, ProfileInline]
 
     ordering = ('-last_activity',)
-    list_filter = ('is_superuser', 'html_emails', 'silence_alerts')
+    list_filter = (
+        'is_superuser', 'is_active', 'html_emails', 'silence_alerts'
+    )
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -123,7 +126,10 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    actions = ['request_password_reset', 'enable_emails', 'disable_emails']
+    actions = [
+        'request_password_reset', 'enable_emails', 'disable_emails',
+        'deactivate', 'activate'
+    ]
 
     def get_inline_instances(self, request, obj=None):
         if not obj:
@@ -134,6 +140,14 @@ class UserAdmin(BaseUserAdmin):
         initiate_password_resets(queryset, request=request)
     request_password_reset.short_description = _('Request password resets.')
 
+    def deactivate(self, request, queryset):
+        queryset.update(is_active=False)
+    deactivate.short_description = _('Disable user accounts.')
+
+    def activate(self, request, queryset):
+        queryset.update(is_active=True)
+    activate.short_description = _('Re-activate user accounts.')
+
     def enable_emails(self, request, queryset):
         queryset.update(silence_alerts=False)
     enable_emails.short_description = _('Enable alert emails for users.')
@@ -141,6 +155,19 @@ class UserAdmin(BaseUserAdmin):
     def disable_emails(self, request, queryset):
         queryset.update(silence_alerts=True)
     disable_emails.short_description = _('Disable alert emails for users.')
+
+    def get_actions(self, request):
+        """
+        Remove delete_selected action. too tempting! Preferred method of
+        account disabling is deactivation. Accounts can be fully wiped from
+        the system using the delete button on the user page but this will
+        remove them from all logs and history, so it should only be done in
+        extreme or specific cases.
+        """
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

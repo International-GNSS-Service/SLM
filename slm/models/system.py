@@ -630,7 +630,6 @@ class LogEntry(PolymorphicModel):
 
     class Meta:
         ordering = ('-timestamp',)
-        unique_together = (('site', 'type', 'timestamp'),)
         verbose_name_plural = 'Log Entries'
         verbose_name = 'Log Entry'
 

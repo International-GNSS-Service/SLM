@@ -16,10 +16,13 @@ from django.utils.timezone import now
 from slm.defines import (
     RinexVersion,
     SiteLogFormat,
-    SLMFileType
+    SLMFileType,
+    SiteLogStatus
 )
+from django.db import transaction
 from slm.models.data import DataAvailability
 from slm.models.system import SiteFile
+from django.utils.translation import gettext_lazy as _
 
 
 class ArchiveIndexManager(models.Manager):
@@ -53,6 +56,12 @@ class ArchiveIndexManager(models.Manager):
             last.end = site.last_publish
             last.save()
 
+    def create(self, **kwargs):
+        return self.insert_index(**kwargs)
+
+    def get_or_create(self, site, begin, **kwargs):
+        self.insert_index(site=site, begin=begin, **kwargs)
+
     def insert_index(self, begin, site, **kwargs):
         """
         Insert a new index into an existing index deck (i.e. between existing
@@ -63,7 +72,6 @@ class ArchiveIndexManager(models.Manager):
             begin=begin
         ).first()
         if existing:
-            print(site, begin)
             return existing
         next_index = self.get_queryset().filter(
             site=site,
@@ -77,10 +85,70 @@ class ArchiveIndexManager(models.Manager):
         if prev_index:
             prev_index.end = begin
             prev_index.save()
-        return self.create(begin=begin, site=site, **kwargs)
+        return super().create(begin=begin, site=site, **kwargs)
 
 
 class ArchiveIndexQuerySet(models.QuerySet):
+
+    def delete(self):
+        """
+        We can't just delete an archive to remove it - we also have to
+        update the end time of the previous archive in the index if there
+        is one to reflect the end time of the deleted log
+        """
+        from slm.models import Site, SiteForm
+        with transaction.atomic():
+            # also, sites where the deleted index is the current index
+            # (end=null) that are in the published state should be set to
+            # updated
+            # we trigger unpublished state by updating the SiteForm
+            # prepared date and synchronizing
+            published_sites = Site.objects.filter(
+                 Q(indexes__in=self.filter(end__isnull=True)) &
+                 Q(status=SiteLogStatus.PUBLISHED)
+            ).distinct()
+
+            # these are the indexes that remain that must be updated - that
+            # includes any non-deleted index immediately preceding a deleted
+            # index, indexes immediately following a deleted index do not
+            # need to be updated
+            after = self.filter(
+                Q(site=OuterRef('site')) &
+                Q(begin=OuterRef('end'))
+            )
+            before = self.filter(
+                Q(site=OuterRef('site')) &
+                Q(end=OuterRef('begin'))
+            )
+            new_bookends = ArchiveIndex.objects.annotate(
+                before=Subquery(before.values('pk')[:1])
+            ).filter(
+                Q(site=OuterRef('site')) &
+                Q(begin__gte=OuterRef('end')) &
+                ~Q(pk__in=self) &
+                Q(before__isnull=False)
+            ).order_by('end')
+            adjacent_indexes = ArchiveIndex.objects.annotate(
+                adjacent=Subquery(after.values('pk')[:1]),
+                new_end=Subquery(new_bookends.values('begin')[:1])
+            ).filter(Q(adjacent__isnull=False) & ~Q(pk__in=self))
+
+            # we use the new last indexes' old last end date
+            forms = []
+            for form in SiteForm.objects.filter(
+                site__in=published_sites
+            ):
+                form.pk = None
+                form.published = False
+                form.date_prepared = now().date()
+                forms.append(form)
+
+            SiteForm.objects.bulk_create(forms)
+            published_sites.synchronize_denormalized_state()
+
+            adjacent_indexes.update(end=F('new_end'))
+            deleted = super().delete()
+            return deleted
 
     @staticmethod
     def epoch_q(epoch=None):
@@ -173,17 +241,40 @@ class ArchiveIndex(models.Model):
     )
 
     # the point in time at which this record begins being valid
-    begin = models.DateTimeField(null=False, db_index=True)
+    begin = models.DateTimeField(
+        null=False,
+        db_index=True,
+        help_text=_('The point in time at which this archive became valid.')
+    )
 
     # the point in time at which this record stops being valid
-    end = models.DateTimeField(null=True, db_index=True)
+    end = models.DateTimeField(
+        null=True,
+        db_index=True,
+        help_text=_(
+            'The point in time at which this archive stops being valid.'
+        )
+    )
 
     objects = ArchiveIndexManager.from_queryset(ArchiveIndexQuerySet)()
+
+    def __str__(self):
+        return f'{self.site.name} | {self.begin.date()} - ' \
+               f'{self.end.date() if self.end else "present"}'
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Deleting an index requires updating the end time of the previous
+        indexes - we use the queryset delete method to do this.
+        """
+        return ArchiveIndex.objects.filter(pk=self.pk).delete()
 
     class Meta:
         ordering = ('-begin',)
         index_together = (('begin', 'end'), ('site', 'begin', 'end'),)
-        unique_together = (('site', 'begin'), ('site', 'end'))
+        unique_together = (('site', 'begin'),)
+        verbose_name = 'Archive Index'
+        verbose_name_plural = 'Archive Index'
 
 
 class ArchivedSiteLogManager(models.Manager):

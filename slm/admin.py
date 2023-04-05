@@ -51,7 +51,9 @@ from slm.models import (
     TideGauge,
     SiteTideGauge,
     DataCenter,
-    LogEntry
+    LogEntry,
+    ArchiveIndex,
+    ArchivedSiteLog
 )
 from slm.authentication import permissions
 from polymorphic.admin import (
@@ -222,16 +224,19 @@ class SiteAdmin(admin.ModelAdmin):
 class NetworkAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
+    ordering = ('name',)
 
 
 class AgencyAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
+    ordering = ('name',)
 
 
 class DataCenterAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
+    ordering = ('name',)
 
 
 class SatelliteSystemAdmin(admin.ModelAdmin):
@@ -240,19 +245,19 @@ class SatelliteSystemAdmin(admin.ModelAdmin):
 
 class AntennaAdmin(admin.ModelAdmin):
 
-    search_fields = ('name',)
+    search_fields = ('model',)
     list_filter = ('state',)
 
 
 class ReceiverAdmin(admin.ModelAdmin):
 
-    search_fields = ('name',)
+    search_fields = ('model',)
     list_filter = ('state',)
 
 
 class RadomeAdmin(admin.ModelAdmin):
 
-    search_fields = ('name',)
+    search_fields = ('model',)
     list_filter = ('state',)
 
 
@@ -275,6 +280,8 @@ class AntennaCalibrationAdmin(admin.ModelAdmin):
     search_fields = ('antenna__model', 'radome__model')
     list_display = ('antenna', 'radome', 'method_label', 'calibrated')
     list_filter = ('method',)
+
+    ordering = ('antenna__name',)
 
     def method_label(self, obj):
         return str(obj.method.label)
@@ -395,6 +402,36 @@ class AlertAdmin(AlertAdminMixin, PolymorphicParentModelAdmin):
     )
     list_filter = (PolymorphicChildModelFilter,)
 
+
+class ArchiveFileInline(admin.TabularInline):
+    model = ArchivedSiteLog
+    extra = 0
+    readonly_fields = [
+        field.name for field in ArchivedSiteLog._meta.get_fields()
+        if field.name != 'id'
+    ]
+    can_delete = False
+
+    def has_add_permission(self, request, obj):
+        return False
+
+
+class ArchiveIndexAdmin(admin.ModelAdmin):
+
+    search_fields = ['site__name']
+    list_display = ('site', 'begin', 'end')
+
+    ordering = ('-begin',)
+
+    inlines = [ArchiveFileInline]
+    readonly_fields = ['site', 'begin', 'end']
+
+    def get_queryset(self, request):
+        return self.model.objects.select_related(
+            'site'
+        ).prefetch_related('files')
+
+
 """
 class SLMAdminSite(admin.AdminSite):
 
@@ -442,5 +479,6 @@ admin.site.register(About, AboutAdmin)
 admin.site.register(AntCal, AntennaCalibrationAdmin)
 admin.site.register(DataCenter, DataCenterAdmin)
 admin.site.register(LogEntry, LogEntryAdmin)
+admin.site.register(ArchiveIndex, ArchiveIndexAdmin)
 
 admin.autodiscover()

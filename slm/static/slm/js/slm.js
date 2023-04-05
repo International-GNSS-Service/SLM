@@ -64,8 +64,10 @@ class StatusUpdater {
         let currentStatus = slm.SiteLogStatus.get(
             node.data('slmStatus')
         );
-        this.status = currentStatus.set(this.status);
-        node.removeClass(currentStatus.css);
+        if (currentStatus !== null) {
+            this.status = currentStatus.set(this.status);
+            node.removeClass(currentStatus.css);
+        }
         node.addClass(this.status.css);
         node.data('slmStatus', this.status.val);
         slm.getNavSiblings(node).each(function(idx, sibling) {

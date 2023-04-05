@@ -104,6 +104,7 @@ from crispy_forms.layout import Layout, Div, Field, Fieldset, Submit
 from crispy_forms.helper import FormHelper
 import json
 from django.contrib.gis.db import models as gis_models
+from django.contrib.gis.geos import Point
 
 
 class StationFilterForm(BaseStationFilterForm):
@@ -716,6 +717,8 @@ class SectionViewSet(type):
                         update = False
                         flags = validated_data.get('_flags', instance._flags)
                         edited_fields = []
+                        # todo this diffing code is getting a bit messy because
+                        #   of all the special type cases - consider a refactor
                         for field in ModelClass.site_log_fields():
                             if field in validated_data:
                                 is_many = isinstance(
@@ -723,9 +726,14 @@ class SectionViewSet(type):
                                     models.ManyToManyField
                                 )
                                 new_value = validated_data.get(field)
+                                old_value = getattr(instance, field)
                                 if (
                                     not is_many and
-                                    new_value != getattr(instance, field)) or (
+                                    (
+                                        new_value.coords != old_value.coords
+                                        if isinstance(new_value, Point) else
+                                        new_value != old_value)
+                                    ) or (
                                     is_many and set(new_value) != set(
                                         getattr(instance, field).all()
                                     )
@@ -747,7 +755,6 @@ class SectionViewSet(type):
                                             setattr(instance, field, new_value)
                                     if field in flags:
                                         del flags[field]
-
                         if update:
                             if instance.published:
                                 validated_data['_flags'] = flags

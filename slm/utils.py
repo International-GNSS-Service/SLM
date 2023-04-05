@@ -4,6 +4,8 @@ from django.core import serializers
 from django.contrib.gis.geos import Point
 import json
 from PIL import Image, ExifTags
+import numpy as np
+from math import sqrt, atan2, cos, sin
 
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
@@ -219,3 +221,29 @@ def get_exif_tags(file_path):
         }
         return exif
     return {}
+
+
+def xyz2llh(xyz):
+    a_e = 6378.1366e3  # meters
+    f_e = 1 / 298.25642  # IERS2000 standards
+    radians2degree = 45 / atan2(1, 1)
+
+    xyz_array = np.array(xyz) / a_e
+    (x, y, z) = (xyz_array[0], xyz_array[1], xyz_array[2])
+    e2 = f_e *(2 - f_e)
+    z2 = z**2
+    p2 = x**2 + y**2
+    p = sqrt(p2)
+    r = sqrt(p2 + z2)
+    mu = atan2(z * (1 - f_e + e2 / r), p)
+    phi = atan2(
+        z * (1 - f_e) + e2 * (sin(mu))**3,
+        (1 - f_e) * (p - e2 * (cos(mu))**3)
+    )
+    lat = phi * radians2degree
+    lon = atan2(y, x) * radians2degree
+    if lon < 0:
+        lon = lon + 360
+    h = a_e * (p * cos(phi) + z * sin(phi) - sqrt(1 - e2 * (sin(phi))**2))
+
+    return lat, lon, h

@@ -597,7 +597,7 @@ class SiteFormForm(SectionForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in ['report_type', 'modified_section', 'date_prepared']:
+        for field in ['report_type', 'date_prepared']:
             self.fields[field].required = False
             self.fields[field].widget.attrs['disabled'] = 'disabled'
 

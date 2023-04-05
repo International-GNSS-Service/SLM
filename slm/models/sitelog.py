@@ -59,6 +59,10 @@ from collections import namedtuple
 from datetime import datetime, timezone
 
 
+def utc_now_date():
+    return datetime.utcnow().date()
+
+
 # a named tuple used as meta information to dynamically determine what the
 # section models are and how to access them from the Site model
 Section = namedtuple(
@@ -973,6 +977,7 @@ class Site(models.Model):
         form = self.siteform_set.head()
         if form.published:
             form.pk = None
+            form.published = False
             form.save()
 
         sections_published = 0
@@ -1210,7 +1215,10 @@ class SiteSection(gis_models.Model):
             #########################################
 
             self.published = True
-            self.save()
+            if isinstance(self, SiteForm):
+                self.save(skip_update=True)
+            else:
+                self.save()
 
             if update_site:
                 self.site.update_status(save=True, timestamp=timestamp)
@@ -1594,7 +1602,8 @@ class SiteForm(SiteSection):
         blank=True,
         verbose_name=_('Date Prepared'),
         help_text=_('Enter the date the site log was prepared (CCYY-MM-DD).'),
-        db_index=True
+        db_index=True,
+        validators=[MaxValueValidator(utc_now_date)]
     )
 
     report_type = models.CharField(
@@ -1650,18 +1659,30 @@ class SiteForm(SiteSection):
         )
     )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, skip_update=False, **kwargs):
         from slm.models import ArchiveIndex
-        if not self.published:
-            self.previous = ArchiveIndex.objects.filter(site=self.site).first()
+        self.previous = ArchiveIndex.objects.filter(site=self.site).first()
+        if self.previous:
+            self.report_type = 'UPDATE'
+        if not skip_update:
             self.modified_section = kwargs.pop(
                 'modified_section', ', '.join(self.site.modified_sections)
             )
             self.date_prepared = datetime.now(timezone.utc).date()
-            if self.previous:
-                self.report_type = 'UPDATE'
             self.full_clean()
         super().save(*args, **kwargs)
+
+    def clean(self):
+        from slm.models import ArchiveIndex
+        super().clean()
+        head = ArchiveIndex.objects.filter(
+            Q(site=self.site) & Q(end__isnull=True)
+        ).first()
+        if head and self.date_prepared < head.begin.date():
+            raise ValidationError(
+                {'date_prepared': [
+                    _('Date prepared cannot be before the previous log.')
+                ]})
 
     def publish(
         self,

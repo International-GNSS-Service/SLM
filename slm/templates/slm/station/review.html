@@ -12,10 +12,6 @@ Template for View/Diff page.
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/1.0.5/index.min.js" integrity="sha512-s/r2YIRA8VD7KT0c9uJqKrZFrNFgKlOPeLyVXp7noa6+F8vw5LMvR+hxteawjCpp6+5A4nTYoWtwLcXEJW1YzA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    {% compress js %}
-        <script src="{% static 'slm/js/diff.js' %}"></script>
-    {% endcompress js %}
-
 {% endblock head %}
 
 {% block action_content %}

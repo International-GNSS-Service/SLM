@@ -234,7 +234,7 @@ class AcceptListArguments:
                     stripped.setlist(key[0:-2], data.getlist(key))
                 else:
                     stripped.setlist(key, data.getlist(key))
-                    if len(stripped[key]) == 1:
+                    if len(stripped.getlist(key)) == 1:
                         stripped[key] = stripped[key][0]
             data = stripped
         super().__init__(data=data, *args, **kwargs)

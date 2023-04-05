@@ -225,12 +225,14 @@ class NetworkAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
     ordering = ('name',)
+    list_filter = ('public',)
 
 
 class AgencyAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
     ordering = ('name',)
+    list_filter = ('public',)
 
 
 class DataCenterAdmin(admin.ModelAdmin):

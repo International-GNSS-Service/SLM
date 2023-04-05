@@ -22,13 +22,6 @@ def rec_dd():
     return defaultdict(rec_dd)
 
 
-sinex_code = ''
-siteAnt = rec_dd()
-used_antennas = set()
-atx = rec_dd()
-sat_phase_center = rec_dd()
-
-
 def sinex_time(time):
     if time is None:
         return '00:000:00000'
@@ -71,6 +64,12 @@ class Command(BaseCommand):
     help = 'Generate the sinex files for each station.'
 
     logger = logging.getLogger(__name__ + '.Command')
+
+    used_antennas: set
+    sinex_code: str = ''
+    siteAnt: dict
+    atx: dict
+    sat_phase_center: dict
 
     def add_arguments(self, parser):
 
@@ -116,7 +115,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        global used_antennas
+
+        self.sinex_code = ''
+        self.siteAnt = rec_dd()
+        self.atx = rec_dd()
+        self.sat_phase_center = rec_dd()
 
         sites = Site.objects.all().order_by('name')
         sites = sites.public() if options['include_former'] else sites.active()
@@ -129,7 +132,7 @@ class Command(BaseCommand):
 
         sites = sites.distinct()
 
-        used_antennas = set([
+        self.used_antennas = set([
             "%-16s%-4s" % (ant[0], ant[1]) for ant in
             SiteAntenna.objects.filter(site__in=sites).order_by(
                 'antenna_type'
@@ -189,7 +192,6 @@ class Command(BaseCommand):
             output.close()
 
     def header(self, antex_file):
-        global sinex_code
         now = datetime.now()
         now_date = "%04d-%02d-%02dT%02d:%02d:%02d" % (
             now.year, now.month, now.day, now.hour, now.minute, now.second
@@ -206,7 +208,7 @@ class Command(BaseCommand):
         yield ' CONTACT            cb@igs.org'
         yield ' SOFTWARE           SLM2SNX'
         yield ' HARDWARE           x86_64 Linux | AWS Cloud'
-        yield f' INPUT              SiteLog Manager, {sinex_code.lower()}.atx'
+        yield f' INPUT              SiteLog Manager, {self.sinex_code.lower()}.atx'
         yield '-FILE/REFERENCE'
         yield '+FILE/COMMENT'
         yield ' This file is generated daily from all current IGS site logs in'
@@ -315,75 +317,73 @@ class Command(BaseCommand):
         yield '-SITE/ANTENNA'
 
     def gps_phase_center(self):
-        global siteAnt
         yield '+SITE/GPS_PHASE_CENTER'
         yield (
             '*ANTENNA_NAME____DOME S_NO_ __UP__ NORTH_ _EAST_ __UP__ NORTH_ '
             '_EAST_ ANT_MODEL_'
         )
-        for ant in sorted(siteAnt):
-            if "G02" in siteAnt[ant]:
+        for ant in sorted(self.siteAnt):
+            if "G02" in self.siteAnt[ant]:
                 yield (
-                    f' {ant:20} ----- {siteAnt[ant]["G01"]["up"]:6.6} '
-                    f'{siteAnt[ant]["G01"]["north"]:6.6} '
-                    f'{siteAnt[ant]["G01"]["east"]:6.6} '
-                    f'{siteAnt[ant]["G02"]["up"]:6.6} '
-                    f'{siteAnt[ant]["G02"]["north"]:6.6} '
-                    f'{siteAnt[ant]["G02"]["east"]:6.6} {sinex_code:10.10}'
+                    f' {ant:20} ----- {self.siteAnt[ant]["G01"]["up"]:6.6} '
+                    f'{self.siteAnt[ant]["G01"]["north"]:6.6} '
+                    f'{self.siteAnt[ant]["G01"]["east"]:6.6} '
+                    f'{self.siteAnt[ant]["G02"]["up"]:6.6} '
+                    f'{self.siteAnt[ant]["G02"]["north"]:6.6} '
+                    f'{self.siteAnt[ant]["G02"]["east"]:6.6} {self.sinex_code:10.10}'
                 )
             else:
                 yield (
-                    f' {ant:20} ----- {siteAnt[ant]["G01"]["up"]:6.6} '
-                    f'{siteAnt[ant]["G01"]["north"]:6.6} '
-                    f'{siteAnt[ant]["G01"]["east"]:6.6} ------ ------ ------ '
-                    f'{sinex_code:10.10}'
+                    f' {ant:20} ----- {self.siteAnt[ant]["G01"]["up"]:6.6} '
+                    f'{self.siteAnt[ant]["G01"]["north"]:6.6} '
+                    f'{self.siteAnt[ant]["G01"]["east"]:6.6} ------ ------ ------ '
+                    f'{self.sinex_code:10.10}'
                 )
         yield '-SITE/GPS_PHASE_CENTER'
 
     def gal_phase_center(self):
-        global siteAnt
         yield '+SITE/GAL_PHASE_CENTER'
         yield (
             '*ANTENNA_NAME____DOME S_NO_ __UP__ NORTH_ _EAST_ __UP__ NORTH_ '
             '_EAST_ ANT_MODEL_'
         )
-        for ant in sorted(siteAnt):
-            if 'E01' in siteAnt[ant]:
-                _e01 = f'{siteAnt[ant]["E01"]["up"]:6.6} ' \
-                       f'{siteAnt[ant]["E01"]["north"]:6.6} ' \
-                       f'{siteAnt[ant]["E01"]["east"]:6.6}'
+        for ant in sorted(self.siteAnt):
+            if 'E01' in self.siteAnt[ant]:
+                _e01 = f'{self.siteAnt[ant]["E01"]["up"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E01"]["north"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E01"]["east"]:6.6}'
             else:
                 _e01 = '------ ------ ------'
-            if 'E05' in siteAnt[ant]:
-                _e05 = f'{siteAnt[ant]["E05"]["up"]:6.6} ' \
-                       f'{siteAnt[ant]["E05"]["north"]:6.6} ' \
-                       f'{siteAnt[ant]["E05"]["east"]:6.6}'
+            if 'E05' in self.siteAnt[ant]:
+                _e05 = f'{self.siteAnt[ant]["E05"]["up"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E05"]["north"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E05"]["east"]:6.6}'
             else:
                 _e05 = '------ ------ ------'
-            yield f' {ant} ----  {_e01} {_e05} {sinex_code:10s}'
+            yield f' {ant} ----  {_e01} {_e05} {self.sinex_code:10s}'
 
-            if "E06" in siteAnt[ant]:
-                _e06 = f'{siteAnt[ant]["E06"]["up"]:6.6} ' \
-                       f'{siteAnt[ant]["E06"]["north"]:6.6} ' \
-                       f'{siteAnt[ant]["E06"]["east"]:6.6}'
+            if "E06" in self.siteAnt[ant]:
+                _e06 = f'{self.siteAnt[ant]["E06"]["up"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E06"]["north"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E06"]["east"]:6.6}'
             else:
                 _e06 = '------ ------ ------'
-            if "E07" in siteAnt[ant]:
-                _e07 = f'{siteAnt[ant]["E07"]["up"]:6.6} ' \
-                       f'{siteAnt[ant]["E07"]["north"]:6.6} ' \
-                       f'{siteAnt[ant]["E07"]["east"]:6.6}'
+            if "E07" in self.siteAnt[ant]:
+                _e07 = f'{self.siteAnt[ant]["E07"]["up"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E07"]["north"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E07"]["east"]:6.6}'
             else:
                 _e07 = '------ ------ ------'
-            yield f' {ant} ----  {_e06} {_e07} {sinex_code:10s}'
+            yield f' {ant} ----  {_e06} {_e07} {self.sinex_code:10s}'
 
-            if "E08" in siteAnt[ant]:
-                _e08 = f'{siteAnt[ant]["E08"]["up"]:6.6} ' \
-                       f'{siteAnt[ant]["E08"]["north"]:6.6} ' \
-                       f'{siteAnt[ant]["E08"]["east"]:6.6}'
+            if "E08" in self.siteAnt[ant]:
+                _e08 = f'{self.siteAnt[ant]["E08"]["up"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E08"]["north"]:6.6} ' \
+                       f'{self.siteAnt[ant]["E08"]["east"]:6.6}'
             else:
                 _e08 = '------ ------ ------'
 
-            yield f' {ant} ----  {_e08} ------ ------ ------ {sinex_code:10s}'
+            yield f' {ant} ----  {_e08} ------ ------ ------ {self.sinex_code:10s}'
         yield '-SITE/GAL_PHASE_CENTER'
 
     def site_eccentricity(self, sites):
@@ -411,87 +411,85 @@ class Command(BaseCommand):
         yield '-SITE/ECCENTRICITY'
 
     def satellite_ids(self):
-        global atx
         yield '+SATELLITE/ID'
         yield (
             '*CNNN PN COSPARID_ T _START_DATE_ __END_DATE__ '
             '____ANTENNA_TYPE____'
         )
-        for sat in sorted(atx):
-            for startDate in atx[sat]:
+        for sat in sorted(self.atx):
+            for startDate in self.atx[sat]:
                 yield (
-                    f' {sat:.4s} {atx[sat][startDate]["prn"]:.2s} '
-                    f'{atx[sat][startDate]["cospar_id"]:.9s} P '
-                    f'{startDate:.12s} {atx[sat][startDate]["endDate"]:.12s} '
-                    f'{atx[sat][startDate]["name"]:.20s}'
+                    f' {sat:.4s} {self.atx[sat][startDate]["prn"]:.2s} '
+                    f'{self.atx[sat][startDate]["cospar_id"]:.9s} P '
+                    f'{startDate:.12s} {self.atx[sat][startDate]["endDate"]:.12s} '
+                    f'{self.atx[sat][startDate]["name"]:.20s}'
                 )
         yield '-SATELLITE/ID'
 
     def satellite_phase_centers(self):
-        global sat_phase_center
         yield '+SATELLITE/PHASE_CENTER'
         yield (
             '*CNNN F __UP__ NORTH_ _EAST_ F __UP__ NORTH_ _EAST_ ' \
             'SINEXCODE_ V M'
         )
-        for sat in sorted(sat_phase_center):
+        for sat in sorted(self.sat_phase_center):
             if sat.startswith('G'):
                 yield (
-                    f' {sat:4.4} 1 {sat_phase_center[sat]["G01"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["G01"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["G01"]["east"]:6.6} 2 '
-                    f'{sat_phase_center[sat]["G02"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["G02"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["G02"]["east"]:6.6} '
-                    f'{sinex_code:10.10} A E'
+                    f' {sat:4.4} 1 {self.sat_phase_center[sat]["G01"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["G01"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["G01"]["east"]:6.6} 2 '
+                    f'{self.sat_phase_center[sat]["G02"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["G02"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["G02"]["east"]:6.6} '
+                    f'{self.sinex_code:10.10} A E'
                 )
                 try:
                     yield (
                         f' {sat:4.4} 5 '
-                        f'{sat_phase_center[sat]["G05"]["up"]:6.6} '
-                        f'{sat_phase_center[sat]["G05"]["north"]:6.6} '
-                        f'{sat_phase_center[sat]["G05"]["east"]:6.6} - ------ '
-                        f'------ ------ {sinex_code:10.10} A E'
+                        f'{self.sat_phase_center[sat]["G05"]["up"]:6.6} '
+                        f'{self.sat_phase_center[sat]["G05"]["north"]:6.6} '
+                        f'{self.sat_phase_center[sat]["G05"]["east"]:6.6} - ------ '
+                        f'------ ------ {self.sinex_code:10.10} A E'
                     )
                 except:
                     pass
 
             if sat.startswith('R'):
                 yield (
-                    f' {sat:4.4} 1 {sat_phase_center[sat]["R01"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["R01"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["R01"]["east"]:6.6} 2 '
-                    f'{sat_phase_center[sat]["R02"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["R02"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["R02"]["east"]:6.6} '
-                    f'{sinex_code:10.10} A E'
+                    f' {sat:4.4} 1 {self.sat_phase_center[sat]["R01"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["R01"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["R01"]["east"]:6.6} 2 '
+                    f'{self.sat_phase_center[sat]["R02"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["R02"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["R02"]["east"]:6.6} '
+                    f'{self.sinex_code:10.10} A E'
                 )
 
             if sat.startswith('E'):
                 yield (
-                    f' {sat:4.4} 1 {sat_phase_center[sat]["E01"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["E01"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["E01"]["east"]:6.6} 5 '
-                    f'{sat_phase_center[sat]["E05"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["E05"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["E05"]["east"]:6.6} '
-                    f'{sinex_code:10.10} A E'
+                    f' {sat:4.4} 1 {self.sat_phase_center[sat]["E01"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E01"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E01"]["east"]:6.6} 5 '
+                    f'{self.sat_phase_center[sat]["E05"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E05"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E05"]["east"]:6.6} '
+                    f'{self.sinex_code:10.10} A E'
                 )
                 yield (
-                    f' {sat:4.4} 6 {sat_phase_center[sat]["E06"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["E06"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["E06"]["east"]:6.6} 7 '
-                    f'{sat_phase_center[sat]["E07"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["E07"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["E07"]["east"]:6.6} '
-                    f'{sinex_code:10.10} A E'
+                    f' {sat:4.4} 6 {self.sat_phase_center[sat]["E06"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E06"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E06"]["east"]:6.6} 7 '
+                    f'{self.sat_phase_center[sat]["E07"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E07"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E07"]["east"]:6.6} '
+                    f'{self.sinex_code:10.10} A E'
                 )
                 yield (
                     f' {sat:4.4} 8 '
-                    f'{sat_phase_center[sat]["E08"]["up"]:6.6} '
-                    f'{sat_phase_center[sat]["E08"]["north"]:6.6} '
-                    f'{sat_phase_center[sat]["E08"]["east"]:6.6} - ------ '
-                    f'------ ------ {sinex_code:10.10} A E'
+                    f'{self.sat_phase_center[sat]["E08"]["up"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E08"]["north"]:6.6} '
+                    f'{self.sat_phase_center[sat]["E08"]["east"]:6.6} - ------ '
+                    f'------ ------ {self.sinex_code:10.10} A E'
                 )
         yield '-SATELLITE/PHASE_CENTER'
 
@@ -503,10 +501,6 @@ class Command(BaseCommand):
         :param antex_file: The url to the antex file to use, may be gzipped or
             uncompressed.
         """
-        global sinex_code
-        global siteAnt
-        global atx
-        global sat_phase_center
 
         def process_line(
                 line,
@@ -521,10 +515,6 @@ class Command(BaseCommand):
                 atxEndDate=None,
                 sat_num=None
         ):
-            global sinex_code
-            global siteAnt
-            global atx
-            global sat_phase_center
 
             if 'TYPE / SERIAL NO' in line:
                 name = line[0:20].rstrip()
@@ -534,7 +524,7 @@ class Command(BaseCommand):
                 atxEndDate = "00:000:00000"
 
             if 'SINEX CODE' in line[60:]:
-                sinex_code = line[:10]
+                self.sinex_code = line[:10]
 
             if 'VALID FROM' in line:
                 year, month, day, hour, minute, second = line[0:60].split()
@@ -564,62 +554,62 @@ class Command(BaseCommand):
                 up = float(up) / 1000
 
                 if prn.isspace():
-                    if name in used_antennas:
+                    if name in self.used_antennas:
                         if north < 0:
-                            siteAnt[name][sat_num[0]][
+                            self.siteAnt[name][sat_num[0]][
                                 "north"] = re.sub("-0.", "-.",
                                                   "%6.4f" % north)
                         else:
-                            siteAnt[name][sat_num[0]]["north"] = str(
+                            self.siteAnt[name][sat_num[0]]["north"] = str(
                                 "%6.4f" % north)
                         if east < 0:
-                            siteAnt[name][sat_num[0]]["east"] = re.sub(
+                            self.siteAnt[name][sat_num[0]]["east"] = re.sub(
                                 "-0.", "-.", "%6.4f" % east)
                         else:
-                            siteAnt[name][sat_num[0]]["east"] = str(
+                            self.siteAnt[name][sat_num[0]]["east"] = str(
                                 "%6.4f" % east)
                         if up < 0:
-                            siteAnt[name][sat_num[0]]["up"] = re.sub(
+                            self.siteAnt[name][sat_num[0]]["up"] = re.sub(
                                 "-0.", "-.", "%6.4f" % up)
                         else:
-                            siteAnt[name][sat_num[0]]["up"] = str("%6.4f" % up)
+                            self.siteAnt[name][sat_num[0]]["up"] = str("%6.4f" % up)
 
-                        # siteAnt[name][sat_num[0]]["north"] = re.sub("0.", ".", str(north), 1)
-                        # siteAnt[name][sat_num[0]]["east"] = re.sub("0.", ".", str(east), 1)
-                        # siteAnt[name][sat_num[0]]["up"] = re.sub("0.", ".", str(up), 1)
+                        # self.siteAnt[name][sat_num[0]]["north"] = re.sub("0.", ".", str(north), 1)
+                        # self.siteAnt[name][sat_num[0]]["east"] = re.sub("0.", ".", str(east), 1)
+                        # self.siteAnt[name][sat_num[0]]["up"] = re.sub("0.", ".", str(up), 1)
                 else:
                     # satAnt
-                    atx[svn][atxStartDate]["endDate"] = atxEndDate
-                    atx[svn][atxStartDate]["svn"] = svn
-                    atx[svn][atxStartDate]["prn"] = prn
-                    atx[svn][atxStartDate]["north"] = north
-                    atx[svn][atxStartDate]["east"] = east
-                    atx[svn][atxStartDate]["up"] = up
-                    atx[svn][atxStartDate]["cospar_id"] = cospar_id
-                    atx[svn][atxStartDate]["name"] = name
+                    self.atx[svn][atxStartDate]["endDate"] = atxEndDate
+                    self.atx[svn][atxStartDate]["svn"] = svn
+                    self.atx[svn][atxStartDate]["prn"] = prn
+                    self.atx[svn][atxStartDate]["north"] = north
+                    self.atx[svn][atxStartDate]["east"] = east
+                    self.atx[svn][atxStartDate]["up"] = up
+                    self.atx[svn][atxStartDate]["cospar_id"] = cospar_id
+                    self.atx[svn][atxStartDate]["name"] = name
 
                     if north < 0:
-                        sat_phase_center[svn][sat_num[0]]["north"] = re.sub(
+                        self.sat_phase_center[svn][sat_num[0]]["north"] = re.sub(
                             "-0.", '-.', "%6.4f" % north
                         )
                     else:
-                        sat_phase_center[svn][sat_num[0]]["north"] = str(
+                        self.sat_phase_center[svn][sat_num[0]]["north"] = str(
                             "%6.4f" % north
                         )
                     if east < 0:
-                        sat_phase_center[svn][sat_num[0]]["east"] = re.sub(
+                        self.sat_phase_center[svn][sat_num[0]]["east"] = re.sub(
                             "-0.", '-.', "%6.4f" % east
                         )
                     else:
-                        sat_phase_center[svn][sat_num[0]]["east"] = str(
+                        self.sat_phase_center[svn][sat_num[0]]["east"] = str(
                             "%6.4f" % east
                         )
                     if up < 0:
-                        sat_phase_center[svn][sat_num[0]]["up"] = re.sub(
+                        self.sat_phase_center[svn][sat_num[0]]["up"] = re.sub(
                             "-0.", '-.', "%6.4f" % up
                         )
                     else:
-                        sat_phase_center[svn][sat_num[0]]["up"] = str(
+                        self.sat_phase_center[svn][sat_num[0]]["up"] = str(
                             "%6.4f" % up
                         )
 

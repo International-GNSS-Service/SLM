@@ -105,11 +105,21 @@ class Command(BaseCommand):
             )
         )
 
+        parser.add_argument(
+            '--include-former',
+            dest='include_former',
+            action='store_true',
+            default=False,
+            help=_(
+                'Include former sites in the list.'
+            )
+        )
+
     def handle(self, *args, **options):
         global used_antennas
 
         sites = Site.objects.all().order_by('name')
-        sites = sites.active()
+        sites = sites.public() if options['include_former'] else sites.active()
         networks = [
             Network.objects.get(name__iexact=network)
             for network in options['include_networks']
@@ -242,7 +252,8 @@ class Command(BaseCommand):
                 llh[1] if llh[1] > 0 else llh[1] + 360
             )
 
-            yield f' {site.four_id.lower()}  A {site.iers_domes_number} P ' \
+            yield f' {site.four_id.lower()}  A ' \
+                  f'{site.iers_domes_number:>9} P ' \
                   f'{location:<21}  {lon_deg:3d} {lon_min:2d} ' \
                   f'{lon_sec:>4.1f} {lat_deg:3d} {lat_min:2d} ' \
                   f'{lat_sec:>4.1f} {llh[2]:>7.1f}'

@@ -308,7 +308,8 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 
 class ManufacturerAdmin(admin.ModelAdmin):
-    pass
+
+    ordering = ('name',)
 
 
 class HelpAdmin(admin.ModelAdmin):

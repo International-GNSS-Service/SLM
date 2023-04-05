@@ -214,16 +214,16 @@ class SiteQuerySet(models.QuerySet):
         :return:
         """
         from slm.models import Agency, Network
-        not_public = Site.objects.filter(
-            Q(agencies__in=Agency.objects.filter(public=False)) |
-            Q(networks__in=Network.objects.filter(public=False)) |
-            Q(last_publish__isnull=True) |
-            Q(status__in=[
+        public = Site.objects.filter(
+            Q(agencies__in=Agency.objects.filter(public=True)) &
+            Q(networks__in=Network.objects.filter(public=True)) &
+            Q(last_publish__isnull=False) &
+            ~Q(status__in=[
                 SiteLogStatus.PROPOSED,
                 SiteLogStatus.EMPTY
             ])
         ).distinct()
-        return self.filter(~Q(pk__in=not_public))
+        return self.filter(pk__in=public)
 
     def editable_by(self, user):
         """

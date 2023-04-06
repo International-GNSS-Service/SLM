@@ -21,7 +21,16 @@ class DataCenter(
     def __str__(self):
         return str(self.label)
 
-    def directory(self, rinex_version, data_rate, date):
+    def directory(self, rinex_version, data_rate, date, hours=None):
+        """
+        todo this interface should be changed to return a list of paths and
+        honor the hours parameter
+        :param rinex_version:
+        :param data_rate:
+        :param date:
+        :param hours:
+        :return:
+        """
         if self == self.IGN:
             path = Path('/pub/igs/data')
             if data_rate == DataRate.HOURLY:
@@ -51,13 +60,16 @@ class DataCenter(
             path /= f'{str(date.year)[2:]}d'
             return str(path)
         if self == self.CDDIS:
-            path = Path('/archive/gps/data')
+            path = Path('/archive/gnss/data')
             if data_rate in [DataRate.HOURLY, DataRate.HIGH_RATE]:
-                return None
+                path /= 'hourly'
             elif data_rate == DataRate.DAILY:
                 path /= 'daily'
             path /= str(date.year)
             path /= f'{day_of_year(date):03d}'
-            path /= f'{str(date.year)[2:]}d'
+            if data_rate in [DataRate.DAILY, DataRate.HIGH_RATE]:
+                path /= f'{str(date.year)[2:]}d'
+            if data_rate in [DataRate.HOURLY, DataRate.HIGH_RATE]:
+                path /= '01'
             return path
         raise NotImplementedError(f'{self} must implement directory()')

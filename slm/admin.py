@@ -410,10 +410,15 @@ class ArchiveFileInline(admin.TabularInline):
     model = ArchivedSiteLog
     extra = 0
     readonly_fields = [
-        field.name for field in ArchivedSiteLog._meta.get_fields()
-        if field.name != 'id'
+        field.name if field.name != 'file' else 'path'
+        for field in ArchivedSiteLog._meta.get_fields()
+        if field.name not in ['id', 'site', 'thumbnail', 'name', 'timestamp']
     ]
     can_delete = False
+    exclude = ['site', 'file', 'thumbnail', 'name', 'timestamp']
+
+    def path(self, obj):
+        return obj.file.path
 
     def has_add_permission(self, request, obj):
         return False

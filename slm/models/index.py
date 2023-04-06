@@ -252,7 +252,7 @@ class ArchiveIndex(models.Model):
         null=True,
         db_index=True,
         help_text=_(
-            'The point in time at which this archive stops being valid.'
+            'The point in time at which this archive stopped being valid.'
         )
     )
 

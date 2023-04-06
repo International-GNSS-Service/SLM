@@ -50,7 +50,7 @@ packages = [
 exclude = ["slm/tests"]
 
 [tool.poetry.scripts]
-manage_slm = 'slm.manage:main'
+slm = 'slm.manage:main'
 
 [tool.poetry.dependencies]
 python = "^3.8"

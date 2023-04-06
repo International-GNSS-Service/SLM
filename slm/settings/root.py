@@ -84,8 +84,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'slm.settings.urls'
 
-WSGI_APPLICATION = 'sites.wsgi.application'
-
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 

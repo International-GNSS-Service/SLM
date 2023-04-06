@@ -1057,7 +1057,7 @@ class SectionViewSet(type):
                     if form.published:
                         form.pk = None
                         form.published = False
-                    if self.request.uesr.full_name:
+                    if self.request.user.full_name:
                         form.prepared_by = self.request.user.full_name
                     form.save()
                     slm_signals.section_deleted.send(

@@ -2916,10 +2916,6 @@ class MeteorologicalInstrumentation(SiteSubSection):
     def section_header(cls):
         return 'Meteorological Instrumentation'
 
-    @classmethod
-    def section_name(cls):
-        return cls.section_header()
-
     manufacturer = models.CharField(
         max_length=255,
         blank=False,

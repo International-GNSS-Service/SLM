@@ -166,15 +166,18 @@ Template for View/Diff page.
     }
 
     const submit = function() {
+        const body = $('body');
+        body.css('cursor', 'progress');
         slm.requestReview({{ site.id }}).done(
             function(data, status, jqXHR) {
+                body.css('cursor', 'default');
                 updateButtonState(data);
                 updateStatus(data);
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {
-                //alert(`{% trans 'Failed to submit' %}: ${jqXHR.responseText}`);
-                $('body').html(jqXHR.responseText);
+                body.css('cursor', 'default');
+                body.html(jqXHR.responseText);
                 console.log(jqXHR);
             }
         );
@@ -294,11 +297,15 @@ Template for View/Diff page.
             $('body').css('cursor', 'default');
         }
         let stack = reviewStack[format.val];
+        if (stack.length === 0) {
+            $('body').css('cursor', 'default');
+            return;  // nothing to diff
+        }
         let backFetched = !formatSwitch && backwardInput.data('slmReviewIndex') === back;
         let forwardFetched = !formatSwitch && forwardInput.data('slmReviewIndex') === forward;
         if (backFetched && forwardFetched) {
             $('body').css('cursor', 'default');
-            return;
+            return finish();
         }
         if (!backFetched) {
             backwardInput.data('slmReviewIndex', back);

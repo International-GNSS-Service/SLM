@@ -11,6 +11,10 @@ from slm.models import Site
 
 logger = logging.getLogger(f'{__name__}')
 
+# signal receivers are stored as weak references, so we need to make sure
+# they don't get garbage collected
+receivers = []
+
 
 def issue_alert(alert_class, **kwargs):
     alert = alert_class.objects.issue_from_signal(**kwargs)
@@ -63,8 +67,15 @@ for alert, config in getattr(settings, 'SLM_AUTOMATED_ALERTS', {}).items():
             ):
                 signal.connect(connection)
 
-        do_connect('issue', partial(issue_alert, alert_class=alert))
-        do_connect('rescind', partial(rescind_alert, alert_class=alert))
+
+        # signal receivers are stored as weak references, so we need to make
+        # sure they don't get garbage collected
+        issue = partial(issue_alert, alert_class=alert)
+        rescind = partial(rescind_alert, alert_class=alert)
+        receivers.append(issue)
+        receivers.append(rescind)
+        do_connect('issue', issue)
+        do_connect('rescind', rescind)
 
 
 @receiver(slm_signals.alert_issued)

@@ -51,6 +51,23 @@ class UserQueryset(models.QuerySet):
             return self.filter(silence_alerts=False)
         return self.filter(silence_alerts=False, html_emails=html)
 
+    def annotate_moderator_status(self):
+        perm = Permission.objects.get_by_natural_key(
+            'moderate_sites', 'slm', 'user'
+        )
+        return self.annotate(
+            moderator=models.Case(
+                models.When(
+                    Q(groups__permissions=perm) |
+                    Q(user_permissions=perm) |
+                    Q(is_superuser=True),
+                    then=True
+                ),
+                default=False,
+                output_field=models.BooleanField()
+            )
+        )
+
 
 class UserProfile(models.Model):
 
@@ -255,6 +272,9 @@ class User(AbstractBaseUser, PermissionsMixin):
             return True
         if station:
             return station.is_moderator(self)
+        elif hasattr(self, 'moderator'):
+            return self.moderator
+
         moderate_perm = Permission.objects.get_by_natural_key(
             'moderate_sites', 'slm', 'user'
         )

@@ -63,6 +63,7 @@ from polymorphic.admin import (
 )
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 
 admin.site.unregister(Group)
@@ -90,12 +91,30 @@ class ProfileInline(admin.StackedInline):
     fk_name = 'user'
 
 
+class ModeratorListFilter(admin.SimpleListFilter):
+    title = _('Moderator')
+
+    parameter_name = 'moderator'
+
+    def lookups(self, request, model_admin):
+        return (
+            (True, _('Yes')),
+            (False, _('No')),
+        )
+
+    def queryset(self, request, queryset):
+        queryset = queryset.annotate_moderator_status()
+        if self.value() is not None:
+            return queryset.filter(moderator=self.value())
+        return queryset
+
+
 class UserAdmin(BaseUserAdmin):
 
     # chooses which fields to display for admin users
     list_display = (
         'email', 'first_name', 'last_name', 'last_activity', 'is_active',
-        'is_superuser'
+        'is_superuser', 'moderator'
     )
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['last_activity', 'date_joined']
@@ -104,7 +123,8 @@ class UserAdmin(BaseUserAdmin):
 
     ordering = ('-last_activity',)
     list_filter = (
-        'is_superuser', 'is_active', 'html_emails', 'silence_alerts'
+        'is_superuser', 'is_active', 'html_emails', 'silence_alerts',
+        ModeratorListFilter
     )
 
     fieldsets = (
@@ -132,6 +152,11 @@ class UserAdmin(BaseUserAdmin):
         'request_password_reset', 'enable_emails', 'disable_emails',
         'deactivate', 'activate'
     ]
+
+    def moderator(self, obj):
+        return obj.moderator
+
+    moderator.boolean = True
 
     def get_inline_instances(self, request, obj=None):
         if not obj:
@@ -228,11 +253,24 @@ class NetworkAdmin(admin.ModelAdmin):
     list_filter = ('public',)
 
 
+class AgencyUserInline(admin.TabularInline):
+    model = Agency.users.through
+    extra = 0
+    max_num = 0
+    readonly_fields = ['user', 'is_moderator']
+
+    def is_moderator(self, obj):
+        return obj.user.is_moderator()
+
+    is_moderator.boolean = True
+
+
 class AgencyAdmin(admin.ModelAdmin):
 
     search_fields = ('name',)
     ordering = ('name',)
     list_filter = ('public',)
+    inlines = [AgencyUserInline]
 
 
 class DataCenterAdmin(admin.ModelAdmin):
@@ -471,6 +509,8 @@ class SLMAdminSite(admin.AdminSite):
 """
 
 #admin.site = SLMAdminSite()
+
+admin.site.site_header = _('SLM Admin')
 
 admin.site.register(get_user_model(), UserAdmin)
 admin.site.register(Group, GroupAdmin)

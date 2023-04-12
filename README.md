@@ -65,9 +65,8 @@ dependencies are listed because many are incidental.
 1. [pyenv](https://github.com/pyenv/pyenv) is not strictly required, but it is highly recommended to help manage multiple
    local Python installations and keep environments clean. Python 3.8+ is required.
 2. [Poetry](https://Python-poetry.org/) is used for dependency and package management.
-3. SLM can be configured to use the following relational database management systems (RDBMS). PostgresSQL is preferred.
+3. SLM requires PostgresSQL along with the PostGIS extension that enables geographic queries to be run directly by the database.
    
    | RDBMS                                        | Minimum Version   | Management Utilities                                        |
    | ---------------------------------------------| ----------------- | ------------------------------------------------------------|
-   | [PostgreSQL](https://www.postgresql.org/)    | 11                | [PgAdmin](https://www.pgadmin.org/)                         |
-   | [MySQL](https://www.mysql.com/)              | 5.7               | [MySQL Workbench](https://www.mysql.com/products/workbench/)|
+   | [PostgreSQL](https://www.postgresql.org/)    | 12                | [PgAdmin](https://www.pgadmin.org/)                         |

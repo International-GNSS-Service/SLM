@@ -5,14 +5,13 @@ from enum_properties import p, s
 
 class MapBoxStyle(
     IntegerChoices,
-    s('label', case_fold=True),
     s('slug', case_fold=True),
     p('version')
 ):
     """
     https://docs.mapbox.com/api/maps/styles/
     """
-    _symmetric_builtins_ = ['name', 'label', 'uri']
+    _symmetric_builtins_ = ['name', s('label', case_fold=True), 'uri']
 
     # name             value    label                slug           version
     STREETS           =  1,   _('Streets'),           'streets',           12

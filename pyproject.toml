@@ -57,8 +57,6 @@ python = "^3.8"
 Django = "<4.2.0"
 django-split-settings = "^1.1.0"
 importlib-resources = "^5.4.0"
-mysqlclient = "^2.1.0"
-PyMySQL = "^1.0.2"
 django-allauth = "^0.53.1"
 django-widget-tweaks = "^1.4.12"
 djangorestframework = "^3.13.1"
@@ -68,7 +66,7 @@ django-filter = "^22.1"
 python-dateutil = "^2.8.2"
 django-ipware = "^5.0.0"
 django-enum = "^1.2.0"
-enum-properties = "^1.1.1"
+enum-properties = "^1.4.0"
 tqdm = "^4.64.1"
 geojson = "^2.5.0"
 Pillow = "^9.3.0"
@@ -82,6 +80,7 @@ crispy-bootstrap5 = "^0.7"
 psycopg2 = "^2.9.5"
 djangorestframework-gis = "^1.0"
 numpy = "^1.24.2"
+pytest = "^7.3.0"
 
 [tool.poetry.group.dev.dependencies]
 django-extensions = "^3.1.5"
@@ -104,6 +103,7 @@ beautifulsoup4 = "^4.11.1"
 doc8 = "^0.11.2"
 django-debug-toolbar = "^3.7.0"
 pygount = "^1.4.0"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

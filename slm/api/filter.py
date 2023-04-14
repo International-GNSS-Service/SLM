@@ -165,12 +165,9 @@ class SiteSearchFilter(SearchFilter):
                     ).order_by().distinct().values_list('pk', flat=True)
                 )
 
-                if searched:
-                    searched |= queryset.filter(Q(pk__in=site_ids))
-                else:
-                    searched = queryset.filter(Q(pk__in=site_ids))
+                searched &= Q(pk__in=site_ids)
 
-        return searched or queryset
+        return queryset.filter(searched)
 
 
 class SLMBooleanFilter(BooleanFilter):

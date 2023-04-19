@@ -1573,3 +1573,24 @@ class SiteFileUploadViewSet(
                             heading_index
                         )
         return errors
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        By default the edit api GET will return a json structure with
+        information about the file. Adding ?download to the url will download
+        the file itself.
+        """
+        if request.GET.get('download', None) is None:
+            return super().retrieve(request, *args, **kwargs)
+
+        file = self.get_object()
+        if request.GET.get('thumbnail', None):
+            file = file.thumbnail
+        else:
+            file = file.file
+        return FileResponse(
+            file.open('rb'),
+            filename=file.name,
+            # note this might not match the name on disk
+            as_attachment=True
+        )

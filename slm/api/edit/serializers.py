@@ -308,7 +308,7 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
 
     def get_download(self, obj):
         return build_absolute_url(
-            obj.link,
+            obj.edit_link,
             request=self.context.get('request', None)
         )
 

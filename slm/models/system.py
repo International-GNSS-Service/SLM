@@ -520,7 +520,7 @@ class SiteFileUpload(SiteFile):
         return reverse(
             'slm_edit_api:files-detail',
             kwargs={'pk': self.pk, 'site': self.site.name}
-        )
+        ) + '?download'
 
     @property
     def thumbnail_link(self):

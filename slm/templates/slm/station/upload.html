@@ -37,7 +37,7 @@ Template for Download page.
       <!-- Title -->
       <div class="d-flex flex-column justify-content-left align-items-left mt-4">
         <div class="mb-4 pb-3 border-bottom">
-            <h2 id="slm-file-header">{% if file %}<a href="{{ file.link }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> <span class="slm-file-name">{{ file.name }}</span></a>{% else %}{% trans "Upload" %}{% endif %}</h2>
+            <h2 id="slm-file-header">{% if file %}<a href="{{ file.edit_link }}" target="_blank" download="{{ file.name }}"><i class="{{ file|file_icon }}"></i> <span class="slm-file-name">{{ file.name }}</span></a>{% else %}{% trans "Upload" %}{% endif %}</h2>
         </div>
       </div>
 

@@ -516,6 +516,13 @@ class SiteFileUpload(SiteFile):
         return reverse('slm_public_api:files-detail', kwargs={'pk': self.pk})
 
     @property
+    def edit_link(self):
+        return reverse(
+            'slm_edit_api:files-detail',
+            kwargs={'pk': self.pk, 'site': self.site.name}
+        )
+
+    @property
     def thumbnail_link(self):
         lnk = reverse('slm_public_api:files-detail', kwargs={'pk': self.pk})
         return f'{lnk}?thumbnail=1'

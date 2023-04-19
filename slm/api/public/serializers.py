@@ -153,7 +153,7 @@ class StationListSerializer(serializers.ModelSerializer):
         """
         This should produce no additional queries b/c of the prefetching.
         """
-        for receiver in reversed(obj.sitereceiver_set.all()):
+        for receiver in obj.sitereceiver_set.all():
             return [
                 sys.name
                 for sys in receiver.satellite_system.all()

@@ -1512,8 +1512,15 @@ class SiteFileUploadViewSet(
                     else:
                         try:
                             serializer.save()
-                        except DjangoValidationError as dve:
-                            for param, error_list in dve.message_dict.items():
+                        except (
+                            DjangoValidationError,
+                            DRFValidationError
+                        ) as dve:
+                            for param, error_list in getattr(
+                                dve,
+                                'message_dict',
+                                getattr(dve, 'detail')
+                            ).items():
                                 errors.setdefault(
                                     index, {}
                                 )[param] = '\n'.join(
@@ -1526,20 +1533,21 @@ class SiteFileUploadViewSet(
                 for section_index, section_errors in errors.items():
                     for param, error in section_errors.items():
                         section = parsed.sections[section_index]
-                        param = section.get_param(param)
-                        if param:
-                            for line_no in range(
-                                    param.line_no,
-                                    param.line_end+1
-                            ):
-                                parsed.add_finding(
-                                    Error(
-                                        line_no,
-                                        parsed,
-                                        str(error),
-                                        section=section
+                        params = section.get_params(param)
+                        if params:
+                            for parsed_param in params:
+                                for line_no in range(
+                                        parsed_param.line_no,
+                                        parsed_param.line_end+1
+                                ):
+                                    parsed.add_finding(
+                                        Error(
+                                            line_no,
+                                            parsed,
+                                            str(error),
+                                            section=section
+                                        )
                                     )
-                                )
                         else:
                             parsed.add_finding(
                                 Error(

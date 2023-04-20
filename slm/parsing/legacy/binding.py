@@ -617,7 +617,7 @@ class SiteLogBinder(BaseBinder):
         # of them as an error to the relevant header line
         missing = [
             param for param in expected
-            if not section.get_param(param)
+            if not section.get_params(param)
             and param not in binding_errors
             and param not in ignored
         ]
@@ -641,13 +641,15 @@ class SiteLogBinder(BaseBinder):
                 assert len(collation) == 3
                 if any(param in section.binding for param in collation[0]):
                     try:
-                        section.binding[collation[1]] = collation[2](*[
-                            section.binding.get(param, None)
-                            for param in collation[0]
-                        ])
+                        section.collate(
+                            collation[0],
+                            collation[1],
+                            collation[2](*[
+                                section.binding.get(param, None)
+                                for param in collation[0]
+                            ])
+                        )
                     except Exception:
                         # todo
                         pass
 
-                for param in collation[0]:
-                    section.binding.pop(param, None)

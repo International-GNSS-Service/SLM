@@ -139,37 +139,43 @@ class BaseSection:
     order = None
     header = ''
 
-    """{
-        str(normalized name): str(value)
-    }
-    """
     parameters = None
     example = False
 
-    _param_binding_: Dict[str, BaseParameter] = None
+    _param_binding_: Dict[str, List[BaseParameter]] = None
     _binding_: Dict[str, Union[str, int, float, date, datetime]] = None
 
-    def get_param(self, name: str) -> Optional[BaseParameter]:
+    def get_params(self, name: str) -> List[BaseParameter]:
         """
         Get parameter by parsing or bound name.
         """
-        if self._param_binding_ is None:
-            self._param_binding_ = {}
+        self._param_binding_ = self._param_binding_ or {}
         return self._param_binding_.get(
             name,
-            self.parameters.get(normalize(name), None)
+            [self.parameters.get(normalize(name), [])]
         )
 
     def bind(self, name, parameter, value):
         """
         Bind a parameter to the given name and value.
         """
-        if self._binding_ is None:
-            self._binding_ = {}
-        if self._param_binding_ is None:
-            self._param_binding_ = {}
-        self._param_binding_[name] = parameter
+        self._binding_ = self._binding_ or {}
+        self._param_binding_ = self._param_binding_ or {}
+        self._param_binding_.setdefault(name, []).append(parameter)
         self._binding_[name] = value
+
+    def collate(self, params, param, value):
+        """
+        Combine the given bound params into a new single binding.
+        """
+        self._binding_ = self._binding_ or {}
+        self._param_binding_ = self._param_binding_ or {}
+        self._binding_[param] = value
+        for collated in params:
+            parsed_params = self._param_binding_.get(collated, [])
+            self._param_binding_.setdefault(param, []).extend(parsed_params)
+            if parsed_params:
+                del self._param_binding_[collated]
 
     @property
     def binding(self) -> Optional[

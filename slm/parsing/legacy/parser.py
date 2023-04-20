@@ -102,37 +102,6 @@ class ParsedSection(BaseSection):
     parameters = None
     example = False
 
-    _param_binding_: Dict[str, ParsedParameter] = None
-    _binding_: Dict[str, Union[str, int, float, date, datetime]] = None
-
-    def get_param(self, name: str) -> Optional[ParsedParameter]:
-        """
-        Get parameter by parsing or bound name.
-        """
-        if self._param_binding_ is None:
-            self._param_binding_ = {}
-        return self._param_binding_.get(
-            name,
-            self.parameters.get(normalize(name), None)
-        )
-
-    def bind(self, name, parameter, value):
-        """
-        Bind a parameter to the given name and value.
-        """
-        if self._binding_ is None:
-            self._binding_ = {}
-        if self._param_binding_ is None:
-            self._param_binding_ = {}
-        self._param_binding_[name] = parameter
-        self._binding_[name] = value
-
-    @property
-    def binding(self) -> Optional[
-        Dict[str, Union[str, int, float, date, datetime]]
-    ]:
-        return self._binding_
-
     @property
     def ordering_id(self):
         if self.order:
@@ -155,7 +124,6 @@ class ParsedSection(BaseSection):
         ) or (
             not isinstance(self.order, int) and match.group(3)
         )
-
 
     @property
     def index_tuple(self):

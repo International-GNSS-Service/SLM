@@ -212,6 +212,10 @@ Template for Download page.
                         }
                         initFileList($("#slm-file-list"));
                     });
+                },
+                error: function(file, message) {
+                    console.log(message);
+                    $(file.previewElement).addClass("dz-error").find('.dz-error-message').html(message);
                 }
               }
             );

@@ -17,6 +17,7 @@
 <script>
     const deleteAlert = function(alertId) {
         this.event.stopPropagation();
+        $(document.body).css({'cursor' : 'wait'});
         $.ajax({
             url: slm.urls.reverse(
                 'slm_edit_api:alerts-detail',
@@ -25,6 +26,7 @@
             method: 'DELETE'
         }).done(
             function() {
+                $(document.body).css({'cursor' : 'initial'});
                 $(`#alert-${alertId}`).remove();
                 {% if site %}
                 $.ajax({
@@ -39,7 +41,7 @@
             }
         ).fail(
             function(jqXHR) {
-                $('body').html(jqXHR.responseText);
+                $(document.body).css({'cursor' : 'initial'});
                 console.log(jqXHR);
             }
         );

@@ -425,7 +425,7 @@ class AlertViewSet(
     def get_queryset(self):
         Alert.objects.delete_expired()
         return Alert.objects.visible_to(self.request.user)
-
+            
 
 class UserProfileViewSet(
     mixins.UpdateModelMixin,
@@ -1407,7 +1407,7 @@ class SiteFileUploadViewSet(
                         f'Unsupported site log upload format.',
                         status=400
                     )
-        upload.site.refresh_from_db()
+        upload.site.synchronize()
         return Response(
             self.get_serializer(instance=upload).data,
             status=200
@@ -1434,6 +1434,7 @@ class SiteFileUploadViewSet(
                 f'Files may only be published or unpublished.'
             )
         super().perform_update(serializer)
+        self.site.synchronize()
 
     def update_from_legacy(self, request, parsed):
         errors = {}

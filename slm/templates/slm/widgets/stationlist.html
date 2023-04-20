@@ -166,7 +166,7 @@
         searchInput.on('input', function() {
             clearTimeout(keyupTimeoutID);
             keyupTimeoutID = setTimeout(function() {
-                stationList.find('button').remove();
+                stationList.find('button').not('.active').remove();
                 // replace below line with above one to keep current station in the
                 // list regardless of filter
                 //stationList.find('button').not(`#select-{{ station }}`).remove();
@@ -196,7 +196,7 @@
         }
 
         const applyFilter = function() {
-            stationList.find('button').remove();
+            stationList.find('button').not('.active').remove();
             let query = getQuery();
             if (filterForm.hasChanged()) {
                 filterStations.removeClass("btn-outline-primary").addClass("btn-primary");

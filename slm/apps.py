@@ -3,6 +3,7 @@ from django.dispatch import Signal
 from django.db.models.signals import (
     post_init,
     post_save,
+    pre_delete,
     post_delete,
     post_migrate
 )
@@ -253,11 +254,23 @@ class SLMConfig(AppConfig):
             if created:
                 slm_signals.alert_issued.send(sender=sender, alert=instance)
 
+        def cache_realalert(sender, instance, using, **kwargs):
+            """
+            Cache real alert instance onto the model because we wont be able
+            to get it in post because it no longer exists.
+            """
+            #
+            instance._slm_real_alert = instance.get_real_instance()
+
         def alert_delete(sender, instance, using, **kwargs):
-            slm_signals.alert_cleared.send(sender=sender, alert=instance)
+            slm_signals.alert_cleared.send(
+                sender=sender,
+                alert=getattr(instance, '_slm_real_alert', instance)
+            )
 
         for alert in Alert.objects.classes():
             post_save.connect(alert_save, sender=alert)
+            pre_delete.connect(cache_realalert, sender=Alert)
             post_delete.connect(alert_delete, sender=Alert)
 
         @receiver(post_migrate)

@@ -36,6 +36,7 @@ def rescind_alert(alert_class, **kwargs):
         )
 
 
+
 def valid_signals(signals):
     signal_set = set()
     for sig in signals:
@@ -86,4 +87,12 @@ def send_alert_emails(sender, alert, **kwargs):
     if hasattr(alert, 'site') and isinstance(alert.site, Site):
         Site.objects.filter(
             pk=alert.site.pk
-        ).synchronize_denormalized_state()
+        ).update_alert_levels()
+
+
+@receiver(slm_signals.alert_cleared)
+def handle_alert_cleared(sender, alert, **kwargs):
+    if hasattr(alert, 'site') and isinstance(alert.site, Site):
+        Site.objects.filter(
+            pk=alert.site.pk
+        ).update_alert_levels()

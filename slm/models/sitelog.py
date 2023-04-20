@@ -248,6 +248,21 @@ class SiteQuerySet(models.QuerySet):
                 return self.filter(agencies__in=user.agencies.all()).distinct()
         return self.none()
 
+    def update_alert_levels(self):
+        """
+        Update the denormalized max alert level for sites in this queryset to
+        reflect their active alerts.
+
+        return: calling queryset for chaining
+        """
+        from slm.models import Alert
+
+        max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
+        self.annotate(
+            _max_alert=Subquery(max_alert.values('level')[:1])
+        ).update(max_alert=F('_max_alert'))
+        return self
+
     def synchronize_denormalized_state(self):
         """
         Some state is denormalized and cached onto site records to speed up
@@ -256,12 +271,7 @@ class SiteQuerySet(models.QuerySet):
         reflect the normal data.
         :return:
         """
-        from slm.models import Alert
-
-        max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
-        self.annotate(
-            _max_alert=Subquery(max_alert.values('level')[:1])
-        ).update(max_alert=F('_max_alert'))
+        self.update_alert_levels()
 
         aggregate = None
         qry = self
@@ -1077,6 +1087,10 @@ class Site(models.Model):
 
     def __str__(self):
         return self.name
+
+    def synchronize(self):
+        Site.objects.filter(pk=self.pk).synchronize_denormalized_state()
+        self.refresh_from_db()
 
 
 class SiteSectionManager(gis_models.Manager):

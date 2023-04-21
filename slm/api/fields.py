@@ -84,7 +84,9 @@ class SLMPointField(Field):
     def to_internal_value(self, data):
         try:
             return Point(*[
-                float(coord) if coord is not None else None for coord in data]
+                None if coord in ['', None]
+                else float(coord)
+                for coord in data]
             ) or None
         except (TypeError, ValueError):
             self.fail('invalid', format='[float, float, float]', data=data)

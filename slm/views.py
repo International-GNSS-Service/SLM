@@ -28,6 +28,7 @@ from slm.defines import (
     SiteLogStatus,
     SLMFileType,
 )
+from slm.parsing import Error, Warn
 from slm.api.edit.views import StationFilterForm
 from slm.forms import (
     NewSiteForm,
@@ -472,6 +473,16 @@ class UploadView(StationContextView):
             context['file'] = file
             if file.context:
                 context.update(file.context)
+                if 'findings' in context:
+                    errors = 0
+                    warnings = 0
+                    for lineno, finding in context['findings'].items():
+                        if finding[0] == Error.level:
+                            errors += 1
+                        elif finding[0] == Warn.level:
+                            warnings += 1
+                    context['finding_errors'] = errors
+                    context['finding_warnings'] = warnings
 
             if file.file_type in {
                 SLMFileType.SITE_IMAGE,

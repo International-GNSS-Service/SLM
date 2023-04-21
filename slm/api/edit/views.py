@@ -27,6 +27,16 @@ from rest_framework.parsers import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
+from django_enum.drf import EnumField
+from django_enum.fields import (
+    EnumIntegerField,
+    EnumPositiveIntegerField,
+    EnumBigIntegerField,
+    EnumPositiveSmallIntegerField,
+    EnumPositiveBigIntegerField,
+    EnumSmallIntegerField,
+    EnumCharField
+)
 from slm import signals as slm_signals
 from slm.api.filter import (
     CrispyFormCompat,
@@ -61,7 +71,7 @@ from slm.defines import (
     SLMFileType,
     ISOCountry
 )
-from slm.parsing.legacy.parser import Error
+from slm.parsing.legacy.parser import Error, Warn
 from slm.models import (
     Alert,
     LogEntry,
@@ -544,6 +554,29 @@ class SectionViewSet(type):
 
         class ViewSetSerializer(ModelSerializer):
 
+            def build_standard_field(self, field_name, model_field):
+                """
+                Force EnumFields into django_enum's enum field type.
+                """
+                if model_field.__class__ in {
+                    EnumIntegerField,
+                    EnumPositiveIntegerField,
+                    EnumBigIntegerField,
+                    EnumPositiveSmallIntegerField,
+                    EnumPositiveBigIntegerField,
+                    EnumSmallIntegerField,
+                    EnumCharField
+                }:
+                    return EnumField, {
+                        **super().build_standard_field(
+                            field_name,
+                            model_field
+                        )[1],
+                        'enum': model_field.enum,
+                        'strict': model_field.strict
+                    }
+                return super().build_standard_field(field_name, model_field)
+
             serializer_field_mapping = {
                 **ModelSerializer.serializer_field_mapping,
                 models.DateTimeField: SLMDateTimeField,
@@ -730,7 +763,8 @@ class SectionViewSet(type):
                                 if (
                                     not is_many and
                                     (
-                                        new_value.coords != old_value.coords
+                                        getattr(new_value, 'coords', None) !=
+                                        getattr(old_value, 'coords', None)
                                         if isinstance(new_value, Point) else
                                         new_value != old_value)
                                     ) or (
@@ -1362,8 +1396,13 @@ class SiteFileUploadViewSet(
                         if bound_log.errors:
                             upload.status = SiteFileUploadStatus.INVALID
                             upload.save()
-                            return Response(
-                                _('There were errors parsing the site log.'),
+                            return Response({
+                                    'file': upload.id,
+                                    'error': _(
+                                        'There were errors parsing the site '
+                                        'log.'
+                                    )
+                                },
                                 status=400
                             )
                         upload.status = (
@@ -1386,9 +1425,13 @@ class SiteFileUploadViewSet(
                         if parsed.errors:
                             upload.status = SiteFileUploadStatus.INVALID
                             upload.save()
-                            return Response(_(
-                                'There were errors parsing the site log.'
-                                ),
+                            return Response({
+                                    'file': upload.id,
+                                    'error': _(
+                                        'There were errors parsing the site '
+                                        'log.'
+                                    )
+                                },
                                 status=400
                             )
                         upload.save()
@@ -1457,7 +1500,12 @@ class SiteFileUploadViewSet(
             10: set()
         }
         with transaction.atomic():
-            for index, section in parsed.sections.items():
+
+            # we reverse this so we process the form section last which will
+            # ensure that the prepared by field will be set to what was given
+            # in the upload log
+            for index, section in reversed(parsed.sections.items()):
+
                 if section.example or not section.contains_values:
                     continue
 
@@ -1512,6 +1560,21 @@ class SiteFileUploadViewSet(
                     else:
                         try:
                             serializer.save()
+                            for param, flag in serializer.instance._flags.items():
+                                params = section.get_params(param)
+                                for parsed_param in params:
+                                    for line_no in range(
+                                        parsed_param.line_no,
+                                        parsed_param.line_end + 1
+                                    ):
+                                        parsed.add_finding(
+                                            Warn(
+                                                line_no,
+                                                parsed,
+                                                str(flag),
+                                                section=section
+                                            )
+                                        )
                         except (
                             DjangoValidationError,
                             DRFValidationError

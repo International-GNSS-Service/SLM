@@ -472,7 +472,7 @@ def to_satellites(value):
     return sats
 
 
-def to_enum(enum_cls, value, strict=True, blank=None):
+def to_enum(enum_cls, value, strict=False, blank=None):
     if value:
         try:
             return enum_cls(value).value

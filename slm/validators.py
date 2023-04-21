@@ -5,12 +5,14 @@ from slm.defines import FlagSeverity
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+from django.db.models import Model
 from slm.defines import EquipmentState
 
 
 # we can't use actual nulls for times because it breaks things like
 # Greatest on MYSQL
 NULL_TIME = datetime.utcfromtimestamp(0)
+NULL_VALUES = [None, '', NULL_TIME]
 
 
 Flag = namedtuple('Flag', 'message manual severity')
@@ -26,6 +28,11 @@ def get_validators(model, field):
     :param field: The field name 
     :return:
     """
+    if (
+        isinstance(model, Model) or
+        (isinstance(model, type) and issubclass(model, Model))
+    ):
+        model = model._meta.label
     return getattr(
         settings, 'SLM_DATA_VALIDATORS', {}
     ).get(model, {}).get(field, [])
@@ -88,33 +95,40 @@ class SLMValidator:
         instance.save()
 
 
-class FieldPreferred(SLMValidator):
+class FieldRequired(SLMValidator):
 
-    statement = 'This field is recommended'
+    statement = _('This field is required.')
+    legacy_allowed = _('This field is desired.')
+
+    allow_legacy_nulls = False
+
+    def __init__(self, allow_legacy_nulls=allow_legacy_nulls):
+        self.allow_legacy_nulls = allow_legacy_nulls
+        super().__init__(
+            severity=FlagSeverity.BLOCK_SAVE
+        )
 
     def __call__(self, instance, field, value):
         if isinstance(value, str):
             value = value.strip()
-        if not value or value == NULL_TIME:
-            self.throw_error(f'{_(self.statement)}.', instance, field)
+        if value in NULL_VALUES:
+            if (
+                not self.allow_legacy_nulls or
+                instance.get_initial_value(field.name) in NULL_VALUES
+            ):
+                self.throw_flag(self.legacy_allowed, instance, field)
+            else:
+                self.throw_error(self.statement, instance, field)
 
 
-class FieldRequiredToPublish(FieldPreferred):
-
-    statement = 'This field is required to publish'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, severity=FlagSeverity.BLOCK_PUBLISH, **kwargs)
-
-
-class EnumValidator(FieldPreferred):
+class EnumValidator(SLMValidator):
 
     statement = _('Value not in Enumeration.')
 
     def __call__(self, instance, field, value):
         if isinstance(value, str):
             value = value.strip()
-        if value not in {None, ''}:
+        if value not in NULL_VALUES:
             try:
                 field.enum(value)
             except ValueError:

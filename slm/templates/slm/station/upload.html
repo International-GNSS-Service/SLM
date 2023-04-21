@@ -91,8 +91,7 @@ Template for Download page.
                     slm.deleteFile("{{ station }}", {{ file.id }}).done(
                         function(data, status, jqXHR) {
                             window.location = slm.urls.reverse(
-                                'slm:upload',
-                                {
+                                'slm:upload', {
                                     kwargs: {'station': "{{ station }}"}
                                 }
                             );
@@ -171,6 +170,7 @@ Template for Download page.
             <script>
 
             Dropzone.autoDiscover = false;
+            let numFiles = 0;
             // Dropzone has been added as a global variable.
             const dropzone = new Dropzone(
               "div#sitefile-upload",
@@ -184,9 +184,22 @@ Template for Download page.
                     'X-CSRFToken' : "{{ csrf_token }}"
                   },
                   init: function () {
+                    this.on('addedfile', function (file) {
+                        numFiles += 1;
+                    });
                     this.on("complete", function (file) {
                         if (file.xhr.status < 300) {
                             let response = JSON.parse(file.xhr.responseText);
+                            if (numFiles === 1) {
+                                window.location = slm.urls.reverse(
+                                    'slm:upload', {
+                                        kwargs: {
+                                            station: "{{ station }}",
+                                            file: response.id
+                                        }
+                                    }
+                                );
+                            }
                             let siteNavBtn = $(`button#select-{{ station }}`);
                             let errBadge = siteNavBtn.find('span.slm-error-badge');
                             let siteStatus = slm.SiteLogStatus.get(response.site_status);
@@ -213,9 +226,21 @@ Template for Download page.
                         initFileList($("#slm-file-list"));
                     });
                 },
-                error: function(file, message) {
-                    console.log(message);
-                    $(file.previewElement).addClass("dz-error").find('.dz-error-message').html(message);
+                error: function(file, message, xhr) {
+                    console.log(xhr);
+                    if (numFiles === 1) {
+                        window.location = slm.urls.reverse(
+                            'slm:upload', {
+                                kwargs: {
+                                    station: "{{ station }}",
+                                    file: message.file
+                                }
+                            }
+                        );
+                    }
+                    $(file.previewElement).addClass("dz-error").find(
+                        '.dz-error-message'
+                    ).html(message.error);
                 }
               }
             );

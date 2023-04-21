@@ -92,6 +92,7 @@ from django.contrib.gis.forms import PointField
 from django.forms.widgets import MultiWidget, NumberInput, TextInput
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
+from slm.validators import get_validators, FieldRequired
 
 
 class SLMCheckboxInput(CheckboxInput):
@@ -301,7 +302,9 @@ class SLMPointField(PointField):
                 self.error_messages["invalid_geom_type"],
                 code="invalid_geom_type"
             )
-        return Point(*value) or None
+        return Point(
+            *[None if val in ['', None] else float(val) for val in value]
+        ) or None
 
 
 class AutoSelectMixin:
@@ -463,7 +466,14 @@ class SectionForm(forms.ModelForm):
         for field in self.fields:
             try:
                 model_field = self.Meta.model._meta.get_field(field)
-                self.fields[field].required = not (
+                for validator in get_validators(
+                    self.Meta.model,
+                    model_field.name
+                ):
+                    if isinstance(validator, FieldRequired):
+                        self.fields[field].required = True
+                        break
+                self.fields[field].required |= not (
                     getattr(model_field, 'default', None) != NOT_PROVIDED
                     and model_field.blank
                 )

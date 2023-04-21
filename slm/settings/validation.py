@@ -13,7 +13,7 @@ The format of SLM_DATA_VALIDATORS is
 from slm.validators import (
     EnumValidator,
     TimeRangeValidator,
-    FieldRequiredToPublish,
+    FieldRequired,
     ARPValidator,
     NonEmptyValidator,
     VerifiedEquipmentValidator
@@ -26,11 +26,20 @@ SLM_VALIDATION_BYPASS_BLOCK = False
 # the model field to validator map
 SLM_DATA_VALIDATORS = {
     'slm.SiteIdentification': {
-        'fracture_spacing': [EnumValidator()],
+        'site_name': [FieldRequired()],
+        'fracture_spacing': [
+            FieldRequired(allow_legacy_nulls=True),
+            EnumValidator()
+        ],
+        'iers_domes_number': [FieldRequired()],
+        'date_installed': [FieldRequired()]
     },
     'slm.SiteLocation': {
-        'country': [EnumValidator()],
-        'tectonic': [EnumValidator()]
+        'city': [FieldRequired()],
+        'country': [FieldRequired(), EnumValidator()],
+        'tectonic': [EnumValidator()],
+        'xyz': [FieldRequired()],
+        'llh': [FieldRequired()]
     },
     'slm.SiteReceiver': {
         'receiver_type': [
@@ -39,8 +48,10 @@ SLM_DATA_VALIDATORS = {
         'satellite_system': [
             NonEmptyValidator()
         ],
+        'serial_number': [FieldRequired()],
+        'firmware': [FieldRequired()],
         'installed': [
-            FieldRequiredToPublish(),
+            FieldRequired(),
             TimeRangeValidator(end_field='removed')
         ],
         'removed': [
@@ -54,55 +65,102 @@ SLM_DATA_VALIDATORS = {
         'radome_type': [
             VerifiedEquipmentValidator()
         ],
-        'reference_point': [ARPValidator(), EnumValidator()],
+        'serial_number': [FieldRequired()],
+        'reference_point': [FieldRequired(), ARPValidator(), EnumValidator()],
         'installed': [
-            FieldRequiredToPublish(),
+            FieldRequired(),
             TimeRangeValidator(end_field='removed')
         ],
-        'removed': [TimeRangeValidator(start_field='installed')]
+        'removed': [TimeRangeValidator(start_field='installed')],
+        'marker_enu': [FieldRequired(allow_legacy_nulls=True)],
+        'alignment': [FieldRequired(allow_legacy_nulls=True)]
+    },
+    'slm.SiteSurveyedLocalTies': {
+        'name': [FieldRequired()],
+        'measured': [FieldRequired(allow_legacy_nulls=True)],
+        'diff_xyz': [FieldRequired(allow_legacy_nulls=True)]
     },
     'slm.SiteFrequencyStandard': {
-        'standard_type': [EnumValidator()],
-        'effective_start': [TimeRangeValidator(end_field='effective_end')],
+        'standard_type': [FieldRequired(), EnumValidator()],
+        'effective_start': [FieldRequired(), TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')],
     },
     'slm.SiteCollocation': {
-        'status': [EnumValidator()],
-        'effective_start': [TimeRangeValidator(end_field='effective_end')],
+        'instrument_type': [FieldRequired()],
+        'status': [FieldRequired(allow_legacy_nulls=True), EnumValidator()],
+        'effective_start': [FieldRequired(), TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
     },
     'slm.SiteHumiditySensor': {
+        'model': [FieldRequired()],
+        'manufacturer': [FieldRequired()],
+        'height_diff': [FieldRequired(allow_legacy_nulls=True)],
         'effective_start': [TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')],
-        'aspiration': [EnumValidator()]
+        'aspiration': [FieldRequired(allow_legacy_nulls=True), EnumValidator()]
     },
     'slm.SitePressureSensor': {
+        'model': [FieldRequired()],
+        'manufacturer': [FieldRequired()],
+        'height_diff': [FieldRequired(allow_legacy_nulls=True)],
         'effective_start': [TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
     },
     'slm.SiteTemperatureSensor': {
+        'model': [FieldRequired()],
+        'manufacturer': [FieldRequired()],
+        'height_diff': [FieldRequired(allow_legacy_nulls=True)],
         'effective_start': [TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')],
-        'aspiration': [EnumValidator()]
+        'aspiration': [FieldRequired(allow_legacy_nulls=True), EnumValidator()]
     },
     'slm.SiteWaterVaporRadiometer': {
+        'model': [FieldRequired()],
+        'manufacturer': [FieldRequired()],
+        'distance_to_antenna': [FieldRequired(allow_legacy_nulls=True)],
+        'height_diff': [FieldRequired(allow_legacy_nulls=True)],
         'effective_start': [TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
     },
+    'slm.SiteOtherInstrumentation': {
+      'instrumentation': [FieldRequired()]
+    },
     'slm.SiteRadioInterferences': {
-        'effective_start': [TimeRangeValidator(end_field='effective_end')],
+        'interferences': [FieldRequired(allow_legacy_nulls=True)],
+        'effective_start': [FieldRequired(), TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
     },
     'slm.SiteMultiPathSources': {
-        'effective_start': [TimeRangeValidator(end_field='effective_end')],
+        'sources': [FieldRequired(allow_legacy_nulls=True)],
+        'effective_start': [FieldRequired(), TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
     },
     'slm.SiteSignalObstructions': {
-        'effective_start': [TimeRangeValidator(end_field='effective_end')],
+        'obstructions': [FieldRequired(allow_legacy_nulls=True)],
+        'effective_start': [FieldRequired(), TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
     },
     'slm.SiteLocalEpisodicEffects': {
-        'effective_start': [TimeRangeValidator(end_field='effective_end')],
+        'event': [FieldRequired(allow_legacy_nulls=True)],
+        'effective_start': [FieldRequired(), TimeRangeValidator(end_field='effective_end')],
         'effective_end': [TimeRangeValidator(start_field='effective_start')]
+    },
+    'slm.SiteOperationalContact': {
+        'agency': [FieldRequired()],
+        'preferred_abbreviation': [FieldRequired()],
+        'primary_name': [FieldRequired()],
+        'primary_phone1': [FieldRequired(allow_legacy_nulls=True)],
+        'primary_email': [FieldRequired(allow_legacy_nulls=True)],
+    },
+    'slm.SiteResponsibleAgency': {
+        'agency': [FieldRequired()],
+        'preferred_abbreviation': [FieldRequired()],
+        'primary_name': [FieldRequired()],
+        'primary_phone1': [FieldRequired(allow_legacy_nulls=True)],
+        'primary_email': [FieldRequired(allow_legacy_nulls=True)],
+    },
+    'slm.SiteMoreInformation': {
+        'primary': [FieldRequired()],
+        'secondary': [FieldRequired()],
     }
 }

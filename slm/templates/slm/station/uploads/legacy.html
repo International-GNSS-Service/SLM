@@ -1,5 +1,17 @@
-{% load slm compress %}
+{% load slm compress i18n %}
 
+
+<hr/>
+
+<h4>
+{% if finding_errors %}
+{% trans 'This log was rejected because' %} <span style="color: red">{{ finding_errors }} {% trans 'errors were found.' %}</span> {% trans 'Scroll down to see the errors. Please correct them and resubmit.' %}
+{% elif finding_warnings %}
+{% trans 'This log was accepted with' %} {{ finding_warnings }} {% trans 'warnings. Please correct the warnings if possible. To publish this log please' %} <a href="{% url 'slm:review' station=station %}">{% trans 'submit it for review.' %}</a>
+{% else %}
+{% trans 'This log was accepted. To publish these changes please' %} <a href="{% url 'slm:review' station=station %}">{% trans 'submit it for review.' %}</a>
+{% endif %}
+</h4>
 
 <hr/>
 

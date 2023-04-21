@@ -10,7 +10,8 @@ from django.db.models import (
     Value,
     OuterRef,
     Subquery,
-    ExpressionWrapper
+    ExpressionWrapper,
+    DEFERRED
 )
 from django.db.models.functions import Greatest, TruncDate
 from django.contrib.gis.db import models as gis_models
@@ -1331,7 +1332,11 @@ class SiteSection(gis_models.Model):
         for field in self.site_log_fields():
             pub = transform(getattr(published, field, None), field)
             head = transform(getattr(self, field), field)
-            if head != pub:
+            if (
+                head != pub and
+                head not in [None, ''] and
+                pub not in [None, '']
+            ):
                 diff[field] = {'pub': pub, 'head': head}
         return diff
 
@@ -1374,6 +1379,7 @@ class SiteSection(gis_models.Model):
     @classmethod
     def structure(cls):
         """
+        todo remove?
         Return the structure of the legacy site log section in the form:
         [
             'field name0',
@@ -1395,6 +1401,41 @@ class SiteSection(gis_models.Model):
         if callable(getattr(cls, field, None)):
             return getattr(cls, field).verbose_name
         return cls._meta.get_field(field).verbose_name
+
+    def __init__(self, *args, **kwargs):
+        """
+        After our model is initialized we cache the values of the fields. This
+        is used by get_initial_value to eliminate the need for another database
+        round trip.
+
+        :param args:
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self._init_values_ = {}
+        deferred = self.get_deferred_fields()
+        for field in self.site_log_fields():
+            if field not in deferred:
+                self._init_values_[field] = getattr(self, field)
+
+    def get_initial_value(self, field):
+        """
+        Get the current value of the field at the time of initialization. This
+        call may result in a database lookup if the field was deferred on
+        initialization. The field must be in the model's site_log_fields().
+
+        :param field:
+        :return:
+        """
+        if field not in self.site_log_fields():
+            raise ValueError(
+                f'Field {field} is not a site log field for {self.__class__}'
+            )
+        if field not in self._init_values_:
+            current = self.__class__.objects.filter(pk=self.pk).first()
+            for field in self.site_log_fields():
+                self._init_values_[field] = getattr(current, field)
+        return self._init_values_[field]
 
     class Meta:
         abstract = True
@@ -1784,7 +1825,8 @@ class SiteIdentification(SiteSection):
 
     site_name = models.CharField(
         max_length=255,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Site Name'),
         help_text=_('Enter the name of the site.'),
         db_index=True
@@ -1805,7 +1847,8 @@ class SiteIdentification(SiteSection):
 
     iers_domes_number = models.CharField(
         max_length=9,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('IERS DOMES Number'),
         help_text=_(
             'This is strictly required. '
@@ -1829,7 +1872,7 @@ class SiteIdentification(SiteSection):
 
     date_installed = models.DateTimeField(
         null=True,
-        blank=False,
+        blank=True,
         verbose_name=_('Date Installed (UTC)'),
         help_text=_(
             'Enter the original date that this site was included in the IGS. '
@@ -2029,7 +2072,8 @@ class SiteLocation(SiteSection):
 
     city = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('City or Town'),
         help_text=_('Enter the city or town the site is located in'),
         db_index=True
@@ -2047,8 +2091,9 @@ class SiteLocation(SiteSection):
         ISOCountry,
         strict=False,
         max_length=100,
-        blank=False,
+        blank=True,
         null=True,
+        default=None,
         verbose_name=_('Country or Region'),
         help_text=_('Enter the country/region the site is located in'),
         db_index=True
@@ -2073,7 +2118,7 @@ class SiteLocation(SiteSection):
         srid=7789,
         dim=3,
         null=True,
-        blank=False,
+        blank=True,
         db_index=True,
         help_text=_(
             'Enter the ITRF position to a one meter precision. Format (m)'
@@ -2191,7 +2236,8 @@ class SiteReceiver(SiteSubSection):
 
     serial_number = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Serial Number'),
         help_text=_(
             'Enter the receiver serial number. '
@@ -2202,7 +2248,8 @@ class SiteReceiver(SiteSubSection):
 
     firmware = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Firmware Version'),
         help_text=_('Enter the receiver firmware version. Format: (A11)'),
         db_index=True
@@ -2364,7 +2411,7 @@ class SiteAntenna(SiteSubSection):
 
     serial_number = models.CharField(
         max_length=128,
-        blank=False,
+        blank=True,
         verbose_name=_('Serial Number'),
         help_text=_('Only Alpha Numeric Chars and - . Symbols allowed'),
         db_index=True
@@ -2373,7 +2420,8 @@ class SiteAntenna(SiteSubSection):
     # todo remove this b/c it belongs solely on antenna type?
     reference_point = EnumField(
         AntennaReferencePoint,
-        blank=False,
+        blank=True,
+        default=None,
         verbose_name=_('Antenna Reference Point'),
         null=True,
         help_text=_(
@@ -2391,6 +2439,9 @@ class SiteAntenna(SiteSubSection):
         srid=0,  # env is a local reference frame
         dim=3,
         verbose_name=_('Marker->ARP ENU Ecc (m)'),
+        default=None,
+        null=True,
+        blank=True,
         help_text=_(
             'East-North-Up eccentricity is the offset between the ARP and '
             'marker described in section 1 measured to an accuracy of 1mm. '
@@ -2399,8 +2450,9 @@ class SiteAntenna(SiteSubSection):
     )
 
     alignment = models.FloatField(
-        blank=False,
+        blank=True,
         null=True,
+        default=None,
         verbose_name=_('Alignment from True N (°)'),
         help_text=_(
             'Enter the clockwise offset from true north in degrees. The '
@@ -2619,7 +2671,8 @@ class SiteSurveyedLocalTies(SiteSubSection):
         srid=7789,
         dim=3,
         null=True,
-        blank=False,
+        blank=True,
+        default=None,
         db_index=True,
         help_text=_(
             'Enter the differential ITRF coordinates to one millimeter '
@@ -2726,8 +2779,9 @@ class SiteFrequencyStandard(SiteSubSection):
         FrequencyStandardType,
         max_length=50,
         strict=False,
-        blank=False,
+        blank=True,
         null=True,
+        default=None,
         verbose_name=_('Standard Type'),
         help_text=_(
             'Select whether the frequency standard is INTERNAL or EXTERNAL '
@@ -2757,8 +2811,9 @@ class SiteFrequencyStandard(SiteSubSection):
     )
 
     effective_start = models.DateField(
-        blank=False,
+        blank=True,
         null=True,
+        default=None,
         help_text=_(
             'Enter the effective start date for the frequency standard. '
             'Format: (CCYY-MM-DD)'
@@ -2835,7 +2890,8 @@ class SiteCollocation(SiteSubSection):
 
     instrument_type = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Instrumentation Type'),
         help_text=_('Select all collocated instrument types that apply'),
         db_index=True
@@ -2845,7 +2901,7 @@ class SiteCollocation(SiteSubSection):
         CollocationStatus,
         max_length=50,
         strict=False,
-        blank=False,
+        blank=True,
         null=True,
         default=None,
         verbose_name=_('Status'),
@@ -2865,8 +2921,9 @@ class SiteCollocation(SiteSubSection):
 
     effective_start = models.DateField(
         max_length=50,
-        blank=False,
+        blank=True,
         null=True,
+        default=None,
         help_text=_(
             'Enter the effective start date of the collocated instrument. '
             'Format: (CCYY-MM-DD)'
@@ -2877,6 +2934,7 @@ class SiteCollocation(SiteSubSection):
         max_length=50,
         blank=True,
         null=True,
+        default=None,
         help_text=_(
             'Enter the effective end date of the collocated instrument. '
             'Format: (CCYY-MM-DD)'
@@ -2932,7 +2990,8 @@ class MeteorologicalInstrumentation(SiteSubSection):
 
     manufacturer = models.CharField(
         max_length=255,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Manufacturer'),
         help_text=_("Enter manufacturer's name"),
         db_index=True
@@ -2948,7 +3007,8 @@ class MeteorologicalInstrumentation(SiteSubSection):
 
     height_diff = models.FloatField(
         null=True,
-        blank=False,
+        blank=True,
+        default=None,
         verbose_name=_('Height Diff to Ant (m)'),
         help_text=_(
             'In meters, enter the difference in height between the sensor and '
@@ -3051,7 +3111,8 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Humidity Sensor Model'),
         help_text=_('Enter humidity sensor model'),
         db_index=True
@@ -3193,7 +3254,8 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Temp. Sensor Model'),
         help_text=_('Enter temperature sensor model'),
         db_index=True
@@ -3269,7 +3331,8 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
 
     model = models.CharField(
         max_length=255,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Water Vapor Radiometer'),
         help_text=_('Enter water vapor radiometer'),
         db_index=True
@@ -3277,7 +3340,7 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
 
     distance_to_antenna = models.FloatField(
         default=None,
-        blank=False,
+        blank=True,
         null=True,
         verbose_name=_('Distance to Antenna (m)'),
         help_text=_(
@@ -3321,7 +3384,8 @@ class SiteOtherInstrumentation(SiteSubSection):
         return None
 
     instrumentation = models.TextField(
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Other Instrumentation'),
         help_text=_(
             'Enter any other relevant information regarding meteorological '
@@ -3640,13 +3704,15 @@ class AgencyPOC(SiteSection):
 
     agency = models.TextField(
         max_length=300,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Agency'),
         help_text=_('Enter contact agency name')
     )
     preferred_abbreviation = models.CharField(
         max_length=50,  # todo A10
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Preferred Abbreviation'),
         help_text=_("Enter the contact agency's preferred abbreviation"),
         db_index=True
@@ -3661,14 +3727,16 @@ class AgencyPOC(SiteSection):
 
     primary_name = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Contact Name'),
         help_text=_('Enter primary contact organization name'),
         db_index=True
     )
     primary_phone1 = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Telephone (primary)'),
         help_text=_('Enter primary contact primary phone number'),
         db_index=True
@@ -3690,7 +3758,8 @@ class AgencyPOC(SiteSection):
         db_index=True
     )
     primary_email = models.EmailField(
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('E-mail'),
         help_text=_(
             'Enter primary contact organization email address. MUST be a '
@@ -3858,14 +3927,16 @@ class SiteMoreInformation(SiteSection):
 
     primary = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Primary Data Center'),
         help_text=_('Enter the name of the primary operational data center'),
         db_index=True
     )
     secondary = models.CharField(
         max_length=50,
-        blank=False,
+        blank=True,
+        default='',
         verbose_name=_('Secondary Data Center'),
         help_text=_('Enter the name of the secondary or backup data center'),
         db_index=True

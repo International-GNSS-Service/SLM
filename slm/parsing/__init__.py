@@ -14,6 +14,10 @@ SPECIAL_CHARACTERS = '().,-_[]{}<>+%'
 NUMERIC_CHARACTERS = {'.', '+', '-'}
 
 
+class _Ignored:
+    pass
+
+
 def normalize(name):
     """
     Normalization is designed to remove any superficial variable name
@@ -537,7 +541,7 @@ def to_int(value):
 def to_date(value):
     if value.strip():
         if 'CCYY-MM-DD' in value.upper():
-            return None
+            return _Ignored
         try:
             return parse_date(value).date()
         except:
@@ -551,7 +555,7 @@ def to_date(value):
 def to_datetime(value):
     if value.strip():
         if 'CCYY-MM-DD' in value.upper():
-            return None
+            return _Ignored
         try:
             return parse_date(value)
         except:

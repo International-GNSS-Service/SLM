@@ -12,7 +12,7 @@ from slm.defines import (
 )
 from django.contrib.gis.geos import Point
 from slm.models import SatelliteSystem
-from slm.parsing import Finding
+from slm.parsing import Finding, _Ignored
 from slm.parsing.legacy.parser import (
     Ignored,
     Error,
@@ -55,10 +55,6 @@ def reg(name, header_index, bindings):
     for binding in [bindings] if isinstance(bindings, tuple) else bindings:
         param_registry.setdefault(header_index, {})[binding[0]] = name
     return normalize(name)
-
-
-class _Ignored:
-    pass
 
 
 def ignored(value):
@@ -111,7 +107,7 @@ def to_temp_stab(value):
             value.lower().replace(' ', '').replace('(', '').replace(')', '') ==
                 'degc+/-degc'
         ):
-            return None, None, None
+            return _Ignored, _Ignored, _Ignored
         raise ValueError(
             f'Unable to parse "{value}" into a temperature stabilization. '
             f'format: deg C +/- deg C'

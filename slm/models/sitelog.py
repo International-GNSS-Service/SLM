@@ -1415,7 +1415,10 @@ class SiteSection(gis_models.Model):
         self._init_values_ = {}
         deferred = self.get_deferred_fields()
         for field in self.site_log_fields():
-            if field not in deferred:
+            if field not in deferred and not isinstance(
+                self._meta.get_field(field),
+                (models.ManyToManyField, models.ForeignKey)
+            ):
                 self._init_values_[field] = getattr(self, field)
 
     def get_initial_value(self, field):

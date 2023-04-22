@@ -106,6 +106,12 @@ def to_temp_stab(value):
 
     stabilized, nominal, deviation = get_tuple()
     if value and stabilized is None and nominal is None and deviation is None:
+        # special EPN null case, where the null value is 'deg C +/- deg C'
+        if (
+            value.lower().replace(' ', '').replace('(', '').replace(')', '') ==
+                'degc+/-degc'
+        ):
+            return None, None, None
         raise ValueError(
             f'Unable to parse "{value}" into a temperature stabilization. '
             f'format: deg C +/- deg C'

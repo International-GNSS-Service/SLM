@@ -85,7 +85,7 @@ Template for Download page.
                 const unpublishBtn = fileActions.find('button[name="unpublish"]');
                 const publishBtn = fileActions.find('button[name="publish"]');
                 const deleteBtn = fileActions.find('button[name="delete"]');
-                const updateBtn = fileActions.find('button[name="update"]');
+                const updateBtn = $('button[name="update"]');
 
                 const deleteFile = function() {
                     slm.deleteFile("{{ station }}", {{ file.id }}).done(
@@ -136,18 +136,21 @@ Template for Download page.
                 }
 
                 const updateFile = function() {
+                    $('body').css('cursor', 'progress');
                     $.ajax({
                         url: slm.urls.reverse(
                             'slm_edit_api:files-detail',
-                            {'site': '{{ station }}', 'pk': {{file.id}}}
+                            {'site': '{{ station }}', 'pk': {{ file.id }}}
                         ),
                         method: 'PATCH',
                         data: $('form#slm-file-form').serialize()
                     }).done(
                         function(data, status, jqXHR) {
+                            $('body').css('cursor', 'default');
                             $('h2#slm-file-header span.slm-file-name').html(data['name']);
                             $('button#select-file-{{file.id}} span.slm-file-name').html(data['name']);
                             updateBtn.blur();
+                            window.scrollTo(0, 0);
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {

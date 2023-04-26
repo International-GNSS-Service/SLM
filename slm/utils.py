@@ -6,9 +6,12 @@ import json
 from PIL import Image, ExifTags
 import numpy as np
 from math import sqrt, atan2, cos, sin
+from datetime import datetime, date, timedelta
+from dateutil import parser as date_parser
 
 
 PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
+GPS_EPOCH = date(year=1980, month=1, day=6)
 
 
 def dddmmssss_to_decimal(dddmmssss):
@@ -131,6 +134,54 @@ def date_to_str(date_obj):
     if date_obj:
         return f'{date_obj.year}-{date_obj.month:02}-{date_obj.day:02}'
     return ''
+
+
+def gps_week(date_obj=datetime.now()):
+    """
+    Return GPS week number for a given datetime, date or date string
+    :param date_obj: Date object, datetime object or date string
+    :return: 2-tuple: GPS week number, GPS day of week
+    :raises ValueError: If date_obj is earlier than the GPS epoch
+    """
+    # todo move this to igs_tools
+    if date_obj is None:
+        date_obj = datetime.now().date()
+    if isinstance(date_obj, str):
+        date_obj = date_parser.parse(date_obj)
+    if isinstance(date_obj, datetime):
+        date_obj = date_obj.date()
+    delta = date_obj - GPS_EPOCH
+    if delta.days >= 0:
+        return delta.days // 7, delta.days % 7
+    raise ValueError(
+        f'{date_obj} is earlier than the GPS epoch {GPS_EPOCH}.'
+    )
+
+
+def date_from_gps_week(gps_week, day_of_week=0):
+    """
+    Return a date object for a given GPS week number and day of week
+    :param gps_week: GPS week number
+    :param day_of_week: GPS day of week, 0-6
+    :return: Date object
+    """
+    # todo move this to igs_tools
+    return GPS_EPOCH + timedelta(days=gps_week*7 + day_of_week)
+
+
+def day_of_year(date_obj=datetime.now()):
+    """
+    Return the day of the year for the given object representing a date.
+
+    :param date_obj: Date object, datetime object or date string
+    :return: integer day of year
+    """
+    # todo move this to igs_tools
+    if isinstance(date_obj, str):
+        date_obj = date_parser.parse(date_obj)
+    if isinstance(date_obj, datetime):
+        date_obj = date_obj.date()
+    return (date_obj - date(date_obj.year, 1, 1) + timedelta(days=1)).days
 
 
 def http_accepts(accepted_types, mimetype):

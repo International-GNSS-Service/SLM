@@ -322,14 +322,14 @@ def split_rows(iterable, row_length):
 
 
 @register.filter(name='rstrip')
-def absolute_url(to_strip, characters):
+def rstrip(to_strip, characters):
     if to_strip:
         return to_strip.rstrip(characters)
     return to_strip
 
 
 @register.filter(name='lstrip')
-def absolute_url(to_strip, characters):
+def lstrip(to_strip, characters):
     if to_strip:
         return to_strip.lstrip(characters)
     return to_strip

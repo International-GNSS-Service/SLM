@@ -74,6 +74,7 @@ from django.template.exceptions import TemplateDoesNotExist
 from enum import Enum
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django.template.loader import get_template
 
 
 User = get_user_model()
@@ -615,12 +616,12 @@ class AlertView(StationContextView):
     def get_template(self, alert):
         if alert.__class__ not in self.template_map:
             try:
-                self.template_map[alert.__class__] = Template(
+                self.template_map[alert.__class__] = get_template(
                     f'slm/alerts/{alert.__class__.__name__.lower()}.html'
                 )
             except TemplateDoesNotExist:
-                self.template_map[alert.__class__] = Template(
-                    'slm/alerts/base.html'
+                self.template_map[alert.__class__] = get_template(
+                    'slm/alerts/alert.html'
                 )
         return self.template_map[alert.__class__]
 
@@ -630,7 +631,9 @@ class AlertView(StationContextView):
         context = super().get_context_data(**kwargs)
         context.update({
             **self.alert.context,
-            'alert_template': self.get_template(self.alert).source,
+            'alert_template': self.get_template(
+                self.alert
+            ).origin.template_name,
             'exclude_targets': True
         })
         return context

@@ -27,6 +27,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from ckeditor_uploader.fields import RichTextUploadingField
+from datetime import timedelta
 import os
 
 
@@ -1043,6 +1044,101 @@ class UnpublishedFilesAlert(AutomatedAlertMixin, Alert):
         unique_together = ('site',)
         verbose_name_plural = ' Alerts: Unpublished Files'
         verbose_name = 'Unpublished Files'
+
+
+class SiteLogPublishedManager(AlertManager):
+
+    SUPPORTED_SIGNALS = {
+        'issue': {
+            slm_signals.site_published
+        }
+    }
+
+    def issue_from_signal(self, signal, site=None, **kwargs):
+        return self.create(
+            site=site,
+            issuer=getattr(kwargs.get('request', None), 'user', None),
+            detail=kwargs.get('detail', '') or ''
+        )
+
+class SiteLogPublishedQueryset(AlertQuerySet):
+    pass
+
+
+class SiteLogPublished(AutomatedAlertMixin, Alert):
+
+    DEFAULT_PRIORITY = 0
+
+    @property
+    def target_link(self):
+        return reverse('slm:download', kwargs={'station': self.target.name})
+
+    @property
+    def context(self):
+        return {
+            **super().context,
+            'site': self.site
+        }
+
+    @property
+    def target(self):
+        return self.site
+
+    site = models.OneToOneField(
+        'slm.Site',
+        null=False,
+        default=None,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text=_('The site this alert applies to.'),
+        related_name='published_alerts'
+    )
+
+    objects = SiteLogPublishedManager.from_queryset(
+        SiteLogPublishedQueryset
+    )()
+
+    def save(self, *args, **kwargs):
+        from slm.templatetags.slm import file_url
+        self.header = _('Log Published')
+        self.sticky = False
+        self.expires = self.expires or (now() + timedelta(hours=2))
+        self.send_email = True
+        self.level = AlertLevel.NOTICE
+        if not self.detail:
+            legacy_link = file_url(
+                reverse(
+                    'slm_public_api:download-detail',
+                    kwargs={
+                        'site': self.site.name,
+                        'format': 'log'
+                    }
+                )
+            )
+            gml_link = file_url(
+                reverse(
+                    'slm_public_api:download-detail',
+                    kwargs={
+                        'site': self.site.name,
+                        'format': 'xml'
+                    }
+                )
+            )
+            self.detail = _(
+                'An updated log has been published for this site. Download '
+                'the new {legacy_file} or the new {geodesyml_file}.'
+            ).format(
+                legacy_file=f'<a href="{legacy_link}" download>'
+                            f'{_("legacy file")}</a>',
+                geodesyml_file=f'<a href="{gml_link}" download>'
+                               f'{_("GeodesyML file")}</a>'
+            )
+        super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('site',)
+        verbose_name_plural = ' Alerts: Log Published'
+        verbose_name = 'Log Published'
 
 
 class UpdatesRejectedManager(AlertManager):

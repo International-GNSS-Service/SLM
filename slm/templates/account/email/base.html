@@ -31,9 +31,11 @@
         <hr>
 
         <div id="footer" style="margin-top: 5%; text-align: center;">
-            {% blocktrans with site_name=current_site.name site_domain=current_site.domain %}Thank you for using {{ site_name }}!
+            {% block email_preferences %}
+            {% endblock %}
+            {% trans 'Thank you for using' %} {{ current_site.name }}!
             <br>
-            {{ site_domain }}{% endblocktrans %}
+            {{ current_site.domain }}
         </div>
     </div>
 </div>

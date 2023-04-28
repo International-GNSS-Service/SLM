@@ -186,6 +186,82 @@ def check_automated_alerts(**kwargs):
     return errors
 
 
+def alert_save(sender, instance, created, raw, using, update_fields, **kwargs):
+    from slm.signals import alert_issued
+    if created:
+        alert_issued.send(sender=sender, alert=instance)
+
+
+def cache_realalert(sender, instance, using, **kwargs):
+    """
+    Cache real alert instance onto the model because we wont be able
+    to get it in post because it no longer exists.
+    """
+    #
+    instance._slm_real_alert = instance.get_real_instance()
+
+
+def alert_delete(sender, instance, using, **kwargs):
+    from slm.signals import alert_cleared
+    alert_cleared.send(
+        sender=sender,
+        alert=getattr(instance, '_slm_real_alert', instance)
+    )
+
+
+def site_init(sender, instance, **kwargs):
+    # publishing may be tracked through a status update or if the
+    # last_publish timestamp changes
+
+    # an infinite recursion loop is triggered if you access a deferred
+    # field in a model's init(). We guard against that case here, which
+    # can happen when related fields are deleted. Such cases should
+    # not involve a status update
+    deferred = instance.get_deferred_fields()
+    if 'status' not in deferred and 'last_publish' not in deferred:
+        instance._slm_pre_status = instance.status
+        instance._slm_last_publish = instance.last_publish
+        if instance.pk is None:
+            instance._slm_pre_status = None
+            instance._slm_last_publish = None
+
+
+def site_save(sender, instance, created, raw, using, update_fields, **kwargs):
+    from slm.models import Site
+    from slm.signals import site_status_changed
+    if (
+        hasattr(instance, '_slm_pre_status') and
+        instance._slm_pre_status != instance.status
+    ) or (
+        hasattr(instance, '_slm_last_publish') and
+        instance._slm_last_publish != instance.last_publish
+    ):
+        site_status_changed.send(
+            sender=Site,
+            site=instance,
+            previous_status=instance._slm_pre_status,
+            new_status=instance.status
+        )
+
+
+def user_save(sender, instance, created, raw, using, update_fields, **kwargs):
+    """Clear any relevant caches whenever a user is saved."""
+    clear_caches()
+
+
+def populate_groups(**kwargs):
+    from django.contrib.auth.models import Group, Permission
+    for group_name, permissions in getattr(
+            settings, 'SLM_DEFAULT_PERMISSION_GROUPS', {}
+    ).items():
+        group, created = Group.objects.get_or_create(name=group_name)
+        if created:
+            group.permissions.set(
+                Permission.objects.filter(codename__in=permissions)
+            )
+            group.save()
+
+
 class SLMConfig(AppConfig):
     name = 'slm'
 
@@ -195,7 +271,6 @@ class SLMConfig(AppConfig):
 
     def ready(self):
 
-        from slm import signals as slm_signals
         from slm.models import Site, Alert
         from django.contrib.auth import get_user_model
 
@@ -206,85 +281,15 @@ class SLMConfig(AppConfig):
         from slm.receivers import cleanup, index, alerts
         #######################################################################
 
-        @receiver(post_init, sender=Site)
-        def site_init(sender, instance, **kwargs):
-            # publishing may be tracked through a status update or if the
-            # last_publish timestamp changes
-
-            # an infinite recursion loop is triggered if you access a deferred
-            # field in a model's init(). We guard against that case here, which
-            # can happen when related fields are deleted. Such cases should
-            # not involve a status update
-            deferred = instance.get_deferred_fields()
-            if 'status' not in deferred and 'last_publish' not in deferred:
-                instance._slm_pre_status = instance.status
-                instance._slm_last_publish = instance.last_publish
-                if instance.pk is None:
-                    instance._slm_pre_status = None
-                    instance._slm_last_publish = None
-
-        @receiver(post_save, sender=Site)
-        def site_save(
-            sender, instance, created, raw, using, update_fields, **kwargs
-        ):
-            if (
-                hasattr(instance, '_slm_pre_status') and
-                instance._slm_pre_status != instance.status
-            ) or (
-                hasattr(instance, '_slm_last_publish') and
-                instance._slm_last_publish != instance.last_publish
-            ):
-                slm_signals.site_status_changed.send(
-                    sender=self,
-                    site=instance,
-                    previous_status=instance._slm_pre_status,
-                    new_status=instance.status
-                )
-
-        @receiver(post_save, sender=get_user_model())
-        def user_save(
-            sender, instance, created, raw, using, update_fields, **kwargs
-        ):
-            """Clear any relevant caches whenever a user is saved."""
-            clear_caches()
-
-        def alert_save(
-            sender, instance, created, raw, using, update_fields, **kwargs
-        ):
-            if created:
-                slm_signals.alert_issued.send(sender=sender, alert=instance)
-
-        def cache_realalert(sender, instance, using, **kwargs):
-            """
-            Cache real alert instance onto the model because we wont be able
-            to get it in post because it no longer exists.
-            """
-            #
-            instance._slm_real_alert = instance.get_real_instance()
-
-        def alert_delete(sender, instance, using, **kwargs):
-            slm_signals.alert_cleared.send(
-                sender=sender,
-                alert=getattr(instance, '_slm_real_alert', instance)
-            )
+        post_init.connect(site_init, sender=Site)
+        post_save.connect(site_save, sender=Site)
+        post_save.connect(user_save, sender=get_user_model())
+        post_migrate.connect(populate_groups)
 
         for alert in Alert.objects.classes():
             post_save.connect(alert_save, sender=alert)
             pre_delete.connect(cache_realalert, sender=Alert)
             post_delete.connect(alert_delete, sender=Alert)
-
-        @receiver(post_migrate)
-        def populate_groups(**kwargs):
-            from django.contrib.auth.models import Group, Permission
-            for group_name, permissions in getattr(
-                settings, 'SLM_DEFAULT_PERMISSION_GROUPS', {}
-            ).items():
-                group, created = Group.objects.get_or_create(name=group_name)
-                if created:
-                    group.permissions.set(
-                        Permission.objects.filter(codename__in=permissions)
-                    )
-                    group.save()
 
         # load schemas into memory - this can take a few moments and requires
         # a live internet connection

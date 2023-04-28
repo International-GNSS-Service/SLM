@@ -38,6 +38,7 @@ from slm.models import (
     ReviewRequested,
     UnpublishedFilesAlert,
     UpdatesRejected,
+    SiteLogPublished,
     AgencyAlert,
     SiteAlert,
     Antenna,
@@ -426,6 +427,12 @@ class ReviewRequestedAdmin(AlertChildAdmin):
 @admin.register(UnpublishedFilesAlert)
 class UnpublishedFilesAlertAdmin(AlertChildAdmin):
     base_model = UnpublishedFilesAlert
+    show_in_index = True
+
+
+@admin.register(SiteLogPublished)
+class SiteLogPublishedAdmin(AlertChildAdmin):
+    base_model = SiteLogPublished
     show_in_index = True
 
 

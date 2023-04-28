@@ -54,6 +54,7 @@ from slm.models.alerts import (
     AgencyAlert,
     GeodesyMLInvalid,
     ReviewRequested,
+    SiteLogPublished,
     UpdatesRejected,
     ImportAlert,
     UnpublishedFilesAlert

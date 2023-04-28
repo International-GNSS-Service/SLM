@@ -152,7 +152,14 @@ set_default(
                 'slm.signals.section_edited',
                 'slm.signals.section_deleted'
             ],
-            'level': AlertLevel.WARNING,
+            'level': AlertLevel.ERROR,
+            'send_email': True
+        },
+        'slm.SiteLogPublished': {
+            'issue': {
+                'slm.signals.site_published'
+            },
+            'level': AlertLevel.NOTICE,
             'send_email': True
         },
         'slm.UnpublishedFilesAlert': {

@@ -1,0 +1,6 @@
+{% extends "account/email/base.html" %}
+{% load slm i18n %}
+
+{% block email_preferences %}
+<p style="font-size: .75em;">{% trans 'You are receiving this email because your account is configured to be notified. You may adjust your email preferences in your' %} <a href="{{ ''|absolute_url|rstrip:'/' }}{% url 'slm:profile' %}">{% trans 'account profile.' %}</a></p>
+{% endblock %}

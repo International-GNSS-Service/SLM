@@ -154,7 +154,19 @@ set_default(
             ],
             'level': AlertLevel.WARNING,
             'send_email': True
-        }
+        },
+        'slm.UnpublishedFilesAlert': {
+            'issue': {
+                'slm.signals.site_file_uploaded',
+                'slm.signals.site_file_unpublished'
+            },
+            'rescind': [
+                'slm.signals.site_file_published',
+                'slm.signals.site_file_deleted'
+            ],
+            'level': AlertLevel.NOTICE,
+            'send_email': True
+        },
     }
 )
 

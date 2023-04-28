@@ -36,6 +36,7 @@ from slm.models import (
     SiteReceiver,
     GeodesyMLInvalid,
     ReviewRequested,
+    UnpublishedFilesAlert,
     UpdatesRejected,
     AgencyAlert,
     SiteAlert,
@@ -419,6 +420,12 @@ class GeodesyMLInvalidAdmin(AlertChildAdmin):
 @admin.register(ReviewRequested)
 class ReviewRequestedAdmin(AlertChildAdmin):
     base_model = ReviewRequested
+    show_in_index = True
+
+
+@admin.register(UnpublishedFilesAlert)
+class UnpublishedFilesAlertAdmin(AlertChildAdmin):
+    base_model = UnpublishedFilesAlert
     show_in_index = True
 
 

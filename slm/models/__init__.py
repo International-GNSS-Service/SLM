@@ -55,7 +55,8 @@ from slm.models.alerts import (
     GeodesyMLInvalid,
     ReviewRequested,
     UpdatesRejected,
-    ImportAlert
+    ImportAlert,
+    UnpublishedFilesAlert
 )
 from slm.models.user import User, UserProfile
 

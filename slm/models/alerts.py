@@ -940,6 +940,111 @@ class ReviewRequested(AutomatedAlertMixin, Alert):
         verbose_name = 'Review Requested'
 
 
+class UnpublishedFilesAlertManager(AlertManager):
+
+    SUPPORTED_SIGNALS = {
+        'issue': {
+            slm_signals.site_file_uploaded,
+            slm_signals.site_file_unpublished
+        },
+        'rescind': {
+            slm_signals.site_file_published,
+            slm_signals.site_file_deleted
+        }
+    }
+
+    def issue_from_signal(self, signal, site=None, **kwargs):
+        from slm.models import SiteFileUpload
+        from slm.defines import SLMFileType, SiteFileUploadStatus
+        self.check_issue_signal_supported(signal)
+        if site:
+            if (
+                hasattr(site, 'unpublished_files_alert') and
+                site.unpublished_files_alert
+            ):
+                site.unpublished_files_alert.timestamp = now()
+                site.unpublished_files_alert.save()
+            elif SiteFileUpload.objects.filter(
+                Q(site=site) &
+                ~Q(file_type=SLMFileType.SITE_LOG) &
+                Q(status=SiteFileUploadStatus.UNPUBLISHED)
+            ).exists():
+                return self.create(
+                    site=site,
+                    issuer=getattr(kwargs.get('request', None), 'user', None),
+                    detail=kwargs.get('detail', '') or ''
+                )
+
+    def rescind_from_signal(self, signal, site=None, **kwargs):
+        from slm.models import SiteFileUpload
+        from slm.defines import SLMFileType, SiteFileUploadStatus
+        self.check_rescind_signal_supported(signal)
+        if site:
+            if (
+                hasattr(site, 'unpublished_files_alert') and
+                site.unpublished_files_alert and
+                not SiteFileUpload.objects.filter(
+                    Q(site=site) &
+                    ~Q(file_type=SLMFileType.SITE_LOG) &
+                    Q(status=SiteFileUploadStatus.UNPUBLISHED)
+                ).exists()
+            ):
+                return self.filter(site=site).delete()
+
+
+class UnpublishedFilesAlertQueryset(AlertQuerySet):
+    pass
+
+
+class UnpublishedFilesAlert(AutomatedAlertMixin, Alert):
+
+    DEFAULT_PRIORITY = 0
+
+    @property
+    def target_link(self):
+        return reverse('slm:upload', kwargs={'station': self.target.name})
+
+    @property
+    def context(self):
+        return {
+            **super().context,
+            'site': self.site
+        }
+
+    @property
+    def target(self):
+        return self.site
+
+    site = models.OneToOneField(
+        'slm.Site',
+        null=False,
+        default=None,
+        blank=True,
+        on_delete=models.CASCADE,
+        help_text=_('The site this alert applies to.'),
+        related_name='unpublished_files_alert'
+    )
+
+    objects = UnpublishedFilesAlertManager.from_queryset(
+        UnpublishedFilesAlertQueryset
+    )()
+
+    def save(self, *args, **kwargs):
+        self.header = _('Unpublished Files')
+        self.sticky = True
+        self.expires = None
+        self.send_email = True
+        self.level = AlertLevel.NOTICE
+        if not self.detail:
+            self.detail = _('This site has unpublished files.')
+        super().save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('site',)
+        verbose_name_plural = ' Alerts: Unpublished Files'
+        verbose_name = 'Unpublished Files'
+
+
 class UpdatesRejectedManager(AlertManager):
 
     SUPPORTED_SIGNALS = {

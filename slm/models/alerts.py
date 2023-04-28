@@ -477,8 +477,8 @@ class Alert(PolymorphicModel):
         from django.contrib.auth import get_user_model
         text = get_template(self.template_txt)
         html = get_template(self.template_html)
-        html_ok = self.untargeted or (
-            not (self.users.emails_ok(html=False).count())
+        html_ok = bool(
+            self.untargeted or (self.users.emails_ok(html=True).count())
         )
 
         context = self.context

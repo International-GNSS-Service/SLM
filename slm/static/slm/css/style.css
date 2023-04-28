@@ -470,12 +470,22 @@ span.slm-parse-error {
 .slm-log-delete {
     border-left-color: #D3D3D3;
 }
+.slm-log-attachment-deleted,
+.slm-log-image-deleted {
+    border-left-color: #EB0000;
+}
 .slm-log-add,
 .slm-log-update {
     border-left-color: #0079AD;
 }
+.slm-log-image-published,
+.slm-log-attachment-published,
 .slm-log-publish {
     border-left-color: #0D820D;
+}
+.slm-log-image-unpublished,
+.slm-log-attachment-unpublished {
+    border-left-color: #0079AD;
 }
 .slm-log-site-proposed {
     border-left-color: #913D88;
@@ -508,8 +518,16 @@ span.badge.slm-log-update {
     background-color: #0079AD;
     color: white;
 }
+span.badge.slm-log-image-published,
+span.badge.slm-log-attachment-published,
 span.badge.slm-log-publish {
     background-color: green;
+    color: white;
+}
+
+span.badge.slm-log-attachment-unpublished,
+span.badge.slm-log-image-unpublished {
+    background-color: #0079AD;
     color: white;
 }
 span.badge.slm-log-site-proposed {
@@ -519,6 +537,11 @@ span.badge.slm-log-site-proposed {
 span.badge.slm-log-delete {
     background-color: #D3D3D3;
     color: black;
+}
+span.badge.slm-log-attachment-deleted,
+span.badge.slm-log-image-deleted {
+    background-color: #EB0000;
+    color: white;
 }
 span.badge.slm-log-log-upload {
     background-color: #006EDB;

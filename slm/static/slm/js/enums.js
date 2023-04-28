@@ -10,6 +10,12 @@ class LogEntryType {
     static LOG_UPLOAD = new LogEntryType(6, 'Log Upload', 'slm-log-log-upload');
     static IMAGE_UPLOAD = new LogEntryType(7, 'Image Upload', 'slm-log-image-upload');
     static ATTACHMENT_UPLOAD = new LogEntryType(8, 'Attachment Upload', 'slm-log-attachment-upload');
+    static IMAGE_PUBLISH = new LogEntryType(9, 'Image Published', 'slm-log-image-published');
+    static ATTACHMENT_PUBLISH = new LogEntryType(10, 'Attachment Published', 'slm-log-attachment-published');
+    static IMAGE_UNPUBLISH = new LogEntryType(11, 'Image Unpublished', 'slm-log-image-unpublished');
+    static ATTACHMENT_UNPUBLISH = new LogEntryType(12, 'Attachment Unpublished', 'slm-log-attachment-unpublished');
+    static IMAGE_DELETE = new LogEntryType(13, 'Image Deleted', 'slm-log-image-deleted');
+    static ATTACHMENT_DELETE = new LogEntryType(14, 'Attachment Deleted', 'slm-log-attachment-deleted');
 
     constructor(val, label, css) {
         this.val = val;
@@ -39,6 +45,18 @@ class LogEntryType {
                 return LogEntryType.IMAGE_UPLOAD;
             case 8:
                 return LogEntryType.ATTACHMENT_UPLOAD;
+            case 9:
+                return LogEntryType.IMAGE_PUBLISH;
+            case 10:
+                return LogEntryType.ATTACHMENT_PUBLISH;
+            case 11:
+                return LogEntryType.IMAGE_UNPUBLISH;
+            case 12:
+                return LogEntryType.ATTACHMENT_UNPUBLISH;
+            case 13:
+                return LogEntryType.IMAGE_DELETE;
+            case 14:
+                return LogEntryType.ATTACHMENT_DELETE;
         }
         return null;
     }

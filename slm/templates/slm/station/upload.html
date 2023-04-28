@@ -109,10 +109,12 @@ Template for Download page.
                 }
 
                 const publishFile = function(publish) {
+                    $('body').css('cursor', 'progress');
                     let btn = $('button#select-file-{{ file.id }}');
                     let oldStatus = slm.SiteFileUploadStatus.get(btn.data('slmFileStatus'));
                     slm.publishFile("{{ station }}", {{ file.id }}, publish).done(
                         function(data, status, jqXHR) {
+                            $('body').css('cursor', 'default');
                             let newStatus = slm.SiteFileUploadStatus.get(data.status);
                             publishBtn.hide();
                             unpublishBtn.hide();
@@ -128,8 +130,8 @@ Template for Download page.
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {
-                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
-                            $('body').html(jqXHR.responseText);
+                            $('body').css('cursor', 'default');
+                            alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
                             console.log(jqXHR);
                         }
                     );
@@ -154,8 +156,8 @@ Template for Download page.
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {
-                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
-                            $('body').html(jqXHR.responseText);
+                            $('body').css('cursor', 'default');
+                            alert(`{% trans 'Update failed:' %}: ${jqXHR.responseText}`);
                             console.log(jqXHR);
                         }
                     );
@@ -174,6 +176,7 @@ Template for Download page.
 
             Dropzone.autoDiscover = false;
             let numFiles = 0;
+            let completedFiles = 0;
             // Dropzone has been added as a global variable.
             const dropzone = new Dropzone(
               "div#sitefile-upload",
@@ -191,6 +194,7 @@ Template for Download page.
                         numFiles += 1;
                     });
                     this.on("complete", function (file) {
+                        completedFiles += 1;
                         if (file.xhr.status < 300) {
                             let response = JSON.parse(file.xhr.responseText);
                             if (numFiles === 1) {
@@ -226,11 +230,14 @@ Template for Download page.
                                 slm.updateFileBadges(1);
                             }
                         }
-                        initFileList($("#slm-file-list"));
+                        if (completedFiles === numFiles) {
+                            initFileList($("#slm-file-list"));
+                        }
                     });
                 },
                 error: function(file, message, xhr) {
                     console.log(xhr);
+                    completedFiles += 1;
                     if (numFiles === 1) {
                         window.location = slm.urls.reverse(
                             'slm:upload', {

@@ -69,7 +69,8 @@ from slm.defines import (
     SiteFileUploadStatus,
     SiteLogFormat,
     SLMFileType,
-    ISOCountry
+    ISOCountry,
+    CardinalDirection
 )
 from slm.parsing.legacy.parser import Error, Warn
 from slm.models import (
@@ -1353,6 +1354,18 @@ class SiteFileUploadViewSet(
             self.request.user
         ).filter(site=self.site)
 
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        if instance.file_type is not SLMFileType.SITE_LOG:
+            slm_signals.site_file_deleted.send(
+                sender=self,
+                site=self.site,
+                user=self.original_request.user,
+                timestamp=now(),
+                request=self.original_request,
+                upload=instance
+            )
+
     def create(self, request, *args, **kwargs):
         with transaction.atomic():
 
@@ -1450,6 +1463,32 @@ class SiteFileUploadViewSet(
                         f'Unsupported site log upload format.',
                         status=400
                     )
+            elif upload.file_type is SLMFileType.SITE_IMAGE:
+                # automagically set the view direction if its specified on
+                # the filename
+                if upload.direction is None:
+                    lower_name = upload.name.lower()
+                    if 'north' in lower_name:
+                        upload.direction = CardinalDirection.NORTH
+                        if 'east' in lower_name:
+                            upload.direction = CardinalDirection.NORTH_EAST
+                        elif 'west' in lower_name:
+                            upload.direction = CardinalDirection.NORTH_WEST
+                        upload.save()
+                    elif 'south' in lower_name:
+                        upload.direction = CardinalDirection.SOUTH
+                        if 'east' in lower_name:
+                            upload.direction = CardinalDirection.SOUTH_EAST
+                        elif 'west' in lower_name:
+                            upload.direction = CardinalDirection.SOUTH_WEST
+                        upload.save()
+                    elif 'east' in lower_name:
+                        upload.direction = CardinalDirection.EAST
+                        upload.save()
+                    elif 'west' in lower_name:
+                        upload.direction = CardinalDirection.WEST
+                        upload.save()
+
         upload.site.synchronize()
         return Response(
             self.get_serializer(instance=upload).data,
@@ -1476,7 +1515,33 @@ class SiteFileUploadViewSet(
             raise PermissionDenied(
                 f'Files may only be published or unpublished.'
             )
+        status = serializer.instance.status
         super().perform_update(serializer)
+
+        if (status, serializer.instance.status) == (
+                SiteFileUploadStatus.UNPUBLISHED,
+                SiteFileUploadStatus.PUBLISHED
+        ):
+            slm_signals.site_file_published.send(
+                sender=self,
+                site=self.site,
+                user=self.original_request.user,
+                timestamp=now(),
+                request=self.original_request,
+                upload=serializer.instance
+            )
+        elif (status, serializer.instance.status) == (
+                SiteFileUploadStatus.PUBLISHED,
+                SiteFileUploadStatus.UNPUBLISHED
+        ):
+            slm_signals.site_file_unpublished.send(
+                sender=self,
+                site=self.site,
+                user=self.original_request.user,
+                timestamp=now(),
+                request=self.original_request,
+                upload=serializer.instance
+            )
         self.site.synchronize()
 
     def update_from_legacy(self, request, parsed):

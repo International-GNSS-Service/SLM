@@ -163,3 +163,12 @@ set_default(
 # path stem mount point for the included apps' URLs and the second element is
 # the string that will be passed to django.urls.include
 SLM_URL_MOUNTS = []
+
+
+# control the domain used to generate absolute links to the SLM log document
+# attachments including images and files. Any standalone artifacts produced by
+# the slm that include links to files served by the SLM will use this domain
+# as the stem. If empty the default site domain will be used. You probably
+# do not need to set this field unless you are serving files off a different
+# instance than the instance that generates serialized artifacts
+SLM_FILE_DOMAIN = None

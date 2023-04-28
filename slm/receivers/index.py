@@ -17,3 +17,48 @@ def index_site(sender, site, previous_status, new_status, **kwargs):
 def publish_site(sender, site, **kwargs):
     from slm.models import ArchiveIndex
     ArchiveIndex.objects.add_index(site)
+
+
+# for image and file attachment changes we simply regenerate the GeodesyML file
+# at the current index. This can lead to some GeodesyML files with different
+# attachment lists but the same file name in circulation. An alternative
+# approach would be to generate a new index for each attachment change but this
+# would produce lots of identical legacy logs with different timestamps/names.
+# The current approach is fine for now - the attachments are largely of
+# ancillary benefit.
+@receiver(slm_signals.site_file_published)
+def log_file_published(
+    sender, site, user, timestamp, request, upload, **kwargs
+):
+    from slm.models import ArchiveIndex
+    from slm.defines import SiteLogFormat
+    ArchiveIndex.objects.regenerate(
+        site,
+        log_format=SiteLogFormat.GEODESY_ML
+    )
+
+
+@receiver(slm_signals.site_file_unpublished)
+def log_file_unpublished(
+    sender, site, user, timestamp, request, upload, **kwargs
+):
+    from slm.models import ArchiveIndex
+    from slm.defines import SiteLogFormat
+    ArchiveIndex.objects.regenerate(
+        site,
+        log_format=SiteLogFormat.GEODESY_ML
+    )
+
+
+@receiver(slm_signals.site_file_deleted)
+def log_file_deleted(sender, site, user, timestamp, request, upload, **kwargs):
+    from slm.defines import SLMFileType, SiteFileUploadStatus, SiteLogFormat
+    from slm.models import ArchiveIndex
+    if (
+        upload.status is SiteFileUploadStatus.PUBLISHED and
+        upload.file_type in [SLMFileType.SITE_IMAGE, SLMFileType.ATTACHMENT]
+    ):
+        ArchiveIndex.objects.regenerate(
+            site,
+            log_format=SiteLogFormat.GEODESY_ML
+        )

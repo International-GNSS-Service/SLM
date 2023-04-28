@@ -340,6 +340,14 @@ def absolute_url(path, request=None):
     return build_absolute_url(path, request=request)
 
 
+@register.filter(name='file_url')
+def file_url(path, request=None):
+    file_domain = getattr(settings, 'SLM_FILE_DOMAIN', None)
+    if file_domain:
+        return f'{file_domain.rstrip("/")}/{path.lstrip("/")}'
+    return absolute_url(path, request=request)
+
+
 @register.filter(name='contact')
 def contact(agency, ctype):
     return {

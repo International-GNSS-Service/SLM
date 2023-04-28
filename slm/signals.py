@@ -139,12 +139,13 @@ Sent when a user uploads a site log.
 site_file_uploaded = Signal()
 
 """
-Sent when a user uploads a site log.
+Sent when a moderator publishes a site file upload - could be an attachment or
+an image.
 
 :param sender: The sending object (unreliable).
 :param site: The Site object. 
-:param user: The user that uploaded the site log.
-:param timestamp: The time the site log was uploaded.
+:param user: The user that published the file.
+:param timestamp: The time the file was published.
 :param request: The Django request object that contained the upload.
 :param upload: The uploaded file (SiteFileUpload).
 :param kwargs: Misc other key word arguments
@@ -153,17 +154,33 @@ site_file_published = Signal()
 
 
 """
-Sent when a user uploads a site log.
+Sent when a moderator unpublishes a site file upload - could be an attachment
+or an image.
 
 :param sender: The sending object (unreliable).
 :param site: The Site object. 
-:param user: The user that uploaded the site log.
-:param timestamp: The time the site log was uploaded.
+:param user: The user that unpublished the file.
+:param timestamp: The time the file was unpublished.
 :param request: The Django request object that contained the upload.
 :param upload: The uploaded file (SiteFileUpload).
 :param kwargs: Misc other key word arguments
 """
 site_file_unpublished = Signal()
+
+
+"""
+Sent when a user deletes a site file upload through the API. The file must be
+a type other than a site log - could be an attachment or an image.
+
+:param sender: The sending object (unreliable).
+:param site: The Site object. 
+:param user: The user that deleted the file.
+:param timestamp: The time the file was deleted.
+:param request: The Django request object that contained the upload.
+:param upload: The uploaded file (SiteFileUpload).
+:param kwargs: Misc other key word arguments
+"""
+site_file_deleted = Signal()
 
 
 """

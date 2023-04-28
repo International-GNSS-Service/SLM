@@ -27,6 +27,23 @@ from django.utils.translation import gettext_lazy as _
 
 class ArchiveIndexManager(models.Manager):
 
+    def regenerate(self, site, log_format):
+        """
+        Regenerate the index file for this index. This will only be done for
+        the head index for this file.
+
+        :param site: The site to regenerate the archived index file for.
+        :param log_format: The log format to regenerate.
+        """
+        new_file = ArchivedSiteLog.objects.from_index(
+            index=self.get_queryset().filter(
+                site=site
+            ).order_by('-begin').first(),
+            log_format=log_format,
+            regenerate=True
+        )
+        return new_file
+
     def add_index(self, site):
         existing = self.filter(site=site, begin=site.last_publish).first()
         if existing:
@@ -285,12 +302,14 @@ class ArchivedSiteLogManager(models.Manager):
     file does not exist.
     """
 
-    def from_index(self, index, log_format):
+    def from_index(self, index, log_format, regenerate=False):
         from slm.api.serializers import SiteLogSerializer
         if index:
             file = index.files.filter(log_format=log_format).first()
-            if file:
+            if file and not regenerate:
                 return file
+            elif file:
+                file.delete()
             return self.model.objects.create(
                 site=index.site,
                 log_format=log_format,

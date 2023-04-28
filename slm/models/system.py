@@ -625,6 +625,14 @@ class LogEntry(PolymorphicModel):
                 'slm:upload',
                 kwargs={'station': self.site.name, 'file': self.file.id}
             )
+        elif self.type in {
+            LogEntryType.ATTACHMENT_DELETE,
+            LogEntryType.IMAGE_DELETE
+        }:
+            return reverse(
+                'slm:upload',
+                kwargs={'station': self.site.name}
+            )
         elif hasattr(self, 'site') and self.site:
             return reverse('slm:review', kwargs={'station': self.site.name})
         return None

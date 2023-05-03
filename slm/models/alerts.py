@@ -27,8 +27,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from ckeditor_uploader.fields import RichTextUploadingField
-from datetime import timedelta
 import os
+from django.db import transaction
 
 
 class AlertManager(PolymorphicManager):
@@ -970,11 +970,18 @@ class UnpublishedFilesAlertManager(AlertManager):
                 ~Q(file_type=SLMFileType.SITE_LOG) &
                 Q(status=SiteFileUploadStatus.UNPUBLISHED)
             ).exists():
-                return self.create(
-                    site=site,
-                    issuer=getattr(kwargs.get('request', None), 'user', None),
-                    detail=kwargs.get('detail', '') or ''
-                )
+                with transaction.atomic():
+                    return self.update_or_create(
+                        site=site,
+                        defaults={
+                            'issuer': getattr(
+                                kwargs.get('request', None),
+                                'user',
+                                None
+                            ),
+                            'detail': kwargs.get('detail', '') or ''
+                        }
+                    )[0]
 
     def rescind_from_signal(self, signal, site=None, **kwargs):
         from slm.models import SiteFileUpload
@@ -1061,6 +1068,7 @@ class SiteLogPublishedManager(AlertManager):
             detail=kwargs.get('detail', '') or ''
         )
 
+
 class SiteLogPublishedQueryset(AlertQuerySet):
     pass
 
@@ -1102,7 +1110,10 @@ class SiteLogPublished(AutomatedAlertMixin, Alert):
         from slm.templatetags.slm import file_url
         self.header = _('Log Published')
         self.sticky = False
-        self.expires = self.expires or (now() + timedelta(hours=2))
+        # by default expire these alerts immediately - this will mean any
+        # configured emails will go out but the alert will never be visible
+        # in the system interface
+        self.expires = self.expires or now()
         self.send_email = True
         self.level = AlertLevel.NOTICE
         if not self.detail:

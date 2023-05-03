@@ -235,7 +235,7 @@ Add new section capability is not functional.
                 <div class="card">
                     <div class="card-image">
                         <a href="{{ photo.link }}" data-fancybox="gallery" data-caption="{{ photo.description|default:photo.name }} - {{ photo.created.date|default:photo.timestamp.date }}">
-                            <img src="{{ photo.thumbnail_link }}" alt="Photos">
+                            <img src="{{ photo.thumbnail_link }}" alt="Photos" style="image-orientation: none">
                         </a>
                     </div>
                 </div>

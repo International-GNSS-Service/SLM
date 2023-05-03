@@ -74,7 +74,7 @@ set_default(
 
 # generated image thumbnail size in pixels - this is a tuple of maximum width
 # and height - the aspect ratio will be preserved
-set_default('SLM_THUMBNAIL_SIZE', (250, 250))
+set_default('SLM_THUMBNAIL_SIZE', 250)
 
 # during deploy the current Site will be set to SLM_SITE_NAME, SLM_ORG_NAME
 # The name of the organization used in communications

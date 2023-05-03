@@ -251,8 +251,18 @@ class SiteFile(models.Model):
         help_text=_('The site log format. (Only if file_type is Site Log)')
     )
 
+    def rotate(self, degrees_ccw=90):
+        if self.file and self.file_type is SLMFileType.SITE_IMAGE:
+            from PIL import Image
+            img = Image.open(self.file.path)
+            out = img.rotate(int(degrees_ccw), expand=True)
+            out.save(self.file.path)
+            self.generate_thumbnail(regenerate=True)
+
     def save(self, *args, **kwargs):
         self._discover_type()
+        if self.pk is None:
+            self._exif_transpose()
         self.generate_thumbnail()
         if self.file:
             self.size = self.file.size
@@ -300,6 +310,25 @@ class SiteFile(models.Model):
 
         return file_type, log_format
 
+    def _exif_transpose(self):
+        """
+        Transpose the image to match the EXIF orientation if it exists and
+        is other than 1.
+        :return:
+        """
+        if self.file_type is SLMFileType.SITE_IMAGE and self.file:
+            from PIL import ImageOps
+            buffer = BytesIO()
+            ImageOps.exif_transpose(
+                Image.open(self.file.open('rb'))
+            ).save(buffer, format=self.mimetype.split('/')[1].upper())
+            buffer.seek(0)
+            self.file.save(
+                self.file.name,
+                ContentFile(buffer.read()),
+                save=False,
+            )
+
     def generate_thumbnail(self, regenerate=False):
         """
         Generate a thumbnail image for this file if it is an image.
@@ -308,13 +337,16 @@ class SiteFile(models.Model):
         :return:
         """
         if (
-            self.file_type == SLMFileType.SITE_IMAGE and
+            self.file_type is SLMFileType.SITE_IMAGE and
             (regenerate or not self.has_thumbnail) and self.file.path
         ):
             try:
                 image = Image.open(self.file.open('rb')).copy().convert('RGB')
+                max_dim = getattr(settings, 'SLM_THUMBNAIL_SIZE', 250)
                 image.thumbnail(
-                    getattr(settings, 'SLM_THUMBNAIL_SIZE', (250, 250)),
+                    (image.width * (max_dim / image.height), max_dim)
+                    if image.height > image.width else
+                    (max_dim, image.height * (max_dim / image.width)),
                     Image.ANTIALIAS
                 )
                 buffer = BytesIO()

@@ -596,7 +596,6 @@ class SiteQuerySet(models.QuerySet):
             for field, name in fields.items()
         })
 
-
     def with_info_fields(self, *fields, **renamed_fields):
         """
         Annotate the given identification fields valid now onto the site
@@ -945,7 +944,8 @@ class Site(models.Model):
                 ) if section.subsection else
                 getattr(self, section.accessor)._current(
                     epoch=epoch,
-                    published=published
+                    published=published,
+                    #is_deleted=False todo can this happen?
                 ).first()
             )
 

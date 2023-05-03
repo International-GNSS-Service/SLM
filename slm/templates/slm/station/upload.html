@@ -52,6 +52,10 @@ Template for Download page.
                     <p class="fs-5"><strong>{% trans "Date Uploaded:" %}</strong> {{ file.timestamp.date }}</p>
                   </div>
                 <div id="file-actions" class="d-flex justify-content-end align-items-center">
+                    {% if file.file_type == SLMFileType.SITE_IMAGE %}
+                    <button name="rotate" onclick="rotate(90);" type="button" class="btn btn-primary"><i class="bi bi-arrow-counterclockwise"></i></button>
+                    <button name="rotate" onclick="rotate(-90);" type="button" class="btn btn-primary"><i class="bi bi-arrow-clockwise"></i></button>
+                    {% endif %}
                     {% if can_publish %}
                     <button name="unpublish" onclick="publishFile(false);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.PUBLISHED %}display: none{% endif %}">{% trans 'Unpublish' %}</button>
                     <button name="publish" onclick="publishFile(true);" type="button" class="btn btn-primary" style="{% if file.status != SiteFileUploadStatus.UNPUBLISHED %}display: none{% endif %}">{% trans 'Publish' %}</button>
@@ -87,6 +91,19 @@ Template for Download page.
                 const deleteBtn = fileActions.find('button[name="delete"]');
                 const updateBtn = $('button[name="update"]');
 
+                const rotate = function(degrees) {
+                    slm.rotateImage(degrees, {{ file.id }}).done(
+                        function(data, status, jqXHR) {
+                            location.reload();
+                        }
+                    ).fail(
+                        function(jqXHR, textStatus, errorThrown) {
+                            alert(`{% trans 'Rotate failed:' %}: ${jqXHR.responseText}`);
+                            console.log(jqXHR);
+                        }
+                    );
+                }
+
                 const deleteFile = function() {
                     slm.deleteFile("{{ station }}", {{ file.id }}).done(
                         function(data, status, jqXHR) {
@@ -101,8 +118,7 @@ Template for Download page.
                         }
                     ).fail(
                         function(jqXHR, textStatus, errorThrown) {
-                            //alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
-                            $('body').html(jqXHR.responseText);
+                            alert(`{% trans 'Delete failed:' %}: ${jqXHR.responseText}`);
                             console.log(jqXHR);
                         }
                     );

@@ -6,7 +6,12 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from slm.models import ArchivedSiteLog, SiteFileUpload, GeodesyMLInvalid
+from slm.models import (
+    ArchivedSiteLog,
+    SiteFileUpload,
+    GeodesyMLInvalid,
+    SiteFile
+)
 
 
 def cleanup(file_path):
@@ -27,8 +32,11 @@ def cleanup(file_path):
         file_path = file_path.parent
 
 
-@receiver(pre_delete, sender=[
-    SiteFileUpload, ArchivedSiteLog, GeodesyMLInvalid
-])
+@receiver(pre_delete, sender=ArchivedSiteLog)
+@receiver(pre_delete, sender=SiteFileUpload)
+@receiver(pre_delete, sender=SiteFile)
+@receiver(pre_delete, sender=GeodesyMLInvalid)
 def file_deleted(sender, instance, using, **kwargs):
     transaction.on_commit(lambda: cleanup(instance.file.path))
+    if hasattr(instance, 'thumbnail') and instance.thumbnail:
+        transaction.on_commit(lambda: cleanup(instance.thumbnail.path))

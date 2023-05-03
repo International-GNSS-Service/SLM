@@ -782,6 +782,14 @@ slm.publish = function(siteId) {
     });
 }
 
+slm.rotateImage = function(degrees, fileId) {
+    return $.ajax({
+        url: slm.urls.reverse(
+            'slm_edit_api:image-detail',
+            {kwargs: {'pk': fileId}, query: {'rotate': degrees}})
+    });
+}
+
 slm.deleteFile = function(station, fileId) {
     return $.ajax({
         url: slm.urls.reverse(

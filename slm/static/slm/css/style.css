@@ -34,6 +34,10 @@ span.slm-section-header {
     text-decoration: underline;
 }
 
+img.fancybox-image {
+    image-orientation: none;
+}
+
 
 
 /*------- Layout CSS -------*/

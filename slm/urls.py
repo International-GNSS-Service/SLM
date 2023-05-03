@@ -75,7 +75,8 @@ APIS = {
         ('request_review', edit_views.ReviewRequestView),
         ('reject_updates', edit_views.RejectUpdatesView),
         ('agency', edit_views.AgencyViewSet),
-        ('network', edit_views.NetworkViewSet)
+        ('network', edit_views.NetworkViewSet),
+        ('image', edit_views.ImageOperationsViewSet)
     ],
     'public': [
         ('stations', public_views.StationListViewSet),

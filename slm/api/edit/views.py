@@ -1368,7 +1368,6 @@ class SiteFileUploadViewSet(
 
     def create(self, request, *args, **kwargs):
         with transaction.atomic():
-
             if 'file' not in request.FILES:
                 return Response(
                     f"Expected a file upload with name 'file'.",
@@ -1731,3 +1730,28 @@ class SiteFileUploadViewSet(
             # note this might not match the name on disk
             as_attachment=True
         )
+
+
+class ImageOperationsViewSet(
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated, CanEditSite)
+
+    def get_queryset(self):
+        return SiteFileUpload.objects.filter(
+            file_type=SLMFileType.SITE_IMAGE
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        rotate = request.GET.get('rotate', None)
+        try:
+            if rotate:
+                file = self.get_object()
+                file.rotate(int(rotate))
+        except ValueError:
+            return Response(
+                {'rotate': 'rotate must be an integer'},
+                status=400
+            )
+        return Response(status=204)

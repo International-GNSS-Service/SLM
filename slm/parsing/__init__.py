@@ -156,7 +156,9 @@ class BaseSection:
         self._param_binding_ = self._param_binding_ or {}
         return self._param_binding_.get(
             name,
-            [self.parameters.get(normalize(name), [])]
+            [self.parameters[normalize(name)]]
+            if normalize(name) in self.parameters
+            else []
         )
 
     def bind(self, name, parameter, value):

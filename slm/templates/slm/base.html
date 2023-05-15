@@ -16,6 +16,8 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% block analytics_head %}
+    {% endblock analytics_head %}
     {% block head %}
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,7 +73,11 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
 </head>
 
 <body>
-<!-- Django message alert icons, these are referenced from message divs -->
+
+    {% block analytics_body %}
+    {% endblock analytics_body %}
+
+    <!-- Django message alert icons, these are referenced from message divs -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
       <symbol id="debug-msg" fill="currentColor" viewBox="0 0 16 16">
         <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/>

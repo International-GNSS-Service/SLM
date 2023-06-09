@@ -288,12 +288,12 @@ class SiteFile(models.Model):
         if mimetype == SiteLogFormat.LEGACY.mimetype:
             # todo - better criteria??
             upl = file.open()
-            content = upl.read().decode()
+            content = upl.read()
             if (
-                'Site Identification of the GNSS Monument' in content and
-                'Site Location Information' in content and
-                'GNSS Receiver Information' in content and
-                'GNSS Antenna Information' in content
+                b'Site Identification of the GNSS Monument' in content and
+                b'Site Location Information' in content and
+                b'GNSS Receiver Information' in content and
+                b'GNSS Antenna Information' in content
             ):
                 return SLMFileType.SITE_LOG, SiteLogFormat.LEGACY
         elif mimetype == SiteLogFormat.GEODESY_ML.mimetype:
@@ -558,6 +558,11 @@ class SiteFileUpload(SiteFile):
     def thumbnail_link(self):
         lnk = reverse('slm_public_api:files-detail', kwargs={'pk': self.pk})
         return f'{lnk}?thumbnail=1'
+
+    @property
+    def edit_thumbnail_link(self):
+        lnk = reverse('slm_edit_api:files-detail', kwargs={'pk': self.pk, 'site': self.site.name})
+        return f'{lnk}?thumbnail=1&download'
 
     class Meta:
         ordering = ('-timestamp',)

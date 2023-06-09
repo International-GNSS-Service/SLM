@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 from slm.utils import to_snake_case, build_absolute_url
 from django.urls import resolve
 from slm.utils import decimal_to_dddmmssss
+from chardet import detect
 
 
 register = template.Library()
@@ -258,7 +259,15 @@ def file_icon(file):
 @register.filter(name='file_lines')
 def file_lines(file):
     if file and os.path.exists(file.file.path):
-        return file.file.open().read().decode().split('\n')
+        content = file.file.open().read()
+        encoding = detect(content).get('encoding', 'utf-8')
+        try:
+            return content.decode(encoding).split('\n')
+        except Exception:
+            return [
+                '** Unable to determine encoding for file - please upload as'
+                ' UTF-8. **'
+            ]
     return ['']
 
 

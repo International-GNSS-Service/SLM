@@ -116,6 +116,7 @@ from crispy_forms.helper import FormHelper
 import json
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.geos import Point
+from chardet import detect
 
 
 class StationFilterForm(BaseStationFilterForm):
@@ -1395,12 +1396,27 @@ class SiteFileUploadViewSet(
                 if upload.log_format is SiteLogFormat.LEGACY:
                     with upload.file.open() as uplf:
                         content = uplf.read()
-                        bound_log = SiteLogBinder(
-                            SiteLogParser(
-                                content.decode(),
-                                site_name=self.site.name
+                        encoding = detect(content).get('encoding', 'utf-8')
+                        try:
+                            bound_log = SiteLogBinder(
+                                SiteLogParser(
+                                    content.decode(encoding),
+                                    site_name=self.site.name
+                                )
+                            ).parsed
+                        except (UnicodeDecodeError, LookupError):
+                            upload.status = SiteFileUploadStatus.INVALID
+                            upload.save()
+                            return Response({
+                                'file': upload.id,
+                                'error': _(
+                                    'Unable to decode this text file - please '
+                                    'ensure the file is encoded in UTF-8 and '
+                                    'try again.'
+                                )
+                            },
+                                status=400
                             )
-                        ).parsed
                         if not bound_log.errors:
                             self.update_from_legacy(request, bound_log)
 
@@ -1428,10 +1444,25 @@ class SiteFileUploadViewSet(
                     from slm.parsing.xsd import SiteLogBinder, SiteLogParser
                     with upload.file.open() as uplf:
                         content = uplf.read()
-                        parsed = SiteLogParser(
-                            content.decode(),
-                            site_name=self.site.name
-                        )
+                        encoding = detect(content).get('encoding', 'utf-8')
+                        try:
+                            parsed = SiteLogParser(
+                                content.decode(encoding),
+                                site_name=self.site.name
+                            )
+                        except (UnicodeDecodeError, LookupError):
+                            upload.status = SiteFileUploadStatus.INVALID
+                            upload.save()
+                            return Response({
+                                'file': upload.id,
+                                'error': _(
+                                    'Unable to decode this xml file - please '
+                                    'ensure the file is encoded in UTF-8 and '
+                                    'try again.'
+                                )
+                            },
+                                status=400
+                            )
 
                         upload.context = parsed.context
                         if parsed.errors:
@@ -1663,9 +1694,11 @@ class SiteFileUploadViewSet(
                         params = section.get_params(param)
                         if params:
                             for parsed_param in params:
+                                import pdb
+                                pdb.set_trace()
                                 for line_no in range(
-                                        parsed_param.line_no,
-                                        parsed_param.line_end+1
+                                    parsed_param.line_no,
+                                    parsed_param.line_end+1
                                 ):
                                     parsed.add_finding(
                                         Error(

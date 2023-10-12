@@ -87,7 +87,7 @@ def from_email():
     from django.contrib.sites.models import Site
     return getattr(
         settings,
-        'DEFAULT_FROM_EMAIL',
+        'SERVER_EMAIL',
         f'noreply@{Site.objects.get_current().domain}'
     )
 

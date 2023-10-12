@@ -120,11 +120,13 @@ class StationListSerializer(serializers.ModelSerializer):
 
     antenna_type = serializers.CharField()
     radome_type = serializers.CharField()
+    antenna_serial_number = serializers.CharField()
     receiver_type = serializers.CharField()
     antcal = serializers.CharField()
 
     xyz = serializers.SerializerMethodField()
     llh = serializers.SerializerMethodField()
+    antenna_marker_enu = serializers.SerializerMethodField()
 
     city = serializers.CharField()
     state = serializers.CharField()
@@ -148,6 +150,13 @@ class StationListSerializer(serializers.ModelSerializer):
 
     def get_llh(self, obj):
         return obj.llh[0], obj.llh[1], obj.llh[2]
+
+    def get_antenna_marker_enu(self, obj):
+        return (
+            obj.antenna_marker_enu[0],
+            obj.antenna_marker_enu[1],
+            obj.antenna_marker_enu[2]
+        )
 
     def get_satellite_system(self, obj):
         """
@@ -179,6 +188,8 @@ class StationListSerializer(serializers.ModelSerializer):
             'state',
             'country',
             'antenna_type',
+            'antenna_serial_number',
+            'antenna_marker_enu',
             'radome_type',
             'antcal',
             'receiver_type',

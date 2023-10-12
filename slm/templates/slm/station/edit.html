@@ -234,8 +234,8 @@ Add new section capability is not functional.
                 {% for photo in station_images %}
                 <div class="card">
                     <div class="card-image">
-                        <a href="{{ photo.link }}" data-fancybox="gallery" data-caption="{{ photo.description|default:photo.name }} - {{ photo.created.date|default:photo.timestamp.date }}">
-                            <img src="{{ photo.thumbnail_link }}" alt="Photos" style="image-orientation: none">
+                        <a href="{{ photo.edit_link }}" data-fancybox="gallery" data-caption="{{ photo.description|default:photo.name }} - {{ photo.created.date|default:photo.timestamp.date }}">
+                            <img src="{{ photo.edit_thumbnail_link }}" alt="Photos" style="image-orientation: none">
                         </a>
                     </div>
                 </div>
@@ -255,7 +255,7 @@ Add new section capability is not functional.
                 <div class="row my-2">
                     {% for attachment in attachment_row %}
                     <div class="col-4 d-flex justify-content-center" style="text-align: center">
-                        <a href="{{attachment.link}}" download>
+                        <a href="{{attachment.edit_link}}" download>
                             <i class="slm-attachment {{attachment.mimetype|file_icon}}" style="font-size: 120px;"></i>
                             <p>{{attachment.name}}</p>
                         </a>

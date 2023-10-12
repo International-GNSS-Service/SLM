@@ -27,7 +27,7 @@ set_default('DJANGO_DEBUG_TOOLBAR', False)
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 if is_defined('ALLOWED_HOSTS') and ALLOWED_HOSTS:
-    set_default('DEFAULT_FROM_EMAIL', f'noreply@{ALLOWED_HOSTS[0]}')
+    set_default('SERVER_EMAIL', f'noreply@{ALLOWED_HOSTS[0]}')
 
 # Application definition
 

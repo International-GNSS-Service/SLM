@@ -260,14 +260,15 @@ def file_icon(file):
 def file_lines(file):
     if file and os.path.exists(file.file.path):
         content = file.file.open().read()
-        encoding = detect(content).get('encoding', 'utf-8')
         try:
-            return content.decode(encoding).split('\n')
-        except Exception:
-            return [
-                '** Unable to determine encoding for file - please upload as'
-                ' UTF-8. **'
-            ]
+            return content.decode(
+                detect(content).get('encoding', 'utf-8')
+            ).split('\n')
+        except (UnicodeDecodeError, LookupError, ValueError):
+            return [_(
+                '** Unable to determine text encoding - please upload as '
+                'UTF-8. **'
+            )]
     return ['']
 
 

@@ -1062,11 +1062,18 @@ class SiteLogPublishedManager(AlertManager):
     }
 
     def issue_from_signal(self, signal, site=None, **kwargs):
-        return self.create(
-            site=site,
-            issuer=getattr(kwargs.get('request', None), 'user', None),
-            detail=kwargs.get('detail', '') or ''
-        )
+        with transaction.atomic():
+            return self.update_or_create(
+                site=site,
+                defaults={
+                    'issuer': getattr(
+                        kwargs.get('request', None),
+                        'user',
+                        None
+                    ),
+                    'detail': kwargs.get('detail', '') or ''
+                }
+            )[0]
 
 
 class SiteLogPublishedQueryset(AlertQuerySet):

@@ -36,7 +36,6 @@ def rescind_alert(alert_class, **kwargs):
         )
 
 
-
 def valid_signals(signals):
     signal_set = set()
     for sig in signals:

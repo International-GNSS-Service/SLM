@@ -138,6 +138,21 @@ div.slm-alert-detail {
     opacity: 0.75;
 }
 
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* For Internet Explorer and Edge */
+.no-scrollbar {
+    -ms-overflow-style: none;
+}
+
+/* For Firefox */
+.no-scrollbar {
+    scrollbar-width: none;
+}
+
 #slm-alert-scroll div.slm-alert-detail {
     display: -webkit-box;
     -webkit-line-clamp: 4;

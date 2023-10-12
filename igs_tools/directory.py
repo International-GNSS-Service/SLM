@@ -1,28 +1,26 @@
 import argparse
 from dateutil import parser as date_parser
 from datetime import datetime, timedelta, date
-from igs_tools.defines import RinexVersion, DataCenter, DataRate
-from igs_tools.utils import classproperty
-from typing import Optional, Generator, Union
+from igs_tools.defines import RinexVersion, DataCenter, DataRate, DataType
+from igs_tools.utils import classproperty, chunks
+from typing import Optional, Generator, Union, Dict, Set, List
 from pathlib import Path
 from igs_tools.connection import Connection
-from igs_tools.utils import get_file_properties
+from igs_tools.file import GNSSDataFile
+from itertools import product
+import asyncio
+import logging
 
 
 class Listing:
 
-    station: str
     protocol: str
     domain: str
     port: int
-    filename: str
+    file: Union[str, GNSSDataFile]
     directory: str
-    rinex_version: RinexVersion
-    data_rate: DataRate
-    date: Union[date, datetime]
-    data_center: DataCenter
     size: Optional[int]
-    file_type: str
+    data_center: DataCenter
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -30,17 +28,30 @@ class Listing:
 
     @property
     def path(self):
-        return Path(self.directory) / self.filename
+        return Path(self.directory) / self.file
+
+    @property
+    def is_gnss_data(self):
+        return isinstance(self.file, GNSSDataFile)
 
 
 class DirectoryListing:
 
-    data_centers = [center for center in DataCenter]
+    data_centers = DataCenter.global_centers
     rinex_versions = [RinexVersion.v3]
-    data_rates = [DataRate.DAILY]
+    data_rates = DataRate.DAILY
+    data_types = DataType.MIXED_OBS
+    hours = [1]
 
     username = ''
     password = ''
+
+    connections_: Dict[DataCenter, Connection]
+    visited = Set
+
+    logger = logging.getLogger(__name__)
+
+    queue = asyncio.Queue()
 
     @classproperty
     def start(self):
@@ -56,16 +67,26 @@ class DirectoryListing:
         data_centers=None,
         rinex_versions=None,
         data_rates=None,
+        data_types=None,
+        hours=None,
         start=None,
         end=None,
         dates=None,
         username=username,
-        password=password
+        password=password,
+        async_queues=None
     ):
         self.stations = set([stn.lower()[0:4] for stn in stations or []])
         self.data_centers = set(data_centers or self.data_centers)
         self.rinex_versions = set(rinex_versions or self.rinex_versions)
         self.data_rates = set(data_rates or self.data_rates)
+        self.data_types = set(data_types or self.data_types)
+        self.hours = set(hours or self.hours)
+        self.connections_ = {}
+        self.visited = set()
+
+        # by default, we want to use the same number of queues as data centers
+        self.async_queues = async_queues or len(self.data_centers)
 
         if dates and (start or end):
             raise ValueError('Cannot specify dates and start/end.')
@@ -75,59 +96,96 @@ class DirectoryListing:
         if self.start < self.end:
             # allow any order
             self.start, self.end = self.end, self.start
-        self.dates = dates or [
+        self.dates = dates or [  # todo should be a generator, could be large
             self.end + timedelta(days=i)
             for i in range((self.start - self.end).days + 1)
         ]
         self.username = username
         self.password = password
 
+    async def read_dir(
+        self,
+        hour: int,
+        data_type: DataType,
+        date: date,
+        data_rate: DataRate,
+        rinex_version: RinexVersion,
+        data_center: DataCenter
+    ) -> List[Listing]:
+        connection = self.connections_.get(data_center, None)
+        if not connection:
+            connection = Connection(
+                data_center,
+                self.username,
+                self.password
+            )
+            self.connections_[data_center] = connection
+
+        for path in data_center.directory(
+            rinex_version=rinex_version,
+            data_rate=data_rate,
+            date=date,
+            data_type=data_type,
+            hour=hour
+        ):
+            if path in self.visited:
+                continue
+            self.visited.add(path)
+            filenames = await connection.list(path)
+            lst = []
+            for filename in filenames:
+                try:
+                    file = GNSSDataFile(filename)
+                    if (
+                        file.rinex_version not in self.rinex_versions or
+                        (
+                            self.stations and
+                            file.station.lower()[0:4]
+                            not in self.stations
+                        ) or file.data_type not in self.data_types
+                    ):
+                        continue
+                except ValueError:
+                    print(f'Unrecognized file: {filename}')
+                    continue
+
+                lst.append(
+                    Listing(
+                        protocol=data_center.protocol,
+                        domain=data_center.domain,
+                        port=data_center.port,
+                        filename=file,
+                        directory=path,
+                        size=None,  # todo when available
+                        data_center=data_center
+                    )
+                )
+            return lst
+
     def __iter__(self) -> Generator[Listing, None, None]:
-        visited = set()
-        for data_center in self.data_centers:
-            connection = Connection(data_center, self.username, self.password)
-            print(data_center)
-            for rinex_version in self.rinex_versions:
-                print(rinex_version)
-                for data_rate in self.data_rates:
-                    print(data_rate)
-                    for date in self.dates:
-                        print(date)
-                        path = data_center.directory(
-                            rinex_version,
-                            data_rate,
-                            date
-                        )
-                        print(path)
-                        if not path or path in visited:
-                            continue
-                        visited.add(path)
-                        for filename in connection.list(path):
-                            properties = get_file_properties(filename)
-                            if (
-                                properties is None or
-                                properties['rinex_version']
-                                    not in self.rinex_versions or (
-                                    self.stations and
-                                    properties['station'].lower()[0:4]
-                                        not in self.stations
-                                )
-                            ):
-                                continue
-                            yield Listing(
-                                station=properties['station'],
-                                protocol=data_center.protocol,
-                                domain=data_center.domain,
-                                port=data_center.port,
-                                filename=filename,
-                                directory=path,
-                                rinex_version=properties['rinex_version'],
-                                data_rate=data_rate,
-                                date=date,
-                                file_type=properties['file_type'],
-                                size=properties.get('size', None),
-                                data_center=data_center
-                            )
+        self.visited = set()
+
+        # data_centers should always be last in this product because this will
+        # ensure that when there is more than one data center, requests to
+        # separate data centers are made asynchronously before different
+        # requests to the same data center
+        search_list = product(
+            self.hours,
+            self.data_types,
+            self.dates,
+            self.data_rates,
+            self.rinex_versions,
+            self.data_centers
+        )
+        for chunk in chunks(search_list, self.async_queues):
+            for lst in await asyncio.gather(
+                *[
+                    asyncio.create_task(self.read_dir(*search))
+                    for search in chunk
+                ]
+            ):
+                for item in lst:
+                    yield item
 
 
 if __name__ == '__main__':

@@ -3,23 +3,32 @@ from typing import Union, List
 import ftplib
 import requests
 from bs4 import BeautifulSoup
+import asyncio
 
 
 class _FTPConnection:
 
     connection: ftplib.FTP
 
+    # ftp only allows a single control channel - so we force ftp connections
+    # to be serial
+    lock_ = asyncio.Lock()
+
     def __init__(self, domain, username, password):
         self.connection = ftplib.FTP(domain)
         self.connection.login(user=username, passwd=password)
 
-    def list(self, directory: str) -> List[str]:
-        try:
-            self.connection.cwd(directory)
-        except ftplib.error_perm as eperr:
-            print(eperr)
-            return []
-        return self.connection.nlst()
+    async def list(self, directory: str) -> List[str]:
+        async with self.lock_:
+            try:
+                self.connection.cwd(directory)
+            except ftplib.error_perm as eperr:
+                print(eperr)
+                return []
+            return self.connection.nlst()
+
+    async def download(self, path: str):
+        raise NotImplementedError(f'{self} must implement download()')
 
 
 class _HTTPConnection:
@@ -28,13 +37,16 @@ class _HTTPConnection:
         self.domain = domain
         self.session = requests.session()
 
-    def list(self, directory: str) -> List[str]:
+    async def list(self, directory: str) -> List[str]:
         raise NotImplementedError(f'{self} must implement list()')
+
+    async def download(self, path: str):
+        raise NotImplementedError(f'{self} must implement download()')
 
 
 class _CDDISConnection(_HTTPConnection):
 
-    def list(self, directory: str) -> List[str]:
+    async def list(self, directory: str) -> List[str]:
         try:
             filenames = []
             resp = requests.get(
@@ -81,8 +93,8 @@ class Connection:
                 f'Protocol {data_center.protocol} not implemented.'
             )
 
-    def list(self, directory: str) -> List[str]:
-        return self._connection.list(directory)
+    async def list(self, directory: str) -> List[str]:
+        return await self._connection.list(directory)
 
-    def download(self, path: str):
-        pass
+    async def download(self, path: str):
+        return await self._connection.download(path)

@@ -1,6 +1,32 @@
 from datetime import date, datetime
 from typing import Union
-import re
+from functools import reduce
+from datetime import timedelta
+from itertools import chain, islice
+
+
+def all_flags(flags):
+    return reduce(lambda x, y: x | y, [flg for flg in flags])
+
+
+def str_to_timedelta(time_delta_str):
+    """
+    Convert a standard string GNSS time period string to a python timedelta.
+    These strings are ofr the format ##(S|M|H|D) where ## is the number of
+    units and the letter is the unit (seconds, minutes, hours, days).
+
+    :param time_delta_str: string in the format
+    :return: timedelta object
+    """
+    if time_delta_str[-1].upper() == 'S':
+        return timedelta(seconds=int(time_delta_str[:-1]))
+    elif time_delta_str[-1].upper() == 'M':
+        return timedelta(minutes=int(time_delta_str[:-1]))
+    elif time_delta_str[-1].upper() == 'H':
+        return timedelta(hours=int(time_delta_str[:-1]))
+    elif time_delta_str[-1].upper() == 'D':
+        return timedelta(days=int(time_delta_str[:-1]))
+    raise ValueError(f'Invalid timedelta: {time_delta_str}')
 
 
 class classproperty:
@@ -27,40 +53,14 @@ def day_of_year(date: Union[date, datetime]) -> int:
     return int(date.strftime('%j'))
 
 
-def get_file_properties(filename):
+def chunks(iterable, size=10):
     """
-    Infer properties of a rinex file from its name.
-    :param filename:
-    :return:
+    Read size elements from a generator at a time without pre-walking the
+    entire generator.
+    :param iterable: The generator to read from
+    :param size: The maximum number of elements to read
+    :return: A generator that yields size elements at a time
     """
-    from igs_tools.defines import RinexVersion
-    regexes = [
-        (
-            re.compile(
-                r'^(?P<station>[a-z0-9]{4})'
-                r'(?P<gps_day>\d{3})'
-                r'(?P<hour>[0a-z]{1})'
-                r'[.](?P<year>\d{2})(?P<file_type>[a-z]{1})'
-                r'[.](?P<compression>\w*)$'
-            ),
-            {'rinex_version': RinexVersion.v2}
-        ),
-        (
-            re.compile(
-                r'^(?P<station>[A-Z0-9]{9})_(\w{1})_(?P<year>\d{4})'
-                r'(?P<gps_day>\d{3})(\d{4})_(\w{3})_((\w{3})_)?'
-                r'(?P<constellation>\w{1})(?P<file_type>\w{1})[.]'
-                r'(?P<rinex_Format>(crx)|(rnx))[.](?P<compression>\w*)$'
-            ),
-            {'rinex_version': RinexVersion.v3}
-        )
-    ]
-
-    for regex in regexes:
-        match = re.match(regex[0], filename)
-        if match:
-            return {
-                **match.groupdict(),
-                **regex[1]
-            }
-    return None
+    iterator = iter(iterable)
+    for first in iterator:
+        yield chain([first], islice(iterator, size - 1))

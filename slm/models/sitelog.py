@@ -55,7 +55,8 @@ from slm.validators import get_validators
 from functools import lru_cache
 from django.utils.functional import classproperty
 from django.db import transaction
-from django.db.models import Func
+from django.db.models import Func, Sum
+from django.db.models.functions import Coalesce
 from collections import namedtuple
 from datetime import datetime, timezone
 
@@ -77,12 +78,6 @@ Section = namedtuple(
 )
 
 
-class JSONLength(Func):
-    #function = 'JSON_LENGTH'  # mysql
-    function = 'jsonb_array_length'
-    output_field = models.IntegerField()
-
-
 class SubquerySum(Subquery):
     """
     The django ORM is still really clunky around aggregating subqueries.
@@ -92,7 +87,7 @@ class SubquerySum(Subquery):
 
     def __init__(self, *args, **kwargs):
         self.template = (
-            f'(SELECT COALESCE(SUM({kwargs.pop("field")}), 0) '
+            f'(SELECT SUM({kwargs.pop("field")}) '
             f'FROM (%(subquery)s) _sum)'
         )
         super().__init__(*args, **kwargs)
@@ -278,16 +273,30 @@ class SiteQuerySet(models.QuerySet):
         qry = self
         mod_q = Q()
         for idx, section in enumerate(self.model.sections()):
-            section_qry = section.cls.objects.filter(
-                site=OuterRef('pk')
-            )._current()
+            # section_qry = section.cls.objects._current(
+            #     filter=Q(site=OuterRef('pk'))
+            # ).aggregate(
+            #     tot_flags=Sum('num_flags', distinct=True)
+            # ).values('tot_flags').order_by()
 
-            mod_qry = section.cls.objects.filter(
-                site=OuterRef('pk')
-            )._current(published=False)
+            section_qry = section.cls.objects._current(
+                filter=Q(site=OuterRef('pk'))
+            )
+
+            mod_qry = section.cls.objects._current(
+                published=False,
+                filter=Q(site=OuterRef('pk'))
+            )
+
+            # if section.cls in [SiteLocation, SiteFrequencyStandard]:
+            #     import pdb
+            #     pdb.set_trace()
 
             qry = qry.annotate(
                 **{
+                    # f'_num_flags{idx}': Subquery(
+                    #     section_qry.values('tot_flags')[:1]
+                    # ),
                     f'_num_flags{idx}': SubquerySum(
                         section_qry,
                         field='num_flags'
@@ -297,17 +306,21 @@ class SiteQuerySet(models.QuerySet):
             )
             mod_q |= Q(**{f'_mod{idx}__isnull': False})
             if aggregate is None:
-                aggregate = F(f'_num_flags{idx}')
+                aggregate = Coalesce(f'_num_flags{idx}', 0)
             else:
-                aggregate += F(f'_num_flags{idx}')
+                aggregate += Coalesce(f'_num_flags{idx}', 0)
 
-        qry.annotate(_num_flags=aggregate).update(num_flags=F('_num_flags'))
+        qry.order_by().annotate(_num_flags=aggregate).update(
+            num_flags=Coalesce('_num_flags', 0)
+        )
 
         update_q = Q(
             status__in=[SiteLogStatus.UPDATED, SiteLogStatus.PUBLISHED]
         )
         qry.filter(update_q).filter(mod_q).update(status=SiteLogStatus.UPDATED)
-        qry.filter(update_q).filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
+        qry.filter(update_q).filter(~mod_q).update(
+            status=SiteLogStatus.PUBLISHED
+        )
 
         # this is the longest operation - there might be a way to squash it
         # into a single query
@@ -823,9 +836,10 @@ class Site(models.Model):
 
         :return: A queryset containing users with edit permissions for the site
         """
-        return get_user_model().objects.filter(
-            Q(agencies__in=self.agencies.all()) | Q(pk=self.owner.pk)
-        )
+        qry = Q(agencies__in=self.agencies.all())
+        if self.owner:
+            qry |= Q(pk=self.owner.pk)
+        return get_user_model().objects.filter(qry)
 
     @classmethod
     def sections(cls):
@@ -866,6 +880,8 @@ class Site(models.Model):
 
     def update_status(self, save=True, user=None, timestamp=None):
         """
+        Todo synchronize() should replace this function eventually
+
         Update the denormalized data that is too expensive to query on the
         fly. This includes flag count, moderation status and DateTimes.
 
@@ -933,19 +949,20 @@ class Site(models.Model):
     def head(self, epoch=None):
         return self._current(epoch=epoch, published=None)
 
-    def _current(self, epoch=None, published=None):
+    def _current(self, epoch=None, published=None, filter=None):
         for section in self.sections():
             setattr(
                 self,
                 section.field,
                 getattr(self, section.accessor)._current(
                     epoch=epoch,
-                    published=published
+                    published=published,
+                    filter=filter
                 ) if section.subsection else
                 getattr(self, section.accessor)._current(
                     epoch=epoch,
                     published=published,
-                    #is_deleted=False todo can this happen?
+                    filter=filter
                 ).first()
             )
 
@@ -1089,9 +1106,10 @@ class Site(models.Model):
     def __str__(self):
         return self.name
 
-    def synchronize(self):
+    def synchronize(self, refresh=True):
         Site.objects.filter(pk=self.pk).synchronize_denormalized_state()
-        self.refresh_from_db()
+        if refresh:
+            self.refresh_from_db()
 
 
 class SiteSectionManager(gis_models.Manager):
@@ -1102,8 +1120,12 @@ class SiteSectionManager(gis_models.Manager):
     def head(self, epoch=None):
         return self.get_queryset().head(epoch=epoch)
 
-    def _current(self, epoch=None, published=None):
-        return self.get_queryset()._current(epoch=epoch, published=published)
+    def _current(self, epoch=None, published=None, filter=None):
+        return self.get_queryset()._current(
+            epoch=epoch,
+            published=published,
+            filter=filter
+        )
 
 
 class SiteSectionQueryset(gis_models.QuerySet):
@@ -1124,15 +1146,15 @@ class SiteSectionQueryset(gis_models.QuerySet):
     def head(self, epoch=None):
         return self._current(epoch=epoch, published=None).first()
 
-    def _current(self, epoch=None, published=None):
-        pub_q = Q()
+    def _current(self, epoch=None, published=None, filter=None):
+        pub_q = filter or Q()
         if published is not None:
             pub_q = Q(published=published)
         if epoch and hasattr(self.model, 'valid_time'):
-            return self.filter(pub_q).order_by('-edited').filter(
+            return self.filter(pub_q).order_by('published').filter(
                 {f'{self.model.valid_time}__lte': epoch}
-            )
-        return self.filter(pub_q).order_by('-edited')
+            )[0:1]
+        return self.filter(pub_q).order_by('published')[0:1]
 
 
 class SiteLocationManager(SiteSectionManager):
@@ -1236,6 +1258,8 @@ class SiteSection(gis_models.Model):
             self.published = True
             if isinstance(self, SiteForm):
                 self.save(skip_update=True)
+            elif getattr(self, 'is_deleted', False):
+                self.delete()
             else:
                 self.save()
 
@@ -1473,7 +1497,9 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
     def head(self, subsection=None, epoch=None):
         return self._current(subsection=subsection, epoch=epoch, published=None)
 
-    def _current(self, subsection=None, epoch=None, published=None):
+    def _current(
+        self, subsection=None, epoch=None, published=None, filter=None
+    ):
         """
         Fetch the subsection stack that matches the parameters.
 
@@ -1484,15 +1510,21 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
             the subsection stack, if True fetch only the latest published
             versions of the subsection stack. If False, fetch only unpublished
             members of the subsection stack.
+        :param filter: An additional Q object to filter the subsection stack
+            by.
         :return:
         """
-        section_q = Q()
+        section_q = filter or Q()
 
         if epoch and self.model.valid_time is not None:
             section_q &= Q(**{f'{self.model.valid_time}__lte': epoch})
 
         if published is not None:
             section_q &= Q(published=published)
+            if published:
+                # no sections should exist in this state - but just incase they
+                # do, filter them out
+                section_q &= Q(is_deleted=False)
 
         if subsection is not None:
             return self.filter(Q(subsection=subsection) & section_q).first()
@@ -1500,14 +1532,13 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
         if published is not None:
             return self.filter(section_q).order_by(self.model.order_field)
 
-        unpub = self.filter(section_q & Q(published=False))
-        return (
-            unpub | self.filter(
-                section_q &
-                Q(published=True) &
-                ~Q(subsection__in=unpub.values('subsection'))
-            )
-        ).order_by(self.model.order_field)
+        ordering = ['subsection', 'published']
+        if self.model.order_field and self.model.order_field != 'subsection':
+            ordering.append(self.model.order_field)
+
+        return self.filter(section_q).order_by(
+            *ordering
+        ).distinct('subsection')
 
 
 class SiteSubSection(SiteSection):
@@ -1620,7 +1651,9 @@ class SiteSubSection(SiteSection):
             ('site', 'edited'),
             ('site', 'edited', 'published'),
             ('site', 'edited', 'subsection'),
-            ('site', 'edited', 'published', 'subsection')
+            ('site', 'edited', 'published', 'subsection'),
+            ('site', 'subsection', 'published'),
+            ('subsection', 'published'),
         ]
 
 
@@ -2347,6 +2380,12 @@ class SiteReceiver(SiteSubSection):
         )
     )
 
+    class Meta:
+        index_together = [
+            ('site', 'subsection', 'published', 'installed'),
+            ('subsection', 'published', 'installed'),
+        ]
+
 
 class SiteAntenna(SiteSubSection):
     """
@@ -2562,6 +2601,12 @@ class SiteAntenna(SiteSubSection):
         blank=True,
         help_text=_('Custom antenna graphic - if different than the default.')
     )
+
+    class Meta:
+        index_together = [
+            ('site', 'subsection', 'published', 'installed'),
+            ('subsection', 'published', 'installed'),
+        ]
 
 
 class SiteSurveyedLocalTies(SiteSubSection):
@@ -2840,6 +2885,12 @@ class SiteFrequencyStandard(SiteSubSection):
     effective_dates.field = (effective_start, effective_end)
     effective_dates.verbose_name = _('Effective Dates')
 
+    class Meta:
+        index_together = [
+            ('site', 'subsection', 'published', 'effective_start'),
+            ('subsection', 'published', 'effective_start'),
+        ]
+
 
 class SiteCollocation(SiteSubSection):
     """
@@ -2949,6 +3000,12 @@ class SiteCollocation(SiteSubSection):
         return self.effective
     effective_dates.field = (effective_start, effective_end)
     effective_dates.verbose_name = _('Effective Dates')
+
+    class Meta:
+        index_together = [
+            ('site', 'subsection', 'published', 'effective_start'),
+            ('subsection', 'published', 'effective_start'),
+        ]
 
 
 class MeteorologicalInstrumentation(SiteSubSection):
@@ -3074,6 +3131,10 @@ class MeteorologicalInstrumentation(SiteSubSection):
 
     class Meta:
         abstract = True
+        index_together = [
+            ('site', 'subsection', 'published', 'effective_start'),
+            ('subsection', 'published', 'effective_start'),
+        ]
 
 
 class SiteHumiditySensor(MeteorologicalInstrumentation):
@@ -3461,6 +3522,10 @@ class Condition(SiteSubSection):
 
     class Meta:
         abstract = True
+        index_together = [
+            ('site', 'subsection', 'published', 'effective_start'),
+            ('subsection', 'published', 'effective_start'),
+        ]
 
 
 class SiteRadioInterferences(Condition):
@@ -3661,6 +3726,12 @@ class SiteLocalEpisodicEffects(SiteSubSection):
         return self.effective
     date.field = (effective_start, effective_end)
     date.verbose_name = _('Date')
+
+    class Meta:
+        index_together = [
+            ('site', 'subsection', 'published', 'effective_start'),
+            ('subsection', 'published', 'effective_start'),
+        ]
 
 
 class AgencyPOC(SiteSection):

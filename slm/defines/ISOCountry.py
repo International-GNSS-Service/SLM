@@ -17,7 +17,7 @@ class ISOCountry(
     An enumeration for ISO 3166-1 Country codes.
     """
 
-    _symmetric_builtins_ = [s('name', case_fold=True)]
+    _symmetric_builtins_ = [s('name', case_fold=True), s('ascii', case_fold=True)]
     
     AD = "AD", _("Andorra"), 20, "AND", True, "Andorra", "the Principality of Andorra"
     AE = "AE", _("United Arab Emirates (the)"), 784, "ARE", True, "United Arab Emirates (the)", "the United Arab Emirates"
@@ -269,6 +269,15 @@ class ISOCountry(
     ZM = "ZM", _("Zambia"), 894, "ZMB", True, "Zambia", "the Republic of Zambia"
     ZW = "ZW", _("Zimbabwe"), 716, "ZWE", True, "Zimbabwe", "the Republic of Zimbabwe"
     # pylint: disable=C0303
+
+    @property
+    def ascii(self):
+        ascii_name = self.short_name
+        for utf16, char in [
+            ('é', 'e'), ('ç', 'c'), ('ü', 'u'), ('ô', 'o'), ('Å', 'A')
+        ]:
+            ascii_name = ascii_name.replace(utf16, char)
+        return ascii_name
 
     @property
     def alpha2(self):

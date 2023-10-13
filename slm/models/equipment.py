@@ -76,7 +76,7 @@ class Equipment(models.Model):
         db_index=True
     )
 
-    description = models.CharField(
+    description = models.TextField(
         max_length=500,
         default='',
         blank=True,

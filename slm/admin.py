@@ -23,6 +23,7 @@ from django.contrib.auth.admin import (
     UserAdmin as BaseUserAdmin,
     GroupAdmin as BaseGroupAdmin
 )
+from django import forms
 from django.contrib.auth.models import Group
 from django.utils.translation import gettext as _
 from slm.authentication import initiate_password_resets
@@ -285,7 +286,26 @@ class SatelliteSystemAdmin(admin.ModelAdmin):
     pass
 
 
+class GraphicTextarea(forms.Textarea):
+
+    def __init__(self, attrs=None):
+        default_attrs = {'cols': 80}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs)
+
+
+class AntennaForm(forms.ModelForm):
+
+    class Meta:
+        model = Antenna
+        fields = '__all__'
+        widgets = {'graphic': GraphicTextarea(attrs={'class': 'mono-spaced'})}
+
+
 class AntennaAdmin(admin.ModelAdmin):
+
+    form = AntennaForm
 
     search_fields = ('model',)
     list_filter = ('state',)

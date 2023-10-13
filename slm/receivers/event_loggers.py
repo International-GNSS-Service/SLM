@@ -14,16 +14,18 @@ def log_publish(sender, site, user, timestamp, request, section, **kwargs):
     from slm.defines import LogEntryType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=LogEntryType.PUBLISH,
-        user=user,
         site=site,
         section=(
             ContentType.objects.get_for_model(section) if section else None
         ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )
 
 
@@ -32,12 +34,14 @@ def log_propose(sender, site, user, timestamp, request, agencies, **kwargs):
     from slm.defines import LogEntryType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=LogEntryType.SITE_PROPOSED,
-        user=user,
         site=site,
         timestamp=timestamp or now(),
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )
 
 
@@ -55,16 +59,18 @@ def log_edit(
     from slm.defines import LogEntryType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=LogEntryType.UPDATE,
-        user=user,
         site=site,
         section=(
             ContentType.objects.get_for_model(section) if section else None
         ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'ip': get_client_ip(request)[0] if request else None,
+        }
     )
 
 
@@ -73,16 +79,18 @@ def log_add(sender, site, user, timestamp, request, section, **kwargs):
     from slm.defines import LogEntryType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=LogEntryType.ADD,
-        user=user,
         site=site,
         section=(
             ContentType.objects.get_for_model(section) if section else None
         ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )
 
 
@@ -91,16 +99,18 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
     from slm.defines import LogEntryType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=LogEntryType.DELETE,
-        user=user,
         site=site,
         section=(
             ContentType.objects.get_for_model(section) if section else None
         ),
         subsection=getattr(section, 'subsection', None),
         timestamp=timestamp or now(),
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )
 
 
@@ -109,17 +119,19 @@ def log_file_upload(sender, site, user, timestamp, request, upload, **kwargs):
     from slm.defines import LogEntryType, SLMFileType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=({
           SLMFileType.SITE_IMAGE: LogEntryType.IMAGE_UPLOAD,
           SLMFileType.SITE_LOG: LogEntryType.LOG_UPLOAD,
           SLMFileType.ATTACHMENT: LogEntryType.ATTACHMENT_UPLOAD
         }.get(upload.file_type, LogEntryType.LOG_UPLOAD)),
-        user=user,
         site=site,
         timestamp=timestamp or now(),
-        file=upload,
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'ip': get_client_ip(request)[0] if request else None,
+            'file': upload
+        }
     )
 
 
@@ -130,17 +142,19 @@ def log_file_published(
     from slm.defines import LogEntryType, SLMFileType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=(
             LogEntryType.IMAGE_PUBLISH
             if upload.file_type == SLMFileType.SITE_IMAGE
             else LogEntryType.ATTACHMENT_PUBLISH
         ),
-        user=user,
         site=site,
         timestamp=timestamp or now(),
-        file=upload,
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'file': upload,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )
 
 
@@ -151,17 +165,19 @@ def log_file_unpublished(
     from slm.defines import LogEntryType, SLMFileType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=(
             LogEntryType.IMAGE_UNPUBLISH
             if upload.file_type == SLMFileType.SITE_IMAGE
             else LogEntryType.ATTACHMENT_UNPUBLISH
         ),
-        user=user,
         site=site,
         timestamp=timestamp or now(),
-        file=upload,
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'file': upload,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )
 
 
@@ -170,15 +186,17 @@ def log_file_deleted(sender, site, user, timestamp, request, upload, **kwargs):
     from slm.defines import LogEntryType, SLMFileType
     from slm.models import LogEntry
 
-    LogEntry.objects.create(
+    LogEntry.objects.get_or_create(
         type=(
             LogEntryType.IMAGE_DELETE
             if upload.file_type == SLMFileType.SITE_IMAGE
             else LogEntryType.ATTACHMENT_DELETE
         ),
-        user=user,
         site=site,
         timestamp=timestamp or now(),
-        file=None,
-        ip=get_client_ip(request)[0] if request else None
+        defaults={
+            'user': user,
+            'file': None,
+            'ip': get_client_ip(request)[0] if request else None
+        }
     )

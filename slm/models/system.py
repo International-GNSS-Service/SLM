@@ -684,6 +684,12 @@ class LogEntry(PolymorphicModel):
         ordering = ('-timestamp',)
         verbose_name_plural = 'Log Entries'
         verbose_name = 'Log Entry'
+        unique_together = (
+            ('timestamp', 'type', 'site', 'section', 'subsection'),
+        )
+        index_together = (
+            ('timestamp', 'type', 'site', 'section', 'subsection'),
+        )
 
 
 class TideGauge(gis_models.Model):

@@ -468,3 +468,13 @@ def autocomplete_values(widget):
                 items.append(json.dumps(value))
 
     return items
+
+
+@register.simple_tag(takes_context=True)
+def set_global(context, name, val):
+    context.render_context[name] = val
+    return ''
+
+@register.simple_tag(takes_context=True)
+def get_global(context, name):
+    return context.render_context.get(name, None)

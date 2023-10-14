@@ -373,6 +373,7 @@ fieldset.slm-form-group > legend {
     position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
+    margin-bottom: 20px;
 }
 #file-actions > button {
     margin-right: 5px;
@@ -662,11 +663,19 @@ button.nav-link.slm-status-updated {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-updated span.section-number {
+    background-color: #0079AD;
+    color: whitesmoke;
+}
 button.slm-status-published,
 button.nav-link.slm-status-published {
     border-left: 10px solid #0D820D;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
+}
+button.slm-status-published span.section-number {
+    background-color: #0D820D;
+    color: whitesmoke;
 }
 button.slm-status-in-review,
 button.nav-link.slm-status-in-review {
@@ -674,11 +683,19 @@ button.nav-link.slm-status-in-review {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-in-review span.section-number {
+    background-color: #0079AD;
+    color: whitesmoke;
+}
 button.slm-status-nascent,
 button.nav-link.slm-status-nascent {
     border-left: 10px solid #913D88;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
+}
+button.slm-status-nascent span.section-number {
+    background-color: #913D88;
+    color: whitesmoke;
 }
 button.slm-status-former,
 button.nav-link.slm-status-former  {
@@ -686,17 +703,29 @@ button.nav-link.slm-status-former  {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-former span.section-number {
+    background-color: #3D4543;
+    color: whitesmoke;
+}
 button.slm-status-suspended,
 button.nav-link.slm-status-suspended  {
     border-left: 10px solid #E0041A;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-suspended span.section-number {
+    background-color: #E0041A;
+    color: whitesmoke;
+}
 button.slm-status-empty,
 button.nav-link.slm-status-empty  {
     border-left: 10px solid #d3d3d3;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
+}
+button.slm-status-empty span.section-number {
+    background-color: #d3d3d3;
+    color: black;
 }
 /* Upload Buttons CSS */
 button.slm-upload-unpublished,
@@ -933,4 +962,17 @@ span.asteriskField:after {
       grid-template-columns: 1fr;
       grid-gap: 1rem;
     }
+}
+
+span.section-number {
+    display: inline-block;
+    background-color: #d3d3d3; /* Green background */
+    border: 1px solid black;
+    color: black; /* White text color */
+    text-align: center; /* Centered text */
+    border-radius: 4px; /* Slightly rounded corners */
+    font-weight: bold; /* Bold text */
+    font-size: small;
+    margin-right: 10px;
+    padding: 0 10px 0 10px;
 }

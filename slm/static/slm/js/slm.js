@@ -128,8 +128,8 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         }
     }
     let headingButton = form.closest('.accordion-item').find('button.accordion-button');
-    headingButton.find(':nth-child(1)').html(data.heading);
-    headingButton.find(':nth-child(2)').html(data.effective);
+    headingButton.find('.slm-heading').html(data.heading);
+    headingButton.find('.slm-effective').html(data.effective);
     if (data.hasOwnProperty('_flags')) {
         form.data('slmErrorFlags', data._flags);
         slm.setFormFlagUI(form);

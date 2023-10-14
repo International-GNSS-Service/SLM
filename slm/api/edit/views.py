@@ -874,10 +874,13 @@ class SectionViewSet(type):
                                 timestamp=update_status,
                                 update_site=False  # this is done below
                             )
-                            instance.refresh_from_db()
+                            try:
+                                instance.refresh_from_db()
+                            except instance.DoesNotExist:
+                                pass
 
                         if update_status:
-                            instance.site.update_status(
+                            site.update_status(
                                 save=True,
                                 user=self.context['request'].user,
                                 timestamp=update_status

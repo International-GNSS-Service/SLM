@@ -1268,7 +1268,7 @@ class SiteSection(gis_models.Model):
 
             if not silent:
                 slm_signals.site_published.send(
-                    sender=self,
+                    sender=self.site,
                     site=self.site,
                     user=request.user if request else None,
                     timestamp=timestamp,

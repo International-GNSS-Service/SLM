@@ -208,9 +208,17 @@ slm.initForm = function(form_id, initial=null, transform= function(data){ return
         let request = null;
         const dataId = data.id || form.data('slmId');
         let finished = function() {};
+        let formBtn = form.closest('.accordion-item');
         if (action === 'delete') {
+            console.log(formBtn.prevAll().find('span.section-number'));
+            formBtn.prevAll().find('span.section-number').each(
+                function(){
+                    $(this).text(slm.incrSectionNumber($(this).text(), -1));
+                }
+            );
+            formBtn.find('span.section-number').remove();
             if (!dataId) {
-                form.closest('.accordion-item').remove();
+                formBtn.remove();
                 return;
             }
             if (btn) {
@@ -963,4 +971,13 @@ slm.processing = function(btn) {
 slm.isIterable = function(input) {
     if (input === null || input === undefined) { return false; }
     return typeof input[Symbol.iterator] === 'function';
+}
+
+slm.incrSectionNumber = function(versionString, incr=1) {
+    if (versionString !== null && versionString !== '') {
+        let numbers = versionString.split('.').map(Number);
+        numbers[numbers.length - 1] += incr;
+        return numbers.join('.');
+    }
+    return '';
 }

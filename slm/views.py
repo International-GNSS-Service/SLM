@@ -450,6 +450,12 @@ class EditView(StationContextView):
                     else SiteLogStatus.EMPTY
                 )
 
+        # add form numbers
+        number = 1
+        for form in reversed(context['forms']):
+            if not form.instance.is_deleted:
+                form.form_number = number
+                number += 1
         return context
 
 

@@ -101,7 +101,7 @@ Add new section capability is not functional.
                     <div class="accordion-item">
                         <h2 id="heading-{{ form_inst_id }}" class="accordion-header">
                             <button id="{{ form.instance.subsection }}" class="slm-subsection {{ form.instance.mod_status.css }} accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#accordion-{{ form_inst_id }}" data-slm-flags={{ form.flags|length }} data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ form.instance.mod_status.value }} aria-expanded="true" aria-controls="accordion-{{ form_inst_id }}">
-                                <span class="section-number">{% if active_section %}{{ active_section }}.{% endif %}{% if active_subsection %}{{ active_subsection}}.{% endif %}{{ forloop.revcounter }}</span><span><span class="slm-heading">{{ form.instance.heading }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
+                                <span class="section-number" {% if form.instance.is_deleted %}style="display: none"{% endif %}>{% if active_section %}{{ active_section }}.{% endif %}{% if active_subsection %}{{ active_subsection}}.{% endif %}{{ form.form_number }}</span><span><span class="slm-heading">{{ form.instance.heading }}</span> <span class="badge rounded-pill bg-danger slm-error-badge" {% if not form.flags %}style="display: none"{% endif %}>{{ form.flags|length }}</span></span><span class="slm-effective">{% if form.instance.effective %}{{ form.instance.effective }}</span>{% endif %}
                             </button>
                         </h2>
                         <div id="accordion-{{ form_inst_id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ form_inst_id }}" data-bs-parent="#accordion-{{ section_id }}">
@@ -129,7 +129,7 @@ Add new section capability is not functional.
             <div class="accordion-item">
                 <h2 id="heading-new_form_id" class="accordion-header">
                     <button class="slm-subsection accordion-button" type="button" data-bs-toggle="collapse" data-slm-parent="{% if parent %}{{ parent }}-{% endif %}{{ section_id }}-tab" data-slm-status={{ SiteLogStatus.EMPTY.value }} aria-expanded="true">
-                        <span><span class="section-number"></span><span><span class="slm-heading">{% translate "New" %}</span> <span class="badge rounded-pill bg-danger slm-error-badge" style="display: none">0</span></span></span><span class="slm-effective"></span>
+                        <span><span class="section-number">{% if active_section %}{{ active_section }}.{% endif %}{% if active_subsection %}{{ active_subsection}}.{% endif %}0</span><span><span class="slm-heading">{% translate "New" %}</span> <span class="badge rounded-pill bg-danger slm-error-badge" style="display: none">0</span></span></span><span class="slm-effective"></span>
                     </button>
                 </h2>
                 <div id="accordion-new_form_id" class="accordion-collapse collapse show" data-bs-parent="#accordion-{{ section_id }}">
@@ -169,19 +169,12 @@ Add new section capability is not functional.
             if (typeof newIdx === 'undefined') {
                 var newIdx = {{ forms|length }};
             }
-            function incrementSectionNumber(versionString) {
-                if (versionString !== null && versionString !== '') {
-                    let numbers = versionString.split('.').map(Number);
-                    numbers[numbers.length - 1]++;
-                    return numbers.join('.');
-                }
-                return '';
-            }
+
             $("#add-{{ section_id }} > button").click(function() {
                 let formId = `{{ section_id }}-new-${newIdx}`;
                 let stack = $("#accordion-{{ section_id }}");
                 let lastForm = $('form.slm-form').first();
-                let newNumber = incrementSectionNumber(
+                let newNumber = slm.incrSectionNumber(
                     lastForm.closest('.accordion-item').find('span.section-number').text()
                 );
                 let initial = slm.formToObject(lastForm, copyLast);

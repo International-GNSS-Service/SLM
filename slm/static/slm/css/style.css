@@ -663,6 +663,12 @@ button.nav-link.slm-status-updated {
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
+button.slm-status-updated.slm-section-deleted {
+    border-left: 10px solid #d3d3d3;
+}
+form.slm-section-deleted input.slm-flag-input {
+    opacity: 0.5;
+}
 button.slm-status-updated span.section-number {
     background-color: #0079AD;
     color: whitesmoke;
@@ -775,6 +781,7 @@ span.autocomplete-match { font-weight: normal; color: #3399FF; }
 /* styling to make custom 24 hour time widget work */
 fieldset.time-24hr:disabled * {
     pointer-events: none;
+    user-select:  none;
 }
 fieldset.time-24hr:disabled > div {
     background-color: #E9ECEF;
@@ -783,7 +790,6 @@ fieldset.time-24hr:disabled > div {
 fieldset.time-24hr {
     position: relative;
 }
-
 div.time-select {
     border: 1px solid rgba(0,0,0,0.2);
     background-color: white;
@@ -975,4 +981,17 @@ span.section-number {
     font-size: small;
     margin-right: 10px;
     padding: 0 10px 0 10px;
+}
+
+div[disabled] {
+    background-color: #E9ECEF;
+}
+textarea[name="custom_graphic"] {
+    font-family: "Lucida Console", Courier, monospace;
+}
+
+@media only screen and (max-width: 1920px) {
+    textarea[name="custom_graphic"] {
+        font-size: small;
+    }
 }

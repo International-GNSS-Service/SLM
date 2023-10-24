@@ -24,7 +24,8 @@ from django.contrib.gis.geos import Polygon
 from polyline import polyline
 from django.forms.fields import (
     TypedMultipleChoiceField,
-    BooleanField
+    BooleanField,
+    CharField
 )
 from django.forms.widgets import (
     CheckboxInput,
@@ -49,7 +50,8 @@ from slm.widgets import (
     DatePicker,
     AutoCompleteSelectMultiple,
     AutoCompleteEnumSelectMultiple,
-    EnumSelectMultiple
+    EnumSelectMultiple,
+    GraphicTextarea
 )
 from slm.models import (
     Alert,
@@ -162,6 +164,11 @@ class SLMNullBooleanSelect(NullBooleanSelect):
             None: None,
             '': None
         }.get(value, super().value_from_datadict(data, files, name))
+
+
+class SiteAntennaGraphicField(CharField):
+
+    widget = GraphicTextarea
 
 
 class PolylineWidget(TextInput):
@@ -802,6 +809,12 @@ class SiteAntennaForm(SubSectionForm):
         to_field_name='model'
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Check if the instance exists (i.e., it's an edit form, not a new form)
+        if self.instance and self.instance.pk:
+            self.fields['custom_graphic'].initial = self.instance.graphic
+
     class Meta(SubSectionForm):
         model = SiteAntenna
         fields = [
@@ -810,8 +823,12 @@ class SiteAntennaForm(SubSectionForm):
         ]
         field_classes = {
             'installed': SLMDateTimeField,
-            'removed': SLMDateTimeField
+            'removed': SLMDateTimeField,
+            'custom_graphic': SiteAntennaGraphicField
         }
+        # widgets = {
+        #     'custom_graphic': GraphicTextarea(),
+        # }
 
 
 class SiteSurveyedLocalTiesForm(SubSectionForm):

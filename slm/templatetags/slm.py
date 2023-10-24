@@ -210,6 +210,14 @@ def get_key(obj, key):
     return obj.get(key)
 
 
+@register.filter(name='has_key')
+def has_key(obj, key):
+    try:
+        return key in obj
+    except TypeError:
+        return hasattr(obj, key)
+
+
 @register.filter(name='merge')
 def merge(obj1, obj2):
     return obj1.merge(obj2)

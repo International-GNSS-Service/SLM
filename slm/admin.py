@@ -58,6 +58,7 @@ from slm.models import (
     ArchiveIndex,
     ArchivedSiteLog
 )
+from slm.widgets import GraphicTextarea
 from slm.authentication import permissions
 from polymorphic.admin import (
     PolymorphicParentModelAdmin,
@@ -285,22 +286,12 @@ class DataCenterAdmin(admin.ModelAdmin):
 class SatelliteSystemAdmin(admin.ModelAdmin):
     pass
 
-
-class GraphicTextarea(forms.Textarea):
-
-    def __init__(self, attrs=None):
-        default_attrs = {'cols': 80}
-        if attrs:
-            default_attrs.update(attrs)
-        super().__init__(default_attrs)
-
-
 class AntennaForm(forms.ModelForm):
 
     class Meta:
         model = Antenna
         fields = '__all__'
-        widgets = {'graphic': GraphicTextarea(attrs={'class': 'mono-spaced'})}
+        widgets = {'graphic': GraphicTextarea}
 
 
 class AntennaAdmin(admin.ModelAdmin):

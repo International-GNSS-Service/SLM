@@ -906,7 +906,7 @@ class Site(models.Model):
         for section in self.sections():
             if section.subsection:
                 for subsection in getattr(self, section.field):
-                    if subsection.published and subsection.is_deleted:
+                    if subsection.is_deleted:
                         continue
                     self.num_flags += len(subsection._flags or {})
                     status = status.merge(subsection.mod_status)
@@ -946,10 +946,20 @@ class Site(models.Model):
     def published(self, epoch=None):
         return self._current(epoch=epoch, published=True)
 
-    def head(self, epoch=None):
-        return self._current(epoch=epoch, published=None)
+    def head(self, epoch=None, include_deleted=False):
+        return self._current(
+            epoch=epoch,
+            published=None,
+            include_deleted=include_deleted
+        )
 
-    def _current(self, epoch=None, published=None, filter=None):
+    def _current(
+            self,
+            epoch=None,
+            published=None,
+            filter=None,
+            include_deleted=False
+    ):
         for section in self.sections():
             setattr(
                 self,
@@ -957,12 +967,14 @@ class Site(models.Model):
                 getattr(self, section.accessor)._current(
                     epoch=epoch,
                     published=published,
-                    filter=filter
+                    filter=filter,
+                    include_deleted=include_deleted
                 ) if section.subsection else
                 getattr(self, section.accessor)._current(
                     epoch=epoch,
                     published=published,
-                    filter=filter
+                    filter=filter,
+                    include_deleted=include_deleted
                 ).first()
             )
 
@@ -1114,21 +1126,37 @@ class Site(models.Model):
 
 class SiteSectionManager(gis_models.Manager):
 
+    is_head = False
+
     def published(self, epoch=None):
         return self.get_queryset().published(epoch=epoch)
 
-    def head(self, epoch=None):
-        return self.get_queryset().head(epoch=epoch)
+    def head(self, epoch=None, include_deleted=False):
+        self.is_head = True
+        return self.get_queryset().head(
+            epoch=epoch,
+            include_deleted=include_deleted
+        )
 
-    def _current(self, epoch=None, published=None, filter=None):
+    def _current(
+            self,
+            epoch=None,
+            published=None,
+            filter=None,
+            include_deleted=False
+    ):
+        self.is_head = published is None
         return self.get_queryset()._current(
             epoch=epoch,
             published=published,
-            filter=filter
+            filter=filter,
+            include_deleted=include_deleted
         )
 
 
 class SiteSectionQueryset(gis_models.QuerySet):
+
+    is_head = False
 
     def editable_by(self, user):
         if user.is_superuser:
@@ -1143,18 +1171,35 @@ class SiteSectionQueryset(gis_models.QuerySet):
     def published(self, epoch=None):
         return self._current(epoch=epoch, published=True).first()
 
-    def head(self, epoch=None):
-        return self._current(epoch=epoch, published=None).first()
+    def head(self, epoch=None, include_deleted=False):
+        self.is_head = True
+        return self._current(
+            epoch=epoch,
+            published=None,
+            include_deleted=include_deleted
+        ).first()
 
-    def _current(self, epoch=None, published=None, filter=None):
+    def _current(
+        self,
+        epoch=None,
+        published=None,
+        filter=None,
+        include_deleted=False
+    ):
+        self.is_head = published is None
         pub_q = filter or Q()
         if published is not None:
             pub_q = Q(published=published)
         if epoch and hasattr(self.model, 'valid_time'):
-            return self.filter(pub_q).order_by('published').filter(
+            # todo does epoch make sense for non-subsections??
+            ret = self.filter(pub_q).order_by('published').filter(
                 {f'{self.model.valid_time}__lte': epoch}
             )[0:1]
-        return self.filter(pub_q).order_by('published')[0:1]
+        else:
+            ret = self.filter(pub_q).order_by('published')[0:1]
+
+        ret.is_head = self.is_head
+        return ret
 
 
 class SiteLocationManager(SiteSectionManager):
@@ -1312,6 +1357,8 @@ class SiteSection(gis_models.Model):
 
     @property
     def mod_status(self):
+        if getattr(self, 'is_deleted', False):
+            return SiteLogStatus.UPDATED
         if self.published:
             return SiteLogStatus.PUBLISHED
         return SiteLogStatus.UPDATED
@@ -1353,11 +1400,16 @@ class SiteSection(gis_models.Model):
                     return value.coords
             return value
 
+        def differ(value1, value2):
+            if isinstance(value1, str) and isinstance(value2, str):
+                return value1.strip() != value2.strip()
+            return value1 != value2
+
         for field in self.site_log_fields():
             pub = transform(getattr(published, field, None), field)
             head = transform(getattr(self, field), field)
             if (
-                head != pub and
+                differ(head, pub) and
                 head not in [None, ''] and
                 pub not in [None, '']
             ):
@@ -1392,7 +1444,6 @@ class SiteSection(gis_models.Model):
                 'error',
                 'subsection',
                 'is_deleted',
-                'custom_graphic',
                 'deleted',
                 '_flags',
                 'inserted',
@@ -1491,14 +1542,42 @@ class SiteSubSectionManager(SiteSectionManager):
 
 class SiteSubSectionQuerySet(SiteSectionQueryset):
 
+    is_head = False
+
+    def last(self):
+        """
+        The technique we use to restrict head() is to order by unpublished vs
+        published and then use DISTINCT on subsection to pick the first
+        row for each subsection - this unfortunately breaks when last() is used
+        because it will pull out the published version instead of one exists.
+        We work around that here by pulling out the last from the original
+        query rather than asking the database to do it. first() is unaffected
+        by this problem.
+        """
+        if self.is_head:
+            for sct in reversed(self):
+                return sct
+        return super().last()
+
     def published(self, subsection=None, epoch=None):
         return self._current(subsection=subsection, epoch=epoch, published=True)
 
-    def head(self, subsection=None, epoch=None):
-        return self._current(subsection=subsection, epoch=epoch, published=None)
+    def head(self, subsection=None, epoch=None, include_deleted=False):
+        self.is_head = True
+        return self._current(
+            subsection=subsection,
+            epoch=epoch,
+            published=None,
+            include_deleted=include_deleted
+        )
 
     def _current(
-        self, subsection=None, epoch=None, published=None, filter=None
+        self,
+        subsection=None,
+        epoch=None,
+        published=None,
+        filter=None,
+        include_deleted=False
     ):
         """
         Fetch the subsection stack that matches the parameters.
@@ -1512,8 +1591,11 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
             members of the subsection stack.
         :param filter: An additional Q object to filter the subsection stack
             by.
+        :param include_deleted: Include deleted sections if True, this param is
+            meaningless if published is True.
         :return:
         """
+        self.is_head = published is None
         section_q = filter or Q()
 
         if epoch and self.model.valid_time is not None:
@@ -1521,24 +1603,28 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
 
         if published is not None:
             section_q &= Q(published=published)
-            if published:
-                # no sections should exist in this state - but just incase they
-                # do, filter them out
-                section_q &= Q(is_deleted=False)
+        elif not include_deleted:
+            section_q &= Q(is_deleted=False)
+        # else:
+        #     import ipdb
+        #     ipdb.set_trace()
 
         if subsection is not None:
-            return self.filter(Q(subsection=subsection) & section_q).first()
+            qry = self.filter(Q(subsection=subsection) & section_q).first()
 
-        if published is not None:
-            return self.filter(section_q).order_by(self.model.order_field)
+        elif published is not None:
+            qry = self.filter(section_q).order_by(self.model.order_field)
+        else:
+            ordering = ['subsection', 'published']
+            if self.model.order_field and self.model.order_field != 'subsection':
+                ordering.append(self.model.order_field)
 
-        ordering = ['subsection', 'published']
-        if self.model.order_field and self.model.order_field != 'subsection':
-            ordering.append(self.model.order_field)
+            qry = self.filter(section_q).order_by(
+                *ordering
+            ).distinct('subsection')
 
-        return self.filter(section_q).order_by(
-            *ordering
-        ).distinct('subsection')
+        qry.is_head = self.is_head
+        return qry
 
 
 class SiteSubSection(SiteSection):
@@ -2599,7 +2685,11 @@ class SiteAntenna(SiteSubSection):
     custom_graphic = models.TextField(
         default='',
         blank=True,
-        help_text=_('Custom antenna graphic - if different than the default.')
+        verbose_name=_('Antenna Graphic'),
+        help_text=_(
+            'A custom graphic may be provided, otherwise the default graphic '
+            'for the antenna type will be used.'
+        )
     )
 
     class Meta:

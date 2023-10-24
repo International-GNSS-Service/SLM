@@ -36,7 +36,7 @@ class SiteLogStatus(IntegerChoices, p('help')):
     EMPTY = (
         5,
         _('Empty'),
-        _('Site log section is empty.')
+        _('Site log section is empty or deleted.')
     )
 
     SUSPENDED = (

@@ -369,11 +369,8 @@ class EditView(StationContextView):
                     subheading = heading['subsections'][form.section_name()]
 
                 for inst in reversed(
-                    form._meta.model.objects.station(self.station).head()
+                    form._meta.model.objects.station(self.station).head(include_deleted=True)
                 ):
-                    if inst.published and inst.is_deleted:
-                        continue  # elide deleted instances if published
-
                     if section is form:
                         # if this is our requested form for editing - populate
                         # it with data from head

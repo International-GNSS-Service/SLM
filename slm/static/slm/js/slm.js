@@ -86,26 +86,34 @@ slm.canPublish = !slm.hasOwnProperty('canPublish') ? false : slm.canPublish;
 slm.handlePostSuccess = function(form, response, status, jqXHR) {
     form.find('button').blur();
     const data = response && response.hasOwnProperty('results') ? response.results : response;
-    if (jqXHR.status === 204 || (data.published && data.is_deleted)) {
-        form.data('slmErrorFlags', {});
-        slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
-        slm.visitEditNavTree(
-            form,
-            new StatusUpdater(
-                form,
-                SiteLogStatus.EMPTY
-            )
-        );
-        form.closest('.accordion-item').remove();
-        return;
-    }
+    // if (jqXHR.status === 204 || (data.published && data.is_deleted)) {
+    //     form.data('slmErrorFlags', {});
+    //     slm.visitEditNavTree(form, new ErrorBadgeUpdater(form));
+    //     slm.visitEditNavTree(
+    //         form,
+    //         new StatusUpdater(
+    //             form,
+    //             SiteLogStatus.EMPTY
+    //         )
+    //     );
+    //     form.closest('.accordion-item').remove();
+    //     return;
+    // }
     form.data('slmId', data.id);
     form.find('input[name="id"]').val(data.id);
 
     if (data.is_deleted) {
+        form.addClass('slm-section-deleted');
+        form.closest('.accordion-item').find(
+            'button.accordion-button'
+        ).addClass('slm-section-deleted').removeClass(
+            'slm-status-published'
+        ).addClass('slm-status-updated');
         form.find('.alert.slm-form-deleted').show();
         form.find('.form-control:visible').attr('disabled', '');
+        form.find('input.form-check-input:visible').attr('disabled', '');
         form.find('.slm-flag').hide();
+        form.find('div[contenteditable]').removeAttr('contenteditable');
     } else if (slm.isModerator){
         form.find('.slm-flag').show();
     } else {
@@ -210,7 +218,6 @@ slm.initForm = function(form_id, initial=null, transform= function(data){ return
         let finished = function() {};
         let formBtn = form.closest('.accordion-item');
         if (action === 'delete') {
-            console.log(formBtn.prevAll().find('span.section-number'));
             formBtn.prevAll().find('span.section-number').each(
                 function(){
                     $(this).text(slm.incrSectionNumber($(this).text(), -1));

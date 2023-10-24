@@ -2,7 +2,8 @@ from django.forms.widgets import (
     TextInput,
     TimeInput,
     DateInput,
-    SelectMultiple
+    SelectMultiple,
+    Textarea
 )
 from django.forms import CheckboxSelectMultiple, SplitDateTimeWidget
 
@@ -70,6 +71,13 @@ class SLMCheckboxSelectMultiple(CheckboxSelectMultiple):
         context["widget"]["columns"] = self.columns
         return context
 
+    def create_option(self, *args, **kwargs):
+        opt = super().create_option(*args, **kwargs)
+        # if 'disabled' in opt['attrs']:
+        #     import ipdb
+        #     ipdb.set_trace()
+        return opt
+
     def __init__(self, columns=columns, **kwargs):
         self.columns = columns or 1
         super().__init__(**kwargs)
@@ -92,7 +100,6 @@ class SLMCheckboxSelectMultiple(CheckboxSelectMultiple):
             class_list.append('form-check-input')
         attrs['class'] = ' '.join(class_list)
         return super().optgroups(name, value, attrs)
-
 
 class SLMDateTimeWidget(SplitDateTimeWidget):
 
@@ -134,3 +141,13 @@ class SLMDateTimeWidget(SplitDateTimeWidget):
                 if cls
             ])
         return context
+
+
+class GraphicTextarea(Textarea):
+
+    def __init__(self, attrs=None, **kwargs):
+        default_attrs = {'cols': 80, 'class': 'mono-spaced'}
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(default_attrs, **kwargs)
+

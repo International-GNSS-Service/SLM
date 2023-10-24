@@ -752,6 +752,7 @@ class SectionViewSet(type):
                         update = False
                         flags = validated_data.get('_flags', instance._flags)
                         edited_fields = []
+
                         # todo this diffing code is getting a bit messy because
                         #   of all the special type cases - consider a refactor
                         for field in ModelClass.site_log_fields():
@@ -789,6 +790,8 @@ class SectionViewSet(type):
                                                 ).clear()
                                         else:
                                             setattr(instance, field, new_value)
+
+
                                     if field in flags:
                                         del flags[field]
                         if update:
@@ -1032,11 +1035,14 @@ class SectionViewSet(type):
             """
             Deletes must happen on head:
 
-            1) If head is published, the delete will copy to an unpublished
-                record with the is_deleted flag marked.
-            2) If head is unpublished, the is_deleted flag will be set
+            1) If head is published, the delete flag will be marked
+            2) If head is unpublished, but no previously published section
+                exists the record will be deleted.
+            3) If head is unpublished, but previous published sections exist,
+                both the published and unpublished sections have their
+                is_deleted flags set.
 
-            Records will be fully deleted when an unpublished record with the
+            Sections are fully deleted when an unpublished record with the
             is_deleted flag set is published or if a section with no previously
             published records is deleted.
 
@@ -1047,12 +1053,12 @@ class SectionViewSet(type):
                 section = ModelClass.objects.select_for_update().get(
                     pk=instance.pk
                 )
+                edit_line = ModelClass.objects.filter(
+                    site=section.site,
+                    subsection=section.subsection
+                )
                 if isinstance(section, SiteSubSection):
-                    if ModelClass.objects.filter(
-                        site=section.site,
-                        subsection=section.subsection
-                    ).order_by('-edited').first() != section:
-
+                    if edit_line.order_by('-edited').first() != section:
                         raise serializers.ValidationError(
                             _(
                                 'Edits must be made on HEAD. Someone else may '
@@ -1061,57 +1067,44 @@ class SectionViewSet(type):
                             )
                         )
 
-                    previous = ModelClass.objects.filter(
-                        site=section.site,
-                        subsection=section.subsection,
-                        published=True
-                    )
+                if edit_line.count() == 1:
+                    if not section.published:
+                        # we delete it if this section or subsection has never
+                        # been published before
+                        section.delete()
+                        instance.site.update_status(
+                            save=True,
+                            user=self.request.user,
+                            timestamp=now()
+                        )
+                        return None
+                    else:
+                        section.is_deleted = True
+                        section.save()
+                        form = section.site.siteform_set.head()
+                        if form.published:
+                            form.pk = None
+                            form.published = False
+                        if self.request.user.full_name:
+                            form.prepared_by = self.request.user.full_name
+                        form.save()
+                        return section
                 else:
-                    previous = ModelClass.objects.filter(
-                        site=section.site,
-                        published=True
-                    )
+                    edit_line.update(is_deleted=True)
 
-                if previous.count() == 0:
-                    # we delete it if this section or subsection has never
-                    # been published before
-                    section.delete()
-                    instance.site.update_status(
-                        save=True,
-                        user=self.request.user,
-                        timestamp=now()
-                    )
-                    return None
-
-                if not section.is_deleted:
-                    # if it is currently published before we copy and save it
-                    # with the is_deleted flag set to True
-                    section.is_deleted = True
-                    if section.published:
-                        section.pk = None  # this is how you copy a model
-                        section.published = False
-
-                    section.save()
-                    form = section.site.siteform_set.head()
-                    if form.published:
-                        form.pk = None
-                        form.published = False
-                    if self.request.user.full_name:
-                        form.prepared_by = self.request.user.full_name
-                    form.save()
-                    slm_signals.section_deleted.send(
-                        sender=self,
-                        site=section.site,
-                        user=self.request.user,
-                        request=self.request,
-                        timestamp=now(),
-                        section=section
-                    )
-                    instance.site.update_status(
-                        save=True,
-                        user=self.request.user,
-                        timestamp=now()
-                    )
+                slm_signals.section_deleted.send(
+                    sender=self,
+                    site=section.site,
+                    user=self.request.user,
+                    request=self.request,
+                    timestamp=now(),
+                    section=section
+                )
+                instance.site.update_status(
+                    save=True,
+                    user=self.request.user,
+                    timestamp=now()
+                )
                 return section
 
         obj.get_queryset = get_queryset
@@ -1697,8 +1690,6 @@ class SiteFileUploadViewSet(
                         params = section.get_params(param)
                         if params:
                             for parsed_param in params:
-                                import pdb
-                                pdb.set_trace()
                                 for line_no in range(
                                     parsed_param.line_no,
                                     parsed_param.line_end+1

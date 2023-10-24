@@ -1,7 +1,7 @@
 {% load static slm %}
 <fieldset id="{{ widget.attrs.id }}-container" class="autocompleteselectmultiple" name="{{ widget.name }}">
     <legend style="display: none">"{{ field.help_text }}"</legend>
-    <div {% include "django/forms/widgets/attrs.html" %} contenteditable="true"></div>
+    <div {% include "django/forms/widgets/attrs.html" %} {% if not widget.attrs|has_key:'disabled' %}contenteditable="true"{% endif %}></div>
     <div style="display: none">
         <label for="{{widget.attrs.id}}-select"></label>
         <select id='{{widget.attrs.id}}-select' name="{{ widget.name }}" multiple></select>

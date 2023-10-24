@@ -14,6 +14,9 @@ slm.time24Init = function(inputs = null) {
 
     inputs.keydown(function( event ) {
         //let timeSelect = $(this).siblings('div.time-select');
+        if ($(this).attr('disabled') !== undefined) {
+            return;
+        }
         let timeSelect = $(this).find('div.time-select');
         let selected = $(this).find('span.time-input-selected');
         let currentTime = timeSelect.find('span.time-selected');

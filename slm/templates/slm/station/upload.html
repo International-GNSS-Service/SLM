@@ -141,7 +141,7 @@ Template for Download page.
                             }
                             btn.removeClass(oldStatus.css);
                             btn.addClass(newStatus.css);
-                            btn.data('slmFileStatus', newStatus.val);
+                            btn.data('slmFileStatus', newStatus.value);
                             slm.updateFileBadges(publish ? -1 : 1);
                         }
                     ).fail(
@@ -232,7 +232,7 @@ Template for Download page.
                                     siteNavBtn.data('slmStatus')
                                 ).css
                             );
-                            siteNavBtn.data('slmStatus', siteStatus.val);
+                            siteNavBtn.data('slmStatus', siteStatus.value);
                             siteNavBtn.addClass(siteStatus.css);
                             siteNavBtn.data('slmFlags', response.site_flags);
                             errBadge.html(response.site_flags);

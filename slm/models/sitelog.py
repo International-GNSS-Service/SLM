@@ -1281,7 +1281,7 @@ class SiteSection(gis_models.Model):
             part of a larger site publish)
         :return: True if a change was published, False otherwise.
         """
-        if self.published:
+        if self.published and not getattr(self, 'is_deleted', False):
             return False
 
         if timestamp is None:
@@ -1304,7 +1304,10 @@ class SiteSection(gis_models.Model):
             if isinstance(self, SiteForm):
                 self.save(skip_update=True)
             elif getattr(self, 'is_deleted', False):
-                self.delete()
+                try:
+                    self.delete()
+                except Exception:
+                    pass
             else:
                 self.save()
 

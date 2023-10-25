@@ -242,7 +242,7 @@ Template for View/Diff page.
 
     const getIndex = function(date_str) {
         const datetime = new Date(Date.parse(date_str))
-        const stack = reviewStack[slm.SiteLogFormat.get(parseInt(formatInput.val())).val];
+        const stack = reviewStack[slm.SiteLogFormat.get(parseInt(formatInput.val())).value];
         let idx = 0;
         for (const edit of stack) {
             if (edit[0] !== null && datetime > edit[0]) {
@@ -271,8 +271,8 @@ Template for View/Diff page.
 
     const initDiff = function() {
         const format = slm.SiteLogFormat.get(parseInt(formatInput.val()));
-        let fwd = content[format.val].forward;
-        let bck = content[format.val].backward;
+        let fwd = content[format.value].forward;
+        let bck = content[format.value].backward;
         if (format === slm.SiteLogFormat.GEODESY_ML) {
             if (fwd) {
                 fwd = new XMLSerializer().serializeToString(fwd.documentElement);
@@ -291,12 +291,12 @@ Template for View/Diff page.
         const formatSwitch = slm.SiteLogFormat.get(
             formatInput.data('slmReviewFormat')
         ) !== format;
-        formatInput.data('slmReviewFormat', format.val);
+        formatInput.data('slmReviewFormat', format.value);
         const finish = function() {
             initDiff();
             $('body').css('cursor', 'default');
         }
-        let stack = reviewStack[format.val];
+        let stack = reviewStack[format.value];
         if (stack.length === 0) {
             $('body').css('cursor', 'default');
             return;  // nothing to diff
@@ -321,7 +321,7 @@ Template for View/Diff page.
                     )
                 }).done(function (data, status, jqXHR) {
                     backFetched = true;
-                    content[format.val].backward = data;
+                    content[format.value].backward = data;
                     if (forwardFetched) {
                         finish();
                     }
@@ -329,7 +329,7 @@ Template for View/Diff page.
             } else {
                 backwardInput.val(null);
                 backFetched = true;
-                content[format.val].backward = '';
+                content[format.value].backward = '';
                 if (forwardFetched) {
                     finish();
                 }
@@ -364,7 +364,7 @@ Template for View/Diff page.
                 });
             }
             request.done(function (data, status, jqXHR) {
-                content[format.val].forward = data;
+                content[format.value].forward = data;
                 forwardFetched = true;
                 if (backFetched) {finish();}
             });

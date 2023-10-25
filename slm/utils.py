@@ -1,4 +1,3 @@
-from logging import Filter
 from django.conf import settings
 from django.core import serializers
 from django.contrib.gis.geos import Point
@@ -97,13 +96,6 @@ def clear_caches():
     from slm.models import User
     User.is_moderator.cache_clear()
     Site.is_moderator.cache_clear()
-
-
-class SquelchStackTraces(Filter):
-
-    def filter(self, record):
-        record.exc_info = None
-        return super().filter(record)
 
 
 def to_bool(bool_str):

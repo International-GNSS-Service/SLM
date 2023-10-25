@@ -11,12 +11,14 @@ def get_enum_context():
         SLMFileType
     )
     return {
-        'LogEntryType': LogEntryType,
-        'SiteLogStatus': SiteLogStatus,
-        'AlertLevel': AlertLevel,
-        'SiteFileUploadStatus': SiteFileUploadStatus,
-        'SiteLogFormat': SiteLogFormat,
-        'SLMFileType': SLMFileType
+        'enums': [
+            LogEntryType,
+            SiteLogStatus,
+            AlertLevel,
+            SiteFileUploadStatus,
+            SiteLogFormat,
+            SLMFileType
+        ]
     }
 
 
@@ -30,21 +32,10 @@ def get_icon_context():
 
 
 STATIC_TEMPLATES = {
-    'templates': {
-        'slm/js/urls.js': {
-            'context': {
-                'exclude': ['admin']
-            },
-            'dest': STATIC_ROOT / 'urls.js'
-        },
-        'slm/js/enums.js': {
-            'context': get_enum_context
-        },
-        'slm/js/fileIcons.js': {
-            'context': get_icon_context
-        },
-        'slm/css/defines.css': {
-            'context': get_enum_context
-        }
-    }
+    'templates': [
+        ('slm/js/urls.js', {'dest': STATIC_ROOT / 'urls.js'}),
+        ('slm/js/enums.js', {'context': get_enum_context}),
+        ('slm/js/fileIcons.js', {'context': get_icon_context}),
+        ('slm/css/defines.css', {'context': get_enum_context})
+    ]
 }

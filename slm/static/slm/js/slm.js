@@ -69,7 +69,7 @@ class StatusUpdater {
             node.removeClass(currentStatus.css);
         }
         node.addClass(this.status.css);
-        node.data('slmStatus', this.status.val);
+        node.data('slmStatus', this.status.value);
         slm.getNavSiblings(node).each(function(idx, sibling) {
             this.status = this.status.merge(
                 slm.SiteLogStatus.get(
@@ -824,8 +824,8 @@ slm.publishFile = function(station, fileId, publish) {
         method: 'PATCH',
         data: {
             'status': publish ?
-                slm.SiteFileUploadStatus.PUBLISHED.val :
-                slm.SiteFileUploadStatus.UNPUBLISHED.val
+                slm.SiteFileUploadStatus.PUBLISHED.value :
+                slm.SiteFileUploadStatus.UNPUBLISHED.value
         }
     });
 }
@@ -955,7 +955,7 @@ slm.updateAlertBell = function(site) {
         bells.removeClass(`${current.css}`);
     }
     if (level) {
-        navBtn.data('slmAlert', level.val);
+        navBtn.data('slmAlert', level.value);
         bells.addClass(`${level.css}`);
         bells.removeClass('bi-bell');
         bells.addClass('bi-bell-fill');

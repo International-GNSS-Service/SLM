@@ -1,12 +1,20 @@
 import os
 
 from slm.settings import set_default
+from logging import Filter
 
 DEFAULT_LOG_LEVEL = 'INFO'
 if DEBUG:
     DEFAULT_LOG_LEVEL = 'DEBUG'
 
 set_default('LOG_DIR', BASE_DIR / 'logs')
+
+
+class SquelchStackTraces(Filter):
+
+    def filter(self, record):
+        record.exc_info = None
+        return super().filter(record)
 
 
 LOGGING = {
@@ -41,7 +49,7 @@ LOGGING = {
     },
     'filters': {
         'squelch_traces': {
-            '()': 'slm.utils.SquelchStackTraces',
+            '()': SquelchStackTraces,
         },
     },
     'loggers': {

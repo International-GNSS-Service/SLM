@@ -1,5 +1,5 @@
 if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
 
-{% urls_to_js exclude=exclude visitor="render_static.ClassURLWriter" %}
+{% urls_to_js %}
 
 slm.urls = new URLResolver();

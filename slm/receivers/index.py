@@ -19,11 +19,6 @@ def publish_site(sender, site, **kwargs):
     ArchiveIndex.objects.add_index(site)
 
 
-@receiver(slm_signals.site_published)
-def synchronize_site(sender, site, **kwargs):
-    site.synchronize(refresh=False)
-
-
 # for image and file attachment changes we simply regenerate the GeodesyML file
 # at the current index. This can lead to some GeodesyML files with different
 # attachment lists but the same file name in circulation. An alternative

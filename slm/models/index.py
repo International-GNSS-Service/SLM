@@ -323,8 +323,7 @@ class ArchivedSiteLogManager(models.Manager):
                 ),
                 file=ContentFile(
                     SiteLogSerializer(
-                        instance=index.site,
-                        epoch=index.begin
+                        instance=index.site
                     ).format(log_format).encode('utf-8'),
                     name=index.site.get_filename(
                         log_format=log_format,

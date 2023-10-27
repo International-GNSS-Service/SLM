@@ -93,13 +93,18 @@
           <button type='button' name='save' class="btn btn-success" {% if form.instance.is_deleted %}style="display: none"{% endif %}>
             {% translate "Save" %}
           </button>
-          <button type='button' name='publish' class="btn btn-success" {% if not can_publish or form.instance.published %}style="display: none"{% endif %}>
+          <button type='button' name='publish' class="btn btn-success" {% if not can_publish or not form.instance.publishable %}style="display: none"{% endif %}>
             {% translate "Publish Changes" %}
           </button>
       </div>
-        <button type='button' name='delete' class="btn btn-danger" {% if not multi or form.instance.is_deleted %}style="display: none"{% endif %}>
-            {% translate "Delete" %}
-        </button>
+        <div class="d-flex gap-2">
+            <button type='button' name='revert' class="btn btn-danger" {% if not form.instance.publishable %}style="display: none"{% endif %} title="{% trans 'Revert all unpublished changes to their published state.' %}">
+                {% translate "Revert" %}
+            </button>
+            <button type='button' name='delete' class="btn btn-danger" {% if not multi or form.instance.is_deleted %}style="display: none"{% endif %}>
+                {% translate "Delete" %}
+            </button>
+        </div>
     </div>
   </form>
 </div>

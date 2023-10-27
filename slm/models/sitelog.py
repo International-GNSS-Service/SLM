@@ -55,7 +55,7 @@ from slm.validators import get_validators
 from functools import lru_cache
 from django.utils.functional import classproperty
 from django.db import transaction
-from django.db.models import Func, Sum
+from django.db.models import CheckConstraint
 from django.db.models.functions import Coalesce
 from collections import namedtuple
 from datetime import datetime, timezone
@@ -273,13 +273,11 @@ class SiteQuerySet(models.QuerySet):
         qry = self
         mod_q = Q()
         for idx, section in enumerate(self.model.sections()):
-            # section_qry = section.cls.objects._current(
-            #     filter=Q(site=OuterRef('pk'))
-            # ).aggregate(
-            #     tot_flags=Sum('num_flags', distinct=True)
-            # ).values('tot_flags').order_by()
 
-            section_qry = section.cls.objects._current(
+            # head query - exclude deleted
+            head_qry = section.cls.objects._current(
+                published=None,
+                include_deleted=False,
                 filter=Q(site=OuterRef('pk'))
             )
 
@@ -288,17 +286,10 @@ class SiteQuerySet(models.QuerySet):
                 filter=Q(site=OuterRef('pk'))
             )
 
-            # if section.cls in [SiteLocation, SiteFrequencyStandard]:
-            #     import pdb
-            #     pdb.set_trace()
-
             qry = qry.annotate(
                 **{
-                    # f'_num_flags{idx}': Subquery(
-                    #     section_qry.values('tot_flags')[:1]
-                    # ),
                     f'_num_flags{idx}': SubquerySum(
-                        section_qry,
+                        head_qry,
                         field='num_flags'
                     ),
                     f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])
@@ -880,18 +871,15 @@ class Site(models.Model):
 
     def update_status(self, save=True, user=None, timestamp=None):
         """
-        Todo synchronize() should replace this function eventually
-
         Update the denormalized data that is too expensive to query on the
-        fly. This includes flag count, moderation status and DateTimes.
+        fly. This includes flag count, moderation status and DateTimes. Also
+        check for and delete any review requests if a publish was done.
 
         :param save:
         :param user: The user responsible for a status update check
         :param timestamp: The time at which the status update is triggered
         :return:
         """
-        self.head()
-
         if not timestamp:
             timestamp = now()
 
@@ -900,48 +888,27 @@ class Site(models.Model):
         if user:
             self.last_user = user
 
-        self.num_flags = 0
-        status = SiteLogStatus.PUBLISHED
-
-        for section in self.sections():
-            if section.subsection:
-                for subsection in getattr(self, section.field):
-                    if subsection.is_deleted:
-                        continue
-                    self.num_flags += len(subsection._flags or {})
-                    status = status.merge(subsection.mod_status)
-            else:
-                section_inst = getattr(self, section.field, None)
-                if section_inst:
-                    self.num_flags += len(
-                        getattr(section_inst, '_flags') or {})
-                    status = status.merge(
-                        getattr(
-                            section_inst,
-                            'mod_status',
-                            SiteLogStatus.PUBLISHED
-                        )
-                    )
+        status = self.status
+        self.synchronize()
 
         # if in either of these two states - status update must come from
         # a global publish of the site log, not from this which can be
         # triggered by a section publish
-        if self.status not in {
-            SiteLogStatus.SUSPENDED,
-            SiteLogStatus.FORMER,
-            SiteLogStatus.PROPOSED
-        }:
-            if status == SiteLogStatus.PUBLISHED:
-                self.last_publish = timestamp
-            self.status = status
-            if (
-                self.status == SiteLogStatus.PUBLISHED
-                and hasattr(self, 'review_request')
-            ):
+        if status != self.status and self.status == SiteLogStatus.PUBLISHED:
+            self.last_publish = timestamp
+            if hasattr(self, 'review_request'):
                 self.review_request.delete()
 
         if save:
             self.save()
+
+    def revert(self):
+        reverted = False
+        for section in self.sections():
+            reverted |= getattr(self, section.accessor).revert()
+        if reverted:
+            self.update_status()
+        return reverted
 
     def published(self, epoch=None):
         return self._current(epoch=epoch, published=True)
@@ -986,7 +953,10 @@ class Site(models.Model):
                 continue
             if section.subsection:
                 idx = 0
-                for subsection in getattr(self, section.accessor).head():
+                for subsection in getattr(
+                    self,
+                    section.accessor
+                ).head().sort():
                     idx += 1
                     if not subsection.published:
                         dot_index = f'{subsection.section_number()}'
@@ -1027,7 +997,9 @@ class Site(models.Model):
         sections_published = 0
         for section in self.sections():
             if section.subsection:
-                for subsection in getattr(self, section.accessor).head():
+                for subsection in getattr(self, section.accessor).head(
+                        include_deleted=True
+                ):
                     sections_published += int(
                         subsection.publish(
                             request=request,
@@ -1037,7 +1009,9 @@ class Site(models.Model):
                         )
                     )
             else:
-                current = getattr(self, section.accessor).head()
+                current = getattr(self, section.accessor).head(
+                    include_deleted=True
+                )
                 if current:
                     sections_published += int(
                         current.publish(
@@ -1050,10 +1024,11 @@ class Site(models.Model):
 
         # this might be an initial PUBLISH when we're in PROPOSED or FORMER
         if sections_published or self.status != SiteLogStatus.PUBLISHED:
-            self.status = SiteLogStatus.PUBLISHED
-            self.last_publish = timestamp
-            self.last_user = request.user if request else None
-            self.save()
+            self.update_status(
+                save=True,
+                user=request.user if request else None,
+                timestamp=timestamp
+            )
             if hasattr(self, 'review_request'):
                 self.review_request.delete()
             if not silent:
@@ -1065,7 +1040,6 @@ class Site(models.Model):
                     request=request,
                     section=None
                 )
-
         return sections_published
 
     @cached_property
@@ -1128,6 +1102,9 @@ class SiteSectionManager(gis_models.Manager):
 
     is_head = False
 
+    def revert(self):
+        return bool(self.get_queryset().filter(published=False).delete()[0])
+
     def published(self, epoch=None):
         return self.get_queryset().published(epoch=epoch)
 
@@ -1189,8 +1166,8 @@ class SiteSectionQueryset(gis_models.QuerySet):
         self.is_head = published is None
         pub_q = filter or Q()
         if published is not None:
-            pub_q = Q(published=published)
-        if epoch and hasattr(self.model, 'valid_time'):
+            pub_q &= Q(published=published)
+        if epoch and getattr(self.model, 'valid_time', ''):
             # todo does epoch make sense for non-subsections??
             ret = self.filter(pub_q).order_by('published').filter(
                 {f'{self.model.valid_time}__lte': epoch}
@@ -1200,6 +1177,9 @@ class SiteSectionQueryset(gis_models.QuerySet):
 
         ret.is_head = self.is_head
         return ret
+
+    def sort(self, reverse=False):
+        return self
 
 
 class SiteLocationManager(SiteSectionManager):
@@ -1253,9 +1233,22 @@ class SiteSection(gis_models.Model):
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
 
+    def publishable(self):
+        return not self.published or (getattr(self, 'is_deleted', False))
+
     def save(self, *args, **kwargs):
         self.num_flags = len(self._flags) if self._flags else 0
         super().save(*args, **kwargs)
+
+    def revert(self):
+        reverted = bool(
+            self.__class__.objects.filter(
+                Q(site=self.site) & Q(published=False)
+            ).delete()[0]
+        )
+        if reverted:
+            self.site.update_status()
+        return reverted
 
     @property
     def dot_index(self):
@@ -1269,7 +1262,7 @@ class SiteSection(gis_models.Model):
         update_site=True
     ):
         """
-        Publish the current HEAD edits on this SiteLog - this will delete the
+        Publish the current HEAD edits on this section - this will delete the
         last published section instance.
 
         :param request: The request that triggered the publish (optional)
@@ -1281,7 +1274,7 @@ class SiteSection(gis_models.Model):
             part of a larger site publish)
         :return: True if a change was published, False otherwise.
         """
-        if self.published and not getattr(self, 'is_deleted', False):
+        if not self.publishable():
             return False
 
         if timestamp is None:
@@ -1289,27 +1282,24 @@ class SiteSection(gis_models.Model):
 
         with transaction.atomic():
 
-            # delete the previously published row if it exists
-            kwargs = {
-                'site': self.site,
-                'published': True
-            }
-            if hasattr(self, 'subsection'):
-                kwargs['subsection'] = self.subsection
-
-            self.__class__.objects.filter(**kwargs).delete()
-            #########################################
-
-            self.published = True
-            if isinstance(self, SiteForm):
-                self.save(skip_update=True)
-            elif getattr(self, 'is_deleted', False):
-                try:
-                    self.delete()
-                except Exception:
-                    pass
+            if getattr(self, 'is_deleted', False):
+                self.delete()
             else:
-                self.save()
+                # delete the previously published row if it exists
+                kwargs = {
+                    'site': self.site,
+                    'published': True
+                }
+                if hasattr(self, 'subsection'):
+                    kwargs['subsection'] = self.subsection
+
+                self.__class__.objects.filter(**kwargs).delete()
+
+                self.published = True
+                if isinstance(self, SiteForm):
+                    self.save(skip_update=True)
+                else:
+                    self.save()
 
             if update_site:
                 self.site.update_status(save=True, timestamp=timestamp)
@@ -1518,6 +1508,13 @@ class SiteSection(gis_models.Model):
                 self._init_values_[field] = getattr(current, field)
         return self._init_values_[field]
 
+    def sort(self):
+        """
+        This is a kludge that's in place until the data model refactor can
+        separate the edit and state tables
+        """
+        return self
+
     class Meta:
         abstract = True
         ordering = ('-edited',)
@@ -1530,6 +1527,15 @@ class SiteSection(gis_models.Model):
 
 
 class SiteSubSectionManager(SiteSectionManager):
+
+    def revert(self):
+        reverted = super().revert()
+        reverted |= bool(
+            self.get_queryset().filter(
+                Q(published=True) & Q(is_deleted=True)
+            ).update(is_deleted=False)
+        )
+        return reverted
 
     def create(self, *args, **kwargs):
         # some DBs only support one auto field per table, so we have to
@@ -1604,23 +1610,24 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
         if epoch and self.model.valid_time is not None:
             section_q &= Q(**{f'{self.model.valid_time}__lte': epoch})
 
-        if published is not None:
-            section_q &= Q(published=published)
-        elif not include_deleted:
-            section_q &= Q(is_deleted=False)
-        # else:
-        #     import ipdb
-        #     ipdb.set_trace()
+        if published:
+            section_q &= Q(published=True)
+        elif published is None:
+            if not include_deleted:
+                section_q &= Q(is_deleted=False)
+        else:
+            section_q &= (Q(published=False) | Q(is_deleted=True))
 
         if subsection is not None:
-            qry = self.filter(Q(subsection=subsection) & section_q).first()
+            return self.filter(Q(subsection=subsection) & section_q).first()
 
         elif published is not None:
-            qry = self.filter(section_q).order_by(self.model.order_field)
+            qry = self.filter(section_q).order_by(
+                self.model.order_field,
+                'subsection'
+            )
         else:
             ordering = ['subsection', 'published']
-            if self.model.order_field and self.model.order_field != 'subsection':
-                ordering.append(self.model.order_field)
 
             qry = self.filter(section_q).order_by(
                 *ordering
@@ -1628,6 +1635,48 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
 
         qry.is_head = self.is_head
         return qry
+
+    def sort(self, reverse=False):
+        """
+        When fetching head() lists - we must sort in memory because changes to
+        the sort field can screw up the head() selection. In short - if
+        you call head() on a subsection and ordering matters, call sort next.
+        This does not alter the query but instead runs the query and returns
+        an in-memory list that is sorted. It should therefore not be called
+        on large querysets on that pull from more than one site.
+
+        This will be fixed in the data model architectural refactor when the
+        edit tables are separated from the published tables.
+
+        :param reverse: Reverse the sorted order
+        :return: An iterable of sorted objects
+        """
+        class OrderTuple:
+
+            def __init__(self, field, subsection):
+                self.field = field
+                self.subsection = subsection
+
+            def __lt__(self, other):
+                """
+                Custom < operator allows for None values of field to be
+                ignored - there's some old/bad data we have to allow
+                """
+                if other.field is not None and self.field is not None:
+                    if self.field < other.field:
+                        return True
+                return self.subsection < other.subsection
+
+        sorter = lambda o: getattr(o, 'subsection')
+        order_field = getattr(self.model, 'order_field', None)
+        if order_field:
+            sorter = (
+                lambda o: OrderTuple(
+                    getattr(o, order_field),
+                    getattr(o, 'subsection')
+                )
+            )
+        return sorted((obj for obj in self), key=sorter, reverse=reverse)
 
 
 class SiteSubSection(SiteSection):
@@ -1639,6 +1688,21 @@ class SiteSubSection(SiteSection):
     inserted = models.DateTimeField(default=now, db_index=True)
 
     objects = SiteSubSectionManager.from_queryset(SiteSubSectionQuerySet)()
+
+    def revert(self):
+        reverted = self.__class__.objects.filter(
+            Q(site=self.site) &
+            Q(published=False) &
+            Q(subsection=self.subsection)
+        ).delete()[0] | self.__class__.objects.filter(
+            Q(site=self.site) &
+            Q(published=True) &
+            Q(is_deleted=True) &
+            Q(subsection=self.subsection)
+        ).update(is_deleted=False)
+        if reverted:
+            self.site.update_status()
+        return reverted
 
     @property
     def dot_index(self, published=False):
@@ -1743,6 +1807,12 @@ class SiteSubSection(SiteSection):
             ('site', 'edited', 'published', 'subsection'),
             ('site', 'subsection', 'published'),
             ('subsection', 'published'),
+        ]
+        constraints = [
+            CheckConstraint(
+                check=~(Q(published=False) & Q(is_deleted=True)),
+                name='%(app_label)s_%(class)s_no_mod_deleted'
+            )
         ]
 
 
@@ -2469,7 +2539,7 @@ class SiteReceiver(SiteSubSection):
         )
     )
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         index_together = [
             ('site', 'subsection', 'published', 'installed'),
             ('subsection', 'published', 'installed'),
@@ -2695,7 +2765,7 @@ class SiteAntenna(SiteSubSection):
         )
     )
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         index_together = [
             ('site', 'subsection', 'published', 'installed'),
             ('subsection', 'published', 'installed'),
@@ -2978,7 +3048,7 @@ class SiteFrequencyStandard(SiteSubSection):
     effective_dates.field = (effective_start, effective_end)
     effective_dates.verbose_name = _('Effective Dates')
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         index_together = [
             ('site', 'subsection', 'published', 'effective_start'),
             ('subsection', 'published', 'effective_start'),
@@ -3094,7 +3164,7 @@ class SiteCollocation(SiteSubSection):
     effective_dates.field = (effective_start, effective_end)
     effective_dates.verbose_name = _('Effective Dates')
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         index_together = [
             ('site', 'subsection', 'published', 'effective_start'),
             ('subsection', 'published', 'effective_start'),
@@ -3222,7 +3292,7 @@ class MeteorologicalInstrumentation(SiteSubSection):
     effective_dates.field = (effective_start, effective_end)
     effective_dates.verbose_name = _('Effective Dates')
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         abstract = True
         index_together = [
             ('site', 'subsection', 'published', 'effective_start'),
@@ -3551,6 +3621,7 @@ class SiteOtherInstrumentation(SiteSubSection):
     )
 
 
+
 class Condition(SiteSubSection):
     """
     9.  Local Ongoing Conditions Possibly Affecting Computed Position
@@ -3613,7 +3684,7 @@ class Condition(SiteSubSection):
     effective_dates.field = (effective_start, effective_end)
     effective_dates.verbose_name = _('Effective Dates')
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         abstract = True
         index_together = [
             ('site', 'subsection', 'published', 'effective_start'),
@@ -3820,7 +3891,7 @@ class SiteLocalEpisodicEffects(SiteSubSection):
     date.field = (effective_start, effective_end)
     date.verbose_name = _('Date')
 
-    class Meta:
+    class Meta(SiteSubSection.Meta):
         index_together = [
             ('site', 'subsection', 'published', 'effective_start'),
             ('subsection', 'published', 'effective_start'),

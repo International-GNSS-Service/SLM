@@ -490,6 +490,9 @@ span.slm-parse-error {
 .slm-log-delete {
     border-left-color: #D3D3D3;
 }
+.slm-log-revert {
+    border-left-color: #eb9e34;
+}
 .slm-log-attachment-deleted,
 .slm-log-image-deleted {
     border-left-color: #EB0000;
@@ -557,6 +560,10 @@ span.badge.slm-log-site-proposed {
 span.badge.slm-log-delete {
     background-color: #D3D3D3;
     color: black;
+}
+span.badge.slm-log-revert {
+    background-color: #eb9e34;
+    color: white;
 }
 span.badge.slm-log-attachment-deleted,
 span.badge.slm-log-image-deleted {

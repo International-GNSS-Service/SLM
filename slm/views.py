@@ -368,9 +368,9 @@ class EditView(StationContextView):
                 if hasattr(form, 'NAV_HEADING'):
                     subheading = heading['subsections'][form.section_name()]
 
-                for inst in reversed(
-                    form._meta.model.objects.station(self.station).head(include_deleted=True)
-                ):
+                for inst in form._meta.model.objects.station(
+                    self.station
+                ).head(include_deleted=True).sort(reverse=True):
                     if section is form:
                         # if this is our requested form for editing - populate
                         # it with data from head

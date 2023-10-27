@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models, transaction
+from django.db.models import Q
 from django.http.response import (
     HttpResponseForbidden,
     HttpResponseNotFound,
@@ -596,6 +597,7 @@ class SectionViewSet(type):
             can_publish = serializers.SerializerMethodField(read_only=True)
 
             publish = serializers.BooleanField(write_only=True, required=False)
+            revert = serializers.BooleanField(write_only=True, required=False)
 
             def to_internal_value(self, data):
                 """
@@ -671,6 +673,7 @@ class SectionViewSet(type):
                         self.context['request'].user
                     )
                     do_publish = validated_data.pop('publish', False)
+                    do_revert = validated_data.pop('revert', False)
                     update_status = None
 
                     if not is_moderator:
@@ -689,6 +692,10 @@ class SectionViewSet(type):
                     section_id = validated_data.pop('id', None)
                     subsection = validated_data.get('subsection', None)
 
+                    line_filter = Q(site=site)
+                    if subsection is not None:
+                        line_filter &= Q(subsection=subsection)
+
                     # get the previous section instance - if it exists
                     if instance is None:
                         # this is either a section where only one can exist or
@@ -701,13 +708,24 @@ class SectionViewSet(type):
                         # present it is
                         elif subsection is not None:
                             instance = ModelClass.objects.filter(
-                                site=site,
-                                subsection=subsection
+                                line_filter
                             ).order_by('-edited').select_for_update().first()
                     else:
                         instance = ModelClass.objects.filter(
                             pk=instance.pk
                         ).select_for_update().first()
+
+                    if do_revert and instance:
+                        if instance.revert():
+                            reverted_to = ModelClass.objects.filter(
+                                line_filter & Q(published=True)
+                            ).first()
+                            if reverted_to:
+                                return reverted_to
+                        self.context['request']._response_status = (
+                            status.HTTP_204_NO_CONTENT
+                        )
+                        return instance
 
                     try:
                         # this is a new section
@@ -880,7 +898,13 @@ class SectionViewSet(type):
                             try:
                                 instance.refresh_from_db()
                             except instance.DoesNotExist:
-                                pass
+                                # hacky but it works, not really another way
+                                # to pass information up and down the chain
+                                # from serializer to view - probably means a
+                                # lot of this logic belongs in the view
+                                self.context['request']._response_status = (
+                                    status.HTTP_204_NO_CONTENT
+                                )
 
                         if update_status:
                             site.update_status(
@@ -956,6 +980,7 @@ class SectionViewSet(type):
                     'id',
                     'publish',
                     'published',
+                    'revert',
                     'can_publish',
                     '_flags',
                     '_diff',
@@ -1012,9 +1037,27 @@ class SectionViewSet(type):
             headers = self.get_success_headers(serializer.data)
             return Response(
                 serializer.data,
-                status=status.HTTP_201_CREATED,
+                status=getattr(
+                    request,
+                    '_response_status',
+                    status.HTTP_201_CREATED
+                ),
                 headers=headers
             )
+
+        def update(self, request, *args, **kwargs):
+            response = mixins.UpdateModelMixin.update(
+                self,
+                request,
+                *args,
+                **kwargs
+            )
+            response.status_code = getattr(
+                request,
+                '_response_status',
+                response.status_code
+            )
+            return response
 
         def destroy(self, request, *args, **kwargs):
             instance = self.get_object()
@@ -1024,11 +1067,19 @@ class SectionViewSet(type):
                 headers = self.get_success_headers(serializer.data)
                 return Response(
                     serializer.data,
-                    status=status.HTTP_200_OK,
+                    status=getattr(
+                        request,
+                        '_response_status',
+                        status.HTTP_200_OK
+                    ),
                     headers=headers
                 )
             return Response(
-                status=status.HTTP_204_NO_CONTENT
+                status=getattr(
+                    request,
+                    '_response_status',
+                    status.HTTP_204_NO_CONTENT
+                )
             )
 
         def perform_destroy(self, instance):
@@ -1039,12 +1090,11 @@ class SectionViewSet(type):
             2) If head is unpublished, but no previously published section
                 exists the record will be deleted.
             3) If head is unpublished, but previous published sections exist,
-                both the published and unpublished sections have their
-                is_deleted flags set.
+                the unpublished record will be deleted and the published record
+                will have its is_deleted flag set.
 
-            Sections are fully deleted when an unpublished record with the
-            is_deleted flag set is published or if a section with no previously
-            published records is deleted.
+            Sections are fully deleted when a published record with the
+            is_deleted flag set is published.
 
             :param self: view class instance
             :param instance: The section or subsection instance
@@ -1053,65 +1103,54 @@ class SectionViewSet(type):
                 section = ModelClass.objects.select_for_update().get(
                     pk=instance.pk
                 )
-                edit_line = ModelClass.objects.filter(
+                site = section.site
+                published = ModelClass.objects.filter(
                     site=section.site,
-                    subsection=section.subsection
-                )
-                if isinstance(section, SiteSubSection):
-                    if edit_line.order_by('-edited').first() != section:
-                        raise serializers.ValidationError(
-                            _(
-                                'Edits must be made on HEAD. Someone else may '
-                                'be editing the log concurrently. Refresh and '
-                                'try again.'
-                            )
-                        )
+                    subsection=section.subsection,
+                    published=True
+                ).first()
 
-                if edit_line.count() == 1:
-                    if not section.published:
-                        # we delete it if this section or subsection has never
-                        # been published before
-                        section.delete()
-                        instance.site.update_status(
-                            save=True,
-                            user=self.request.user,
-                            timestamp=now()
-                        )
-                        return None
-                    else:
-                        section.is_deleted = True
-                        section.save()
-                        form = section.site.siteform_set.head()
-                        if form.published:
-                            form.pk = None
-                            form.published = False
-                        if self.request.user.full_name:
-                            form.prepared_by = self.request.user.full_name
-                        form.save()
-                        return section
+                if not section.published:
+                    # we delete it if this section or subsection has never
+                    # been published before
+                    section.delete()
+
+                if published:
+                    published.is_deleted = True
+                    published.save()
+                    form = section.site.siteform_set.head()
+                    if form.published:
+                        form.pk = None
+                        form.published = False
+                    if self.request.user.full_name:
+                        form.prepared_by = self.request.user.full_name
+                    form.save()
+                    to_return = published
                 else:
-                    edit_line.update(is_deleted=True)
+                    to_return = None
 
                 slm_signals.section_deleted.send(
                     sender=self,
-                    site=section.site,
+                    site=site,
                     user=self.request.user,
                     request=self.request,
                     timestamp=now(),
                     section=section
                 )
-                instance.site.update_status(
+
+                site.update_status(
                     save=True,
                     user=self.request.user,
                     timestamp=now()
                 )
-                return section
+                return to_return
 
         obj.get_queryset = get_queryset
         if can_delete:
             obj.perform_destroy = perform_destroy
             obj.destroy = destroy
         obj.create = create
+        obj.update = update
         return obj
 
 
@@ -1623,7 +1662,7 @@ class SiteFileUploadViewSet(
                                     objects.filter(
                                         site=self.site,
                                         is_deleted=False
-                                ).head().order_by('subsection')
+                                ).head().sort()
                             )
                         if (
                             len(existing_sections[section.heading_index]) >

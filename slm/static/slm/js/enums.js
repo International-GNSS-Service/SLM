@@ -16,6 +16,7 @@ class LogEntryType {
 	static ATTACHMENT_UNPUBLISH = new LogEntryType(12, "ATTACHMENT_UNPUBLISH", "Attachment Unpublished", "slm-log-attachment-unpublished");
 	static IMAGE_DELETE = new LogEntryType(13, "IMAGE_DELETE", "Image Deleted", "slm-log-image-deleted");
 	static ATTACHMENT_DELETE = new LogEntryType(14, "ATTACHMENT_DELETE", "Attachment Deleted", "slm-log-attachment-deleted");
+	static REVERT = new LogEntryType(15, "REVERT", "Revert", "slm-log-revert");
 	
 	constructor (value, name, label, css) {
 		this.value = value;
@@ -58,12 +59,46 @@ class LogEntryType {
 				return LogEntryType.IMAGE_DELETE;
 			case 14:
 				return LogEntryType.ATTACHMENT_DELETE;
+			case 15:
+				return LogEntryType.REVERT;
+		}
+		switch(value) {
+			case "SITE_PROPOSED":
+				return LogEntryType.SITE_PROPOSED;
+			case "ADD":
+				return LogEntryType.ADD;
+			case "UPDATE":
+				return LogEntryType.UPDATE;
+			case "DELETE":
+				return LogEntryType.DELETE;
+			case "PUBLISH":
+				return LogEntryType.PUBLISH;
+			case "LOG_UPLOAD":
+				return LogEntryType.LOG_UPLOAD;
+			case "IMAGE_UPLOAD":
+				return LogEntryType.IMAGE_UPLOAD;
+			case "ATTACHMENT_UPLOAD":
+				return LogEntryType.ATTACHMENT_UPLOAD;
+			case "IMAGE_PUBLISH":
+				return LogEntryType.IMAGE_PUBLISH;
+			case "ATTACHMENT_PUBLISH":
+				return LogEntryType.ATTACHMENT_PUBLISH;
+			case "IMAGE_UNPUBLISH":
+				return LogEntryType.IMAGE_UNPUBLISH;
+			case "ATTACHMENT_UNPUBLISH":
+				return LogEntryType.ATTACHMENT_UNPUBLISH;
+			case "IMAGE_DELETE":
+				return LogEntryType.IMAGE_DELETE;
+			case "ATTACHMENT_DELETE":
+				return LogEntryType.ATTACHMENT_DELETE;
+			case "REVERT":
+				return LogEntryType.REVERT;
 		}
 		return null;
 	}
 	
 	static [Symbol.iterator]() {
-		return [LogEntryType.SITE_PROPOSED, LogEntryType.ADD, LogEntryType.UPDATE, LogEntryType.DELETE, LogEntryType.PUBLISH, LogEntryType.LOG_UPLOAD, LogEntryType.IMAGE_UPLOAD, LogEntryType.ATTACHMENT_UPLOAD, LogEntryType.IMAGE_PUBLISH, LogEntryType.ATTACHMENT_PUBLISH, LogEntryType.IMAGE_UNPUBLISH, LogEntryType.ATTACHMENT_UNPUBLISH, LogEntryType.IMAGE_DELETE, LogEntryType.ATTACHMENT_DELETE][Symbol.iterator]();
+		return [LogEntryType.SITE_PROPOSED, LogEntryType.ADD, LogEntryType.UPDATE, LogEntryType.DELETE, LogEntryType.PUBLISH, LogEntryType.LOG_UPLOAD, LogEntryType.IMAGE_UPLOAD, LogEntryType.ATTACHMENT_UPLOAD, LogEntryType.IMAGE_PUBLISH, LogEntryType.ATTACHMENT_PUBLISH, LogEntryType.IMAGE_UNPUBLISH, LogEntryType.ATTACHMENT_UNPUBLISH, LogEntryType.IMAGE_DELETE, LogEntryType.ATTACHMENT_DELETE, LogEntryType.REVERT][Symbol.iterator]();
 	}
 }
 class SiteLogStatus {
@@ -103,6 +138,20 @@ class SiteLogStatus {
 			case 6:
 				return SiteLogStatus.SUSPENDED;
 		}
+		switch(value) {
+			case "FORMER":
+				return SiteLogStatus.FORMER;
+			case "PROPOSED":
+				return SiteLogStatus.PROPOSED;
+			case "UPDATED":
+				return SiteLogStatus.UPDATED;
+			case "PUBLISHED":
+				return SiteLogStatus.PUBLISHED;
+			case "EMPTY":
+				return SiteLogStatus.EMPTY;
+			case "SUSPENDED":
+				return SiteLogStatus.SUSPENDED;
+		}
 		return null;
 	}
 	
@@ -135,6 +184,22 @@ class AlertLevel {
 			case 2:
 				return AlertLevel.WARNING;
 			case 3:
+				return AlertLevel.ERROR;
+		}
+		switch(value) {
+			case "NOTICE":
+				return AlertLevel.NOTICE;
+			case "WARNING":
+				return AlertLevel.WARNING;
+			case "ERROR":
+				return AlertLevel.ERROR;
+		}
+		switch(value) {
+			case "NOTICE":
+				return AlertLevel.NOTICE;
+			case "WARNING":
+				return AlertLevel.WARNING;
+			case "ERROR":
 				return AlertLevel.ERROR;
 		}
 		return null;
@@ -178,6 +243,18 @@ class SiteFileUploadStatus {
 			case 5:
 				return SiteFileUploadStatus.VALID;
 		}
+		switch(value) {
+			case "UNPUBLISHED":
+				return SiteFileUploadStatus.UNPUBLISHED;
+			case "PUBLISHED":
+				return SiteFileUploadStatus.PUBLISHED;
+			case "INVALID":
+				return SiteFileUploadStatus.INVALID;
+			case "WARNINGS":
+				return SiteFileUploadStatus.WARNINGS;
+			case "VALID":
+				return SiteFileUploadStatus.VALID;
+		}
 		return null;
 	}
 	
@@ -214,6 +291,30 @@ class SiteLogFormat {
 			case 3:
 				return SiteLogFormat.JSON;
 		}
+		switch(value) {
+			case "LEGACY":
+				return SiteLogFormat.LEGACY;
+			case "GEODESY_ML":
+				return SiteLogFormat.GEODESY_ML;
+			case "JSON":
+				return SiteLogFormat.JSON;
+		}
+		switch(value) {
+			case "text/plain":
+				return SiteLogFormat.LEGACY;
+			case "application/xml":
+				return SiteLogFormat.GEODESY_ML;
+			case "application/json":
+				return SiteLogFormat.JSON;
+		}
+		switch(value) {
+			case "log":
+				return SiteLogFormat.LEGACY;
+			case "xml":
+				return SiteLogFormat.GEODESY_ML;
+			case "json":
+				return SiteLogFormat.JSON;
+		}
 		return null;
 	}
 	
@@ -247,6 +348,22 @@ class SLMFileType {
 			case 3:
 				return SLMFileType.ATTACHMENT;
 		}
+		switch(value) {
+			case "SITE_LOG":
+				return SLMFileType.SITE_LOG;
+			case "SITE_IMAGE":
+				return SLMFileType.SITE_IMAGE;
+			case "ATTACHMENT":
+				return SLMFileType.ATTACHMENT;
+		}
+		switch(value) {
+			case "log":
+				return SLMFileType.SITE_LOG;
+			case "image":
+				return SLMFileType.SITE_IMAGE;
+			case "attachment":
+				return SLMFileType.ATTACHMENT;
+		}
 		return null;
 	}
 	
@@ -255,6 +372,24 @@ class SLMFileType {
 	}
 }
 
+
+SiteLogStatus.prototype.set = function (child) {
+    if (
+        this === SiteLogStatus.PUBLISHED ||
+        this === SiteLogStatus.UPDATED ||
+        this === SiteLogStatus.EMPTY
+    ) {
+        return child;
+    }
+    return this.merge(child);
+};
+
+SiteLogStatus.prototype.merge = function (sibling) {
+    if (sibling !== null && sibling.value < this.value) {
+        return sibling;
+    }
+    return this;
+};
 
 slm.LogEntryType = LogEntryType;
 slm.SiteLogStatus = SiteLogStatus;

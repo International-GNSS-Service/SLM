@@ -69,6 +69,7 @@ class StationSerializer(serializers.ModelSerializer):
     can_publish = serializers.SerializerMethodField(read_only=True)
 
     publish = serializers.BooleanField(write_only=True, required=False)
+    revert = serializers.BooleanField(write_only=True, required=False)
 
     review_requested = serializers.DateTimeField(
         read_only=True,
@@ -82,7 +83,9 @@ class StationSerializer(serializers.ModelSerializer):
         return None
 
     def update(self, instance, validated_data):
-        if validated_data.get('publish', False):
+        if validated_data.get('revert', False):
+            instance.revert()
+        elif validated_data.get('publish', False):
             if not instance.can_publish(self.context['request'].user):
                 raise PermissionDenied(
                     _('You do not have permission to publish the site log.')
@@ -94,6 +97,7 @@ class StationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # strip out anything but name or agencies
         validated_data.pop('publish', None)
+        validated_data.pop('revert', None)
         validated_data['name'] = validated_data['name'].upper()
         agencies = Agency.objects.filter(
             pk__in=[acy['id'] for acy in validated_data.pop('agencies', [])]
@@ -136,6 +140,7 @@ class StationSerializer(serializers.ModelSerializer):
             'last_user',
             'can_publish',
             'publish',
+            'revert',
             'review_requested',
             'max_alert'
         ]

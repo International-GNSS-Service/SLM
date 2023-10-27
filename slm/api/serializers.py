@@ -83,6 +83,11 @@ class SiteLogSerializer(serializers.BaseSerializer):
 
     @cached_property
     def context(self):
+        def sort(subsections):
+            if subsections:
+                return subsections.sort()
+            return subsections
+
         return {
             'site': self.site,
             **{
@@ -90,9 +95,10 @@ class SiteLogSerializer(serializers.BaseSerializer):
                     getattr(self.site, section.accessor).published(
                         epoch=self.epoch_param
                     ) if self.published_param else
-                    getattr(self.site, section.accessor).head(
-                        epoch=self.epoch_param
-                    )
+                    sort(getattr(self.site, section.accessor).head(
+                        epoch=self.epoch_param,
+                        include_deleted=False
+                    ))
                     for section in Site.sections()
             },
             'graphic': getattr(
@@ -100,9 +106,10 @@ class SiteLogSerializer(serializers.BaseSerializer):
                     epoch=self.epoch_param
                 ).last()
                 if self.published_param else
-                self.site.siteantenna_set.head(
-                    epoch=self.epoch_param
-                ).last(),
+                sort(self.site.siteantenna_set.head(
+                    epoch=self.epoch_param,
+                    include_deleted=False
+                ))[-1:] or None,
                 'graphic',
                 ''
             ),

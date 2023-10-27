@@ -6,7 +6,7 @@ from django.db.models import Q
 def clean_duplicate_logs(apps, schema_editor):
     total_deleted = 0
     LogEntry = apps.get_model('slm', 'LogEntry')
-    deleted_pks = {}
+    deleted_pks = set()
     for log_entry in LogEntry.objects.all():
         if log_entry.pk in deleted_pks:
             continue
@@ -21,7 +21,7 @@ def clean_duplicate_logs(apps, schema_editor):
                 subsection=log_entry.subsection))
         ).exclude(pk=log_entry.pk)
         if to_delete.count():
-            deleted_pks.update(to_delete.value_list('pk'))
+            deleted_pks.update(to_delete.values_list('pk'))
             deleted, _ = to_delete.delete()
             total_deleted += deleted
 

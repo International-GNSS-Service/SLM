@@ -37,6 +37,8 @@ def cleanup(file_path):
 @receiver(pre_delete, sender=SiteFile)
 @receiver(pre_delete, sender=GeodesyMLInvalid)
 def file_deleted(sender, instance, using, **kwargs):
-    transaction.on_commit(lambda: cleanup(instance.file.path))
+    if os.path.exists(instance.file.path):
+        transaction.on_commit(lambda: cleanup(instance.file.path))
     if hasattr(instance, 'thumbnail') and instance.thumbnail:
-        transaction.on_commit(lambda: cleanup(instance.thumbnail.path))
+        if os.path.exists(instance.thumbnail.path):
+            transaction.on_commit(lambda: cleanup(instance.thumbnail.path))

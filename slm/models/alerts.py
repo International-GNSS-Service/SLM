@@ -731,7 +731,11 @@ class GeodesyMLInvalidManager(AlertManager):
         )
         parser = SiteLogParser(xml_str)
         if parser.errors:
-            return self.model.objects.create(
+            xml_file = ContentFile(
+                xml_str.encode('utf-8'),
+                name=site.get_filename(log_format=SiteLogFormat.GEODESY_ML)
+            )
+            obj = self.model.objects.create(
                 published=serializer.is_published,
                 site=site,
                 schema=geo_version,
@@ -739,11 +743,9 @@ class GeodesyMLInvalidManager(AlertManager):
                     lineno: (err.level, err.message)
                     for lineno, err in parser.errors.items()
                 },
-                file=ContentFile(
-                    xml_str.encode('utf-8'),
-                    name=site.get_filename(log_format=SiteLogFormat.GEODESY_ML)
-                )
+                file=xml_file
             )
+            return obj
         return None
 
 

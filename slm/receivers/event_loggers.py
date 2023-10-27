@@ -99,8 +99,11 @@ def log_delete(sender, site, user, timestamp, request, section, **kwargs):
     from slm.defines import LogEntryType
     from slm.models import LogEntry
 
+    entry_type = LogEntryType.DELETE
+    if not getattr(section, 'published', True):
+        entry_type = LogEntryType.REVERT
     LogEntry.objects.get_or_create(
-        type=LogEntryType.DELETE,
+        type=entry_type,
         site=site,
         section=(
             ContentType.objects.get_for_model(section) if section else None

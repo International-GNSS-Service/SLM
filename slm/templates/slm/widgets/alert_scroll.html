@@ -21,7 +21,7 @@
         $.ajax({
             url: slm.urls.reverse(
                 'slm_edit_api:alerts-detail',
-                {'pk': alertId}
+                {kwargs: {'pk': alertId}}
             ),
             method: 'DELETE'
         }).done(

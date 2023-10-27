@@ -21,6 +21,7 @@ class LogEntryType(IntegerChoices):
     ATTACHMENT_UNPUBLISH  = 12, _('Attachment Unpublished')
     IMAGE_DELETE          = 13, _('Image Deleted')
     ATTACHMENT_DELETE     = 14, _('Attachment Deleted')
+    REVERT                = 15, _('Revert')
 
     @property
     def css(self):

@@ -340,8 +340,8 @@ class SiteLogBinder(BaseBinder):
                 ('Additional Information', ('additional_information', to_str))
             ]},
             'collations': ((
-                ('marker_east', 'marker_north', 'marker_up'),
-                'marker_enu',
+                ('marker_up', 'marker_north', 'marker_east'),
+                'marker_une',
                 Point
             ),)
         },

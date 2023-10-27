@@ -79,9 +79,9 @@
 4.{{ loop.index|rpad_space(3) }}Antenna Type             : {{ ant|antenna_radome }}
      Serial Number            : {{ ant.serial_number }}
      Antenna Reference Point  : {{ ant.reference_point.name }}
-     Marker->ARP Up Ecc. (m)  : {{ ant.marker_enu.2|precision_full(4) }}
-     Marker->ARP North Ecc(m) : {{ ant.marker_enu.1|precision_full(4) }}
-     Marker->ARP East Ecc(m)  : {{ ant.marker_enu.0|precision_full(4) }}
+     Marker->ARP Up Ecc. (m)  : {{ ant.marker_une.0|precision_full(4) }}
+     Marker->ARP North Ecc(m) : {{ ant.marker_une.1|precision_full(4) }}
+     Marker->ARP East Ecc(m)  : {{ ant.marker_une.2|precision_full(4) }}
      Alignment from True N    : {% if ant.alignment is not none %}{{ ant.alignment|precision(1)|pos }} deg{% endif %}
      Antenna Radome Type      : {{ ant.radome_type.model }}
      Radome Serial Number     : {{ ant.radome_serial_number }}

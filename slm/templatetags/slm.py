@@ -116,7 +116,7 @@ def iso_utc_full(datetime_field):
 @register.filter(name='multi_line')
 def multi_line(text):
     if text:
-        limit = 49
+        limit = 47
         lines = [line.rstrip() for line in text.split('\n')]
         limited = []
         for line in lines:

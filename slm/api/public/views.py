@@ -226,7 +226,7 @@ class StationListViewSet(
             antenna_type__model='antenna_type',
             radome_type__model='radome_type',
             serial_number='antenna_serial_number',
-            marker_enu='antenna_marker_enu'
+            marker_une='antenna_marker_une'
         ).with_receiver_fields(
             'firmware',
             'serial_number',

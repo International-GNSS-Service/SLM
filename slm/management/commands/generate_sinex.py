@@ -404,9 +404,9 @@ class Command(BaseCommand):
                     f' {site.four_id.lower():4.4}  A ---- P '
                     f'{sinex_time(antenna.installed):12.12} '
                     f'{sinex_time(antenna.removed):12.12} UNE '
-                    f'{antenna.marker_enu[2]:8.4f} '
-                    f'{antenna.marker_enu[1]:8.4f} '
-                    f'{antenna.marker_enu[0]:8.4f}'
+                    f'{antenna.marker_une[0]:8.4f} '
+                    f'{antenna.marker_une[1]:8.4f} '
+                    f'{antenna.marker_une[2]:8.4f}'
                 )
         yield '-SITE/ECCENTRICITY'
 

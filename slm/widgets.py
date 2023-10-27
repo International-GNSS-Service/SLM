@@ -71,13 +71,6 @@ class SLMCheckboxSelectMultiple(CheckboxSelectMultiple):
         context["widget"]["columns"] = self.columns
         return context
 
-    def create_option(self, *args, **kwargs):
-        opt = super().create_option(*args, **kwargs)
-        # if 'disabled' in opt['attrs']:
-        #     import ipdb
-        #     ipdb.set_trace()
-        return opt
-
     def __init__(self, columns=columns, **kwargs):
         self.columns = columns or 1
         super().__init__(**kwargs)

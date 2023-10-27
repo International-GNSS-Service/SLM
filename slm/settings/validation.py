@@ -72,7 +72,7 @@ SLM_DATA_VALIDATORS = {
             TimeRangeValidator(end_field='removed')
         ],
         'removed': [TimeRangeValidator(start_field='installed')],
-        'marker_enu': [FieldRequired(allow_legacy_nulls=True)],
+        'marker_une': [FieldRequired(allow_legacy_nulls=True)],
         'alignment': [FieldRequired(allow_legacy_nulls=True)]
     },
     'slm.SiteSurveyedLocalTies': {

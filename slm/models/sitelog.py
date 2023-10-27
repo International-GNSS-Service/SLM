@@ -2636,15 +2636,15 @@ class SiteAntenna(SiteSubSection):
         db_index=True
     )
 
-    marker_enu = gis_models.PointField(
+    marker_une = gis_models.PointField(
         srid=0,  # env is a local reference frame
         dim=3,
-        verbose_name=_('Marker->ARP ENU Ecc (m)'),
+        verbose_name=_('Marker->ARP UNE Ecc (m)'),
         default=None,
         null=True,
         blank=True,
         help_text=_(
-            'East-North-Up eccentricity is the offset between the ARP and '
+            'Up-North-East eccentricity is the offset between the ARP and '
             'marker described in section 1 measured to an accuracy of 1mm. '
             'Format: (F8.4) Value 0 is OK'
         )

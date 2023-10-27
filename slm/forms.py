@@ -774,9 +774,9 @@ class SiteAntennaForm(SubSectionForm):
         if field not in {'installed', 'removed', 'additional_info'}
     ]
 
-    marker_enu = SLMPointField(
-        help_text=SiteAntenna._meta.get_field('marker_enu').help_text,
-        label=SiteAntenna._meta.get_field('marker_enu').verbose_name,
+    marker_une = SLMPointField(
+        help_text=SiteAntenna._meta.get_field('marker_une').help_text,
+        label=SiteAntenna._meta.get_field('marker_une').verbose_name,
     )
 
     alignment = forms.FloatField(
@@ -826,9 +826,6 @@ class SiteAntennaForm(SubSectionForm):
             'removed': SLMDateTimeField,
             'custom_graphic': SiteAntennaGraphicField
         }
-        # widgets = {
-        #     'custom_graphic': GraphicTextarea(),
-        # }
 
 
 class SiteSurveyedLocalTiesForm(SubSectionForm):

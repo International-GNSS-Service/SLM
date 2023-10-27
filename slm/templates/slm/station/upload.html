@@ -199,7 +199,7 @@ Template for Download page.
               {
                   url: slm.urls.reverse(
                       'slm_edit_api:files-list',
-                      kwargs={'site': '{{ station }}'}
+                      {kwargs: {'site': '{{ station }}'}}
                   ),
                   maxFilesize: {{ MAX_UPLOAD_MB }},
                   headers:{

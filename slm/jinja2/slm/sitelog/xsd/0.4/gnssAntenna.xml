@@ -2,9 +2,9 @@
     <geo:manufacturerSerialNumber>{{ ant.serial_number }}</geo:manufacturerSerialNumber>
     <geo:igsModelCode codeList="http://xml.gov.au/icsm/geodesyml/codelists/antenna-receiver-codelists.xml#GeodesyML_GNSSAntennaTypeCode" codeListValue="{{ ant|antenna_codelist }}" codeSpace="urn:xml-gov-au:icsm:egeodesy:0.5">{{ ant|antenna_radome }}</geo:igsModelCode>
     <geo:antennaReferencePoint codeSpace="urn:ga-gov-au:antenna-reference-point-type">{{ ant.reference_point.name }}</geo:antennaReferencePoint>
-    <geo:marker-arpUpEcc. {% if ant.marker_enu is none %}xsi:nil="true"{% endif %}>{{ ant.marker_enu.2|precision_full(4) }}</geo:marker-arpUpEcc.>
-    <geo:marker-arpNorthEcc. {% if ant.marker_enu is none %}xsi:nil="true"{% endif %}>{{ ant.marker_enu.1|precision_full(4) }}</geo:marker-arpNorthEcc.>
-    <geo:marker-arpEastEcc. {% if ant.marker_enu is none %}xsi:nil="true"{% endif %}>{{ ant.marker_enu.0|precision_full(4) }}</geo:marker-arpEastEcc.>
+    <geo:marker-arpUpEcc. {% if ant.marker_une is none %}xsi:nil="true"{% endif %}>{{ ant.marker_une.0|precision_full(4) }}</geo:marker-arpUpEcc.>
+    <geo:marker-arpNorthEcc. {% if ant.marker_une is none %}xsi:nil="true"{% endif %}>{{ ant.marker_une.1|precision_full(4) }}</geo:marker-arpNorthEcc.>
+    <geo:marker-arpEastEcc. {% if ant.marker_une is none %}xsi:nil="true"{% endif %}>{{ ant.marker_une.2|precision_full(4) }}</geo:marker-arpEastEcc.>
     <geo:alignmentFromTrueNorth {% if ant.alignment is none %}xsi:nil="true"{% endif %}>{{ ant.alignment|precision(1)|pos }}</geo:alignmentFromTrueNorth>
     <geo:antennaRadomeType codeSpace="urn:igs-org:gnss-radome-model-code">{{ ant.radome_type.model }}</geo:antennaRadomeType>
     <geo:radomeSerialNumber>{{ ant.radome_serial_number }}</geo:radomeSerialNumber>

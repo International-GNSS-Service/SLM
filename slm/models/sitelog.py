@@ -2539,6 +2539,10 @@ class SiteReceiver(SiteSubSection):
         )
     )
 
+
+    def __str__(self):
+        return str(self.receiver_type)
+
     class Meta(SiteSubSection.Meta):
         index_together = [
             ('site', 'subsection', 'published', 'installed'),
@@ -2764,6 +2768,9 @@ class SiteAntenna(SiteSubSection):
             'for the antenna type will be used.'
         )
     )
+
+    def __str__(self):
+        return str(self.antenna_type)
 
     class Meta(SiteSubSection.Meta):
         index_together = [

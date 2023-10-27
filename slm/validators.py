@@ -190,6 +190,58 @@ class ARPValidator(SLMValidator):
             )
 
 
+class TimeRangeBookendValidator(SLMValidator):
+    """
+    Ensures that sections that should not have overlapping time ranges
+    are properly bookended - i.e. that the time range fields are closed before
+    the next section starts.
+    """
+    accessor: str
+    bookend_field: str
+
+    def __init__(
+        self,
+        *args,
+        bookend_field = 'installed',
+        severity=FlagSeverity.NOTIFY,
+        **kwargs
+    ):
+        self.bookend_field = bookend_field
+        assert self.bookend_field, 'Bookend field must be specified.'
+        super().__init__(*args, severity=severity, **kwargs)
+
+    def __call__(self, instance, field, value):
+        sections = getattr(
+            instance.site,
+            instance._meta.get_field('site').remote_field.get_accessor_name()
+        ).head().sort(reverse=True)
+        last = sections[0]
+        for section in sections[1:]:
+            # todo - this should be unnecessary when validation system is made
+            #   more robust
+            if 'Must end before' in section._flags.get(field.name, ''):
+                del section._flags[field.name]
+                section.save()
+            ######
+            
+            last_start = getattr(last, self.bookend_field, None)
+            if (
+                getattr(section, field.name, None) is None or (
+                    last_start and
+                    last_start < getattr(section, field.name)
+                )
+            ):
+                self.throw_error(
+                    _('Must end before {} starts {}.').format(
+                        last,
+                        getattr(last, self.bookend_field, None)
+                    ),
+                    section,
+                    field
+                )
+
+            last = section
+
 class TimeRangeValidator(SLMValidator):
 
     start_field = None

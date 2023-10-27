@@ -42,12 +42,12 @@
      Country                  : {{ location.country|enum_str }}
      Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
      Approximate Position (ITRF)
-       X coordinate (m)       : {{ location.xyz.0|precision(4) }}
-       Y coordinate (m)       : {{ location.xyz.1|precision(4) }}
-       Z coordinate (m)       : {{ location.xyz.2|precision(4) }}
+       X coordinate (m)       : {{ location.xyz.0|precision_full(4) }}
+       Y coordinate (m)       : {{ location.xyz.1|precision_full(4) }}
+       Z coordinate (m)       : {{ location.xyz.2|precision_full(4) }}
        Latitude (N is +)      : {% if location %}{{ location.llh.0|iso6709(6) }}{% else %}(+/-DDMMSS.SS){% endif %}
        Longitude (E is +)     : {% if location %}{{ location.llh.1|iso6709(7) }}{% else %}(+/-DDDMMSS.SS){% endif %}
-       Elevation (m,ellips.)  : {% if location %}{{ location.llh.2|precision(4) }}{% else %}(F7.1){% endif %}
+       Elevation (m,ellips.)  : {% if location %}{{ location.llh.2|precision_full(1) }}{% else %}(F7.1){% endif %}
      Additional Information   : {% if location %}{{ location.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
 
 

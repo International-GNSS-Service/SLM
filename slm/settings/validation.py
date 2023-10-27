@@ -16,7 +16,8 @@ from slm.validators import (
     FieldRequired,
     ARPValidator,
     NonEmptyValidator,
-    VerifiedEquipmentValidator
+    VerifiedEquipmentValidator,
+    TimeRangeBookendValidator
 )
 
 # toggling this off will prevent any validation configured to block edit saves
@@ -55,7 +56,8 @@ SLM_DATA_VALIDATORS = {
             TimeRangeValidator(end_field='removed')
         ],
         'removed': [
-            TimeRangeValidator(start_field='installed')
+            TimeRangeValidator(start_field='installed'),
+            TimeRangeBookendValidator()
         ]
     },
     'slm.SiteAntenna': {
@@ -71,7 +73,10 @@ SLM_DATA_VALIDATORS = {
             FieldRequired(),
             TimeRangeValidator(end_field='removed')
         ],
-        'removed': [TimeRangeValidator(start_field='installed')],
+        'removed': [
+            TimeRangeValidator(start_field='installed'),
+            TimeRangeBookendValidator()
+        ],
         'marker_une': [FieldRequired(allow_legacy_nulls=True)],
         'alignment': [FieldRequired(allow_legacy_nulls=True)]
     },

@@ -21,6 +21,16 @@ def get_enum_context():
         ]
     }
 
+def get_defines_context():
+    from slm.defines import (
+        AlertLevel,
+        SiteLogStatus
+    )
+    return {
+        'AlertLevel': AlertLevel,
+        'SiteLogStatus': SiteLogStatus
+    }
+
 
 def get_icon_context():
     from django.conf import settings
@@ -36,6 +46,6 @@ STATIC_TEMPLATES = {
         ('slm/js/urls.js', {'dest': STATIC_ROOT / 'urls.js'}),
         ('slm/js/enums.js', {'context': get_enum_context}),
         ('slm/js/fileIcons.js', {'context': get_icon_context}),
-        ('slm/css/defines.css', {'context': get_enum_context})
+        ('slm/css/defines.css', {'context': get_defines_context})
     ]
 }

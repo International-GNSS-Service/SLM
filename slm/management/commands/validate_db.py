@@ -4,9 +4,12 @@ Update the data availability information for each station.
 import logging
 
 from django.core.management import BaseCommand
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import gettext as _
 from slm.models import Site, GeodesyMLInvalid
+from slm.defines import SiteLogStatus
+from django.db.models import Sum
 from tqdm import tqdm
 
 
@@ -64,9 +67,16 @@ class Command(BaseCommand):
         set_bypass(True)
         invalid = 0
         valid = 0
+        critical = 0
+        old_flag_count = Site.objects.aggregate(
+            Sum('num_flags')
+        )['num_flags__sum']
         with transaction.atomic():
             
-            sites = Site.objects.public()
+            sites = Site.objects.filter(status__in=[
+                SiteLogStatus.PUBLISHED,
+                SiteLogStatus.UPDATED
+            ])
             if options['all']:
                 sites = Site.objects.all()
 
@@ -93,8 +103,33 @@ class Command(BaseCommand):
                         for obj in head:
                             if options['clear']:
                                 obj._flags = {}
-                            obj.clean()
-                            obj.save()
+                            try:
+                                obj.clean()
+                                obj.save()
+                            except ValidationError as verr:
+                                self.stderr.write(
+                                    self.style.ERROR(
+                                        _(
+                                            'Section {} of site {} has '
+                                            'critical error(s): {}'
+                                        ).format(
+                                            obj.__class__.__name__.lstrip(
+                                                'Site'
+                                            ),
+                                            site.name,
+                                            str(verr)
+                                        )
+                                    )
+                                )
+                                critical += 1
+                                # this type of error would normally block the
+                                # section from being saved - but we let this
+                                # go through here and record the error as a
+                                # normal flag
+                                for field, errors in verr.error_dict.items():
+                                    obj._flags[field] = '\n'.join(
+                                        err.message for err in errors
+                                    )
 
                     if options['schema']:
                         alert = GeodesyMLInvalid.objects.check_site(site=site)
@@ -106,10 +141,41 @@ class Command(BaseCommand):
                     #site.update_status(save=True)
                     p_bar.update(n=1)
 
-            Site.objects.synchronize_denormalized_state()
+            Site.objects.synchronize_denormalized_state(skip_form_updates=True)
 
         if options['schema']:
-            print(
-                f'{valid} sites had valid GeodesyML documents while {invalid} '
-                f'sites did not.'
+            if valid:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f'{valid} sites had valid GeodesyML documents.'
+                    )
+                )
+            if invalid:
+                self.stdout.write(
+                    self.style.ERROR(
+                        f'{invalid} sites do not have valid GeodesyML '
+                        f'documents.'
+                    )
+                )
+
+        new_flags = Site.objects.aggregate(
+            Sum('num_flags')
+        )['num_flags__sum']
+
+        delta = new_flags - old_flag_count
+
+        if delta >= 0:
+            change = 'added'
+        else:
+            change = 'removed'
+
+        self.stdout.write(
+            self.style.NOTICE(
+                f'{abs(delta)} flags were {change}.'
             )
+        )
+
+        self.stdout.write(self.style.NOTICE(
+            f'There are a total of validation {new_flags} across '
+            f'{sites.count()} sites. {critical} are critical.'
+        ))

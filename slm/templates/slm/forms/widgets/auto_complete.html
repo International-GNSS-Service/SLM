@@ -3,7 +3,7 @@
     <legend style="display: none">"{{ field.help_text }}"</legend>
     <div {% include "django/forms/widgets/attrs.html" %} {% if not widget.attrs|has_key:'disabled' %}contenteditable="true"{% endif %}>{{ widget.value|default_if_none:'' }}</div>
 
-    <label for="{{ widget.attrs.id }}-input" style="display: none"></label>
+    <label for="{{ widget.attrs.id }}-input" style="display: none">{{ label }}</label>
     <input id="{{ widget.attrs.id }}-input" name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="text" style="display: none">
 
     <script type="module">

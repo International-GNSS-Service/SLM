@@ -1,1 +1,14 @@
-{% spaceless %}<div id="{{ widget.attrs.id }}" class="row {% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">{% for widget in widget.subwidgets %}<div class="col">{% include widget.template_name %}</div>{% endfor %}</div>{% endspaceless %}
+{% spaceless %}<div id="{{ widget.attrs.id }}" class="row {% if widget.attrs.class %} {{ widget.attrs.class }}{% endif %}">
+    <div class="col">
+        <label for="{{ widget.subwidgets.0.attrs.id }}" style="display: none">Date</label>
+        {% with widget=widget.subwidgets.0 %}
+        {% include widget.template_name %}
+        {% endwith %}
+    </div>
+    <div class="col">
+        {% with widget=widget.subwidgets.1 %}
+        {% include widget.template_name %}
+        {% endwith %}
+    </div>
+</div>
+{% endspaceless %}

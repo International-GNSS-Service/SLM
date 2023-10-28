@@ -223,7 +223,7 @@ class TimeRangeBookendValidator(SLMValidator):
                 del section._flags[field.name]
                 section.save()
             ######
-            
+
             last_start = getattr(last, self.bookend_field, None)
             if (
                 getattr(section, field.name, None) is None or (

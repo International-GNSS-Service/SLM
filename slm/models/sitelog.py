@@ -259,12 +259,14 @@ class SiteQuerySet(models.QuerySet):
         ).update(max_alert=F('_max_alert'))
         return self
 
-    def synchronize_denormalized_state(self):
+    def synchronize_denormalized_state(self, skip_form_updates=False):
         """
         Some state is denormalized and cached onto site records to speed up
         reads. This ensures this denormalized state
         (max_alert, num_flags, status, and some site form fields) accurately
         reflect the normal data.
+        :param skip_form_updates: If true do not update the forms section
+            with modified section info.
         :return:
         """
         self.update_alert_levels()
@@ -285,11 +287,10 @@ class SiteQuerySet(models.QuerySet):
                 published=False,
                 filter=Q(site=OuterRef('pk'))
             )
-
             qry = qry.annotate(
                 **{
                     f'_num_flags{idx}': SubquerySum(
-                        head_qry,
+                        head_qry.values('num_flags'),
                         field='num_flags'
                     ),
                     f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])
@@ -315,15 +316,16 @@ class SiteQuerySet(models.QuerySet):
 
         # this is the longest operation - there might be a way to squash it
         # into a single query
-        for site in qry.filter(mod_q):
-            form = site.siteform_set.head()
-            if form.published:
-                form.pk = None
-                form.published = False
-                form.save()
+        if not skip_form_updates:
+            for site in qry.filter(mod_q):
+                form = site.siteform_set.head()
+                if form.published:
+                    form.pk = None
+                    form.published = False
+                    form.save()
 
-            form.modified_section = ', '.join(site.modified_sections)
-            form.save()
+                form.modified_section = ', '.join(site.modified_sections)
+                form.save()
 
     def availability(self):
         from slm.models import DataAvailability
@@ -1101,6 +1103,9 @@ class Site(models.Model):
 class SiteSectionManager(gis_models.Manager):
 
     is_head = False
+
+    def get_queryset(self):
+        return super().get_queryset().select_related('site')
 
     def revert(self):
         return bool(self.get_queryset().filter(published=False).delete()[0])
@@ -2349,6 +2354,20 @@ class SiteLocation(SiteSection):
     )
 
 
+class SiteReceiverManager(SiteSubSectionManager):
+
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'receiver_type'
+        ).prefetch_related(
+            'satellite_system'
+        )
+
+
+class SiteReceiverQueryset(SiteSubSectionQuerySet):
+    pass
+
+
 class SiteReceiver(SiteSubSection):
     """
     3.   GNSS Receiver Information
@@ -2381,6 +2400,8 @@ class SiteReceiver(SiteSubSection):
             'temp_deviation',
             'additional_info'
         ]
+
+    #objects = SiteReceiverManager.from_queryset(SiteReceiverQueryset)()
 
     @classmethod
     def section_number(cls):
@@ -2550,6 +2571,19 @@ class SiteReceiver(SiteSubSection):
         ]
 
 
+class SiteAntennaManager(SiteSubSectionManager):
+
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'antenna_type',
+            'radome_type'
+        )
+
+
+class SiteAntennaQueryset(SiteSubSectionQuerySet):
+    pass
+
+
 class SiteAntenna(SiteSubSection):
     """
     4.   GNSS Antenna Information
@@ -2569,6 +2603,8 @@ class SiteAntenna(SiteSubSection):
          Date Removed             : (CCYY-MM-DDThh:mmZ)
          Additional Information   : (multiple lines)
     """
+
+    #objects = SiteAntennaManager.from_queryset(SiteAntennaQueryset)()
 
     @property
     def heading(self):

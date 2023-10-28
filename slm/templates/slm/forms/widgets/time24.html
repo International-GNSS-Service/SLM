@@ -1,4 +1,5 @@
 <fieldset {% include "django/forms/widgets/attrs.html" %} tabindex=0 style="display: flex; justify-content: space-between; align-items: center" name="{{ widget.name }}" class="time24-hr form-control">
+    <legend style="display: none">24 Hour Time</legend>
     <span class="time"><span style="cursor: default; user-select: all;" class="hours">--</span>:<span style="cursor: default; user-select: all;" class="minutes">--</span></span>
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-clock clock-icon" viewBox="-2 -2 20 20">
         <path stroke="black" stroke-width="3%" d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>

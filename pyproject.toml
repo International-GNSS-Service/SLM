@@ -87,7 +87,7 @@ psycopg = {extras = ["binary"], version = "^3.1.12"}
 django-extensions = "^3.1.5"
 pydot = "^1.4.2"
 pyparsing = "^3.0.6"
-ipython = "8.12.2"
+ipython = "8.12.3"
 isort = "^5.10.1"
 pytest = "^7.1.2"
 pytest-django = "^4.5.2"

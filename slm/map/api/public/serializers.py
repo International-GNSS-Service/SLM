@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from slm.api.public import serializers as slm_serializers
+from slm.defines import SiteLogStatus
 
 
 class StationListSerializer(slm_serializers.StationListSerializer):
@@ -19,7 +20,7 @@ class StationMapSerializer(serializers.Serializer):
                 "coordinates": [
                     instance.llh[1],
                     instance.llh[0]
-                ],
+                ] if instance.llh else [None, None],
             },
             "properties": {
                 "name": instance.name,

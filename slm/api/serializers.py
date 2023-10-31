@@ -88,6 +88,20 @@ class SiteLogSerializer(serializers.BaseSerializer):
                 return subsections.sort()
             return subsections
 
+        # todo put this logic on the site model?
+        graphic = ''
+        if self.published_param:
+            graphic = self.site.siteantenna_set.published(
+                epoch=self.epoch_param
+            ).last()
+        else:
+            antennas = self.site.siteantenna_set.head(
+                epoch=self.epoch_param,
+                include_deleted=False
+            ).sort(reverse=True)
+            if antennas:
+                graphic = antennas[0].graphic
+
         return {
             'site': self.site,
             **{
@@ -101,18 +115,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
                     ))
                     for section in Site.sections()
             },
-            'graphic': getattr(
-                self.site.siteantenna_set.published(
-                    epoch=self.epoch_param
-                ).last()
-                if self.published_param else
-                sort(self.site.siteantenna_set.head(
-                    epoch=self.epoch_param,
-                    include_deleted=False
-                ))[-1:] or None,
-                'graphic',
-                ''
-            ),
+            'graphic': graphic,
         }
 
     @cached_property

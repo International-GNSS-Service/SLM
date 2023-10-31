@@ -65,13 +65,14 @@ class ArchiveIndexManager(models.Manager):
         return new_index
 
     def close_index(self, site):
-        last = self.filter(site=site).filter(
-            Q(begin__lte=site.last_publish) &
-            Q(end__isnull=True) | Q(end__gt=site.last_publish)
-        ).first()
-        if last:
-            last.end = site.last_publish
-            last.save()
+        if site.last_publish:
+            last = self.filter(site=site).filter(
+                Q(begin__lte=site.last_publish) &
+                Q(end__isnull=True) | Q(end__gt=site.last_publish)
+            ).first()
+            if last:
+                last.end = site.last_publish
+                last.save()
 
     def create(self, **kwargs):
         return self.insert_index(**kwargs)

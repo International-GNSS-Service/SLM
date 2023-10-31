@@ -198,6 +198,7 @@ class SiteQuerySet(models.QuerySet):
         """
         return self.public().filter(
             ~Q(status__in=[
+                SiteLogStatus.PROPOSED,
                 SiteLogStatus.FORMER,
                 SiteLogStatus.SUSPENDED
             ])
@@ -206,18 +207,16 @@ class SiteQuerySet(models.QuerySet):
     def public(self):
         """
         Return all publicly visible sites. This includes sites that are
-        in the former or suspended states.
+        in non-active states (i.e. proposed, former, suspended).
         :return:
         """
         from slm.models import Agency, Network
         public = Site.objects.filter(
             Q(agencies__in=Agency.objects.filter(public=True)) &
             Q(networks__in=Network.objects.filter(public=True)) &
-            Q(last_publish__isnull=False) &
-            ~Q(status__in=[
-                SiteLogStatus.PROPOSED,
-                SiteLogStatus.EMPTY
-            ])
+            # must have been published at least once! - even if in proposed
+            # state
+            Q(last_publish__isnull=False)
         ).distinct()
         return self.filter(pk__in=public)
 
@@ -258,6 +257,20 @@ class SiteQuerySet(models.QuerySet):
             _max_alert=Subquery(max_alert.values('level')[:1])
         ).update(max_alert=F('_max_alert'))
         return self
+
+    def needs_publish(self):
+        qry = self
+        mod_q = Q()
+        for idx, section in enumerate(self.model.sections()):
+            mod_qry = section.cls.objects._current(
+                published=False,
+                filter=Q(site=OuterRef('pk'))
+            )
+            qry = qry.annotate(
+                **{f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])}
+            )
+            mod_q |= Q(**{f'_mod{idx}__isnull': False})
+        return qry.filter(mod_q).exists()
 
     def synchronize_denormalized_state(self, skip_form_updates=False):
         """
@@ -750,6 +763,13 @@ class Site(models.Model):
         db_index=True
     )
 
+    def needs_publish(self):
+        if self.status == SiteLogStatus.UPDATED:
+            return True
+        elif self.status == SiteLogStatus.PUBLISHED:
+            return False
+        return self.__class__.objects.filter(pk=self.pk).needs_publish()
+
     @lru_cache(maxsize=32)
     def is_moderator(self, user):
         if user.is_superuser:
@@ -991,7 +1011,13 @@ class Site(models.Model):
             timestamp = now()
 
         form = self.siteform_set.head()
-        if form.published:
+        if form is None:
+            SiteForm.objects.create(
+                site=self,
+                published=False,
+                report_type='NEW'
+            )
+        elif form.published:
             form.pk = None
             form.published = False
             form.save()
@@ -1026,6 +1052,8 @@ class Site(models.Model):
 
         # this might be an initial PUBLISH when we're in PROPOSED or FORMER
         if sections_published or self.status != SiteLogStatus.PUBLISHED:
+            self.last_publish = timestamp
+            self.save()
             self.update_status(
                 save=True,
                 user=request.user if request else None,
@@ -1241,6 +1269,12 @@ class SiteSection(gis_models.Model):
     def publishable(self):
         return not self.published or (getattr(self, 'is_deleted', False))
 
+    @cached_property
+    def has_published(self):
+        return self.__class__.objects.filter(
+            Q(site=self.site) & Q(published=True)
+        ).exists()
+
     def save(self, *args, **kwargs):
         self.num_flags = len(self._flags) if self._flags else 0
         super().save(*args, **kwargs)
@@ -1307,6 +1341,8 @@ class SiteSection(gis_models.Model):
                     self.save()
 
             if update_site:
+                self.site.last_publish = timestamp
+                self.site.save()
                 self.site.update_status(save=True, timestamp=timestamp)
 
             if not silent:
@@ -1708,6 +1744,14 @@ class SiteSubSection(SiteSection):
         if reverted:
             self.site.update_status()
         return reverted
+
+    @cached_property
+    def has_published(self):
+        return self.__class__.objects.filter(
+            Q(site=self.site) &
+            Q(published=True) &
+            Q(subsection=self.subsection)
+        ).exists()
 
     @property
     def dot_index(self, published=False):

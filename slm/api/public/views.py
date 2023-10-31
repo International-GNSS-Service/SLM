@@ -1,8 +1,9 @@
 import django_filters
-from django.db.models import Q, Subquery, OuterRef, Prefetch
+from django.db.models import Q, Prefetch
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, viewsets
 from rest_framework.filters import OrderingFilter
+from slm.forms import SLMBooleanField
 from slm.api.pagination import DataTablesPagination
 from slm.api.public.serializers import (
     SiteFileUploadSerializer,
@@ -20,25 +21,17 @@ from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.models import (
     SiteFileUpload,
     Site,
-    SiteIdentification,
-    SiteLocation,
-    SiteAntenna,
     SiteReceiver,
-    SiteFrequencyStandard,
-    SiteMoreInformation,
     Receiver,
     Antenna,
     Radome,
     ArchivedSiteLog,
     Agency,
     Network,
-    SatelliteSystem,
-    SiteTideGauge,
-    AntCal
+    SiteTideGauge
 )
 from slm.api.filter import (
     SLMDateTimeFilter,
-    AcceptListArguments,
     SiteSearchFilter
 )
 from slm.api.filter import (
@@ -47,7 +40,7 @@ from slm.api.filter import (
     BaseStationFilter
 )
 from django.http import FileResponse
-from slm.defines import SiteLogFormat, ISOCountry, FrequencyStandardType
+from slm.defines import SiteLogFormat, SiteLogStatus
 from slm.forms import StationFilterForm as BaseStationFilterForm
 from django_enum.filters import EnumFilter
 from django.utils.translation import gettext as _
@@ -58,6 +51,26 @@ import json
 
 
 class StationFilterForm(BaseStationFilterForm):
+
+    include_former = SLMBooleanField(
+        label=_('Include Former'),
+        help_text=_(
+            'Include stations that are no longer maintained as part of any '
+            'of our networks.'
+        ),
+        initial=False,
+        required=False
+    )
+
+    include_proposed = SLMBooleanField(
+        label=_('Include Proposed'),
+        help_text=_(
+            'Include stations that are proposed for future inclusion in one '
+            'of our networks.'
+        ),
+        initial=False,
+        required=False
+    )
 
     @property
     def helper(self):
@@ -97,6 +110,14 @@ class StationFilterForm(BaseStationFilterForm):
                     'agency',
                     'network',
                     Field('country', css_class='slm-country search-input'),
+                    Field(
+                        'include_former',
+                        wrapper_class="form-switch"
+                    ),
+                    Field(
+                        'include_proposed',
+                        wrapper_class="form-switch"
+                    ),
                     'geography',
                     css_class='col-5'
                 ),
@@ -112,6 +133,26 @@ class StationFilterForm(BaseStationFilterForm):
 
 
 class StationFilter(BaseStationFilter):
+
+    include_former = SLMBooleanFilter(
+        method='filter_former',
+        field_name='include_former'
+    )
+
+    include_proposed = SLMBooleanFilter(
+        method='filter_proposed',
+        field_name='include_proposed'
+    )
+
+    def filter_former(self, queryset, name, value):
+        if not value:
+            return queryset.filter(~Q(status=SiteLogStatus.FORMER))
+        return queryset
+
+    def filter_proposed(self, queryset, name, value):
+        if not value:
+            return queryset.filter(~Q(status=SiteLogStatus.PROPOSED))
+        return queryset
 
     def get_form_class(self):
         return StationFilterForm
@@ -235,7 +276,7 @@ class StationListViewSet(
             standard_type='frequency_standard'
         ).with_info_fields(
             primary='data_center'
-        ).active().availability().distinct()
+        ).public().availability().distinct()
 
 
 class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):

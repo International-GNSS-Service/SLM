@@ -1,3 +1,4 @@
+{% if moreinformation -%}
 <geo:MoreInformation gml:id="more-information">
     <geo:dataCenter>{{ moreinformation.primary }}</geo:dataCenter>
     <geo:dataCenter>{{ moreinformation.secondary }}</geo:dataCenter>
@@ -18,3 +19,4 @@
     {% endif %}
     <geo:DOI codeSpace="urn:ga-gov-au:self.moreInformation-type">TODO</geo:DOI>
 </geo:MoreInformation>
+{%- endif %}

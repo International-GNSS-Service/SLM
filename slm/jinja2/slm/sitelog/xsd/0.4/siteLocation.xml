@@ -1,3 +1,4 @@
+{% if location -%}
 <geo:SiteLocation gml:id="site-location">
     <geo:city>{{ location.city }}</geo:city>
     <geo:state>{{ location.state }}</geo:state>
@@ -17,3 +18,4 @@
     </geo:approximatePositionITRF>
     <geo:notes>{{ identification.additional_information }}</geo:notes>
 </geo:SiteLocation>
+{%- endif %}

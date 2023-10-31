@@ -192,8 +192,8 @@ class PolylineListField(forms.CharField):
     widget = PolylineWidget
 
     def clean(self, value):
-        if value is None:
-            return value
+        if value is None or value == ['']:
+            return None
         polygons = []
         for poly in value:
             try:

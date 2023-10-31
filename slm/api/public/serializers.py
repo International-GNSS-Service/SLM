@@ -12,6 +12,7 @@ from slm.models import (
     SatelliteSystem,
     SiteTideGauge
 )
+from slm.defines import SiteLogStatus
 from slm.utils import build_absolute_url
 
 """
@@ -146,17 +147,23 @@ class StationListSerializer(serializers.ModelSerializer):
     last_data = serializers.SerializerMethodField()
 
     def get_xyz(self, obj):
-        return obj.xyz[0], obj.xyz[1], obj.xyz[2]
+        if obj.xyz:
+            return obj.xyz[0], obj.xyz[1], obj.xyz[2]
+        return None, None, None
 
     def get_llh(self, obj):
-        return obj.llh[0], obj.llh[1], obj.llh[2]
+        if obj.llh:
+            return obj.llh[0], obj.llh[1], obj.llh[2]
+        return None, None, None
 
     def get_antenna_marker_une(self, obj):
-        return (
-            obj.antenna_marker_une[0],
-            obj.antenna_marker_une[1],
-            obj.antenna_marker_une[2]
-        )
+        if obj.antenna_marker_une:
+            return (
+                obj.antenna_marker_une[0],
+                obj.antenna_marker_une[1],
+                obj.antenna_marker_une[2]
+            )
+        return None, None, None
 
     def get_satellite_system(self, obj):
         """
@@ -178,6 +185,7 @@ class StationListSerializer(serializers.ModelSerializer):
         model = Site
         fields = [
             'name',
+            'status',
             'agencies',
             'networks',
             'join_date',
@@ -204,7 +212,7 @@ class StationListSerializer(serializers.ModelSerializer):
             'last_rinex3',
             'last_rinex4',
             'last_data_time',
-            'last_data',
+            'last_data'
         ]
 
 

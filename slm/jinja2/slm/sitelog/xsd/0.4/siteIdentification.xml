@@ -1,3 +1,4 @@
+{% if identification -%}
 <geo:SiteIdentification gml:id="site-identification">
     <geo:siteName>{{ identification.site_name }}</geo:siteName>
     <geo:fourCharacterID>{{ identification.four_character_id}}</geo:fourCharacterID>
@@ -18,3 +19,4 @@
     {% if identification.distance %}<geo:distance-Activity>{{ identification.distance }}</geo:distance-Activity>{% endif %}
     {% if identification.additional_information %}<geo:notes>{{ identification.additional_information }}</geo:notes>{% endif %}
 </geo:SiteIdentification>
+{%- endif %}

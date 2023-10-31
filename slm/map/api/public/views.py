@@ -67,4 +67,4 @@ class StationMapViewSet(StationListViewSet):
     def get_queryset(self):
         return Site.objects.with_location_fields(
             'llh'
-        ).active().availability().distinct()
+        ).public().availability().distinct()

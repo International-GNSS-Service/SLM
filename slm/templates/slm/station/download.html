@@ -49,7 +49,7 @@ Template for Download page.
         </div>
       </div>
       <!-- todo only include if unpublished changes are present -->
-      {% if site.status == SiteLogStatus.UPDATED %}
+      {% if site.needs_publish %}
       <div class="row align-items-md-stretch mt-5 mb-5">
         <div class="col-12 col-md-6 col-xl-4 my-3">
           <div class="h-100 p-5 bg-light border rounded-3 text-center">

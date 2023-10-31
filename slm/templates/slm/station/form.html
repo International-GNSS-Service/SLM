@@ -2,7 +2,7 @@
 
 <!-- Form Fields -->
 <div class="form-group px-0">
-  <form id="site-{{ form_id }}" data-slm-section="{{ section_id }}" {% if form.group_name %}data-slm-group="{{ form.group_name }}"{% endif %} data-slm-site="{{ station }}" data-slm-id="{% if form.instance.id %}{{ form.instance.id }}{% endif %}" data-slm-flags="{{ flag_id }}" class="slm-form {% if form.instance.is_deleted %}slm-section-deleted{% endif %}" data-slm-method="post" data-slm-api="{{ form.api }}">
+  <form id="site-{{ form_id }}" data-slm-section="{{ section_id }}" data-has-published="{{form.instance.has_published}}" {% if form.group_name %}data-slm-group="{{ form.group_name }}"{% endif %} data-slm-site="{{ station }}" data-slm-id="{% if form.instance.id %}{{ form.instance.id }}{% endif %}" data-slm-flags="{{ flag_id }}" class="slm-form {% if form.instance.is_deleted %}slm-section-deleted{% endif %}" data-slm-method="post" data-slm-api="{{ form.api }}">
       <div class="alert alert-warning slm-form-unpublished" {% if not form.diff%}style="display: none"{% endif %}>{% trans "Changes have been saved but are not public, please "%} <a href="{% url 'slm:review' station=station %}">{% trans "submit to publish!" %}</a></div>
     <div class="alert alert-warning slm-form-deleted" {% if not form.instance.is_deleted %}style="display: none"{% endif %}>{% trans "This section has been deleted, please " %}<a href="{% url 'slm:review' station=station %}">{% trans "submit to publish!" %}</a></div>
 
@@ -98,7 +98,7 @@
           </button>
       </div>
         <div class="d-flex gap-2">
-            <button type='button' name='revert' class="btn btn-danger" {% if not form.instance.publishable %}style="display: none"{% endif %} title="{% trans 'Revert all unpublished changes to their published state.' %}">
+            <button type='button' name='revert' class="btn btn-danger" {% if not form.instance.publishable or not form.instance.has_published %}style="display: none"{% endif %} title="{% trans 'Revert all unpublished changes to their published state.' %}">
                 {% translate "Revert" %}
             </button>
             <button type='button' name='delete' class="btn btn-danger" {% if not multi or form.instance.is_deleted %}style="display: none"{% endif %}>

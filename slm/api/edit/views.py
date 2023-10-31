@@ -736,7 +736,13 @@ class SectionViewSet(type):
                             update_status = new_section.edited
                             if not isinstance(new_section, SiteForm):
                                 form = new_section.site.siteform_set.head()
-                                if form.published:
+                                if form is None:
+                                    form = SiteForm.objects.create(
+                                        site=site,
+                                        published=False,
+                                        report_type='NEW'
+                                    )
+                                elif form.published:
                                     form.pk = None
                                     form.published = False
                                 if self.context['request'].user.full_name:
@@ -773,6 +779,7 @@ class SectionViewSet(type):
 
                         # todo this diffing code is getting a bit messy because
                         #   of all the special type cases - consider a refactor
+                        #   also needs to be DRYed w/ published_diff function
                         for field in ModelClass.site_log_fields():
                             if field in validated_data:
                                 is_many = isinstance(
@@ -1007,7 +1014,8 @@ class SectionViewSet(type):
                         'subsection': {'required': False},
                         'four_character_id': {  # special case
                             'required': False, 'read_only': True
-                        }
+                        },
+                        'custom_graphic': {'trim_whitespace': False}
                     } if issubclass(ModelClass, SiteSubSection) else {})
                 }
 

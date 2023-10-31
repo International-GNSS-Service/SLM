@@ -107,7 +107,6 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
     if (data.hasOwnProperty('subsection')) {
         form.find('input[name="subsection"]').val(data.subsection);
     }
-
     if (data.is_deleted) {
         form.addClass('slm-section-deleted');
         form.closest('.accordion-item').find(
@@ -165,6 +164,9 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         data.can_publish
     ) {
         form.find('button[name="publish"]').show();
+        if (form.data('hasPublished')) {
+            form.find('button[name="revert"]').show();
+        }
     }
     if (data.hasOwnProperty('is_deleted') && data.is_deleted) {
         form.find('button[name="delete"]').hide();
@@ -297,6 +299,9 @@ slm.initForm = function(form_id, initial=null, transform= function(data){ return
 
         request.done(
             function(data, status, jqXHR) {
+                if (action === 'revert') {
+                    window.location.reload();
+                }
                 finished();
                 if (data) {
                     $.ajax({
@@ -307,6 +312,9 @@ slm.initForm = function(form_id, initial=null, transform= function(data){ return
                     }).done(function (site, status, jqXHR) {
                         slm.updateAlertBell(site);
                     });
+                }
+                if (action === 'publish') {
+                    form.data('hasPublished', true);
                 }
                 slm.handlePostSuccess(form, data, status, jqXHR);
             }

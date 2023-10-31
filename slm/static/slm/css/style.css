@@ -700,13 +700,13 @@ button.slm-status-in-review span.section-number {
     background-color: #0079AD;
     color: whitesmoke;
 }
-button.slm-status-nascent,
-button.nav-link.slm-status-nascent {
+button.slm-status-proposed,
+button.nav-link.slm-status-proposed {
     border-left: 10px solid #913D88;
     border-bottom-left-radius: 10px;
     border-top-left-radius: 10px;
 }
-button.slm-status-nascent span.section-number {
+button.slm-status-proposed span.section-number {
     background-color: #913D88;
     color: whitesmoke;
 }

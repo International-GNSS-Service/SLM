@@ -598,11 +598,9 @@ class StationReviewView(StationContextView):
                     )
                 ] for fmt in self.LOG_FORMATS
             },
-            'needs_publish': (
-                self.station.status in SiteLogStatus.unpublished_states()
-            )
+            'needs_publish': self.station.needs_publish()
         }
-        if self.site.status == SiteLogStatus.UPDATED:
+        if ctx['needs_publish']:
             for fmt in self.LOG_FORMATS:
                 ctx['review_stack'][fmt].insert(0, (None, None))
         return ctx

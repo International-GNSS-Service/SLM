@@ -75,6 +75,9 @@ class SLMPointField(Field):
     default_error_messages = {
         'invalid': _(
             'Unable to interpret point ({data}), please use format: {format}.'
+        ),
+        'missing': _(
+            'Must provide all {num} values, received: {received}.'
         )
     }
 
@@ -83,10 +86,23 @@ class SLMPointField(Field):
 
     def to_internal_value(self, data):
         try:
-            return Point(*[
+            coords = [
                 None if coord in ['', None]
                 else float(coord)
-                for coord in data]
-            ) or None
+                for coord in data
+            ]
+            # all values must be null or a number
+            if (
+                any([coord is None for coord in coords]) and
+                not all([coord is None for coord in coords])
+            ):
+                self.fail(
+                    'missing',
+                    num=len(coords),
+                    received=len(
+                        [coord for coord in coords if coord is not None]
+                    )
+                )
+            return Point(*coords) or None
         except (TypeError, ValueError):
             self.fail('invalid', format='[float, float, float]', data=data)

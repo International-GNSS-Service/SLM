@@ -21,7 +21,7 @@ Template for View/Diff page.
       <h2>Review and Submit</h2>
       <div id="review-actions">
         <button id="slm-reject-changes" name="reject" class="btn btn-danger" {% if not can_publish or not site.review_requested %}style="display: none"{% endif %} tabindex="0" data-bs-toggle="modal" data-bs-target="#slm-reject-modal" data-backdrop="false">{% trans 'Reject Changes' %}</button>
-        <button name="revert" onclick="revert();" class="btn btn-danger" title="{% trans 'Revert all unpublished changes to their published state.' %}" {% if not needs_publish %}style="display: none"{% endif %}>{% trans 'Revert' %}</button>
+        <button name="revert" onclick="revert();" class="btn btn-danger" title="{% trans 'Revert all unpublished changes to their published state.' %}" {% if not needs_publish or not site.last_publish %}style="display: none"{% endif %}>{% trans 'Revert' %}</button>
         <button name="publish" onclick="publish();" class="btn btn-primary" {% if not can_publish or not needs_publish %}style="display: none"{% endif %}>{% trans 'Publish' %}</button>
         <button name="submit" onclick="submit();" class="btn btn-primary" {% if can_publish or not needs_publish %}style="display: none"{% endif %} {% if site.review_requested %}disabled{% endif %}>{% if site.review_requested %}{% trans 'Pending Review' %}{% else %}{% if SLM_ORG_NAME %}{% trans 'Submit to' %} {{SLM_ORG_NAME}}{% else %}{% trans 'Submit for Review' %}{% endif %}{% endif %}</button>
       </div>

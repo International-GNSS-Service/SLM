@@ -37,14 +37,14 @@
 
 2.   Site Location Information
 
-     City or Town             : {{ location.city }}
-     State or Province        : {{ location.state }}
-     Country                  : {{ location.country|enum_str }}
-     Tectonic Plate           : {{ location.tectonic|enum_str|upper }}
+     City or Town             : {% if location %}{{ location.city }}{% endif %}
+     State or Province        : {% if location %}{{ location.state }}{% endif %}
+     Country                  : {% if location %}{{ location.country|enum_str }}{% endif %}
+     Tectonic Plate           : {% if location %}{{ location.tectonic|enum_str|upper }}{% endif %}
      Approximate Position (ITRF)
-       X coordinate (m)       : {{ location.xyz.0|precision_full(4) }}
-       Y coordinate (m)       : {{ location.xyz.1|precision_full(4) }}
-       Z coordinate (m)       : {{ location.xyz.2|precision_full(4) }}
+       X coordinate (m)       : {% if location %}{{ location.xyz.0|precision_full(4) }}{% endif %}
+       Y coordinate (m)       : {% if location %}{{ location.xyz.1|precision_full(4) }}{% endif %}
+       Z coordinate (m)       : {% if location %}{{ location.xyz.2|precision_full(4) }}{% endif %}
        Latitude (N is +)      : {% if location %}{{ location.llh.0|iso6709(6) }}{% else %}(+/-DDMMSS.SS){% endif %}
        Longitude (E is +)     : {% if location %}{{ location.llh.1|iso6709(7) }}{% else %}(+/-DDDMMSS.SS){% endif %}
        Elevation (m,ellips.)  : {% if location %}{{ location.llh.2|precision_full(1) }}{% else %}(F7.1){% endif %}
@@ -291,56 +291,56 @@
 
 11.   On-Site, Point of Contact Agency Information
 
-     Agency                   : {% if operationalcontact.agency %}{{ operationalcontact.agency|multi_line }}{% else %}(multiple lines){% endif %}
-     Preferred Abbreviation   : {% if operationalcontact.preferred_abbreviation %}{{ operationalcontact.preferred_abbreviation }}{% else %}(A10){% endif %}
-     Mailing Address          : {% if operationalcontact.mailing_address %}{{ operationalcontact.mailing_address|multi_line }}{% else %}(multiple lines){% endif %}
+     Agency                   : {% if operationalcontact and operationalcontact.agency %}{{ operationalcontact.agency|multi_line }}{% else %}(multiple lines){% endif %}
+     Preferred Abbreviation   : {% if operationalcontact and operationalcontact.preferred_abbreviation %}{{ operationalcontact.preferred_abbreviation }}{% else %}(A10){% endif %}
+     Mailing Address          : {% if operationalcontact and operationalcontact.mailing_address %}{{ operationalcontact.mailing_address|multi_line }}{% else %}(multiple lines){% endif %}
      Primary Contact
-       Contact Name           : {{ operationalcontact.primary_name }}
-       Telephone (primary)    : {{ operationalcontact.primary_phone1 }}
-       Telephone (secondary)  : {{ operationalcontact.primary_phone2 }}
-       Fax                    : {{ operationalcontact.primary_fax }}
-       E-mail                 : {{ operationalcontact.primary_email }}
+       Contact Name           : {% if operationalcontact %}{{ operationalcontact.primary_name }}{% endif %}
+       Telephone (primary)    : {% if operationalcontact %}{{ operationalcontact.primary_phone1 }}{% endif %}
+       Telephone (secondary)  : {% if operationalcontact %}{{ operationalcontact.primary_phone2 }}{% endif %}
+       Fax                    : {% if operationalcontact %}{{ operationalcontact.primary_fax }}{% endif %}
+       E-mail                 : {% if operationalcontact %}{{ operationalcontact.primary_email }}{% endif %}
      Secondary Contact
-       Contact Name           : {{ operationalcontact.secondary_name }}
-       Telephone (primary)    : {{ operationalcontact.secondary_phone1 }}
-       Telephone (secondary)  : {{ operationalcontact.secondary_phone2 }}
-       Fax                    : {{ operationalcontact.secondary_fax }}
-       E-mail                 : {{ operationalcontact.secondary_email }}
-     Additional Information   : {{ operationalcontact.additional_information|multi_line }}
+       Contact Name           : {% if operationalcontact %}{{ operationalcontact.secondary_name }}{% endif %}
+       Telephone (primary)    : {% if operationalcontact %}{{ operationalcontact.secondary_phone1 }}{% endif %}
+       Telephone (secondary)  : {% if operationalcontact %}{{ operationalcontact.secondary_phone2 }}{% endif %}
+       Fax                    : {% if operationalcontact %}{{ operationalcontact.secondary_fax }}{% endif %}
+       E-mail                 : {% if operationalcontact %}{{ operationalcontact.secondary_email }}{% endif %}
+     Additional Information   : {% if operationalcontact %}{{ operationalcontact.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
 
 
 12.  Responsible Agency (if different from 11.)
 
-     Agency                   : {% if responsibleagency.agency %}{{ responsibleagency.agency|multi_line }}{% else %}(multiple lines){% endif %}
-     Preferred Abbreviation   : {% if responsibleagency.preferred_abbreviation %}{{ responsibleagency.preferred_abbreviation }}{% else %}(A10){% endif %}
-     Mailing Address          : {% if responsibleagency.mailing_address %}{{ responsibleagency.mailing_address|multi_line }}{% else %}(multiple lines){% endif %}
+     Agency                   : {% if responsibleagency and responsibleagency.agency %}{{ responsibleagency.agency|multi_line }}{% else %}(multiple lines){% endif %}
+     Preferred Abbreviation   : {% if responsibleagency and responsibleagency.preferred_abbreviation %}{{ responsibleagency.preferred_abbreviation }}{% else %}(A10){% endif %}
+     Mailing Address          : {% if responsibleagency and responsibleagency.mailing_address %}{{ responsibleagency.mailing_address|multi_line }}{% else %}(multiple lines){% endif %}
      Primary Contact
-       Contact Name           : {{ responsibleagency.primary_name }}
-       Telephone (primary)    : {{ responsibleagency.primary_phone1 }}
-       Telephone (secondary)  : {{ responsibleagency.primary_phone2 }}
-       Fax                    : {{ responsibleagency.primary_fax }}
-       E-mail                 : {{ responsibleagency.primary_email }}
+       Contact Name           : {% if responsibleagency %}{{ responsibleagency.primary_name }}{% endif %}
+       Telephone (primary)    : {% if responsibleagency %}{{ responsibleagency.primary_phone1 }}{% endif %}
+       Telephone (secondary)  : {% if responsibleagency %}{{ responsibleagency.primary_phone2 }}{% endif %}
+       Fax                    : {% if responsibleagency %}{{ responsibleagency.primary_fax }}{% endif %}
+       E-mail                 : {% if responsibleagency %}{{ responsibleagency.primary_email }}{% endif %}
      Secondary Contact
-       Contact Name           : {{ responsibleagency.secondary_name }}
-       Telephone (primary)    : {{ responsibleagency.secondary_phone1 }}
-       Telephone (secondary)  : {{ responsibleagency.secondary_phone2 }}
-       Fax                    : {{ responsibleagency.secondary_fax }}
-       E-mail                 : {{ responsibleagency.secondary_email }}
-     Additional Information   : {{ responsibleagency.additional_information|multi_line }}
+       Contact Name           : {% if responsibleagency %}{{ responsibleagency.secondary_name }}{% endif %}
+       Telephone (primary)    : {% if responsibleagency %}{{ responsibleagency.secondary_phone1 }}{% endif %}
+       Telephone (secondary)  : {% if responsibleagency %}{{ responsibleagency.secondary_phone2 }}{% endif %}
+       Fax                    : {% if responsibleagency %}{{ responsibleagency.secondary_fax }}{% endif %}
+       E-mail                 : {% if responsibleagency %}{{ responsibleagency.secondary_email }}{% endif %}
+     Additional Information   : {% if responsibleagency %}{{ responsibleagency.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
 
 
 13.  More Information
 
-     Primary Data Center      : {{ moreinformation.primary }}
-     Secondary Data Center    : {{ moreinformation.secondary }}
-     URL for More Information : {{ moreinformation.more_info }}
+     Primary Data Center      : {% if moreinformation %}{{ moreinformation.primary }}{% endif %}
+     Secondary Data Center    : {% if moreinformation %}{{ moreinformation.secondary }}{% endif %}
+     URL for More Information : {% if moreinformation %}{{ moreinformation.more_info }}{% endif %}
      Hardcopy on File
-       Site Map               : {{ moreinformation.sitemap }}
-       Site Diagram           : {{ moreinformation.site_diagram }}
-       Horizon Mask           : {{ moreinformation.horizon_mask }}
-       Monument Description   : {{ moreinformation.monument_description }}
-       Site Pictures          : {{ moreinformation.site_picture }}
-     Additional Information   : {{ moreinformation.additional_information|multi_line }}
+       Site Map               : {% if moreinformation %}{{ moreinformation.sitemap }}{% else %}(Y or URL){% endif %}
+       Site Diagram           : {% if moreinformation %}{{ moreinformation.site_diagram }}{% else %}(Y or URL){% endif %}
+       Horizon Mask           : {% if moreinformation %}{{ moreinformation.horizon_mask }}{% else %}(Y or URL){% endif %}
+       Monument Description   : {% if moreinformation %}{{ moreinformation.monument_description }}{% else %}(Y or URL){% endif %}
+       Site Pictures          : {% if moreinformation %}{{ moreinformation.site_picture }}{% else %}(Y or URL){% endif %}
+     Additional Information   : {% if moreinformation %}{{ moreinformation.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
      Antenna Graphics with Dimensions
 
 {% if graphic %}{{ graphic }}{% else %}     (insert text graphic from file antenna.gra){% endif %}

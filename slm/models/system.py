@@ -347,7 +347,7 @@ class SiteFile(models.Model):
                     (image.width * (max_dim / image.height), max_dim)
                     if image.height > image.width else
                     (max_dim, image.height * (max_dim / image.width)),
-                    Image.ANTIALIAS
+                    Image.LANCZOS
                 )
                 buffer = BytesIO()
                 image.save(buffer, 'JPEG')

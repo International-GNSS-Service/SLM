@@ -1717,7 +1717,10 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
                     getattr(o, 'subsection')
                 )
             )
-        return sorted((obj for obj in self), key=sorter, reverse=reverse)
+        sorted_sections = sorted((obj for obj in self), key=sorter)
+        if reverse:
+            return reversed(sorted_sections)
+        return sorted_sections
 
 
 class SiteSubSection(SiteSection):

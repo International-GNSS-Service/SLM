@@ -1719,7 +1719,7 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
             )
         sorted_sections = sorted((obj for obj in self), key=sorter)
         if reverse:
-            return reversed(sorted_sections)
+            return list(reversed(sorted_sections))
         return list(sorted_sections)
 
 

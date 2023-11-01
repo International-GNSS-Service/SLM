@@ -13,6 +13,7 @@ from slm.models import (
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
 from slm.utils import build_absolute_url
+from django_enum.drf import EnumField
 from django.urls import reverse
 
 
@@ -298,6 +299,13 @@ class UserSerializer(UserProfileSerializer):
 
 class SiteFileUploadSerializer(serializers.ModelSerializer):
 
+    # django_enum shouldn't require us to do this
+    class DirectionField(EnumField):
+        def to_internal_value(self, value):
+            if value == '':
+                return None
+            return super().to_internal_value(value)
+
     site = serializers.CharField(source='site.name', allow_null=True)
     site_status = serializers.IntegerField(
         source='site.status',
@@ -310,6 +318,11 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
     user = EmbeddedUserSerializer(many=False)
 
     download = serializers.SerializerMethodField()
+
+    direction = DirectionField(
+        SiteFileUpload._meta.get_field('direction').enum,
+        allow_blank=True
+    )
 
     def get_download(self, obj):
         return build_absolute_url(

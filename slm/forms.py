@@ -41,7 +41,8 @@ from slm.defines import (
     SiteLogStatus,
     AlertLevel,
     ISOCountry,
-    FrequencyStandardType
+    FrequencyStandardType,
+    CardinalDirection
 )
 from slm.widgets import (
     AutoComplete,
@@ -95,6 +96,7 @@ from django.forms.widgets import MultiWidget, NumberInput, TextInput
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 from slm.validators import get_validators, FieldRequired
+from django_enum.choices import choices
 
 
 class SLMCheckboxInput(CheckboxInput):
@@ -1114,6 +1116,13 @@ class SiteFileForm(forms.ModelForm):
     name = forms.SlugField(
         max_length=255,
         help_text=_('The name of the file.')
+    )
+
+    direction = EnumChoiceField(
+        CardinalDirection,
+        help_text=SiteFileUpload._meta.get_field('direction').help_text,
+        label=SiteFileUpload._meta.get_field('direction').verbose_name,
+        choices=[('', '-'*10), *choices(CardinalDirection)]
     )
 
     def __init__(self, *args, instance=None, **kwargs):

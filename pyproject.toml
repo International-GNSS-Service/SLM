@@ -78,7 +78,10 @@ django-ckeditor = "^6.5.1"
 django-crispy-forms = "^2.0"
 crispy-bootstrap5 = "^2023.10"
 djangorestframework-gis = "^1.0"
-numpy = "^1.24.2"
+numpy = [
+    { version = ">=1.26", markers = "python_version > '3.8'" },
+    { version = "<=1.24", markers = "python_version <= '3.8'" },
+]
 pytest = "^7.3.0"
 chardet = "^5.1.0"
 psycopg = {extras = ["binary"], version = "^3.1.12"}

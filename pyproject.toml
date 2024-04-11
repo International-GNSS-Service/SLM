@@ -82,7 +82,7 @@ numpy = [
     { version = ">=1.26", markers = "python_version > '3.8'" },
     { version = "<=1.24", markers = "python_version <= '3.8'" },
 ]
-pytest = "^7.3.0"
+pytest = "^8.1.1"
 chardet = "^5.1.0"
 psycopg = {extras = ["binary"], version = "^3.1.12"}
 
@@ -92,7 +92,7 @@ pydot = "^1.4.2"
 pyparsing = "^3.0.6"
 ipython = "8.12.3"
 isort = "^5.10.1"
-pytest = "^7.1.2"
+pytest = "^8.1.1"
 pytest-django = "^4.5.2"
 Sphinx = "^7.1.2"
 coverage = "^7.2.1"

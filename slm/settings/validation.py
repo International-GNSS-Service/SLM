@@ -29,7 +29,7 @@ SLM_DATA_VALIDATORS = {
     'slm.SiteIdentification': {
         'site_name': [FieldRequired()],
         'fracture_spacing': [
-            FieldRequired(allow_legacy_nulls=True),
+            FieldRequired(desired=True),
             EnumValidator()
         ],
         'iers_domes_number': [FieldRequired()],
@@ -154,14 +154,14 @@ SLM_DATA_VALIDATORS = {
         'agency': [FieldRequired()],
         'preferred_abbreviation': [FieldRequired()],
         'primary_name': [FieldRequired()],
-        'primary_phone1': [FieldRequired(allow_legacy_nulls=True)],
+        'primary_phone1': [FieldRequired(desired=True)],
         'primary_email': [FieldRequired(allow_legacy_nulls=True)],
     },
     'slm.SiteResponsibleAgency': {
         'agency': [FieldRequired()],
         'preferred_abbreviation': [FieldRequired()],
         'primary_name': [FieldRequired()],
-        'primary_phone1': [FieldRequired(allow_legacy_nulls=True)],
+        'primary_phone1': [FieldRequired(desired=True)],
         'primary_email': [FieldRequired(allow_legacy_nulls=True)],
     },
     'slm.SiteMoreInformation': {

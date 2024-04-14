@@ -97,28 +97,30 @@ class SLMValidator:
 
 class FieldRequired(SLMValidator):
 
-    statement = _('This field is required.')
-    legacy_allowed = _('This field is desired.')
+    required_msg = _('This field is required.')
+    desired_msg = _('This field is desired.')
 
     allow_legacy_nulls = False
 
-    def __init__(self, allow_legacy_nulls=allow_legacy_nulls):
+    desired = False
+
+    def __init__(self, allow_legacy_nulls=allow_legacy_nulls, desired=desired):
         self.allow_legacy_nulls = allow_legacy_nulls
-        super().__init__(
-            severity=FlagSeverity.BLOCK_SAVE
-        )
+        self.desired = desired
+        super().__init__(severity=FlagSeverity.BLOCK_SAVE)
 
     def __call__(self, instance, field, value):
         if isinstance(value, str):
             value = value.strip()
         if value in NULL_VALUES:
             if (
+                self.desired or
                 not self.allow_legacy_nulls or
                 instance.get_initial_value(field.name) in NULL_VALUES
             ):
-                self.throw_flag(self.legacy_allowed, instance, field)
+                self.throw_flag(self.desired_msg, instance, field)
             else:
-                self.throw_error(self.statement, instance, field)
+                self.throw_error(self.required_msg, instance, field)
 
 
 class EnumValidator(SLMValidator):

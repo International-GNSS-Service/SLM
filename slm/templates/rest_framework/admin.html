@@ -42,7 +42,7 @@
             <ul class="navbar-nav">
               {% block userlinks %}
                 {% if user.is_authenticated %}
-                  {% optional_logout request user %}
+                  {% optional_logout request user csrf_token %}
                 {% else %}
                   {% optional_login request %}
                 {% endif %}

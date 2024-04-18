@@ -6,7 +6,7 @@ from slm.defines import ISOCountry
 class TestISOCountry(TestCase):
 
     def test_equality(self):
-        
+
         self.assertEqual(ISOCountry.AD, 20)
         self.assertEqual(ISOCountry.AD.label, "Andorra")
         self.assertEqual(ISOCountry.AD.alpha2, "AD")
@@ -19,7 +19,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AD), "AD")
         self.assertEqual(ISOCountry.AD, "the Principality of Andorra")
         self.assertEqual(ISOCountry.AD, "THE PRINCIPALITY OF ANDORRA")
-        
+
         self.assertEqual(ISOCountry.AE, 784)
         self.assertEqual(ISOCountry.AE.label, "United Arab Emirates (the)")
         self.assertEqual(ISOCountry.AE.alpha2, "AE")
@@ -32,7 +32,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AE), "AE")
         self.assertEqual(ISOCountry.AE, "the United Arab Emirates")
         self.assertEqual(ISOCountry.AE, "THE UNITED ARAB EMIRATES")
-        
+
         self.assertEqual(ISOCountry.AF, 4)
         self.assertEqual(ISOCountry.AF.label, "Afghanistan")
         self.assertEqual(ISOCountry.AF.alpha2, "AF")
@@ -45,7 +45,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AF), "AF")
         self.assertEqual(ISOCountry.AF, "the Islamic Republic of Afghanistan")
         self.assertEqual(ISOCountry.AF, "THE ISLAMIC REPUBLIC OF AFGHANISTAN")
-        
+
         self.assertEqual(ISOCountry.AG, 28)
         self.assertEqual(ISOCountry.AG.label, "Antigua and Barbuda")
         self.assertEqual(ISOCountry.AG.alpha2, "AG")
@@ -57,7 +57,6 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AG, "ANTIGUA AND BARBUDA")
         self.assertEqual(str(ISOCountry.AG), "AG")
 
-        
         self.assertEqual(ISOCountry.AI, 660)
         self.assertEqual(ISOCountry.AI.label, "Anguilla")
         self.assertEqual(ISOCountry.AI.alpha2, "AI")
@@ -68,8 +67,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AI, "Anguilla")
         self.assertEqual(ISOCountry.AI, "ANGUILLA")
         self.assertEqual(str(ISOCountry.AI), "AI")
-        
-        
+
         self.assertEqual(ISOCountry.AL, 8)
         self.assertEqual(ISOCountry.AL.label, "Albania")
         self.assertEqual(ISOCountry.AL.alpha2, "AL")
@@ -82,7 +80,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AL), "AL")
         self.assertEqual(ISOCountry.AL, "the Republic of Albania")
         self.assertEqual(ISOCountry.AL, "THE REPUBLIC OF ALBANIA")
-        
+
         self.assertEqual(ISOCountry.AM, 51)
         self.assertEqual(ISOCountry.AM.label, "Armenia")
         self.assertEqual(ISOCountry.AM.alpha2, "AM")
@@ -95,8 +93,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AM), "AM")
         self.assertEqual(ISOCountry.AM, "the Republic of Armenia")
         self.assertEqual(ISOCountry.AM, "THE REPUBLIC OF ARMENIA")
-        
-        
+
         self.assertEqual(ISOCountry.AO, 24)
         self.assertEqual(ISOCountry.AO.label, "Angola")
         self.assertEqual(ISOCountry.AO.alpha2, "AO")
@@ -109,8 +106,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AO), "AO")
         self.assertEqual(ISOCountry.AO, "the Republic of Angola")
         self.assertEqual(ISOCountry.AO, "THE REPUBLIC OF ANGOLA")
-        
-        
+
         self.assertEqual(ISOCountry.AQ, 10)
         self.assertEqual(ISOCountry.AQ.label, "Antarctica")
         self.assertEqual(ISOCountry.AQ.alpha2, "AQ")
@@ -121,8 +117,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AQ, "Antarctica")
         self.assertEqual(ISOCountry.AQ, "ANTARCTICA")
         self.assertEqual(str(ISOCountry.AQ), "AQ")
-        
-        
+
         self.assertEqual(ISOCountry.AR, 32)
         self.assertEqual(ISOCountry.AR.label, "Argentina")
         self.assertEqual(ISOCountry.AR.alpha2, "AR")
@@ -135,7 +130,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AR), "AR")
         self.assertEqual(ISOCountry.AR, "the Argentine Republic")
         self.assertEqual(ISOCountry.AR, "THE ARGENTINE REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.AS, 16)
         self.assertEqual(ISOCountry.AS.label, "American Samoa")
         self.assertEqual(ISOCountry.AS.alpha2, "AS")
@@ -146,8 +141,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AS, "American Samoa")
         self.assertEqual(ISOCountry.AS, "AMERICAN SAMOA")
         self.assertEqual(str(ISOCountry.AS), "AS")
-        
-        
+
         self.assertEqual(ISOCountry.AT, 40)
         self.assertEqual(ISOCountry.AT.label, "Austria")
         self.assertEqual(ISOCountry.AT.alpha2, "AT")
@@ -160,7 +154,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AT), "AT")
         self.assertEqual(ISOCountry.AT, "the Republic of Austria")
         self.assertEqual(ISOCountry.AT, "THE REPUBLIC OF AUSTRIA")
-        
+
         self.assertEqual(ISOCountry.AU, 36)
         self.assertEqual(ISOCountry.AU.label, "Australia")
         self.assertEqual(ISOCountry.AU.alpha2, "AU")
@@ -171,8 +165,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AU, "Australia")
         self.assertEqual(ISOCountry.AU, "AUSTRALIA")
         self.assertEqual(str(ISOCountry.AU), "AU")
-        
-        
+
         self.assertEqual(ISOCountry.AW, 533)
         self.assertEqual(ISOCountry.AW.label, "Aruba")
         self.assertEqual(ISOCountry.AW.alpha2, "AW")
@@ -183,8 +176,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AW, "Aruba")
         self.assertEqual(ISOCountry.AW, "ARUBA")
         self.assertEqual(str(ISOCountry.AW), "AW")
-        
-        
+
         self.assertEqual(ISOCountry.AX, 248)
         self.assertEqual(ISOCountry.AX.label, "Åland Islands")
         self.assertEqual(ISOCountry.AX.alpha2, "AX")
@@ -195,8 +187,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.AX, "Åland Islands")
         self.assertEqual(ISOCountry.AX, "ÅLAND ISLANDS")
         self.assertEqual(str(ISOCountry.AX), "AX")
-        
-        
+
         self.assertEqual(ISOCountry.AZ, 31)
         self.assertEqual(ISOCountry.AZ.label, "Azerbaijan")
         self.assertEqual(ISOCountry.AZ.alpha2, "AZ")
@@ -209,7 +200,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.AZ), "AZ")
         self.assertEqual(ISOCountry.AZ, "the Republic of Azerbaijan")
         self.assertEqual(ISOCountry.AZ, "THE REPUBLIC OF AZERBAIJAN")
-        
+
         self.assertEqual(ISOCountry.BA, 70)
         self.assertEqual(ISOCountry.BA.label, "Bosnia and Herzegovina")
         self.assertEqual(ISOCountry.BA.alpha2, "BA")
@@ -220,8 +211,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BA, "Bosnia and Herzegovina")
         self.assertEqual(ISOCountry.BA, "BOSNIA AND HERZEGOVINA")
         self.assertEqual(str(ISOCountry.BA), "BA")
-        
-        
+
         self.assertEqual(ISOCountry.BB, 52)
         self.assertEqual(ISOCountry.BB.label, "Barbados")
         self.assertEqual(ISOCountry.BB.alpha2, "BB")
@@ -232,8 +222,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BB, "Barbados")
         self.assertEqual(ISOCountry.BB, "BARBADOS")
         self.assertEqual(str(ISOCountry.BB), "BB")
-        
-        
+
         self.assertEqual(ISOCountry.BD, 50)
         self.assertEqual(ISOCountry.BD.label, "Bangladesh")
         self.assertEqual(ISOCountry.BD.alpha2, "BD")
@@ -246,7 +235,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BD), "BD")
         self.assertEqual(ISOCountry.BD, "the People's Republic of Bangladesh")
         self.assertEqual(ISOCountry.BD, "THE PEOPLE'S REPUBLIC OF BANGLADESH")
-        
+
         self.assertEqual(ISOCountry.BE, 56)
         self.assertEqual(ISOCountry.BE.label, "Belgium")
         self.assertEqual(ISOCountry.BE.alpha2, "BE")
@@ -259,7 +248,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BE), "BE")
         self.assertEqual(ISOCountry.BE, "the Kingdom of Belgium")
         self.assertEqual(ISOCountry.BE, "THE KINGDOM OF BELGIUM")
-        
+
         self.assertEqual(ISOCountry.BF, 854)
         self.assertEqual(ISOCountry.BF.label, "Burkina Faso")
         self.assertEqual(ISOCountry.BF.alpha2, "BF")
@@ -270,8 +259,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BF, "Burkina Faso")
         self.assertEqual(ISOCountry.BF, "BURKINA FASO")
         self.assertEqual(str(ISOCountry.BF), "BF")
-        
-        
+
         self.assertEqual(ISOCountry.BG, 100)
         self.assertEqual(ISOCountry.BG.label, "Bulgaria")
         self.assertEqual(ISOCountry.BG.alpha2, "BG")
@@ -284,7 +272,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BG), "BG")
         self.assertEqual(ISOCountry.BG, "the Republic of Bulgaria")
         self.assertEqual(ISOCountry.BG, "THE REPUBLIC OF BULGARIA")
-        
+
         self.assertEqual(ISOCountry.BH, 48)
         self.assertEqual(ISOCountry.BH.label, "Bahrain")
         self.assertEqual(ISOCountry.BH.alpha2, "BH")
@@ -297,7 +285,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BH), "BH")
         self.assertEqual(ISOCountry.BH, "the Kingdom of Bahrain")
         self.assertEqual(ISOCountry.BH, "THE KINGDOM OF BAHRAIN")
-        
+
         self.assertEqual(ISOCountry.BI, 108)
         self.assertEqual(ISOCountry.BI.label, "Burundi")
         self.assertEqual(ISOCountry.BI.alpha2, "BI")
@@ -310,7 +298,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BI), "BI")
         self.assertEqual(ISOCountry.BI, "the Republic of Burundi")
         self.assertEqual(ISOCountry.BI, "THE REPUBLIC OF BURUNDI")
-        
+
         self.assertEqual(ISOCountry.BJ, 204)
         self.assertEqual(ISOCountry.BJ.label, "Benin")
         self.assertEqual(ISOCountry.BJ.alpha2, "BJ")
@@ -323,7 +311,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BJ), "BJ")
         self.assertEqual(ISOCountry.BJ, "the Republic of Benin")
         self.assertEqual(ISOCountry.BJ, "THE REPUBLIC OF BENIN")
-        
+
         self.assertEqual(ISOCountry.BL, 652)
         self.assertEqual(ISOCountry.BL.label, "Saint Barthélemy")
         self.assertEqual(ISOCountry.BL.alpha2, "BL")
@@ -334,8 +322,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BL, "Saint Barthélemy")
         self.assertEqual(ISOCountry.BL, "SAINT BARTHÉLEMY")
         self.assertEqual(str(ISOCountry.BL), "BL")
-        
-        
+
         self.assertEqual(ISOCountry.BM, 60)
         self.assertEqual(ISOCountry.BM.label, "Bermuda")
         self.assertEqual(ISOCountry.BM.alpha2, "BM")
@@ -346,8 +333,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BM, "Bermuda")
         self.assertEqual(ISOCountry.BM, "BERMUDA")
         self.assertEqual(str(ISOCountry.BM), "BM")
-        
-        
+
         self.assertEqual(ISOCountry.BN, 96)
         self.assertEqual(ISOCountry.BN.label, "Brunei Darussalam")
         self.assertEqual(ISOCountry.BN.alpha2, "BN")
@@ -358,8 +344,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BN, "Brunei Darussalam")
         self.assertEqual(ISOCountry.BN, "BRUNEI DARUSSALAM")
         self.assertEqual(str(ISOCountry.BN), "BN")
-        
-        
+
         self.assertEqual(ISOCountry.BO, 68)
         self.assertEqual(ISOCountry.BO.label, "Bolivia (Plurinational State of)")
         self.assertEqual(ISOCountry.BO.alpha2, "BO")
@@ -372,8 +357,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BO), "BO")
         self.assertEqual(ISOCountry.BO, "the Plurinational State of Bolivia")
         self.assertEqual(ISOCountry.BO, "THE PLURINATIONAL STATE OF BOLIVIA")
-        
-        
+
         self.assertEqual(ISOCountry.BQ, 535)
         self.assertEqual(ISOCountry.BQ.label, "Bonaire, Sint Eustatius and Saba")
         self.assertEqual(ISOCountry.BQ.alpha2, "BQ")
@@ -384,8 +368,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BQ, "Bonaire, Sint Eustatius and Saba")
         self.assertEqual(ISOCountry.BQ, "BONAIRE, SINT EUSTATIUS AND SABA")
         self.assertEqual(str(ISOCountry.BQ), "BQ")
-        
-        
+
         self.assertEqual(ISOCountry.BR, 76)
         self.assertEqual(ISOCountry.BR.label, "Brazil")
         self.assertEqual(ISOCountry.BR.alpha2, "BR")
@@ -398,7 +381,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BR), "BR")
         self.assertEqual(ISOCountry.BR, "the Federative Republic of Brazil")
         self.assertEqual(ISOCountry.BR, "THE FEDERATIVE REPUBLIC OF BRAZIL")
-        
+
         self.assertEqual(ISOCountry.BS, 44)
         self.assertEqual(ISOCountry.BS.label, "Bahamas (the)")
         self.assertEqual(ISOCountry.BS.alpha2, "BS")
@@ -411,7 +394,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BS), "BS")
         self.assertEqual(ISOCountry.BS, "the Commonwealth of the Bahamas")
         self.assertEqual(ISOCountry.BS, "THE COMMONWEALTH OF THE BAHAMAS")
-        
+
         self.assertEqual(ISOCountry.BT, 64)
         self.assertEqual(ISOCountry.BT.label, "Bhutan")
         self.assertEqual(ISOCountry.BT.alpha2, "BT")
@@ -424,8 +407,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BT), "BT")
         self.assertEqual(ISOCountry.BT, "the Kingdom of Bhutan")
         self.assertEqual(ISOCountry.BT, "THE KINGDOM OF BHUTAN")
-        
-        
+
         self.assertEqual(ISOCountry.BV, 74)
         self.assertEqual(ISOCountry.BV.label, "Bouvet Island")
         self.assertEqual(ISOCountry.BV.alpha2, "BV")
@@ -436,8 +418,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BV, "Bouvet Island")
         self.assertEqual(ISOCountry.BV, "BOUVET ISLAND")
         self.assertEqual(str(ISOCountry.BV), "BV")
-        
-        
+
         self.assertEqual(ISOCountry.BW, 72)
         self.assertEqual(ISOCountry.BW.label, "Botswana")
         self.assertEqual(ISOCountry.BW.alpha2, "BW")
@@ -450,9 +431,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BW), "BW")
         self.assertEqual(ISOCountry.BW, "the Republic of Botswana")
         self.assertEqual(ISOCountry.BW, "THE REPUBLIC OF BOTSWANA")
-        
-        
-        
+
         self.assertEqual(ISOCountry.BY, 112)
         self.assertEqual(ISOCountry.BY.label, "Belarus")
         self.assertEqual(ISOCountry.BY.alpha2, "BY")
@@ -465,7 +444,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.BY), "BY")
         self.assertEqual(ISOCountry.BY, "the Republic of Belarus")
         self.assertEqual(ISOCountry.BY, "THE REPUBLIC OF BELARUS")
-        
+
         self.assertEqual(ISOCountry.BZ, 84)
         self.assertEqual(ISOCountry.BZ.label, "Belize")
         self.assertEqual(ISOCountry.BZ.alpha2, "BZ")
@@ -476,8 +455,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.BZ, "Belize")
         self.assertEqual(ISOCountry.BZ, "BELIZE")
         self.assertEqual(str(ISOCountry.BZ), "BZ")
-        
-        
+
         self.assertEqual(ISOCountry.CA, 124)
         self.assertEqual(ISOCountry.CA.label, "Canada")
         self.assertEqual(ISOCountry.CA.alpha2, "CA")
@@ -488,8 +466,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.CA, "Canada")
         self.assertEqual(ISOCountry.CA, "CANADA")
         self.assertEqual(str(ISOCountry.CA), "CA")
-        
-        
+
         self.assertEqual(ISOCountry.CC, 166)
         self.assertEqual(ISOCountry.CC.label, "Cocos (Keeling) Islands (the)")
         self.assertEqual(ISOCountry.CC.alpha2, "CC")
@@ -500,13 +477,16 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.CC, "Cocos (Keeling) Islands (the)")
         self.assertEqual(ISOCountry.CC, "COCOS (KEELING) ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.CC), "CC")
-        
-        
+
         self.assertEqual(ISOCountry.CD, 180)
         self.assertEqual(ISOCountry.CD.label, "Congo (the Democratic Republic of the)")
         self.assertEqual(ISOCountry.CD.alpha2, "CD")
-        self.assertEqual(ISOCountry.CD.short_name, "Congo (the Democratic Republic of the)")
-        self.assertEqual(ISOCountry.CD, ISOCountry("Congo (the Democratic Republic of the)"))
+        self.assertEqual(
+            ISOCountry.CD.short_name, "Congo (the Democratic Republic of the)"
+        )
+        self.assertEqual(
+            ISOCountry.CD, ISOCountry("Congo (the Democratic Republic of the)")
+        )
         self.assertEqual(ISOCountry.CD, "CD")
         self.assertEqual(ISOCountry.CD, "COD")
         self.assertEqual(ISOCountry.CD, "Congo (the Democratic Republic of the)")
@@ -514,7 +494,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CD), "CD")
         self.assertEqual(ISOCountry.CD, "the Democratic Republic of the Congo")
         self.assertEqual(ISOCountry.CD, "THE DEMOCRATIC REPUBLIC OF THE CONGO")
-        
+
         self.assertEqual(ISOCountry.CF, 140)
         self.assertEqual(ISOCountry.CF.label, "Central African Republic (the)")
         self.assertEqual(ISOCountry.CF.alpha2, "CF")
@@ -527,7 +507,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CF), "CF")
         self.assertEqual(ISOCountry.CF, "the Central African Republic")
         self.assertEqual(ISOCountry.CF, "THE CENTRAL AFRICAN REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.CG, 178)
         self.assertEqual(ISOCountry.CG.label, "Congo (the)")
         self.assertEqual(ISOCountry.CG.alpha2, "CG")
@@ -540,7 +520,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CG), "CG")
         self.assertEqual(ISOCountry.CG, "the Republic of the Congo")
         self.assertEqual(ISOCountry.CG, "THE REPUBLIC OF THE CONGO")
-        
+
         self.assertEqual(ISOCountry.CH, 756)
         self.assertEqual(ISOCountry.CH.label, "Switzerland")
         self.assertEqual(ISOCountry.CH.alpha2, "CH")
@@ -553,7 +533,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CH), "CH")
         self.assertEqual(ISOCountry.CH, "the Swiss Confederation")
         self.assertEqual(ISOCountry.CH, "THE SWISS CONFEDERATION")
-        
+
         self.assertEqual(ISOCountry.CI, 384)
         self.assertEqual(ISOCountry.CI.label, "Côte d'Ivoire")
         self.assertEqual(ISOCountry.CI.alpha2, "CI")
@@ -566,7 +546,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CI), "CI")
         self.assertEqual(ISOCountry.CI, "the Republic of Côte d'Ivoire")
         self.assertEqual(ISOCountry.CI, "THE REPUBLIC OF CÔTE D'IVOIRE")
-        
+
         self.assertEqual(ISOCountry.CK, 184)
         self.assertEqual(ISOCountry.CK.label, "Cook Islands (the)")
         self.assertEqual(ISOCountry.CK.alpha2, "CK")
@@ -577,8 +557,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.CK, "Cook Islands (the)")
         self.assertEqual(ISOCountry.CK, "COOK ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.CK), "CK")
-        
-        
+
         self.assertEqual(ISOCountry.CL, 152)
         self.assertEqual(ISOCountry.CL.label, "Chile")
         self.assertEqual(ISOCountry.CL.alpha2, "CL")
@@ -591,7 +570,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CL), "CL")
         self.assertEqual(ISOCountry.CL, "the Republic of Chile")
         self.assertEqual(ISOCountry.CL, "THE REPUBLIC OF CHILE")
-        
+
         self.assertEqual(ISOCountry.CM, 120)
         self.assertEqual(ISOCountry.CM.label, "Cameroon")
         self.assertEqual(ISOCountry.CM.alpha2, "CM")
@@ -604,7 +583,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CM), "CM")
         self.assertEqual(ISOCountry.CM, "the Republic of Cameroon")
         self.assertEqual(ISOCountry.CM, "THE REPUBLIC OF CAMEROON")
-        
+
         self.assertEqual(ISOCountry.CN, 156)
         self.assertEqual(ISOCountry.CN.label, "China")
         self.assertEqual(ISOCountry.CN.alpha2, "CN")
@@ -617,7 +596,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CN), "CN")
         self.assertEqual(ISOCountry.CN, "the People's Republic of China")
         self.assertEqual(ISOCountry.CN, "THE PEOPLE'S REPUBLIC OF CHINA")
-        
+
         self.assertEqual(ISOCountry.CO, 170)
         self.assertEqual(ISOCountry.CO.label, "Colombia")
         self.assertEqual(ISOCountry.CO.alpha2, "CO")
@@ -630,9 +609,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CO), "CO")
         self.assertEqual(ISOCountry.CO, "the Republic of Colombia")
         self.assertEqual(ISOCountry.CO, "THE REPUBLIC OF COLOMBIA")
-        
-        
-        
+
         self.assertEqual(ISOCountry.CR, 188)
         self.assertEqual(ISOCountry.CR.label, "Costa Rica")
         self.assertEqual(ISOCountry.CR.alpha2, "CR")
@@ -645,10 +622,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CR), "CR")
         self.assertEqual(ISOCountry.CR, "the Republic of Costa Rica")
         self.assertEqual(ISOCountry.CR, "THE REPUBLIC OF COSTA RICA")
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.CU, 192)
         self.assertEqual(ISOCountry.CU.label, "Cuba")
         self.assertEqual(ISOCountry.CU.alpha2, "CU")
@@ -661,7 +635,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CU), "CU")
         self.assertEqual(ISOCountry.CU, "the Republic of Cuba")
         self.assertEqual(ISOCountry.CU, "THE REPUBLIC OF CUBA")
-        
+
         self.assertEqual(ISOCountry.CV, 132)
         self.assertEqual(ISOCountry.CV.label, "Cabo Verde")
         self.assertEqual(ISOCountry.CV.alpha2, "CV")
@@ -674,7 +648,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CV), "CV")
         self.assertEqual(ISOCountry.CV, "the Republic of Cabo Verde")
         self.assertEqual(ISOCountry.CV, "THE REPUBLIC OF CABO VERDE")
-        
+
         self.assertEqual(ISOCountry.CW, 531)
         self.assertEqual(ISOCountry.CW.label, "Curaçao")
         self.assertEqual(ISOCountry.CW.alpha2, "CW")
@@ -685,8 +659,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.CW, "Curaçao")
         self.assertEqual(ISOCountry.CW, "CURAÇAO")
         self.assertEqual(str(ISOCountry.CW), "CW")
-        
-        
+
         self.assertEqual(ISOCountry.CX, 162)
         self.assertEqual(ISOCountry.CX.label, "Christmas Island")
         self.assertEqual(ISOCountry.CX.alpha2, "CX")
@@ -697,8 +670,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.CX, "Christmas Island")
         self.assertEqual(ISOCountry.CX, "CHRISTMAS ISLAND")
         self.assertEqual(str(ISOCountry.CX), "CX")
-        
-        
+
         self.assertEqual(ISOCountry.CY, 196)
         self.assertEqual(ISOCountry.CY.label, "Cyprus")
         self.assertEqual(ISOCountry.CY.alpha2, "CY")
@@ -711,7 +683,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CY), "CY")
         self.assertEqual(ISOCountry.CY, "the Republic of Cyprus")
         self.assertEqual(ISOCountry.CY, "THE REPUBLIC OF CYPRUS")
-        
+
         self.assertEqual(ISOCountry.CZ, 203)
         self.assertEqual(ISOCountry.CZ.label, "Czechia")
         self.assertEqual(ISOCountry.CZ.alpha2, "CZ")
@@ -724,8 +696,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.CZ), "CZ")
         self.assertEqual(ISOCountry.CZ, "the Czech Republic")
         self.assertEqual(ISOCountry.CZ, "THE CZECH REPUBLIC")
-        
-        
+
         self.assertEqual(ISOCountry.DE, 276)
         self.assertEqual(ISOCountry.DE.label, "Germany")
         self.assertEqual(ISOCountry.DE.alpha2, "DE")
@@ -738,8 +709,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.DE), "DE")
         self.assertEqual(ISOCountry.DE, "the Federal Republic of Germany")
         self.assertEqual(ISOCountry.DE, "THE FEDERAL REPUBLIC OF GERMANY")
-        
-        
+
         self.assertEqual(ISOCountry.DJ, 262)
         self.assertEqual(ISOCountry.DJ.label, "Djibouti")
         self.assertEqual(ISOCountry.DJ.alpha2, "DJ")
@@ -752,7 +722,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.DJ), "DJ")
         self.assertEqual(ISOCountry.DJ, "the Republic of Djibouti")
         self.assertEqual(ISOCountry.DJ, "THE REPUBLIC OF DJIBOUTI")
-        
+
         self.assertEqual(ISOCountry.DK, 208)
         self.assertEqual(ISOCountry.DK.label, "Denmark")
         self.assertEqual(ISOCountry.DK.alpha2, "DK")
@@ -765,7 +735,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.DK), "DK")
         self.assertEqual(ISOCountry.DK, "the Kingdom of Denmark")
         self.assertEqual(ISOCountry.DK, "THE KINGDOM OF DENMARK")
-        
+
         self.assertEqual(ISOCountry.DM, 212)
         self.assertEqual(ISOCountry.DM.label, "Dominica")
         self.assertEqual(ISOCountry.DM.alpha2, "DM")
@@ -778,7 +748,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.DM), "DM")
         self.assertEqual(ISOCountry.DM, "the Commonwealth of Dominica")
         self.assertEqual(ISOCountry.DM, "THE COMMONWEALTH OF DOMINICA")
-        
+
         self.assertEqual(ISOCountry.DO, 214)
         self.assertEqual(ISOCountry.DO.label, "Dominican Republic (the)")
         self.assertEqual(ISOCountry.DO.alpha2, "DO")
@@ -791,9 +761,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.DO), "DO")
         self.assertEqual(ISOCountry.DO, "the Dominican Republic")
         self.assertEqual(ISOCountry.DO, "THE DOMINICAN REPUBLIC")
-        
-        
-        
+
         self.assertEqual(ISOCountry.DZ, 12)
         self.assertEqual(ISOCountry.DZ.label, "Algeria")
         self.assertEqual(ISOCountry.DZ.alpha2, "DZ")
@@ -806,8 +774,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.DZ), "DZ")
         self.assertEqual(ISOCountry.DZ, "the People's Democratic Republic of Algeria")
         self.assertEqual(ISOCountry.DZ, "THE PEOPLE'S DEMOCRATIC REPUBLIC OF ALGERIA")
-        
-        
+
         self.assertEqual(ISOCountry.EC, 218)
         self.assertEqual(ISOCountry.EC.label, "Ecuador")
         self.assertEqual(ISOCountry.EC.alpha2, "EC")
@@ -820,7 +787,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.EC), "EC")
         self.assertEqual(ISOCountry.EC, "the Republic of Ecuador")
         self.assertEqual(ISOCountry.EC, "THE REPUBLIC OF ECUADOR")
-        
+
         self.assertEqual(ISOCountry.EE, 233)
         self.assertEqual(ISOCountry.EE.label, "Estonia")
         self.assertEqual(ISOCountry.EE.alpha2, "EE")
@@ -833,8 +800,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.EE), "EE")
         self.assertEqual(ISOCountry.EE, "the Republic of Estonia")
         self.assertEqual(ISOCountry.EE, "THE REPUBLIC OF ESTONIA")
-        
-        
+
         self.assertEqual(ISOCountry.EG, 818)
         self.assertEqual(ISOCountry.EG.label, "Egypt")
         self.assertEqual(ISOCountry.EG.alpha2, "EG")
@@ -847,7 +813,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.EG), "EG")
         self.assertEqual(ISOCountry.EG, "the Arab Republic of Egypt")
         self.assertEqual(ISOCountry.EG, "THE ARAB REPUBLIC OF EGYPT")
-        
+
         self.assertEqual(ISOCountry.EH, 732)
         self.assertEqual(ISOCountry.EH.label, "Western Sahara*")
         self.assertEqual(ISOCountry.EH.alpha2, "EH")
@@ -858,10 +824,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.EH, "Western Sahara*")
         self.assertEqual(ISOCountry.EH, "WESTERN SAHARA*")
         self.assertEqual(str(ISOCountry.EH), "EH")
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.ER, 232)
         self.assertEqual(ISOCountry.ER.label, "Eritrea")
         self.assertEqual(ISOCountry.ER.alpha2, "ER")
@@ -874,7 +837,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ER), "ER")
         self.assertEqual(ISOCountry.ER, "the State of Eritrea")
         self.assertEqual(ISOCountry.ER, "THE STATE OF ERITREA")
-        
+
         self.assertEqual(ISOCountry.ES, 724)
         self.assertEqual(ISOCountry.ES.label, "Spain")
         self.assertEqual(ISOCountry.ES.alpha2, "ES")
@@ -887,7 +850,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ES), "ES")
         self.assertEqual(ISOCountry.ES, "the Kingdom of Spain")
         self.assertEqual(ISOCountry.ES, "THE KINGDOM OF SPAIN")
-        
+
         self.assertEqual(ISOCountry.ET, 231)
         self.assertEqual(ISOCountry.ET.label, "Ethiopia")
         self.assertEqual(ISOCountry.ET.alpha2, "ET")
@@ -900,11 +863,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ET), "ET")
         self.assertEqual(ISOCountry.ET, "the Federal Democratic Republic of Ethiopia")
         self.assertEqual(ISOCountry.ET, "THE FEDERAL DEMOCRATIC REPUBLIC OF ETHIOPIA")
-        
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.FI, 246)
         self.assertEqual(ISOCountry.FI.label, "Finland")
         self.assertEqual(ISOCountry.FI.alpha2, "FI")
@@ -917,7 +876,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.FI), "FI")
         self.assertEqual(ISOCountry.FI, "the Republic of Finland")
         self.assertEqual(ISOCountry.FI, "THE REPUBLIC OF FINLAND")
-        
+
         self.assertEqual(ISOCountry.FJ, 242)
         self.assertEqual(ISOCountry.FJ.label, "Fiji")
         self.assertEqual(ISOCountry.FJ.alpha2, "FJ")
@@ -930,7 +889,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.FJ), "FJ")
         self.assertEqual(ISOCountry.FJ, "the Republic of Fiji")
         self.assertEqual(ISOCountry.FJ, "THE REPUBLIC OF FIJI")
-        
+
         self.assertEqual(ISOCountry.FK, 238)
         self.assertEqual(ISOCountry.FK.label, "Falkland Islands (the) [Malvinas]")
         self.assertEqual(ISOCountry.FK.alpha2, "FK")
@@ -941,9 +900,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.FK, "Falkland Islands (the) [Malvinas]")
         self.assertEqual(ISOCountry.FK, "FALKLAND ISLANDS (THE) [MALVINAS]")
         self.assertEqual(str(ISOCountry.FK), "FK")
-        
-        
-        
+
         self.assertEqual(ISOCountry.FM, 583)
         self.assertEqual(ISOCountry.FM.label, "Micronesia (Federated States of)")
         self.assertEqual(ISOCountry.FM.alpha2, "FM")
@@ -956,7 +913,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.FM), "FM")
         self.assertEqual(ISOCountry.FM, "the Federated States of Micronesia")
         self.assertEqual(ISOCountry.FM, "THE FEDERATED STATES OF MICRONESIA")
-        
+
         self.assertEqual(ISOCountry.FO, 234)
         self.assertEqual(ISOCountry.FO.label, "Faroe Islands (the)")
         self.assertEqual(ISOCountry.FO.alpha2, "FO")
@@ -967,9 +924,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.FO, "Faroe Islands (the)")
         self.assertEqual(ISOCountry.FO, "FAROE ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.FO), "FO")
-        
-        
-        
+
         self.assertEqual(ISOCountry.FR, 250)
         self.assertEqual(ISOCountry.FR.label, "France")
         self.assertEqual(ISOCountry.FR.alpha2, "FR")
@@ -982,8 +937,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.FR), "FR")
         self.assertEqual(ISOCountry.FR, "the French Republic")
         self.assertEqual(ISOCountry.FR, "THE FRENCH REPUBLIC")
-        
-        
+
         self.assertEqual(ISOCountry.GA, 266)
         self.assertEqual(ISOCountry.GA.label, "Gabon")
         self.assertEqual(ISOCountry.GA.alpha2, "GA")
@@ -996,21 +950,37 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GA), "GA")
         self.assertEqual(ISOCountry.GA, "the Gabonese Republic")
         self.assertEqual(ISOCountry.GA, "THE GABONESE REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.GB, 826)
-        self.assertEqual(ISOCountry.GB.label, "United Kingdom of Great Britain and Northern Ireland (the)")
+        self.assertEqual(
+            ISOCountry.GB.label,
+            "United Kingdom of Great Britain and Northern Ireland (the)",
+        )
         self.assertEqual(ISOCountry.GB.alpha2, "GB")
-        self.assertEqual(ISOCountry.GB.short_name, "United Kingdom of Great Britain and Northern Ireland (the)")
-        self.assertEqual(ISOCountry.GB, ISOCountry("United Kingdom of Great Britain and Northern Ireland (the)"))
+        self.assertEqual(
+            ISOCountry.GB.short_name,
+            "United Kingdom of Great Britain and Northern Ireland (the)",
+        )
+        self.assertEqual(
+            ISOCountry.GB,
+            ISOCountry("United Kingdom of Great Britain and Northern Ireland (the)"),
+        )
         self.assertEqual(ISOCountry.GB, "GB")
         self.assertEqual(ISOCountry.GB, "GBR")
-        self.assertEqual(ISOCountry.GB, "United Kingdom of Great Britain and Northern Ireland (the)")
-        self.assertEqual(ISOCountry.GB, "UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND (THE)")
+        self.assertEqual(
+            ISOCountry.GB, "United Kingdom of Great Britain and Northern Ireland (the)"
+        )
+        self.assertEqual(
+            ISOCountry.GB, "UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND (THE)"
+        )
         self.assertEqual(str(ISOCountry.GB), "GB")
-        self.assertEqual(ISOCountry.GB, "the United Kingdom of Great Britain and Northern Ireland")
-        self.assertEqual(ISOCountry.GB, "THE UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND")
-        
-        
+        self.assertEqual(
+            ISOCountry.GB, "the United Kingdom of Great Britain and Northern Ireland"
+        )
+        self.assertEqual(
+            ISOCountry.GB, "THE UNITED KINGDOM OF GREAT BRITAIN AND NORTHERN IRELAND"
+        )
+
         self.assertEqual(ISOCountry.GD, 308)
         self.assertEqual(ISOCountry.GD.label, "Grenada")
         self.assertEqual(ISOCountry.GD.alpha2, "GD")
@@ -1021,9 +991,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GD, "Grenada")
         self.assertEqual(ISOCountry.GD, "GRENADA")
         self.assertEqual(str(ISOCountry.GD), "GD")
-        
-        
-        
+
         self.assertEqual(ISOCountry.GE, 268)
         self.assertEqual(ISOCountry.GE.label, "Georgia")
         self.assertEqual(ISOCountry.GE.alpha2, "GE")
@@ -1034,8 +1002,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GE, "Georgia")
         self.assertEqual(ISOCountry.GE, "GEORGIA")
         self.assertEqual(str(ISOCountry.GE), "GE")
-        
-        
+
         self.assertEqual(ISOCountry.GF, 254)
         self.assertEqual(ISOCountry.GF.label, "French Guiana")
         self.assertEqual(ISOCountry.GF.alpha2, "GF")
@@ -1046,8 +1013,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GF, "French Guiana")
         self.assertEqual(ISOCountry.GF, "FRENCH GUIANA")
         self.assertEqual(str(ISOCountry.GF), "GF")
-        
-        
+
         self.assertEqual(ISOCountry.GG, 831)
         self.assertEqual(ISOCountry.GG.label, "Guernsey")
         self.assertEqual(ISOCountry.GG.alpha2, "GG")
@@ -1058,8 +1024,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GG, "Guernsey")
         self.assertEqual(ISOCountry.GG, "GUERNSEY")
         self.assertEqual(str(ISOCountry.GG), "GG")
-        
-        
+
         self.assertEqual(ISOCountry.GH, 288)
         self.assertEqual(ISOCountry.GH.label, "Ghana")
         self.assertEqual(ISOCountry.GH.alpha2, "GH")
@@ -1072,7 +1037,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GH), "GH")
         self.assertEqual(ISOCountry.GH, "the Republic of Ghana")
         self.assertEqual(ISOCountry.GH, "THE REPUBLIC OF GHANA")
-        
+
         self.assertEqual(ISOCountry.GI, 292)
         self.assertEqual(ISOCountry.GI.label, "Gibraltar")
         self.assertEqual(ISOCountry.GI.alpha2, "GI")
@@ -1083,8 +1048,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GI, "Gibraltar")
         self.assertEqual(ISOCountry.GI, "GIBRALTAR")
         self.assertEqual(str(ISOCountry.GI), "GI")
-        
-        
+
         self.assertEqual(ISOCountry.GL, 304)
         self.assertEqual(ISOCountry.GL.label, "Greenland")
         self.assertEqual(ISOCountry.GL.alpha2, "GL")
@@ -1095,8 +1059,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GL, "Greenland")
         self.assertEqual(ISOCountry.GL, "GREENLAND")
         self.assertEqual(str(ISOCountry.GL), "GL")
-        
-        
+
         self.assertEqual(ISOCountry.GM, 270)
         self.assertEqual(ISOCountry.GM.label, "Gambia (the)")
         self.assertEqual(ISOCountry.GM.alpha2, "GM")
@@ -1109,7 +1072,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GM), "GM")
         self.assertEqual(ISOCountry.GM, "the Republic of the Gambia")
         self.assertEqual(ISOCountry.GM, "THE REPUBLIC OF THE GAMBIA")
-        
+
         self.assertEqual(ISOCountry.GN, 324)
         self.assertEqual(ISOCountry.GN.label, "Guinea")
         self.assertEqual(ISOCountry.GN.alpha2, "GN")
@@ -1122,7 +1085,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GN), "GN")
         self.assertEqual(ISOCountry.GN, "the Republic of Guinea")
         self.assertEqual(ISOCountry.GN, "THE REPUBLIC OF GUINEA")
-        
+
         self.assertEqual(ISOCountry.GP, 312)
         self.assertEqual(ISOCountry.GP.label, "Guadeloupe")
         self.assertEqual(ISOCountry.GP.alpha2, "GP")
@@ -1133,8 +1096,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GP, "Guadeloupe")
         self.assertEqual(ISOCountry.GP, "GUADELOUPE")
         self.assertEqual(str(ISOCountry.GP), "GP")
-        
-        
+
         self.assertEqual(ISOCountry.GQ, 226)
         self.assertEqual(ISOCountry.GQ.label, "Equatorial Guinea")
         self.assertEqual(ISOCountry.GQ.alpha2, "GQ")
@@ -1147,7 +1109,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GQ), "GQ")
         self.assertEqual(ISOCountry.GQ, "the Republic of Equatorial Guinea")
         self.assertEqual(ISOCountry.GQ, "THE REPUBLIC OF EQUATORIAL GUINEA")
-        
+
         self.assertEqual(ISOCountry.GR, 300)
         self.assertEqual(ISOCountry.GR.label, "Greece")
         self.assertEqual(ISOCountry.GR.alpha2, "GR")
@@ -1160,19 +1122,24 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GR), "GR")
         self.assertEqual(ISOCountry.GR, "the Hellenic Republic")
         self.assertEqual(ISOCountry.GR, "THE HELLENIC REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.GS, 239)
-        self.assertEqual(ISOCountry.GS.label, "South Georgia and the South Sandwich Islands")
+        self.assertEqual(
+            ISOCountry.GS.label, "South Georgia and the South Sandwich Islands"
+        )
         self.assertEqual(ISOCountry.GS.alpha2, "GS")
-        self.assertEqual(ISOCountry.GS.short_name, "South Georgia and the South Sandwich Islands")
-        self.assertEqual(ISOCountry.GS, ISOCountry("South Georgia and the South Sandwich Islands"))
+        self.assertEqual(
+            ISOCountry.GS.short_name, "South Georgia and the South Sandwich Islands"
+        )
+        self.assertEqual(
+            ISOCountry.GS, ISOCountry("South Georgia and the South Sandwich Islands")
+        )
         self.assertEqual(ISOCountry.GS, "GS")
         self.assertEqual(ISOCountry.GS, "SGS")
         self.assertEqual(ISOCountry.GS, "South Georgia and the South Sandwich Islands")
         self.assertEqual(ISOCountry.GS, "SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS")
         self.assertEqual(str(ISOCountry.GS), "GS")
-        
-        
+
         self.assertEqual(ISOCountry.GT, 320)
         self.assertEqual(ISOCountry.GT.label, "Guatemala")
         self.assertEqual(ISOCountry.GT.alpha2, "GT")
@@ -1185,7 +1152,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GT), "GT")
         self.assertEqual(ISOCountry.GT, "the Republic of Guatemala")
         self.assertEqual(ISOCountry.GT, "THE REPUBLIC OF GUATEMALA")
-        
+
         self.assertEqual(ISOCountry.GU, 316)
         self.assertEqual(ISOCountry.GU.label, "Guam")
         self.assertEqual(ISOCountry.GU.alpha2, "GU")
@@ -1196,8 +1163,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.GU, "Guam")
         self.assertEqual(ISOCountry.GU, "GUAM")
         self.assertEqual(str(ISOCountry.GU), "GU")
-        
-        
+
         self.assertEqual(ISOCountry.GW, 624)
         self.assertEqual(ISOCountry.GW.label, "Guinea-Bissau")
         self.assertEqual(ISOCountry.GW.alpha2, "GW")
@@ -1210,7 +1176,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GW), "GW")
         self.assertEqual(ISOCountry.GW, "the Republic of Guinea-Bissau")
         self.assertEqual(ISOCountry.GW, "THE REPUBLIC OF GUINEA-BISSAU")
-        
+
         self.assertEqual(ISOCountry.GY, 328)
         self.assertEqual(ISOCountry.GY.label, "Guyana")
         self.assertEqual(ISOCountry.GY.alpha2, "GY")
@@ -1223,7 +1189,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.GY), "GY")
         self.assertEqual(ISOCountry.GY, "the Co-operative Republic of Guyana")
         self.assertEqual(ISOCountry.GY, "THE CO-OPERATIVE REPUBLIC OF GUYANA")
-        
+
         self.assertEqual(ISOCountry.HK, 344)
         self.assertEqual(ISOCountry.HK.label, "Hong Kong")
         self.assertEqual(ISOCountry.HK.alpha2, "HK")
@@ -1234,9 +1200,13 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.HK, "Hong Kong")
         self.assertEqual(ISOCountry.HK, "HONG KONG")
         self.assertEqual(str(ISOCountry.HK), "HK")
-        self.assertEqual(ISOCountry.HK, "the Hong Kong Special Administrative Region of China")
-        self.assertEqual(ISOCountry.HK, "THE HONG KONG SPECIAL ADMINISTRATIVE REGION OF CHINA")
-        
+        self.assertEqual(
+            ISOCountry.HK, "the Hong Kong Special Administrative Region of China"
+        )
+        self.assertEqual(
+            ISOCountry.HK, "THE HONG KONG SPECIAL ADMINISTRATIVE REGION OF CHINA"
+        )
+
         self.assertEqual(ISOCountry.HM, 334)
         self.assertEqual(ISOCountry.HM.label, "Heard Island and McDonald Islands")
         self.assertEqual(ISOCountry.HM.alpha2, "HM")
@@ -1247,8 +1217,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.HM, "Heard Island and McDonald Islands")
         self.assertEqual(ISOCountry.HM, "HEARD ISLAND AND MCDONALD ISLANDS")
         self.assertEqual(str(ISOCountry.HM), "HM")
-        
-        
+
         self.assertEqual(ISOCountry.HN, 340)
         self.assertEqual(ISOCountry.HN.label, "Honduras")
         self.assertEqual(ISOCountry.HN.alpha2, "HN")
@@ -1261,7 +1230,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.HN), "HN")
         self.assertEqual(ISOCountry.HN, "the Republic of Honduras")
         self.assertEqual(ISOCountry.HN, "THE REPUBLIC OF HONDURAS")
-        
+
         self.assertEqual(ISOCountry.HR, 191)
         self.assertEqual(ISOCountry.HR.label, "Croatia")
         self.assertEqual(ISOCountry.HR.alpha2, "HR")
@@ -1274,7 +1243,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.HR), "HR")
         self.assertEqual(ISOCountry.HR, "the Republic of Croatia")
         self.assertEqual(ISOCountry.HR, "THE REPUBLIC OF CROATIA")
-        
+
         self.assertEqual(ISOCountry.HT, 332)
         self.assertEqual(ISOCountry.HT.label, "Haiti")
         self.assertEqual(ISOCountry.HT.alpha2, "HT")
@@ -1287,7 +1256,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.HT), "HT")
         self.assertEqual(ISOCountry.HT, "the Republic of Haiti")
         self.assertEqual(ISOCountry.HT, "THE REPUBLIC OF HAITI")
-        
+
         self.assertEqual(ISOCountry.HU, 348)
         self.assertEqual(ISOCountry.HU.label, "Hungary")
         self.assertEqual(ISOCountry.HU.alpha2, "HU")
@@ -1298,11 +1267,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.HU, "Hungary")
         self.assertEqual(ISOCountry.HU, "HUNGARY")
         self.assertEqual(str(ISOCountry.HU), "HU")
-        
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.ID, 360)
         self.assertEqual(ISOCountry.ID.label, "Indonesia")
         self.assertEqual(ISOCountry.ID.alpha2, "ID")
@@ -1315,7 +1280,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ID), "ID")
         self.assertEqual(ISOCountry.ID, "the Republic of Indonesia")
         self.assertEqual(ISOCountry.ID, "THE REPUBLIC OF INDONESIA")
-        
+
         self.assertEqual(ISOCountry.IE, 372)
         self.assertEqual(ISOCountry.IE.label, "Ireland")
         self.assertEqual(ISOCountry.IE.alpha2, "IE")
@@ -1326,8 +1291,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.IE, "Ireland")
         self.assertEqual(ISOCountry.IE, "IRELAND")
         self.assertEqual(str(ISOCountry.IE), "IE")
-        
-        
+
         self.assertEqual(ISOCountry.IL, 376)
         self.assertEqual(ISOCountry.IL.label, "Israel")
         self.assertEqual(ISOCountry.IL.alpha2, "IL")
@@ -1340,7 +1304,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.IL), "IL")
         self.assertEqual(ISOCountry.IL, "the State of Israel")
         self.assertEqual(ISOCountry.IL, "THE STATE OF ISRAEL")
-        
+
         self.assertEqual(ISOCountry.IM, 833)
         self.assertEqual(ISOCountry.IM.label, "Isle of Man")
         self.assertEqual(ISOCountry.IM.alpha2, "IM")
@@ -1351,8 +1315,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.IM, "Isle of Man")
         self.assertEqual(ISOCountry.IM, "ISLE OF MAN")
         self.assertEqual(str(ISOCountry.IM), "IM")
-        
-        
+
         self.assertEqual(ISOCountry.IN, 356)
         self.assertEqual(ISOCountry.IN.label, "India")
         self.assertEqual(ISOCountry.IN.alpha2, "IN")
@@ -1365,19 +1328,22 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.IN), "IN")
         self.assertEqual(ISOCountry.IN, "the Republic of India")
         self.assertEqual(ISOCountry.IN, "THE REPUBLIC OF INDIA")
-        
+
         self.assertEqual(ISOCountry.IO, 86)
         self.assertEqual(ISOCountry.IO.label, "British Indian Ocean Territory (the)")
         self.assertEqual(ISOCountry.IO.alpha2, "IO")
-        self.assertEqual(ISOCountry.IO.short_name, "British Indian Ocean Territory (the)")
-        self.assertEqual(ISOCountry.IO, ISOCountry("British Indian Ocean Territory (the)"))
+        self.assertEqual(
+            ISOCountry.IO.short_name, "British Indian Ocean Territory (the)"
+        )
+        self.assertEqual(
+            ISOCountry.IO, ISOCountry("British Indian Ocean Territory (the)")
+        )
         self.assertEqual(ISOCountry.IO, "IO")
         self.assertEqual(ISOCountry.IO, "IOT")
         self.assertEqual(ISOCountry.IO, "British Indian Ocean Territory (the)")
         self.assertEqual(ISOCountry.IO, "BRITISH INDIAN OCEAN TERRITORY (THE)")
         self.assertEqual(str(ISOCountry.IO), "IO")
-        
-        
+
         self.assertEqual(ISOCountry.IQ, 368)
         self.assertEqual(ISOCountry.IQ.label, "Iraq")
         self.assertEqual(ISOCountry.IQ.alpha2, "IQ")
@@ -1390,7 +1356,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.IQ), "IQ")
         self.assertEqual(ISOCountry.IQ, "the Republic of Iraq")
         self.assertEqual(ISOCountry.IQ, "THE REPUBLIC OF IRAQ")
-        
+
         self.assertEqual(ISOCountry.IR, 364)
         self.assertEqual(ISOCountry.IR.label, "Iran (Islamic Republic of)")
         self.assertEqual(ISOCountry.IR.alpha2, "IR")
@@ -1403,7 +1369,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.IR), "IR")
         self.assertEqual(ISOCountry.IR, "the Islamic Republic of Iran")
         self.assertEqual(ISOCountry.IR, "THE ISLAMIC REPUBLIC OF IRAN")
-        
+
         self.assertEqual(ISOCountry.IS, 352)
         self.assertEqual(ISOCountry.IS.label, "Iceland")
         self.assertEqual(ISOCountry.IS.alpha2, "IS")
@@ -1416,7 +1382,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.IS), "IS")
         self.assertEqual(ISOCountry.IS, "the Republic of Iceland")
         self.assertEqual(ISOCountry.IS, "THE REPUBLIC OF ICELAND")
-        
+
         self.assertEqual(ISOCountry.IT, 380)
         self.assertEqual(ISOCountry.IT.label, "Italy")
         self.assertEqual(ISOCountry.IT.alpha2, "IT")
@@ -1429,8 +1395,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.IT), "IT")
         self.assertEqual(ISOCountry.IT, "the Republic of Italy")
         self.assertEqual(ISOCountry.IT, "THE REPUBLIC OF ITALY")
-        
-        
+
         self.assertEqual(ISOCountry.JE, 832)
         self.assertEqual(ISOCountry.JE.label, "Jersey")
         self.assertEqual(ISOCountry.JE.alpha2, "JE")
@@ -1441,8 +1406,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.JE, "Jersey")
         self.assertEqual(ISOCountry.JE, "JERSEY")
         self.assertEqual(str(ISOCountry.JE), "JE")
-        
-        
+
         self.assertEqual(ISOCountry.JM, 388)
         self.assertEqual(ISOCountry.JM.label, "Jamaica")
         self.assertEqual(ISOCountry.JM.alpha2, "JM")
@@ -1453,8 +1417,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.JM, "Jamaica")
         self.assertEqual(ISOCountry.JM, "JAMAICA")
         self.assertEqual(str(ISOCountry.JM), "JM")
-        
-        
+
         self.assertEqual(ISOCountry.JO, 400)
         self.assertEqual(ISOCountry.JO.label, "Jordan")
         self.assertEqual(ISOCountry.JO.alpha2, "JO")
@@ -1467,7 +1430,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.JO), "JO")
         self.assertEqual(ISOCountry.JO, "the Hashemite Kingdom of Jordan")
         self.assertEqual(ISOCountry.JO, "THE HASHEMITE KINGDOM OF JORDAN")
-        
+
         self.assertEqual(ISOCountry.JP, 392)
         self.assertEqual(ISOCountry.JP.label, "Japan")
         self.assertEqual(ISOCountry.JP.alpha2, "JP")
@@ -1478,9 +1441,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.JP, "Japan")
         self.assertEqual(ISOCountry.JP, "JAPAN")
         self.assertEqual(str(ISOCountry.JP), "JP")
-        
-        
-        
+
         self.assertEqual(ISOCountry.KE, 404)
         self.assertEqual(ISOCountry.KE.label, "Kenya")
         self.assertEqual(ISOCountry.KE.alpha2, "KE")
@@ -1493,7 +1454,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KE), "KE")
         self.assertEqual(ISOCountry.KE, "the Republic of Kenya")
         self.assertEqual(ISOCountry.KE, "THE REPUBLIC OF KENYA")
-        
+
         self.assertEqual(ISOCountry.KG, 417)
         self.assertEqual(ISOCountry.KG.label, "Kyrgyzstan")
         self.assertEqual(ISOCountry.KG.alpha2, "KG")
@@ -1506,7 +1467,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KG), "KG")
         self.assertEqual(ISOCountry.KG, "the Kyrgyz Republic")
         self.assertEqual(ISOCountry.KG, "THE KYRGYZ REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.KH, 116)
         self.assertEqual(ISOCountry.KH.label, "Cambodia")
         self.assertEqual(ISOCountry.KH.alpha2, "KH")
@@ -1519,7 +1480,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KH), "KH")
         self.assertEqual(ISOCountry.KH, "the Kingdom of Cambodia")
         self.assertEqual(ISOCountry.KH, "THE KINGDOM OF CAMBODIA")
-        
+
         self.assertEqual(ISOCountry.KI, 296)
         self.assertEqual(ISOCountry.KI.label, "Kiribati")
         self.assertEqual(ISOCountry.KI.alpha2, "KI")
@@ -1532,7 +1493,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KI), "KI")
         self.assertEqual(ISOCountry.KI, "the Republic of Kiribati")
         self.assertEqual(ISOCountry.KI, "THE REPUBLIC OF KIRIBATI")
-        
+
         self.assertEqual(ISOCountry.KM, 174)
         self.assertEqual(ISOCountry.KM.label, "Comoros (the)")
         self.assertEqual(ISOCountry.KM.alpha2, "KM")
@@ -1545,7 +1506,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KM), "KM")
         self.assertEqual(ISOCountry.KM, "the Union of the Comoros")
         self.assertEqual(ISOCountry.KM, "THE UNION OF THE COMOROS")
-        
+
         self.assertEqual(ISOCountry.KN, 659)
         self.assertEqual(ISOCountry.KN.label, "Saint Kitts and Nevis")
         self.assertEqual(ISOCountry.KN.alpha2, "KN")
@@ -1556,13 +1517,18 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.KN, "Saint Kitts and Nevis")
         self.assertEqual(ISOCountry.KN, "SAINT KITTS AND NEVIS")
         self.assertEqual(str(ISOCountry.KN), "KN")
-        
-        
+
         self.assertEqual(ISOCountry.KP, 408)
-        self.assertEqual(ISOCountry.KP.label, "Korea (the Democratic People's Republic of)")
+        self.assertEqual(
+            ISOCountry.KP.label, "Korea (the Democratic People's Republic of)"
+        )
         self.assertEqual(ISOCountry.KP.alpha2, "KP")
-        self.assertEqual(ISOCountry.KP.short_name, "Korea (the Democratic People's Republic of)")
-        self.assertEqual(ISOCountry.KP, ISOCountry("Korea (the Democratic People's Republic of)"))
+        self.assertEqual(
+            ISOCountry.KP.short_name, "Korea (the Democratic People's Republic of)"
+        )
+        self.assertEqual(
+            ISOCountry.KP, ISOCountry("Korea (the Democratic People's Republic of)")
+        )
         self.assertEqual(ISOCountry.KP, "KP")
         self.assertEqual(ISOCountry.KP, "PRK")
         self.assertEqual(ISOCountry.KP, "Korea (the Democratic People's Republic of)")
@@ -1570,7 +1536,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KP), "KP")
         self.assertEqual(ISOCountry.KP, "the Democratic People's Republic of Korea")
         self.assertEqual(ISOCountry.KP, "THE DEMOCRATIC PEOPLE'S REPUBLIC OF KOREA")
-        
+
         self.assertEqual(ISOCountry.KR, 410)
         self.assertEqual(ISOCountry.KR.label, "Korea (the Republic of)")
         self.assertEqual(ISOCountry.KR.alpha2, "KR")
@@ -1583,7 +1549,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KR), "KR")
         self.assertEqual(ISOCountry.KR, "the Republic of Korea")
         self.assertEqual(ISOCountry.KR, "THE REPUBLIC OF KOREA")
-        
+
         self.assertEqual(ISOCountry.KW, 414)
         self.assertEqual(ISOCountry.KW.label, "Kuwait")
         self.assertEqual(ISOCountry.KW.alpha2, "KW")
@@ -1596,7 +1562,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KW), "KW")
         self.assertEqual(ISOCountry.KW, "the State of Kuwait")
         self.assertEqual(ISOCountry.KW, "THE STATE OF KUWAIT")
-        
+
         self.assertEqual(ISOCountry.KY, 136)
         self.assertEqual(ISOCountry.KY.label, "Cayman Islands (the)")
         self.assertEqual(ISOCountry.KY.alpha2, "KY")
@@ -1607,8 +1573,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.KY, "Cayman Islands (the)")
         self.assertEqual(ISOCountry.KY, "CAYMAN ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.KY), "KY")
-        
-        
+
         self.assertEqual(ISOCountry.KZ, 398)
         self.assertEqual(ISOCountry.KZ.label, "Kazakhstan")
         self.assertEqual(ISOCountry.KZ.alpha2, "KZ")
@@ -1621,12 +1586,16 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.KZ), "KZ")
         self.assertEqual(ISOCountry.KZ, "the Republic of Kazakhstan")
         self.assertEqual(ISOCountry.KZ, "THE REPUBLIC OF KAZAKHSTAN")
-        
+
         self.assertEqual(ISOCountry.LA, 418)
         self.assertEqual(ISOCountry.LA.label, "Lao People's Democratic Republic (the)")
         self.assertEqual(ISOCountry.LA.alpha2, "LA")
-        self.assertEqual(ISOCountry.LA.short_name, "Lao People's Democratic Republic (the)")
-        self.assertEqual(ISOCountry.LA, ISOCountry("Lao People's Democratic Republic (the)"))
+        self.assertEqual(
+            ISOCountry.LA.short_name, "Lao People's Democratic Republic (the)"
+        )
+        self.assertEqual(
+            ISOCountry.LA, ISOCountry("Lao People's Democratic Republic (the)")
+        )
         self.assertEqual(ISOCountry.LA, "LA")
         self.assertEqual(ISOCountry.LA, "LAO")
         self.assertEqual(ISOCountry.LA, "Lao People's Democratic Republic (the)")
@@ -1634,7 +1603,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LA), "LA")
         self.assertEqual(ISOCountry.LA, "the Lao People's Democratic Republic")
         self.assertEqual(ISOCountry.LA, "THE LAO PEOPLE'S DEMOCRATIC REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.LB, 422)
         self.assertEqual(ISOCountry.LB.label, "Lebanon")
         self.assertEqual(ISOCountry.LB.alpha2, "LB")
@@ -1647,7 +1616,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LB), "LB")
         self.assertEqual(ISOCountry.LB, "the Lebanese Republic")
         self.assertEqual(ISOCountry.LB, "THE LEBANESE REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.LC, 662)
         self.assertEqual(ISOCountry.LC.label, "Saint Lucia")
         self.assertEqual(ISOCountry.LC.alpha2, "LC")
@@ -1658,9 +1627,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.LC, "Saint Lucia")
         self.assertEqual(ISOCountry.LC, "SAINT LUCIA")
         self.assertEqual(str(ISOCountry.LC), "LC")
-        
-        
-        
+
         self.assertEqual(ISOCountry.LI, 438)
         self.assertEqual(ISOCountry.LI.label, "Liechtenstein")
         self.assertEqual(ISOCountry.LI.alpha2, "LI")
@@ -1673,7 +1640,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LI), "LI")
         self.assertEqual(ISOCountry.LI, "the Principality of Liechtenstein")
         self.assertEqual(ISOCountry.LI, "THE PRINCIPALITY OF LIECHTENSTEIN")
-        
+
         self.assertEqual(ISOCountry.LK, 144)
         self.assertEqual(ISOCountry.LK.label, "Sri Lanka")
         self.assertEqual(ISOCountry.LK.alpha2, "LK")
@@ -1684,9 +1651,13 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.LK, "Sri Lanka")
         self.assertEqual(ISOCountry.LK, "SRI LANKA")
         self.assertEqual(str(ISOCountry.LK), "LK")
-        self.assertEqual(ISOCountry.LK, "the Democratic Socialist Republic of Sri Lanka")
-        self.assertEqual(ISOCountry.LK, "THE DEMOCRATIC SOCIALIST REPUBLIC OF SRI LANKA")
-        
+        self.assertEqual(
+            ISOCountry.LK, "the Democratic Socialist Republic of Sri Lanka"
+        )
+        self.assertEqual(
+            ISOCountry.LK, "THE DEMOCRATIC SOCIALIST REPUBLIC OF SRI LANKA"
+        )
+
         self.assertEqual(ISOCountry.LR, 430)
         self.assertEqual(ISOCountry.LR.label, "Liberia")
         self.assertEqual(ISOCountry.LR.alpha2, "LR")
@@ -1699,7 +1670,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LR), "LR")
         self.assertEqual(ISOCountry.LR, "the Republic of Liberia")
         self.assertEqual(ISOCountry.LR, "THE REPUBLIC OF LIBERIA")
-        
+
         self.assertEqual(ISOCountry.LS, 426)
         self.assertEqual(ISOCountry.LS.label, "Lesotho")
         self.assertEqual(ISOCountry.LS.alpha2, "LS")
@@ -1712,7 +1683,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LS), "LS")
         self.assertEqual(ISOCountry.LS, "the Kingdom of Lesotho")
         self.assertEqual(ISOCountry.LS, "THE KINGDOM OF LESOTHO")
-        
+
         self.assertEqual(ISOCountry.LT, 440)
         self.assertEqual(ISOCountry.LT.label, "Lithuania")
         self.assertEqual(ISOCountry.LT.alpha2, "LT")
@@ -1725,7 +1696,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LT), "LT")
         self.assertEqual(ISOCountry.LT, "the Republic of Lithuania")
         self.assertEqual(ISOCountry.LT, "THE REPUBLIC OF LITHUANIA")
-        
+
         self.assertEqual(ISOCountry.LU, 442)
         self.assertEqual(ISOCountry.LU.label, "Luxembourg")
         self.assertEqual(ISOCountry.LU.alpha2, "LU")
@@ -1738,7 +1709,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LU), "LU")
         self.assertEqual(ISOCountry.LU, "the Grand Duchy of Luxembourg")
         self.assertEqual(ISOCountry.LU, "THE GRAND DUCHY OF LUXEMBOURG")
-        
+
         self.assertEqual(ISOCountry.LV, 428)
         self.assertEqual(ISOCountry.LV.label, "Latvia")
         self.assertEqual(ISOCountry.LV.alpha2, "LV")
@@ -1751,7 +1722,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LV), "LV")
         self.assertEqual(ISOCountry.LV, "the Republic of Latvia")
         self.assertEqual(ISOCountry.LV, "THE REPUBLIC OF LATVIA")
-        
+
         self.assertEqual(ISOCountry.LY, 434)
         self.assertEqual(ISOCountry.LY.label, "Libya")
         self.assertEqual(ISOCountry.LY.alpha2, "LY")
@@ -1764,7 +1735,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.LY), "LY")
         self.assertEqual(ISOCountry.LY, "the State of Libya")
         self.assertEqual(ISOCountry.LY, "THE STATE OF LIBYA")
-        
+
         self.assertEqual(ISOCountry.MA, 504)
         self.assertEqual(ISOCountry.MA.label, "Morocco")
         self.assertEqual(ISOCountry.MA.alpha2, "MA")
@@ -1777,7 +1748,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MA), "MA")
         self.assertEqual(ISOCountry.MA, "the Kingdom of Morocco")
         self.assertEqual(ISOCountry.MA, "THE KINGDOM OF MOROCCO")
-        
+
         self.assertEqual(ISOCountry.MC, 492)
         self.assertEqual(ISOCountry.MC.label, "Monaco")
         self.assertEqual(ISOCountry.MC.alpha2, "MC")
@@ -1790,7 +1761,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MC), "MC")
         self.assertEqual(ISOCountry.MC, "the Principality of Monaco")
         self.assertEqual(ISOCountry.MC, "THE PRINCIPALITY OF MONACO")
-        
+
         self.assertEqual(ISOCountry.MD, 498)
         self.assertEqual(ISOCountry.MD.label, "Moldova (the Republic of)")
         self.assertEqual(ISOCountry.MD.alpha2, "MD")
@@ -1803,7 +1774,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MD), "MD")
         self.assertEqual(ISOCountry.MD, "the Republic of Moldova")
         self.assertEqual(ISOCountry.MD, "THE REPUBLIC OF MOLDOVA")
-        
+
         self.assertEqual(ISOCountry.ME, 499)
         self.assertEqual(ISOCountry.ME.label, "Montenegro")
         self.assertEqual(ISOCountry.ME.alpha2, "ME")
@@ -1814,8 +1785,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.ME, "Montenegro")
         self.assertEqual(ISOCountry.ME, "MONTENEGRO")
         self.assertEqual(str(ISOCountry.ME), "ME")
-        
-        
+
         self.assertEqual(ISOCountry.MF, 663)
         self.assertEqual(ISOCountry.MF.label, "Saint Martin (French part)")
         self.assertEqual(ISOCountry.MF.alpha2, "MF")
@@ -1826,8 +1796,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.MF, "Saint Martin (French part)")
         self.assertEqual(ISOCountry.MF, "SAINT MARTIN (FRENCH PART)")
         self.assertEqual(str(ISOCountry.MF), "MF")
-        
-        
+
         self.assertEqual(ISOCountry.MG, 450)
         self.assertEqual(ISOCountry.MG.label, "Madagascar")
         self.assertEqual(ISOCountry.MG.alpha2, "MG")
@@ -1840,7 +1809,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MG), "MG")
         self.assertEqual(ISOCountry.MG, "the Republic of Madagascar")
         self.assertEqual(ISOCountry.MG, "THE REPUBLIC OF MADAGASCAR")
-        
+
         self.assertEqual(ISOCountry.MH, 584)
         self.assertEqual(ISOCountry.MH.label, "Marshall Islands (the)")
         self.assertEqual(ISOCountry.MH.alpha2, "MH")
@@ -1853,8 +1822,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MH), "MH")
         self.assertEqual(ISOCountry.MH, "the Republic of the Marshall Islands")
         self.assertEqual(ISOCountry.MH, "THE REPUBLIC OF THE MARSHALL ISLANDS")
-        
-        
+
         self.assertEqual(ISOCountry.MK, 807)
         self.assertEqual(ISOCountry.MK.label, "North Macedonia")
         self.assertEqual(ISOCountry.MK.alpha2, "MK")
@@ -1867,7 +1835,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MK), "MK")
         self.assertEqual(ISOCountry.MK, "the Republic of North Macedonia")
         self.assertEqual(ISOCountry.MK, "THE REPUBLIC OF NORTH MACEDONIA")
-        
+
         self.assertEqual(ISOCountry.ML, 466)
         self.assertEqual(ISOCountry.ML.label, "Mali")
         self.assertEqual(ISOCountry.ML.alpha2, "ML")
@@ -1880,7 +1848,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ML), "ML")
         self.assertEqual(ISOCountry.ML, "the Republic of Mali")
         self.assertEqual(ISOCountry.ML, "THE REPUBLIC OF MALI")
-        
+
         self.assertEqual(ISOCountry.MM, 104)
         self.assertEqual(ISOCountry.MM.label, "Myanmar")
         self.assertEqual(ISOCountry.MM.alpha2, "MM")
@@ -1893,7 +1861,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MM), "MM")
         self.assertEqual(ISOCountry.MM, "the Republic of the Union of Myanmar")
         self.assertEqual(ISOCountry.MM, "THE REPUBLIC OF THE UNION OF MYANMAR")
-        
+
         self.assertEqual(ISOCountry.MN, 496)
         self.assertEqual(ISOCountry.MN.label, "Mongolia")
         self.assertEqual(ISOCountry.MN.alpha2, "MN")
@@ -1904,8 +1872,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.MN, "Mongolia")
         self.assertEqual(ISOCountry.MN, "MONGOLIA")
         self.assertEqual(str(ISOCountry.MN), "MN")
-        
-        
+
         self.assertEqual(ISOCountry.MO, 446)
         self.assertEqual(ISOCountry.MO.label, "Macao")
         self.assertEqual(ISOCountry.MO.alpha2, "MO")
@@ -1918,7 +1885,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MO), "MO")
         self.assertEqual(ISOCountry.MO, "Macao Special Administrative Region of China")
         self.assertEqual(ISOCountry.MO, "MACAO SPECIAL ADMINISTRATIVE REGION OF CHINA")
-        
+
         self.assertEqual(ISOCountry.MP, 580)
         self.assertEqual(ISOCountry.MP.label, "Northern Mariana Islands (the)")
         self.assertEqual(ISOCountry.MP.alpha2, "MP")
@@ -1929,9 +1896,13 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.MP, "Northern Mariana Islands (the)")
         self.assertEqual(ISOCountry.MP, "NORTHERN MARIANA ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.MP), "MP")
-        self.assertEqual(ISOCountry.MP, "the Commonwealth of the Northern Mariana Islands")
-        self.assertEqual(ISOCountry.MP, "THE COMMONWEALTH OF THE NORTHERN MARIANA ISLANDS")
-        
+        self.assertEqual(
+            ISOCountry.MP, "the Commonwealth of the Northern Mariana Islands"
+        )
+        self.assertEqual(
+            ISOCountry.MP, "THE COMMONWEALTH OF THE NORTHERN MARIANA ISLANDS"
+        )
+
         self.assertEqual(ISOCountry.MQ, 474)
         self.assertEqual(ISOCountry.MQ.label, "Martinique")
         self.assertEqual(ISOCountry.MQ.alpha2, "MQ")
@@ -1942,8 +1913,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.MQ, "Martinique")
         self.assertEqual(ISOCountry.MQ, "MARTINIQUE")
         self.assertEqual(str(ISOCountry.MQ), "MQ")
-        
-        
+
         self.assertEqual(ISOCountry.MR, 478)
         self.assertEqual(ISOCountry.MR.label, "Mauritania")
         self.assertEqual(ISOCountry.MR.alpha2, "MR")
@@ -1956,7 +1926,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MR), "MR")
         self.assertEqual(ISOCountry.MR, "the Islamic Republic of Mauritania")
         self.assertEqual(ISOCountry.MR, "THE ISLAMIC REPUBLIC OF MAURITANIA")
-        
+
         self.assertEqual(ISOCountry.MS, 500)
         self.assertEqual(ISOCountry.MS.label, "Montserrat")
         self.assertEqual(ISOCountry.MS.alpha2, "MS")
@@ -1967,8 +1937,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.MS, "Montserrat")
         self.assertEqual(ISOCountry.MS, "MONTSERRAT")
         self.assertEqual(str(ISOCountry.MS), "MS")
-        
-        
+
         self.assertEqual(ISOCountry.MT, 470)
         self.assertEqual(ISOCountry.MT.label, "Malta")
         self.assertEqual(ISOCountry.MT.alpha2, "MT")
@@ -1981,7 +1950,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MT), "MT")
         self.assertEqual(ISOCountry.MT, "the Republic of Malta")
         self.assertEqual(ISOCountry.MT, "THE REPUBLIC OF MALTA")
-        
+
         self.assertEqual(ISOCountry.MU, 480)
         self.assertEqual(ISOCountry.MU.label, "Mauritius")
         self.assertEqual(ISOCountry.MU.alpha2, "MU")
@@ -1994,7 +1963,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MU), "MU")
         self.assertEqual(ISOCountry.MU, "the Republic of Mauritius")
         self.assertEqual(ISOCountry.MU, "THE REPUBLIC OF MAURITIUS")
-        
+
         self.assertEqual(ISOCountry.MV, 462)
         self.assertEqual(ISOCountry.MV.label, "Maldives")
         self.assertEqual(ISOCountry.MV.alpha2, "MV")
@@ -2007,7 +1976,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MV), "MV")
         self.assertEqual(ISOCountry.MV, "the Republic of Maldives")
         self.assertEqual(ISOCountry.MV, "THE REPUBLIC OF MALDIVES")
-        
+
         self.assertEqual(ISOCountry.MW, 454)
         self.assertEqual(ISOCountry.MW.label, "Malawi")
         self.assertEqual(ISOCountry.MW.alpha2, "MW")
@@ -2020,7 +1989,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MW), "MW")
         self.assertEqual(ISOCountry.MW, "the Republic of Malawi")
         self.assertEqual(ISOCountry.MW, "THE REPUBLIC OF MALAWI")
-        
+
         self.assertEqual(ISOCountry.MX, 484)
         self.assertEqual(ISOCountry.MX.label, "Mexico")
         self.assertEqual(ISOCountry.MX.alpha2, "MX")
@@ -2033,7 +2002,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MX), "MX")
         self.assertEqual(ISOCountry.MX, "the United Mexican States")
         self.assertEqual(ISOCountry.MX, "THE UNITED MEXICAN STATES")
-        
+
         self.assertEqual(ISOCountry.MY, 458)
         self.assertEqual(ISOCountry.MY.label, "Malaysia")
         self.assertEqual(ISOCountry.MY.alpha2, "MY")
@@ -2044,8 +2013,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.MY, "Malaysia")
         self.assertEqual(ISOCountry.MY, "MALAYSIA")
         self.assertEqual(str(ISOCountry.MY), "MY")
-        
-        
+
         self.assertEqual(ISOCountry.MZ, 508)
         self.assertEqual(ISOCountry.MZ.label, "Mozambique")
         self.assertEqual(ISOCountry.MZ.alpha2, "MZ")
@@ -2058,7 +2026,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.MZ), "MZ")
         self.assertEqual(ISOCountry.MZ, "the Republic of Mozambique")
         self.assertEqual(ISOCountry.MZ, "THE REPUBLIC OF MOZAMBIQUE")
-        
+
         self.assertEqual(ISOCountry.NA, 516)
         self.assertEqual(ISOCountry.NA.label, "Namibia")
         self.assertEqual(ISOCountry.NA.alpha2, "NA")
@@ -2071,7 +2039,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NA), "NA")
         self.assertEqual(ISOCountry.NA, "the Republic of Namibia")
         self.assertEqual(ISOCountry.NA, "THE REPUBLIC OF NAMIBIA")
-        
+
         self.assertEqual(ISOCountry.NC, 540)
         self.assertEqual(ISOCountry.NC.label, "New Caledonia")
         self.assertEqual(ISOCountry.NC.alpha2, "NC")
@@ -2082,8 +2050,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.NC, "New Caledonia")
         self.assertEqual(ISOCountry.NC, "NEW CALEDONIA")
         self.assertEqual(str(ISOCountry.NC), "NC")
-        
-        
+
         self.assertEqual(ISOCountry.NE, 562)
         self.assertEqual(ISOCountry.NE.label, "Niger (the)")
         self.assertEqual(ISOCountry.NE.alpha2, "NE")
@@ -2096,7 +2063,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NE), "NE")
         self.assertEqual(ISOCountry.NE, "the Republic of the Niger")
         self.assertEqual(ISOCountry.NE, "THE REPUBLIC OF THE NIGER")
-        
+
         self.assertEqual(ISOCountry.NF, 574)
         self.assertEqual(ISOCountry.NF.label, "Norfolk Island")
         self.assertEqual(ISOCountry.NF.alpha2, "NF")
@@ -2107,8 +2074,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.NF, "Norfolk Island")
         self.assertEqual(ISOCountry.NF, "NORFOLK ISLAND")
         self.assertEqual(str(ISOCountry.NF), "NF")
-        
-        
+
         self.assertEqual(ISOCountry.NG, 566)
         self.assertEqual(ISOCountry.NG.label, "Nigeria")
         self.assertEqual(ISOCountry.NG.alpha2, "NG")
@@ -2121,8 +2087,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NG), "NG")
         self.assertEqual(ISOCountry.NG, "the Federal Republic of Nigeria")
         self.assertEqual(ISOCountry.NG, "THE FEDERAL REPUBLIC OF NIGERIA")
-        
-        
+
         self.assertEqual(ISOCountry.NI, 558)
         self.assertEqual(ISOCountry.NI.label, "Nicaragua")
         self.assertEqual(ISOCountry.NI.alpha2, "NI")
@@ -2135,7 +2100,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NI), "NI")
         self.assertEqual(ISOCountry.NI, "the Republic of Nicaragua")
         self.assertEqual(ISOCountry.NI, "THE REPUBLIC OF NICARAGUA")
-        
+
         self.assertEqual(ISOCountry.NL, 528)
         self.assertEqual(ISOCountry.NL.label, "Netherlands (the)")
         self.assertEqual(ISOCountry.NL.alpha2, "NL")
@@ -2148,7 +2113,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NL), "NL")
         self.assertEqual(ISOCountry.NL, "the Kingdom of the Netherlands")
         self.assertEqual(ISOCountry.NL, "THE KINGDOM OF THE NETHERLANDS")
-        
+
         self.assertEqual(ISOCountry.NO, 578)
         self.assertEqual(ISOCountry.NO.label, "Norway")
         self.assertEqual(ISOCountry.NO.alpha2, "NO")
@@ -2161,7 +2126,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NO), "NO")
         self.assertEqual(ISOCountry.NO, "the Kingdom of Norway")
         self.assertEqual(ISOCountry.NO, "THE KINGDOM OF NORWAY")
-        
+
         self.assertEqual(ISOCountry.NP, 524)
         self.assertEqual(ISOCountry.NP.label, "Nepal")
         self.assertEqual(ISOCountry.NP.alpha2, "NP")
@@ -2172,9 +2137,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.NP, "Nepal")
         self.assertEqual(ISOCountry.NP, "NEPAL")
         self.assertEqual(str(ISOCountry.NP), "NP")
-        
-        
-        
+
         self.assertEqual(ISOCountry.NR, 520)
         self.assertEqual(ISOCountry.NR.label, "Nauru")
         self.assertEqual(ISOCountry.NR.alpha2, "NR")
@@ -2187,8 +2150,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.NR), "NR")
         self.assertEqual(ISOCountry.NR, "the Republic of Nauru")
         self.assertEqual(ISOCountry.NR, "THE REPUBLIC OF NAURU")
-        
-        
+
         self.assertEqual(ISOCountry.NU, 570)
         self.assertEqual(ISOCountry.NU.label, "Niue")
         self.assertEqual(ISOCountry.NU.alpha2, "NU")
@@ -2199,8 +2161,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.NU, "Niue")
         self.assertEqual(ISOCountry.NU, "NIUE")
         self.assertEqual(str(ISOCountry.NU), "NU")
-        
-        
+
         self.assertEqual(ISOCountry.NZ, 554)
         self.assertEqual(ISOCountry.NZ.label, "New Zealand")
         self.assertEqual(ISOCountry.NZ.alpha2, "NZ")
@@ -2211,9 +2172,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.NZ, "New Zealand")
         self.assertEqual(ISOCountry.NZ, "NEW ZEALAND")
         self.assertEqual(str(ISOCountry.NZ), "NZ")
-        
-        
-        
+
         self.assertEqual(ISOCountry.OM, 512)
         self.assertEqual(ISOCountry.OM.label, "Oman")
         self.assertEqual(ISOCountry.OM.alpha2, "OM")
@@ -2226,7 +2185,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.OM), "OM")
         self.assertEqual(ISOCountry.OM, "the Sultanate of Oman")
         self.assertEqual(ISOCountry.OM, "THE SULTANATE OF OMAN")
-        
+
         self.assertEqual(ISOCountry.PA, 591)
         self.assertEqual(ISOCountry.PA.label, "Panama")
         self.assertEqual(ISOCountry.PA.alpha2, "PA")
@@ -2239,8 +2198,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PA), "PA")
         self.assertEqual(ISOCountry.PA, "the Republic of Panama")
         self.assertEqual(ISOCountry.PA, "THE REPUBLIC OF PANAMA")
-        
-        
+
         self.assertEqual(ISOCountry.PE, 604)
         self.assertEqual(ISOCountry.PE.label, "Peru")
         self.assertEqual(ISOCountry.PE.alpha2, "PE")
@@ -2253,7 +2211,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PE), "PE")
         self.assertEqual(ISOCountry.PE, "the Republic of Peru")
         self.assertEqual(ISOCountry.PE, "THE REPUBLIC OF PERU")
-        
+
         self.assertEqual(ISOCountry.PF, 258)
         self.assertEqual(ISOCountry.PF.label, "French Polynesia")
         self.assertEqual(ISOCountry.PF.alpha2, "PF")
@@ -2264,8 +2222,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.PF, "French Polynesia")
         self.assertEqual(ISOCountry.PF, "FRENCH POLYNESIA")
         self.assertEqual(str(ISOCountry.PF), "PF")
-        
-        
+
         self.assertEqual(ISOCountry.PG, 598)
         self.assertEqual(ISOCountry.PG.label, "Papua New Guinea")
         self.assertEqual(ISOCountry.PG.alpha2, "PG")
@@ -2278,7 +2235,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PG), "PG")
         self.assertEqual(ISOCountry.PG, "the Independent State of Papua New Guinea")
         self.assertEqual(ISOCountry.PG, "THE INDEPENDENT STATE OF PAPUA NEW GUINEA")
-        
+
         self.assertEqual(ISOCountry.PH, 608)
         self.assertEqual(ISOCountry.PH.label, "Philippines (the)")
         self.assertEqual(ISOCountry.PH.alpha2, "PH")
@@ -2291,8 +2248,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PH), "PH")
         self.assertEqual(ISOCountry.PH, "the Republic of the Philippines")
         self.assertEqual(ISOCountry.PH, "THE REPUBLIC OF THE PHILIPPINES")
-        
-        
+
         self.assertEqual(ISOCountry.PK, 586)
         self.assertEqual(ISOCountry.PK.label, "Pakistan")
         self.assertEqual(ISOCountry.PK.alpha2, "PK")
@@ -2305,7 +2261,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PK), "PK")
         self.assertEqual(ISOCountry.PK, "the Islamic Republic of Pakistan")
         self.assertEqual(ISOCountry.PK, "THE ISLAMIC REPUBLIC OF PAKISTAN")
-        
+
         self.assertEqual(ISOCountry.PL, 616)
         self.assertEqual(ISOCountry.PL.label, "Poland")
         self.assertEqual(ISOCountry.PL.alpha2, "PL")
@@ -2318,7 +2274,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PL), "PL")
         self.assertEqual(ISOCountry.PL, "the Republic of Poland")
         self.assertEqual(ISOCountry.PL, "THE REPUBLIC OF POLAND")
-        
+
         self.assertEqual(ISOCountry.PM, 666)
         self.assertEqual(ISOCountry.PM.label, "Saint Pierre and Miquelon")
         self.assertEqual(ISOCountry.PM.alpha2, "PM")
@@ -2329,8 +2285,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.PM, "Saint Pierre and Miquelon")
         self.assertEqual(ISOCountry.PM, "SAINT PIERRE AND MIQUELON")
         self.assertEqual(str(ISOCountry.PM), "PM")
-        
-        
+
         self.assertEqual(ISOCountry.PN, 612)
         self.assertEqual(ISOCountry.PN.label, "Pitcairn")
         self.assertEqual(ISOCountry.PN.alpha2, "PN")
@@ -2341,8 +2296,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.PN, "Pitcairn")
         self.assertEqual(ISOCountry.PN, "PITCAIRN")
         self.assertEqual(str(ISOCountry.PN), "PN")
-        
-        
+
         self.assertEqual(ISOCountry.PR, 630)
         self.assertEqual(ISOCountry.PR.label, "Puerto Rico")
         self.assertEqual(ISOCountry.PR.alpha2, "PR")
@@ -2353,8 +2307,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.PR, "Puerto Rico")
         self.assertEqual(ISOCountry.PR, "PUERTO RICO")
         self.assertEqual(str(ISOCountry.PR), "PR")
-        
-        
+
         self.assertEqual(ISOCountry.PS, 275)
         self.assertEqual(ISOCountry.PS.label, "Palestine, State of")
         self.assertEqual(ISOCountry.PS.alpha2, "PS")
@@ -2367,7 +2320,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PS), "PS")
         self.assertEqual(ISOCountry.PS, "the State of Palestine")
         self.assertEqual(ISOCountry.PS, "THE STATE OF PALESTINE")
-        
+
         self.assertEqual(ISOCountry.PT, 620)
         self.assertEqual(ISOCountry.PT.label, "Portugal")
         self.assertEqual(ISOCountry.PT.alpha2, "PT")
@@ -2380,8 +2333,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PT), "PT")
         self.assertEqual(ISOCountry.PT, "the Portuguese Republic")
         self.assertEqual(ISOCountry.PT, "THE PORTUGUESE REPUBLIC")
-        
-        
+
         self.assertEqual(ISOCountry.PW, 585)
         self.assertEqual(ISOCountry.PW.label, "Palau")
         self.assertEqual(ISOCountry.PW.alpha2, "PW")
@@ -2394,7 +2346,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PW), "PW")
         self.assertEqual(ISOCountry.PW, "the Republic of Palau")
         self.assertEqual(ISOCountry.PW, "THE REPUBLIC OF PALAU")
-        
+
         self.assertEqual(ISOCountry.PY, 600)
         self.assertEqual(ISOCountry.PY.label, "Paraguay")
         self.assertEqual(ISOCountry.PY.alpha2, "PY")
@@ -2407,8 +2359,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.PY), "PY")
         self.assertEqual(ISOCountry.PY, "the Republic of Paraguay")
         self.assertEqual(ISOCountry.PY, "THE REPUBLIC OF PARAGUAY")
-        
-        
+
         self.assertEqual(ISOCountry.QA, 634)
         self.assertEqual(ISOCountry.QA.label, "Qatar")
         self.assertEqual(ISOCountry.QA.alpha2, "QA")
@@ -2421,10 +2372,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.QA), "QA")
         self.assertEqual(ISOCountry.QA, "the State of Qatar")
         self.assertEqual(ISOCountry.QA, "THE STATE OF QATAR")
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.RE, 638)
         self.assertEqual(ISOCountry.RE.label, "Réunion")
         self.assertEqual(ISOCountry.RE.alpha2, "RE")
@@ -2435,14 +2383,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.RE, "Réunion")
         self.assertEqual(ISOCountry.RE, "RÉUNION")
         self.assertEqual(str(ISOCountry.RE), "RE")
-        
-        
-        
-        
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.RO, 642)
         self.assertEqual(ISOCountry.RO.label, "Romania")
         self.assertEqual(ISOCountry.RO.alpha2, "RO")
@@ -2453,9 +2394,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.RO, "Romania")
         self.assertEqual(ISOCountry.RO, "ROMANIA")
         self.assertEqual(str(ISOCountry.RO), "RO")
-        
-        
-        
+
         self.assertEqual(ISOCountry.RS, 688)
         self.assertEqual(ISOCountry.RS.label, "Serbia")
         self.assertEqual(ISOCountry.RS.alpha2, "RS")
@@ -2468,7 +2407,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.RS), "RS")
         self.assertEqual(ISOCountry.RS, "the Republic of Serbia")
         self.assertEqual(ISOCountry.RS, "THE REPUBLIC OF SERBIA")
-        
+
         self.assertEqual(ISOCountry.RU, 643)
         self.assertEqual(ISOCountry.RU.label, "Russian Federation (the)")
         self.assertEqual(ISOCountry.RU.alpha2, "RU")
@@ -2481,7 +2420,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.RU), "RU")
         self.assertEqual(ISOCountry.RU, "the Russian Federation")
         self.assertEqual(ISOCountry.RU, "THE RUSSIAN FEDERATION")
-        
+
         self.assertEqual(ISOCountry.RW, 646)
         self.assertEqual(ISOCountry.RW.label, "Rwanda")
         self.assertEqual(ISOCountry.RW.alpha2, "RW")
@@ -2494,7 +2433,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.RW), "RW")
         self.assertEqual(ISOCountry.RW, "the Republic of Rwanda")
         self.assertEqual(ISOCountry.RW, "THE REPUBLIC OF RWANDA")
-        
+
         self.assertEqual(ISOCountry.SA, 682)
         self.assertEqual(ISOCountry.SA.label, "Saudi Arabia")
         self.assertEqual(ISOCountry.SA.alpha2, "SA")
@@ -2507,7 +2446,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SA), "SA")
         self.assertEqual(ISOCountry.SA, "the Kingdom of Saudi Arabia")
         self.assertEqual(ISOCountry.SA, "THE KINGDOM OF SAUDI ARABIA")
-        
+
         self.assertEqual(ISOCountry.SB, 90)
         self.assertEqual(ISOCountry.SB.label, "Solomon Islands")
         self.assertEqual(ISOCountry.SB.alpha2, "SB")
@@ -2518,8 +2457,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.SB, "Solomon Islands")
         self.assertEqual(ISOCountry.SB, "SOLOMON ISLANDS")
         self.assertEqual(str(ISOCountry.SB), "SB")
-        
-        
+
         self.assertEqual(ISOCountry.SC, 690)
         self.assertEqual(ISOCountry.SC.label, "Seychelles")
         self.assertEqual(ISOCountry.SC.alpha2, "SC")
@@ -2532,7 +2470,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SC), "SC")
         self.assertEqual(ISOCountry.SC, "the Republic of Seychelles")
         self.assertEqual(ISOCountry.SC, "THE REPUBLIC OF SEYCHELLES")
-        
+
         self.assertEqual(ISOCountry.SD, 729)
         self.assertEqual(ISOCountry.SD.label, "Sudan (the)")
         self.assertEqual(ISOCountry.SD.alpha2, "SD")
@@ -2545,7 +2483,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SD), "SD")
         self.assertEqual(ISOCountry.SD, "the Republic of the Sudan")
         self.assertEqual(ISOCountry.SD, "THE REPUBLIC OF THE SUDAN")
-        
+
         self.assertEqual(ISOCountry.SE, 752)
         self.assertEqual(ISOCountry.SE.label, "Sweden")
         self.assertEqual(ISOCountry.SE.alpha2, "SE")
@@ -2558,8 +2496,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SE), "SE")
         self.assertEqual(ISOCountry.SE, "the Kingdom of Sweden")
         self.assertEqual(ISOCountry.SE, "THE KINGDOM OF SWEDEN")
-        
-        
+
         self.assertEqual(ISOCountry.SG, 702)
         self.assertEqual(ISOCountry.SG.label, "Singapore")
         self.assertEqual(ISOCountry.SG.alpha2, "SG")
@@ -2572,19 +2509,24 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SG), "SG")
         self.assertEqual(ISOCountry.SG, "the Republic of Singapore")
         self.assertEqual(ISOCountry.SG, "THE REPUBLIC OF SINGAPORE")
-        
+
         self.assertEqual(ISOCountry.SH, 654)
-        self.assertEqual(ISOCountry.SH.label, "Saint Helena, Ascension and Tristan da Cunha")
+        self.assertEqual(
+            ISOCountry.SH.label, "Saint Helena, Ascension and Tristan da Cunha"
+        )
         self.assertEqual(ISOCountry.SH.alpha2, "SH")
-        self.assertEqual(ISOCountry.SH.short_name, "Saint Helena, Ascension and Tristan da Cunha")
-        self.assertEqual(ISOCountry.SH, ISOCountry("Saint Helena, Ascension and Tristan da Cunha"))
+        self.assertEqual(
+            ISOCountry.SH.short_name, "Saint Helena, Ascension and Tristan da Cunha"
+        )
+        self.assertEqual(
+            ISOCountry.SH, ISOCountry("Saint Helena, Ascension and Tristan da Cunha")
+        )
         self.assertEqual(ISOCountry.SH, "SH")
         self.assertEqual(ISOCountry.SH, "SHN")
         self.assertEqual(ISOCountry.SH, "Saint Helena, Ascension and Tristan da Cunha")
         self.assertEqual(ISOCountry.SH, "SAINT HELENA, ASCENSION AND TRISTAN DA CUNHA")
         self.assertEqual(str(ISOCountry.SH), "SH")
-        
-        
+
         self.assertEqual(ISOCountry.SI, 705)
         self.assertEqual(ISOCountry.SI.label, "Slovenia")
         self.assertEqual(ISOCountry.SI.alpha2, "SI")
@@ -2597,7 +2539,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SI), "SI")
         self.assertEqual(ISOCountry.SI, "the Republic of Slovenia")
         self.assertEqual(ISOCountry.SI, "THE REPUBLIC OF SLOVENIA")
-        
+
         self.assertEqual(ISOCountry.SJ, 744)
         self.assertEqual(ISOCountry.SJ.label, "Svalbard and Jan Mayen")
         self.assertEqual(ISOCountry.SJ.alpha2, "SJ")
@@ -2608,8 +2550,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.SJ, "Svalbard and Jan Mayen")
         self.assertEqual(ISOCountry.SJ, "SVALBARD AND JAN MAYEN")
         self.assertEqual(str(ISOCountry.SJ), "SJ")
-        
-        
+
         self.assertEqual(ISOCountry.SK, 703)
         self.assertEqual(ISOCountry.SK.label, "Slovakia")
         self.assertEqual(ISOCountry.SK.alpha2, "SK")
@@ -2622,8 +2563,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SK), "SK")
         self.assertEqual(ISOCountry.SK, "the Slovak Republic")
         self.assertEqual(ISOCountry.SK, "THE SLOVAK REPUBLIC")
-        
-        
+
         self.assertEqual(ISOCountry.SL, 694)
         self.assertEqual(ISOCountry.SL.label, "Sierra Leone")
         self.assertEqual(ISOCountry.SL.alpha2, "SL")
@@ -2636,7 +2576,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SL), "SL")
         self.assertEqual(ISOCountry.SL, "the Republic of Sierra Leone")
         self.assertEqual(ISOCountry.SL, "THE REPUBLIC OF SIERRA LEONE")
-        
+
         self.assertEqual(ISOCountry.SM, 674)
         self.assertEqual(ISOCountry.SM.label, "San Marino")
         self.assertEqual(ISOCountry.SM.alpha2, "SM")
@@ -2649,7 +2589,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SM), "SM")
         self.assertEqual(ISOCountry.SM, "the Republic of San Marino")
         self.assertEqual(ISOCountry.SM, "THE REPUBLIC OF SAN MARINO")
-        
+
         self.assertEqual(ISOCountry.SN, 686)
         self.assertEqual(ISOCountry.SN.label, "Senegal")
         self.assertEqual(ISOCountry.SN.alpha2, "SN")
@@ -2662,7 +2602,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SN), "SN")
         self.assertEqual(ISOCountry.SN, "the Republic of Senegal")
         self.assertEqual(ISOCountry.SN, "THE REPUBLIC OF SENEGAL")
-        
+
         self.assertEqual(ISOCountry.SO, 706)
         self.assertEqual(ISOCountry.SO.label, "Somalia")
         self.assertEqual(ISOCountry.SO.alpha2, "SO")
@@ -2675,7 +2615,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SO), "SO")
         self.assertEqual(ISOCountry.SO, "the Federal Republic of Somalia")
         self.assertEqual(ISOCountry.SO, "THE FEDERAL REPUBLIC OF SOMALIA")
-        
+
         self.assertEqual(ISOCountry.SR, 740)
         self.assertEqual(ISOCountry.SR.label, "Suriname")
         self.assertEqual(ISOCountry.SR.alpha2, "SR")
@@ -2688,7 +2628,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SR), "SR")
         self.assertEqual(ISOCountry.SR, "the Republic of Suriname")
         self.assertEqual(ISOCountry.SR, "THE REPUBLIC OF SURINAME")
-        
+
         self.assertEqual(ISOCountry.SS, 728)
         self.assertEqual(ISOCountry.SS.label, "South Sudan")
         self.assertEqual(ISOCountry.SS.alpha2, "SS")
@@ -2701,7 +2641,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SS), "SS")
         self.assertEqual(ISOCountry.SS, "the Republic of South Sudan")
         self.assertEqual(ISOCountry.SS, "THE REPUBLIC OF SOUTH SUDAN")
-        
+
         self.assertEqual(ISOCountry.ST, 678)
         self.assertEqual(ISOCountry.ST.label, "Sao Tome and Principe")
         self.assertEqual(ISOCountry.ST.alpha2, "ST")
@@ -2712,10 +2652,13 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.ST, "Sao Tome and Principe")
         self.assertEqual(ISOCountry.ST, "SAO TOME AND PRINCIPE")
         self.assertEqual(str(ISOCountry.ST), "ST")
-        self.assertEqual(ISOCountry.ST, "the Democratic Republic of Sao Tome and Principe")
-        self.assertEqual(ISOCountry.ST, "THE DEMOCRATIC REPUBLIC OF SAO TOME AND PRINCIPE")
-        
-        
+        self.assertEqual(
+            ISOCountry.ST, "the Democratic Republic of Sao Tome and Principe"
+        )
+        self.assertEqual(
+            ISOCountry.ST, "THE DEMOCRATIC REPUBLIC OF SAO TOME AND PRINCIPE"
+        )
+
         self.assertEqual(ISOCountry.SV, 222)
         self.assertEqual(ISOCountry.SV.label, "El Salvador")
         self.assertEqual(ISOCountry.SV.alpha2, "SV")
@@ -2728,7 +2671,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SV), "SV")
         self.assertEqual(ISOCountry.SV, "the Republic of El Salvador")
         self.assertEqual(ISOCountry.SV, "THE REPUBLIC OF EL SALVADOR")
-        
+
         self.assertEqual(ISOCountry.SX, 534)
         self.assertEqual(ISOCountry.SX.label, "Sint Maarten (Dutch part)")
         self.assertEqual(ISOCountry.SX.alpha2, "SX")
@@ -2739,8 +2682,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.SX, "Sint Maarten (Dutch part)")
         self.assertEqual(ISOCountry.SX, "SINT MAARTEN (DUTCH PART)")
         self.assertEqual(str(ISOCountry.SX), "SX")
-        
-        
+
         self.assertEqual(ISOCountry.SY, 760)
         self.assertEqual(ISOCountry.SY.label, "Syrian Arab Republic (the)")
         self.assertEqual(ISOCountry.SY.alpha2, "SY")
@@ -2753,7 +2695,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SY), "SY")
         self.assertEqual(ISOCountry.SY, "the Syrian Arab Republic")
         self.assertEqual(ISOCountry.SY, "THE SYRIAN ARAB REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.SZ, 748)
         self.assertEqual(ISOCountry.SZ.label, "Eswatini")
         self.assertEqual(ISOCountry.SZ.alpha2, "SZ")
@@ -2766,8 +2708,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.SZ), "SZ")
         self.assertEqual(ISOCountry.SZ, "the Kingdom of Eswatini")
         self.assertEqual(ISOCountry.SZ, "THE KINGDOM OF ESWATINI")
-        
-        
+
         self.assertEqual(ISOCountry.TC, 796)
         self.assertEqual(ISOCountry.TC.label, "Turks and Caicos Islands (the)")
         self.assertEqual(ISOCountry.TC.alpha2, "TC")
@@ -2778,8 +2719,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TC, "Turks and Caicos Islands (the)")
         self.assertEqual(ISOCountry.TC, "TURKS AND CAICOS ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.TC), "TC")
-        
-        
+
         self.assertEqual(ISOCountry.TD, 148)
         self.assertEqual(ISOCountry.TD.label, "Chad")
         self.assertEqual(ISOCountry.TD.alpha2, "TD")
@@ -2792,7 +2732,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TD), "TD")
         self.assertEqual(ISOCountry.TD, "the Republic of Chad")
         self.assertEqual(ISOCountry.TD, "THE REPUBLIC OF CHAD")
-        
+
         self.assertEqual(ISOCountry.TF, 260)
         self.assertEqual(ISOCountry.TF.label, "French Southern Territories (the)")
         self.assertEqual(ISOCountry.TF.alpha2, "TF")
@@ -2803,8 +2743,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TF, "French Southern Territories (the)")
         self.assertEqual(ISOCountry.TF, "FRENCH SOUTHERN TERRITORIES (THE)")
         self.assertEqual(str(ISOCountry.TF), "TF")
-        
-        
+
         self.assertEqual(ISOCountry.TG, 768)
         self.assertEqual(ISOCountry.TG.label, "Togo")
         self.assertEqual(ISOCountry.TG.alpha2, "TG")
@@ -2817,7 +2756,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TG), "TG")
         self.assertEqual(ISOCountry.TG, "the Togolese Republic")
         self.assertEqual(ISOCountry.TG, "THE TOGOLESE REPUBLIC")
-        
+
         self.assertEqual(ISOCountry.TH, 764)
         self.assertEqual(ISOCountry.TH.label, "Thailand")
         self.assertEqual(ISOCountry.TH.alpha2, "TH")
@@ -2830,7 +2769,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TH), "TH")
         self.assertEqual(ISOCountry.TH, "the Kingdom of Thailand")
         self.assertEqual(ISOCountry.TH, "THE KINGDOM OF THAILAND")
-        
+
         self.assertEqual(ISOCountry.TJ, 762)
         self.assertEqual(ISOCountry.TJ.label, "Tajikistan")
         self.assertEqual(ISOCountry.TJ.alpha2, "TJ")
@@ -2843,7 +2782,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TJ), "TJ")
         self.assertEqual(ISOCountry.TJ, "the Republic of Tajikistan")
         self.assertEqual(ISOCountry.TJ, "THE REPUBLIC OF TAJIKISTAN")
-        
+
         self.assertEqual(ISOCountry.TK, 772)
         self.assertEqual(ISOCountry.TK.label, "Tokelau")
         self.assertEqual(ISOCountry.TK.alpha2, "TK")
@@ -2854,8 +2793,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TK, "Tokelau")
         self.assertEqual(ISOCountry.TK, "TOKELAU")
         self.assertEqual(str(ISOCountry.TK), "TK")
-        
-        
+
         self.assertEqual(ISOCountry.TL, 626)
         self.assertEqual(ISOCountry.TL.label, "Timor-Leste")
         self.assertEqual(ISOCountry.TL.alpha2, "TL")
@@ -2868,7 +2806,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TL), "TL")
         self.assertEqual(ISOCountry.TL, "the Democratic Republic of Timor-Leste")
         self.assertEqual(ISOCountry.TL, "THE DEMOCRATIC REPUBLIC OF TIMOR-LESTE")
-        
+
         self.assertEqual(ISOCountry.TM, 795)
         self.assertEqual(ISOCountry.TM.label, "Turkmenistan")
         self.assertEqual(ISOCountry.TM.alpha2, "TM")
@@ -2879,8 +2817,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TM, "Turkmenistan")
         self.assertEqual(ISOCountry.TM, "TURKMENISTAN")
         self.assertEqual(str(ISOCountry.TM), "TM")
-        
-        
+
         self.assertEqual(ISOCountry.TN, 788)
         self.assertEqual(ISOCountry.TN.label, "Tunisia")
         self.assertEqual(ISOCountry.TN.alpha2, "TN")
@@ -2893,7 +2830,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TN), "TN")
         self.assertEqual(ISOCountry.TN, "the Republic of Tunisia")
         self.assertEqual(ISOCountry.TN, "THE REPUBLIC OF TUNISIA")
-        
+
         self.assertEqual(ISOCountry.TO, 776)
         self.assertEqual(ISOCountry.TO.label, "Tonga")
         self.assertEqual(ISOCountry.TO.alpha2, "TO")
@@ -2906,8 +2843,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TO), "TO")
         self.assertEqual(ISOCountry.TO, "the Kingdom of Tonga")
         self.assertEqual(ISOCountry.TO, "THE KINGDOM OF TONGA")
-        
-        
+
         self.assertEqual(ISOCountry.TR, 792)
         self.assertEqual(ISOCountry.TR.label, "Türkiye")
         self.assertEqual(ISOCountry.TR.alpha2, "TR")
@@ -2920,7 +2856,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TR), "TR")
         self.assertEqual(ISOCountry.TR, "the Republic of Türkiye")
         self.assertEqual(ISOCountry.TR, "THE REPUBLIC OF TÜRKIYE")
-        
+
         self.assertEqual(ISOCountry.TT, 780)
         self.assertEqual(ISOCountry.TT.label, "Trinidad and Tobago")
         self.assertEqual(ISOCountry.TT.alpha2, "TT")
@@ -2933,7 +2869,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TT), "TT")
         self.assertEqual(ISOCountry.TT, "the Republic of Trinidad and Tobago")
         self.assertEqual(ISOCountry.TT, "THE REPUBLIC OF TRINIDAD AND TOBAGO")
-        
+
         self.assertEqual(ISOCountry.TV, 798)
         self.assertEqual(ISOCountry.TV.label, "Tuvalu")
         self.assertEqual(ISOCountry.TV.alpha2, "TV")
@@ -2944,8 +2880,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TV, "Tuvalu")
         self.assertEqual(ISOCountry.TV, "TUVALU")
         self.assertEqual(str(ISOCountry.TV), "TV")
-        
-        
+
         self.assertEqual(ISOCountry.TW, 158)
         self.assertEqual(ISOCountry.TW.label, "Taiwan")
         self.assertEqual(ISOCountry.TW.alpha2, "TW")
@@ -2956,8 +2891,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.TW, "Taiwan")
         self.assertEqual(ISOCountry.TW, "TAIWAN (PROVINCE OF CHINA)")
         self.assertEqual(str(ISOCountry.TW), "TW")
-        
-        
+
         self.assertEqual(ISOCountry.TZ, 834)
         self.assertEqual(ISOCountry.TZ.label, "Tanzania, the United Republic of")
         self.assertEqual(ISOCountry.TZ.alpha2, "TZ")
@@ -2970,7 +2904,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.TZ), "TZ")
         self.assertEqual(ISOCountry.TZ, "the United Republic of Tanzania")
         self.assertEqual(ISOCountry.TZ, "THE UNITED REPUBLIC OF TANZANIA")
-        
+
         self.assertEqual(ISOCountry.UA, 804)
         self.assertEqual(ISOCountry.UA.label, "Ukraine")
         self.assertEqual(ISOCountry.UA.alpha2, "UA")
@@ -2981,8 +2915,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.UA, "Ukraine")
         self.assertEqual(ISOCountry.UA, "UKRAINE")
         self.assertEqual(str(ISOCountry.UA), "UA")
-        
-        
+
         self.assertEqual(ISOCountry.UG, 800)
         self.assertEqual(ISOCountry.UG.label, "Uganda")
         self.assertEqual(ISOCountry.UG.alpha2, "UG")
@@ -2995,21 +2928,24 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.UG), "UG")
         self.assertEqual(ISOCountry.UG, "the Republic of Uganda")
         self.assertEqual(ISOCountry.UG, "THE REPUBLIC OF UGANDA")
-        
-        
+
         self.assertEqual(ISOCountry.UM, 581)
-        self.assertEqual(ISOCountry.UM.label, "United States Minor Outlying Islands (the)")
+        self.assertEqual(
+            ISOCountry.UM.label, "United States Minor Outlying Islands (the)"
+        )
         self.assertEqual(ISOCountry.UM.alpha2, "UM")
-        self.assertEqual(ISOCountry.UM.short_name, "United States Minor Outlying Islands (the)")
-        self.assertEqual(ISOCountry.UM, ISOCountry("United States Minor Outlying Islands (the)"))
+        self.assertEqual(
+            ISOCountry.UM.short_name, "United States Minor Outlying Islands (the)"
+        )
+        self.assertEqual(
+            ISOCountry.UM, ISOCountry("United States Minor Outlying Islands (the)")
+        )
         self.assertEqual(ISOCountry.UM, "UM")
         self.assertEqual(ISOCountry.UM, "UMI")
         self.assertEqual(ISOCountry.UM, "United States Minor Outlying Islands (the)")
         self.assertEqual(ISOCountry.UM, "UNITED STATES MINOR OUTLYING ISLANDS (THE)")
         self.assertEqual(str(ISOCountry.UM), "UM")
-        
-        
-        
+
         self.assertEqual(ISOCountry.US, 840)
         self.assertEqual(ISOCountry.US.label, "United States of America (the)")
         self.assertEqual(ISOCountry.US.alpha2, "US")
@@ -3022,7 +2958,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.US), "US")
         self.assertEqual(ISOCountry.US, "the United States of America")
         self.assertEqual(ISOCountry.US, "THE UNITED STATES OF AMERICA")
-        
+
         self.assertEqual(ISOCountry.UY, 858)
         self.assertEqual(ISOCountry.UY.label, "Uruguay")
         self.assertEqual(ISOCountry.UY.alpha2, "UY")
@@ -3035,7 +2971,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.UY), "UY")
         self.assertEqual(ISOCountry.UY, "the Eastern Republic of Uruguay")
         self.assertEqual(ISOCountry.UY, "THE EASTERN REPUBLIC OF URUGUAY")
-        
+
         self.assertEqual(ISOCountry.UZ, 860)
         self.assertEqual(ISOCountry.UZ.label, "Uzbekistan")
         self.assertEqual(ISOCountry.UZ.alpha2, "UZ")
@@ -3048,7 +2984,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.UZ), "UZ")
         self.assertEqual(ISOCountry.UZ, "the Republic of Uzbekistan")
         self.assertEqual(ISOCountry.UZ, "THE REPUBLIC OF UZBEKISTAN")
-        
+
         self.assertEqual(ISOCountry.VA, 336)
         self.assertEqual(ISOCountry.VA.label, "Holy See (the)")
         self.assertEqual(ISOCountry.VA.alpha2, "VA")
@@ -3059,8 +2995,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.VA, "Holy See (the)")
         self.assertEqual(ISOCountry.VA, "HOLY SEE (THE)")
         self.assertEqual(str(ISOCountry.VA), "VA")
-        
-        
+
         self.assertEqual(ISOCountry.VC, 670)
         self.assertEqual(ISOCountry.VC.label, "Saint Vincent and the Grenadines")
         self.assertEqual(ISOCountry.VC.alpha2, "VC")
@@ -3071,14 +3006,14 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.VC, "Saint Vincent and the Grenadines")
         self.assertEqual(ISOCountry.VC, "SAINT VINCENT AND THE GRENADINES")
         self.assertEqual(str(ISOCountry.VC), "VC")
-        
-        
-        
+
         self.assertEqual(ISOCountry.VE, 862)
         self.assertEqual(ISOCountry.VE.label, "Venezuela (Bolivarian Republic of)")
         self.assertEqual(ISOCountry.VE.alpha2, "VE")
         self.assertEqual(ISOCountry.VE.short_name, "Venezuela (Bolivarian Republic of)")
-        self.assertEqual(ISOCountry.VE, ISOCountry("Venezuela (Bolivarian Republic of)"))
+        self.assertEqual(
+            ISOCountry.VE, ISOCountry("Venezuela (Bolivarian Republic of)")
+        )
         self.assertEqual(ISOCountry.VE, "VE")
         self.assertEqual(ISOCountry.VE, "VEN")
         self.assertEqual(ISOCountry.VE, "Venezuela (Bolivarian Republic of)")
@@ -3086,7 +3021,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.VE), "VE")
         self.assertEqual(ISOCountry.VE, "the Bolivarian Republic of Venezuela")
         self.assertEqual(ISOCountry.VE, "THE BOLIVARIAN REPUBLIC OF VENEZUELA")
-        
+
         self.assertEqual(ISOCountry.VG, 92)
         self.assertEqual(ISOCountry.VG.label, "Virgin Islands (British)")
         self.assertEqual(ISOCountry.VG.alpha2, "VG")
@@ -3099,7 +3034,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.VG), "VG")
         self.assertEqual(ISOCountry.VG, "British Virgin Islands (the)")
         self.assertEqual(ISOCountry.VG, "BRITISH VIRGIN ISLANDS (THE)")
-        
+
         self.assertEqual(ISOCountry.VI, 850)
         self.assertEqual(ISOCountry.VI.label, "Virgin Islands (U.S.)")
         self.assertEqual(ISOCountry.VI.alpha2, "VI")
@@ -3112,7 +3047,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.VI), "VI")
         self.assertEqual(ISOCountry.VI, "the Virgin Islands of the United States")
         self.assertEqual(ISOCountry.VI, "THE VIRGIN ISLANDS OF THE UNITED STATES")
-        
+
         self.assertEqual(ISOCountry.VN, 704)
         self.assertEqual(ISOCountry.VN.label, "Viet Nam")
         self.assertEqual(ISOCountry.VN.alpha2, "VN")
@@ -3125,7 +3060,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.VN), "VN")
         self.assertEqual(ISOCountry.VN, "the Socialist Republic of Viet Nam")
         self.assertEqual(ISOCountry.VN, "THE SOCIALIST REPUBLIC OF VIET NAM")
-        
+
         self.assertEqual(ISOCountry.VU, 548)
         self.assertEqual(ISOCountry.VU.label, "Vanuatu")
         self.assertEqual(ISOCountry.VU.alpha2, "VU")
@@ -3138,7 +3073,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.VU), "VU")
         self.assertEqual(ISOCountry.VU, "the Republic of Vanuatu")
         self.assertEqual(ISOCountry.VU, "THE REPUBLIC OF VANUATU")
-        
+
         self.assertEqual(ISOCountry.WF, 876)
         self.assertEqual(ISOCountry.WF.label, "Wallis and Futuna")
         self.assertEqual(ISOCountry.WF.alpha2, "WF")
@@ -3151,11 +3086,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.WF), "WF")
         self.assertEqual(ISOCountry.WF, "Wallis and Futuna Islands")
         self.assertEqual(ISOCountry.WF, "WALLIS AND FUTUNA ISLANDS")
-        
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.WS, 882)
         self.assertEqual(ISOCountry.WS.label, "Samoa")
         self.assertEqual(ISOCountry.WS.alpha2, "WS")
@@ -3168,9 +3099,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.WS), "WS")
         self.assertEqual(ISOCountry.WS, "the Independent State of Samoa")
         self.assertEqual(ISOCountry.WS, "THE INDEPENDENT STATE OF SAMOA")
-        
-        
-        
+
         self.assertEqual(ISOCountry.YE, 887)
         self.assertEqual(ISOCountry.YE.label, "Yemen")
         self.assertEqual(ISOCountry.YE.alpha2, "YE")
@@ -3183,7 +3112,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.YE), "YE")
         self.assertEqual(ISOCountry.YE, "the Republic of Yemen")
         self.assertEqual(ISOCountry.YE, "THE REPUBLIC OF YEMEN")
-        
+
         self.assertEqual(ISOCountry.YT, 175)
         self.assertEqual(ISOCountry.YT.label, "Mayotte")
         self.assertEqual(ISOCountry.YT.alpha2, "YT")
@@ -3194,10 +3123,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.YT, "Mayotte")
         self.assertEqual(ISOCountry.YT, "MAYOTTE")
         self.assertEqual(str(ISOCountry.YT), "YT")
-        
-        
-        
-        
+
         self.assertEqual(ISOCountry.ZA, 710)
         self.assertEqual(ISOCountry.ZA.label, "South Africa")
         self.assertEqual(ISOCountry.ZA.alpha2, "ZA")
@@ -3210,7 +3136,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ZA), "ZA")
         self.assertEqual(ISOCountry.ZA, "the Republic of South Africa")
         self.assertEqual(ISOCountry.ZA, "THE REPUBLIC OF SOUTH AFRICA")
-        
+
         self.assertEqual(ISOCountry.ZM, 894)
         self.assertEqual(ISOCountry.ZM.label, "Zambia")
         self.assertEqual(ISOCountry.ZM.alpha2, "ZM")
@@ -3223,8 +3149,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(str(ISOCountry.ZM), "ZM")
         self.assertEqual(ISOCountry.ZM, "the Republic of Zambia")
         self.assertEqual(ISOCountry.ZM, "THE REPUBLIC OF ZAMBIA")
-        
-        
+
         self.assertEqual(ISOCountry.ZW, 716)
         self.assertEqual(ISOCountry.ZW.label, "Zimbabwe")
         self.assertEqual(ISOCountry.ZW.alpha2, "ZW")
@@ -3239,7 +3164,7 @@ class TestISOCountry(TestCase):
         self.assertEqual(ISOCountry.ZW, "THE REPUBLIC OF ZIMBABWE")
 
     def test_independent(self):
-        
+
         self.assertEqual(ISOCountry.AD.independent, True)
         self.assertEqual(ISOCountry.AE.independent, True)
         self.assertEqual(ISOCountry.AF.independent, True)

@@ -1,49 +1,42 @@
 from django.utils.translation import gettext_lazy as _
 from django_enum import IntegerChoices
 from enum_properties import p, s
+
 from slm.defines import SLMFileType
 
 
-class SiteFileUploadStatus(IntegerChoices, p('help')):
+class SiteFileUploadStatus(IntegerChoices, p("help")):
     """
     Depending on file type different uploads will have different relevant
     status tuples.
     """
 
-    _symmetric_builtins_ = [s('name', case_fold=True)]
+    _symmetric_builtins_ = [s("name", case_fold=True)]
 
     UNPUBLISHED = (
         1,
-        _('Unpublished File'),
-        _('The file is pending moderation before it will be made public.')
+        _("Unpublished File"),
+        _("The file is pending moderation before it will be made public."),
     )
 
     PUBLISHED = (
         2,
-        _('Published File'),
+        _("Published File"),
         _(
-            'The file is published and is publicly available as an attachment '
-            'to the site.'
-        )
+            "The file is published and is publicly available as an attachment "
+            "to the site."
+        ),
     )
 
-    INVALID = (
-        3,
-        _('Invalid Site Log'),
-        _('The file did not pass validation.')
-    )
+    INVALID = (3, _("Invalid Site Log"), _("The file did not pass validation."))
 
     WARNINGS = (
         4,
-        _('Warnings Site Log'),
-        _('The file is valid but has some warnings.')
+        _("Warnings Site Log"),
+        _("The file is valid but has some warnings."),
     )
 
-    VALID = (
-        5,
-        _('Valid Site Log'),
-        _('The file is valid.')
-    )
+    VALID = (5, _("Valid Site Log"), _("The file is valid."))
 
     @classmethod
     def status_by_filetype(cls, filetype):
@@ -56,12 +49,13 @@ class SiteFileUploadStatus(IntegerChoices, p('help')):
 
     @property
     def css(self):
-        return f'slm-upload-{self.label.lower()}'
+        return f"slm-upload-{self.label.lower()}"
 
     @property
     def color(self):
         from django.conf import settings
-        return getattr(settings, 'SLM_FILE_COLORS', {}).get(self, None)
+
+        return getattr(settings, "SLM_FILE_COLORS", {}).get(self, None)
 
     def __str__(self):
         return str(self.label)

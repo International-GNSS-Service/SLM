@@ -1,21 +1,17 @@
-from typing import List, Union
-from slm.parsing import Error, BaseParser, BaseParameter, BaseSection
-from slm.defines import GeodesyMLVersion
-from lxml import etree
 from threading import Lock
+from typing import List, Union
+
+from lxml import etree
+
+from slm.defines import GeodesyMLVersion
+from slm.parsing import BaseParameter, BaseParser, BaseSection, Error
 
 
 class Section(BaseSection):
-
     tree: etree.XML
 
     def __init__(
-            self,
-            tree,
-            parser,
-            section_number,
-            subsection_number=None,
-            order=None
+        self, tree, parser, section_number, subsection_number=None, order=None
     ):
         self.tree = tree
         super().__init__(
@@ -23,12 +19,11 @@ class Section(BaseSection):
             section_number=section_number,
             subsection_number=subsection_number,
             order=order,
-            parser=parser
+            parser=parser,
         )
 
 
 class Parameter(BaseParameter):
-
     elements: etree.XML
 
     def __init__(self, elements, parser, section):
@@ -38,9 +33,9 @@ class Parameter(BaseParameter):
             name=elements[0].tag,
             values=[elem.text for elem in elements],
             parser=parser,
-            section=section
+            section=section,
         )
-        self.line_end=elements[-1].sourceline - 1
+        self.line_end = elements[-1].sourceline - 1
 
 
 class SiteLogParser(BaseParser):
@@ -53,11 +48,7 @@ class SiteLogParser(BaseParser):
     xsd: GeodesyMLVersion
     doc: etree.XML
 
-    def __init__(
-            self,
-            site_log: Union[str, List[str]],
-            site_name: str = None
-    ) -> None:
+    def __init__(self, site_log: Union[str, List[str]], site_name: str = None) -> None:
         """
 
         :param site_log:
@@ -65,49 +56,31 @@ class SiteLogParser(BaseParser):
         """
         super().__init__(site_log=site_log, site_name=site_name)
         try:
-            self.doc = etree.fromstring(
-                '\n'.join(self.lines).encode()
-            )
+            self.doc = etree.fromstring("\n".join(self.lines).encode())
 
             try:
                 self.xsd = GeodesyMLVersion(
-                    self.doc.nsmap.get(
-                        self.doc.prefix,
-                        GeodesyMLVersion.latest()
-                    )
+                    self.doc.nsmap.get(self.doc.prefix, GeodesyMLVersion.latest())
                 )
 
                 # Unclear if schema.validate is thread safe. Serialize access
                 # to it to be safe.
                 with self.lock:
-
                     result = self.xsd.schema.validate(self.doc)
 
                     if not result:
                         for error in self.xsd.schema.error_log:
-                            self.add_finding(
-                                Error(
-                                    error.line-1,
-                                    self,
-                                    error.message
-                                )
-                            )
+                            self.add_finding(Error(error.line - 1, self, error.message))
 
             except ValueError:
                 self.add_finding(
                     Error(
-                        self.doc.sourceline-1,
+                        self.doc.sourceline - 1,
                         self,
-                        f'Unsupported schema: '
-                        f'{self.doc.nsmap.get(self.doc.prefix)}'
+                        f"Unsupported schema: "
+                        f"{self.doc.nsmap.get(self.doc.prefix)}",
                     )
                 )
 
         except etree.ParseError as pe:
-            self.add_finding(
-                Error(
-                    pe.position[0]-1,
-                    self,
-                    str(pe)
-                )
-            )
+            self.add_finding(Error(pe.position[0] - 1, self, str(pe)))

@@ -4,23 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('slm', '0003_remove_logentry_slm_logentr_site_lo_7a2af7_idx_and_more'),
+        ("slm", "0003_remove_logentry_slm_logentr_site_lo_7a2af7_idx_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='logentry',
-            name='timestamp',
+            model_name="logentry",
+            name="timestamp",
             field=models.DateTimeField(blank=True, db_index=True),
         ),
         migrations.AlterUniqueTogether(
-            name='logentry',
-            unique_together={('site', 'type', 'timestamp')},
+            name="logentry",
+            unique_together={("site", "type", "timestamp")},
         ),
         migrations.RemoveField(
-            model_name='logentry',
-            name='epoch',
+            model_name="logentry",
+            name="epoch",
         ),
     ]

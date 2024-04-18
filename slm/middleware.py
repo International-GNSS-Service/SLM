@@ -1,6 +1,7 @@
-from django.utils.timezone import now
-from slm.utils import set_protocol
 from django.conf import settings
+from django.utils.timezone import now
+
+from slm.utils import set_protocol
 
 
 class SetLastVisitMiddleware:
@@ -17,9 +18,8 @@ class SetLastVisitMiddleware:
         set_protocol(request)
         if request.user.is_authenticated:
             # if this is the first login - check if we should enable emails
-            if (
-                request.user.last_activity is None and
-                getattr(settings, 'SLM_EMAILS_REQUIRE_LOGIN', True)
+            if request.user.last_activity is None and getattr(
+                settings, "SLM_EMAILS_REQUIRE_LOGIN", True
             ):
                 request.user.silence_alerts = False
             request.user.last_activity = now()

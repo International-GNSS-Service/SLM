@@ -1,4 +1,5 @@
-""" Signal handlers that cleanup filesystem artifacts """
+"""Signal handlers that cleanup filesystem artifacts"""
+
 import os
 from pathlib import Path
 
@@ -6,12 +7,8 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from slm.models import (
-    ArchivedSiteLog,
-    SiteFileUpload,
-    GeodesyMLInvalid,
-    SiteFile
-)
+
+from slm.models import ArchivedSiteLog, GeodesyMLInvalid, SiteFile, SiteFileUpload
 
 
 def cleanup(file_path):
@@ -39,6 +36,6 @@ def cleanup(file_path):
 def file_deleted(sender, instance, using, **kwargs):
     if os.path.exists(instance.file.path):
         transaction.on_commit(lambda: cleanup(instance.file.path))
-    if hasattr(instance, 'thumbnail') and instance.thumbnail:
+    if hasattr(instance, "thumbnail") and instance.thumbnail:
         if os.path.exists(instance.thumbnail.path):
             transaction.on_commit(lambda: cleanup(instance.thumbnail.path))

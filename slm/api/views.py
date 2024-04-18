@@ -1,88 +1,85 @@
+from datetime import datetime
+
+from django.db.models import Q
 from django.http import FileResponse
+from django.utils.translation import gettext as _
 from django_filters import filters
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
-from rest_framework import mixins, viewsets, renderers
-from slm.models import ArchivedSiteLog, ArchiveIndex
+from rest_framework import mixins, renderers, viewsets
+
+from slm.api.filter import InitialValueFilterSet, SLMDateTimeFilter
 from slm.defines import SiteLogFormat
-from slm.api.filter import SLMDateTimeFilter, InitialValueFilterSet
-from datetime import datetime
-from django.utils.translation import gettext as _
+from slm.models import ArchivedSiteLog, ArchiveIndex
 
 
 class LegacyRenderer(renderers.BaseRenderer):
     """
     Renderer which serializes to legacy format.
     """
+
     media_type = SiteLogFormat.LEGACY.mimetype
     format = SiteLogFormat.LEGACY
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        return b''
+        return b""
 
 
 class GeodesyMLRenderer(renderers.BaseRenderer):
     """
     Renderer which serializes to GeodesyML format.
     """
+
     media_type = SiteLogFormat.GEODESY_ML.mimetype
     format = SiteLogFormat.GEODESY_ML
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        return b''
+        return b""
 
 
 class JSONRenderer(renderers.BaseRenderer):
     """
     Renderer which serializes to GeodesyML format.
     """
+
     media_type = SiteLogFormat.JSON.mimetype
     format = SiteLogFormat.JSON
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        return b''
+        return b""
 
 
-class BaseSiteLogDownloadViewSet(
-    mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet
-):
+class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     renderer_classes = [LegacyRenderer, GeodesyMLRenderer]
 
     site = None
 
-    lookup_field = 'site__name'
-    lookup_url_kwarg = 'site'
+    lookup_field = "site__name"
+    lookup_url_kwarg = "site"
 
     queryset = ArchiveIndex.objects.all()
 
     class ArchiveIndexFilter(InitialValueFilterSet):
-
         epoch = SLMDateTimeFilter(
-            method='at_epoch',
+            method="at_epoch",
             initial=lambda: datetime.now(),
-            help_text=_(
-                'Get the log that was active at this given date or datetime.'
-            )
+            help_text=_("Get the log that was active at this given date or datetime."),
         )
 
         name_len = filters.NumberFilter(
-            method='noop',
+            method="noop",
             help_text=_(
-                'The number of characters to include in the filename from the '
-                'start of the 9 character site name.'
-            )
+                "The number of characters to include in the filename from the "
+                "start of the 9 character site name."
+            ),
         )
 
         lower_case = filters.BooleanFilter(
-            method='noop',
-            help_text=_('If true filename will be lowercase.')
+            method="noop", help_text=_("If true filename will be lowercase.")
         )
 
         def at_epoch(self, queryset, name, value):
             return queryset.filter(
-                Q(begin__lte=value) &
-                (Q(end__isnull=True) | Q(end__gt=value))
+                Q(begin__lte=value) & (Q(end__isnull=True) | Q(end__gt=value))
             )
 
         def noop(self, queryset, _1, _2):
@@ -90,7 +87,7 @@ class BaseSiteLogDownloadViewSet(
 
         class Meta:
             model = ArchiveIndex
-            fields = ['name_len', 'epoch', 'lower_case']
+            fields = ["name_len", "epoch", "lower_case"]
 
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ArchiveIndexFilter
@@ -115,13 +112,12 @@ class BaseSiteLogDownloadViewSet(
         index = self.get_object()
         return FileResponse(
             ArchivedSiteLog.objects.from_index(
-                index=index,
-                log_format=request.accepted_renderer.format
+                index=index, log_format=request.accepted_renderer.format
             ).file,
             filename=index.site.get_filename(
                 log_format=request.accepted_renderer.format,
                 epoch=index.begin,
-                name_len=request.GET.get('name_len', 9),
-                lower_case=request.GET.get('lower_case', False)
-            )
+                name_len=request.GET.get("name_len", 9),
+                lower_case=request.GET.get("lower_case", False),
+            ),
         )

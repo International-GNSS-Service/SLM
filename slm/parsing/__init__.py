@@ -1,17 +1,13 @@
-from typing import Dict, Optional, List, Union, Tuple
 from datetime import date, datetime
-from slm.models import (
-    Antenna,
-    Radome,
-    Receiver,
-    SatelliteSystem
-)
+from typing import Dict, List, Optional, Tuple, Union
+
 from dateutil.parser import parse as parse_date
+
+from slm.models.equipment import Antenna, Radome, Receiver, SatelliteSystem
 from slm.utils import dddmmssss_to_decimal
 
-
-SPECIAL_CHARACTERS = '().,-_[]{}<>+%'
-NUMERIC_CHARACTERS = {'.', '+', '-'}
+SPECIAL_CHARACTERS = "().,-_[]{}<>+%"
+NUMERIC_CHARACTERS = {".", "+", "-"}
 
 
 class _Ignored:
@@ -24,8 +20,8 @@ def normalize(name):
     mismatches. We remove all special characters and spaces and then
     upper case the name.
     """
-    for char in SPECIAL_CHARACTERS + ' \t':
-        name = name.replace(char, '')
+    for char in SPECIAL_CHARACTERS + " \t":
+        name = name.replace(char, "")
     return name.upper().strip()
 
 
@@ -35,13 +31,7 @@ class Finding:
     """
 
     def __init__(
-            self,
-            lineno,
-            parser,
-            message,
-            section=None,
-            parameter=None,
-            line=None
+        self, lineno, parser, message, section=None, parameter=None, line=None
     ):
         self.lineno = lineno
         self.parser = parser
@@ -51,9 +41,11 @@ class Finding:
         self.line = line
 
     def __str__(self):
-        return f'({self.lineno+1: 4}) {self.parser.lines[self.lineno]}' \
-               f'{" " * (80-len(self.parser.lines[self.lineno]))}' \
-               f'[{self.level.upper()}]: {self.message}'
+        return (
+            f"({self.lineno+1: 4}) {self.parser.lines[self.lineno]}"
+            f'{" " * (80-len(self.parser.lines[self.lineno]))}'
+            f"[{self.level.upper()}]: {self.message}"
+        )
 
     @property
     def level(self):
@@ -61,23 +53,19 @@ class Finding:
 
 
 class Ignored(Finding):
-
-    level = 'I'
+    level = "I"
 
 
 class Error(Finding):
-
-    level = 'E'
+    level = "E"
 
 
 class Warn(Finding):
-
-    level = 'W'
+    level = "W"
 
 
 class BaseParameter:
-
-    name = ''
+    name = ""
     parser = None
     section = None
     line_no = None
@@ -100,7 +88,7 @@ class BaseParameter:
 
     @property
     def lines(self):
-        return self.parser.lines[self.line_no:self.line_end]
+        return self.parser.lines[self.line_no : self.line_end]
 
     def __init__(self, line_no, name, values, parser, section):
         self.line_no = line_no
@@ -116,7 +104,7 @@ class BaseParameter:
 
     @property
     def value(self):
-        return '\n'.join(self.values)
+        return "\n".join(self.values)
 
     @property
     def normalized_name(self):
@@ -130,18 +118,17 @@ class BaseParameter:
 
     def __str__(self):
         if self.is_placeholder:
-            return f'{self.name} [PLACEHOLDER]: {self.value}'
-        return f'{self.name}: {self.value}'
+            return f"{self.name} [PLACEHOLDER]: {self.value}"
+        return f"{self.name}: {self.value}"
 
 
 class BaseSection:
-
     line_no = None
     line_end = None
     section_number = None
     subsection_number = None
     order = None
-    header = ''
+    header = ""
 
     parameters = None
     example = False
@@ -156,9 +143,11 @@ class BaseSection:
         self._param_binding_ = self._param_binding_ or {}
         return self._param_binding_.get(
             name,
-            [self.parameters[normalize(name)]]
-            if normalize(name) in self.parameters
-            else []
+            (
+                [self.parameters[normalize(name)]]
+                if normalize(name) in self.parameters
+                else []
+            ),
         )
 
     def bind(self, name, parameter, value):
@@ -184,9 +173,7 @@ class BaseSection:
                 del self._param_binding_[collated]
 
     @property
-    def binding(self) -> Optional[
-        Dict[str, Union[str, int, float, date, datetime]]
-    ]:
+    def binding(self) -> Optional[Dict[str, Union[str, int, float, date, datetime]]]:
         return self._binding_
 
     @property
@@ -197,14 +184,7 @@ class BaseSection:
             return self.subsection_number
         return None
 
-    def __init__(
-            self,
-            line_no,
-            section_number,
-            subsection_number,
-            order,
-            parser
-    ):
+    def __init__(self, line_no, section_number, subsection_number, order, parser):
         self.parameters = {}
         self.line_no = line_no
         self.line_end = line_no
@@ -213,21 +193,18 @@ class BaseSection:
         self.order = order
         self.parser = parser
 
-        if (
-            isinstance(self.subsection_number, str) and
-            self.subsection_number.isdigit()
-        ):
+        if isinstance(self.subsection_number, str) and self.subsection_number.isdigit():
             self.subsection_number = int(self.subsection_number)
 
         if isinstance(self.order, str) and self.order.isdigit():
             self.order = int(self.order)
 
     def __str__(self):
-        section_str = f'{self.index_string} {self.header}\n'
+        section_str = f"{self.index_string} {self.header}\n"
         if self.example:
-            section_str = f'{self.index_string} {self.header} (EXAMPLE)\n'
+            section_str = f"{self.index_string} {self.header} (EXAMPLE)\n"
         for name, param in self.parameters.items():
-            section_str += f'\t{param}\n'
+            section_str += f"\t{param}\n"
         return section_str
 
     @property
@@ -243,13 +220,13 @@ class BaseSection:
 
     @property
     def index_string(self):
-        index = f'{self.section_number}'
+        index = f"{self.section_number}"
         if self.subsection_number or self.example:
-            index += f'.'
+            index += "."
             if self.subsection_number:
                 index += str(self.subsection_number)
             else:
-                index += 'x'
+                index += "x"
             if self.subsection_number and (self.order or self.example):
                 index += f'.{self.order if self.order else "x"}'
         return index
@@ -270,8 +247,8 @@ class BaseSection:
                 Error(
                     parameter.line_no,
                     self.parser,
-                    f'Duplicate parameter: {parameter.name}',
-                    section=self
+                    f"Duplicate parameter: {parameter.name}",
+                    section=self,
                 )
             )
         else:
@@ -297,10 +274,7 @@ class BaseParser:
     Sections indexed by section number tuple 
     (section_number, subsection_number, order)
     """
-    sections: Dict[
-        Tuple[int, Optional[int], Optional[int]],
-        BaseSection
-    ]
+    sections: Dict[Tuple[int, Optional[int], Optional[int]], BaseSection]
 
     @property
     def findings(self) -> Dict[int, Finding]:
@@ -320,29 +294,29 @@ class BaseParser:
 
     @property
     def context(self):
-        return {
-            'site': self.site_name,
-            'findings': self.findings_context
-        }
+        return {"site": self.site_name, "findings": self.findings_context}
 
     @property
     def ignored(self):
         return {
-            lineno: finding for lineno, finding in self._findings_.items()
+            lineno: finding
+            for lineno, finding in self._findings_.items()
             if isinstance(finding, Ignored)
         }
 
     @property
     def errors(self):
         return {
-            lineno: finding for lineno, finding in self._findings_.items()
+            lineno: finding
+            for lineno, finding in self._findings_.items()
             if isinstance(finding, Error)
         }
 
     @property
     def warnings(self):
         return {
-            lineno: finding for lineno, finding in self._findings_.items()
+            lineno: finding
+            for lineno, finding in self._findings_.items()
             if isinstance(finding, Warn)
         }
 
@@ -365,32 +339,25 @@ class BaseParser:
         return section
 
     def duplicate_section_error(self, duplicate_section):
-        for lineno in range(
-                duplicate_section.line_no,
-                duplicate_section.line_end
-        ):
+        for lineno in range(duplicate_section.line_no, duplicate_section.line_end):
             self.add_finding(
                 Error(
                     lineno,
                     self,
-                    f'Duplicate section {duplicate_section.index_string}',
-                    section=duplicate_section
+                    f"Duplicate section {duplicate_section.index_string}",
+                    section=duplicate_section,
                 )
             )
 
     def add_finding(self, finding):
         if not isinstance(finding, Finding):
             raise ValueError(
-                f'add_finding() expected a {Finding.__class__.__name__} '
-                f'object, was given: {finding.__class__.__name__}.'
+                f"add_finding() expected a {Finding.__class__.__name__} "
+                f"object, was given: {finding.__class__.__name__}."
             )
         self._findings_[finding.lineno] = finding
 
-    def __init__(
-            self,
-            site_log: Union[str, List[str]],
-            site_name: str = None
-    ) -> None:
+    def __init__(self, site_log: Union[str, List[str]], site_name: str = None) -> None:
         """
         :param site_log: The entire site log contents as a string or as a list
             of lines
@@ -400,13 +367,13 @@ class BaseParser:
         self.sections = {}
         self.site_name = site_name.upper() if site_name else site_name
         if isinstance(site_log, str):
-            self.lines = site_log.split('\n')
+            self.lines = site_log.split("\n")
         elif isinstance(site_log, list):
             self.lines = site_log
         else:
             raise ValueError(
-                f'Expected site_log input to be string or list of lines, '
-                f'given: {type(site_log)}.'
+                f"Expected site_log input to be string or list of lines, "
+                f"given: {type(site_log)}."
             )
 
         self._findings_ = {}
@@ -420,12 +387,9 @@ def to_antenna(value):
     try:
         return Antenna.objects.get(model__iexact=antenna).model
     except Antenna.DoesNotExist:
-        antennas = '\n'.join(
-            [ant.model for ant in Antenna.objects.all()]
-        )
+        antennas = "\n".join([ant.model for ant in Antenna.objects.all()])
         raise ValueError(
-            f"Unexpected antenna model {antenna}. Must be one of "
-            f"\n{antennas}"
+            f"Unexpected antenna model {antenna}. Must be one of " f"\n{antennas}"
         )
 
 
@@ -434,12 +398,9 @@ def to_radome(value):
     try:
         return Radome.objects.get(model__iexact=radome).model
     except Radome.DoesNotExist:
-        radomes = '\n'.join(
-            [rad.model for rad in Radome.objects.all()]
-        )
+        radomes = "\n".join([rad.model for rad in Radome.objects.all()])
         raise ValueError(
-            f"Unexpected radome model {radome}. Must be one of "
-            f"\n{radomes}"
+            f"Unexpected radome model {radome}. Must be one of " f"\n{radomes}"
         )
 
 
@@ -448,28 +409,23 @@ def to_receiver(value):
     try:
         return Receiver.objects.get(model__iexact=receiver).model
     except Receiver.DoesNotExist:
-        receivers = '\n'.join(
-            [rec.model for rec in Receiver.objects.all()]
-        )
+        receivers = "\n".join([rec.model for rec in Receiver.objects.all()])
         raise ValueError(
-            f"Unexpected receiver model {receiver}. Must be one of "
-            f"\n{receivers}"
+            f"Unexpected receiver model {receiver}. Must be one of " f"\n{receivers}"
         )
 
 
 def to_satellites(value):
     sats = []
     bad_sats = set()
-    for sat in [sat for sat in value.split('+') if sat]:
+    for sat in [sat for sat in value.split("+") if sat]:
         try:
             sats.append(SatelliteSystem.objects.get(name__iexact=sat).pk)
         except SatelliteSystem.DoesNotExist:
             bad_sats.add(sat)
     if bad_sats:
-        bad_sats = '  \n'.join(bad_sats)
-        good_sats = '  \n'.join(
-            [sat.name for sat in SatelliteSystem.objects.all()]
-        )
+        bad_sats = "  \n".join(bad_sats)
+        good_sats = "  \n".join([sat.name for sat in SatelliteSystem.objects.all()])
         raise ValueError(
             f"Expected constellation list delineated by '+' (e.g. GPS+GLO). "
             f"Unexpected values encountered: \n{bad_sats}\n\nMust be one of "
@@ -487,8 +443,7 @@ def to_enum(enum_cls, value, strict=False, blank=None):
                 return value.strip()
             valid_list = "  \n".join(en.label for en in enum_cls)
             raise ValueError(
-                f'Invalid value {value} must be one of:\n'
-                f'{valid_list}'
+                f"Invalid value {value} must be one of:\n" f"{valid_list}"
             ) from ve
     return blank
 
@@ -503,21 +458,19 @@ def to_numeric(numeric_type, value):
         return None
 
     # just try to chop the numbers off the front of the string
-    digits = ''
+    digits = ""
     for char in value:
         if char.isdigit() or char in NUMERIC_CHARACTERS:
             digits += char
 
     if not digits:
-        raise ValueError(
-            f'Could not convert {value} to type {numeric_type.__name__}.'
-        )
+        raise ValueError(f"Could not convert {value} to type {numeric_type.__name__}.")
 
     # there should not be any other numbers in the string!
-    for char in value.replace(digits, ''):
+    for char in value.replace(digits, ""):
         if char.isdigit():
             raise ValueError(
-                f'Could not convert {value} to type {numeric_type.__name__}.'
+                f"Could not convert {value} to type {numeric_type.__name__}."
             )
 
     return numeric_type(digits)
@@ -542,35 +495,34 @@ def to_int(value):
 
 def to_date(value):
     if value.strip():
-        if 'CCYY-MM-DD' in value.upper():
+        if "CCYY-MM-DD" in value.upper():
             return _Ignored
         try:
             return parse_date(value).date()
-        except:
+        except Exception as exc:
             raise ValueError(
-                f'Unable to parse {value} into a date. Expected '
-                f'format: CCYY-MM-DD'
-            )
+                f"Unable to parse {value} into a date. Expected " f"format: CCYY-MM-DD"
+            ) from exc
     return None
 
 
 def to_datetime(value):
     if value.strip():
-        if 'CCYY-MM-DD' in value.upper():
+        if "CCYY-MM-DD" in value.upper():
             return _Ignored
         try:
             return parse_date(value)
-        except:
+        except Exception as exc:
             raise ValueError(
-                f'Unable to parse {value} into a date and time. Expected '
-                f'format: CCYY-MM-DDThh:mmZ'
-            )
+                f"Unable to parse {value} into a date and time. Expected "
+                f"format: CCYY-MM-DDThh:mmZ"
+            ) from exc
     return None
 
 
 def to_str(value):
     if value is None:
-        return ''
+        return ""
     return value
 
 

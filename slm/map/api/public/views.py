@@ -1,15 +1,12 @@
 from rest_framework import pagination
 from rest_framework.response import Response
+
 from slm.api.public import views as slm_views
+from slm.map.api.public.serializers import StationListSerializer, StationMapSerializer
 from slm.models import Site
-from slm.map.api.public.serializers import (
-    StationListSerializer,
-    StationMapSerializer,
-)
 
 
 class StationListViewSet(slm_views.StationListViewSet):
-
     serializer_class = StationListSerializer
 
     # could add fields here to extend ordering options
@@ -35,23 +32,20 @@ class FeatureCollectionPagination(pagination.BasePagination):
         return None
 
     def get_results(self, data):
-        return data['features']
+        return data["features"]
 
     def get_paginated_response(self, data):
-        return Response({
-            'type': 'FeatureCollection',
-            'features':  data
-        })
+        return Response({"type": "FeatureCollection", "features": data})
 
     def get_paginated_response_schema(self, schema):
         return {
-            'type': 'object',
-            'properties': {
-                'type': {
-                    'type': 'string',
-                    'example': 'FeatureCollection',
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "example": "FeatureCollection",
                 },
-                'features': schema,
+                "features": schema,
             },
         }
 
@@ -65,6 +59,6 @@ class StationMapViewSet(StationListViewSet):
     pagination_class = FeatureCollectionPagination
 
     def get_queryset(self):
-        return Site.objects.with_location_fields(
-            'llh'
-        ).public().availability().distinct()
+        return (
+            Site.objects.with_location_fields("llh").public().availability().distinct()
+        )

@@ -4,25 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('slm', '0015_alter_siteantenna_options_and_more'),
+        ("slm", "0015_alter_siteantenna_options_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='antenna',
-            name='description',
-            field=models.TextField(blank=True, default='', help_text='The equipment characteristics.', max_length=500),
+            model_name="antenna",
+            name="description",
+            field=models.TextField(
+                blank=True,
+                default="",
+                help_text="The equipment characteristics.",
+                max_length=500,
+            ),
         ),
         migrations.AlterField(
-            model_name='radome',
-            name='description',
-            field=models.TextField(blank=True, default='', help_text='The equipment characteristics.', max_length=500),
+            model_name="radome",
+            name="description",
+            field=models.TextField(
+                blank=True,
+                default="",
+                help_text="The equipment characteristics.",
+                max_length=500,
+            ),
         ),
         migrations.AlterField(
-            model_name='receiver',
-            name='description',
-            field=models.TextField(blank=True, default='', help_text='The equipment characteristics.', max_length=500),
+            model_name="receiver",
+            name="description",
+            field=models.TextField(
+                blank=True,
+                default="",
+                help_text="The equipment characteristics.",
+                max_length=500,
+            ),
         ),
     ]

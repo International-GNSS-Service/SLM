@@ -1,32 +1,31 @@
+from datetime import date, datetime
 from pathlib import Path
 from unittest import TestCase
 
 from slm.parsing.xsd.binding import SiteLogBinder
 from slm.parsing.xsd.parser import Error, SiteLogParser
-from datetime import datetime, date
 
-
-file_dir = Path(__file__).parent / 'files'
+file_dir = Path(__file__).parent / "files"
 
 
 class TestXSDParser(TestCase):
 
-    ex_04 = ''
-    ex_05 = ''
+    ex_04 = ""
+    ex_05 = ""
 
     expected = {
         (0, None, None): {
-            'date_prepared': date(year=2016, month=10, day=27),
-            'prepared_by': 'Amy Peterson',
-            'report_type': 'UPDATE'
+            "date_prepared": date(year=2016, month=10, day=27),
+            "prepared_by": "Amy Peterson",
+            "report_type": "UPDATE",
         }
     }
 
     def setUp(self):
-        with open(file_dir / '0.4/20na_20161027.xml', 'r') as log:
+        with open(file_dir / "0.4/20na_20161027.xml", "r") as log:
             self.ex_04 = log.read()
 
-        with open(file_dir / '0.5/20na_20161027.xml', 'r') as log:
+        with open(file_dir / "0.5/20na_20161027.xml", "r") as log:
             self.ex_05 = log.read()
 
     def test_0_4(self):
@@ -34,8 +33,7 @@ class TestXSDParser(TestCase):
         SiteLogBinder(parsed)
         for section_heading, section in parsed.sections.items():
             self.assertDictEqual(
-                self.expected.get(section_heading, {}),
-                section.binding
+                self.expected.get(section_heading, {}), section.binding
             )
 
     def test_0_5(self):
@@ -43,8 +41,7 @@ class TestXSDParser(TestCase):
         SiteLogBinder(parsed)
         for section_heading, section in parsed.sections.items():
             self.assertDictEqual(
-                self.expected.get(section_heading, {}),
-                section.binding
+                self.expected.get(section_heading, {}), section.binding
             )
 
     """

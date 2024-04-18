@@ -1,16 +1,42 @@
-from django.conf import settings
-from django.core import serializers
-from django.contrib.gis.geos import Point
 import json
-from PIL import Image, ExifTags
+from datetime import date, datetime, timedelta
+from math import atan2, cos, sin, sqrt
+
 import numpy as np
-from math import sqrt, atan2, cos, sin
-from datetime import datetime, date, timedelta
 from dateutil import parser as date_parser
+from django.conf import settings
+from django.contrib.gis.geos import Point
+from django.core import serializers
+from django.core.exceptions import ImproperlyConfigured
+from PIL import ExifTags, Image
 
-
-PROTOCOL = getattr(settings, 'SLM_HTTP_PROTOCOL', None)
+PROTOCOL = getattr(settings, "SLM_HTTP_PROTOCOL", None)
 GPS_EPOCH = date(year=1980, month=1, day=6)
+
+_site_record = None
+
+
+def get_record_model():
+    global _site_record
+    if _site_record is not None:
+        return _site_record
+
+    from django.apps import apps
+
+    slm_site_record = getattr(settings, "SLM_SITE_RECORD", "slm.DefaultSiteRecord")
+    try:
+        app_label, model_class = slm_site_record.split(".")
+        _site_record = apps.get_app_config(app_label).get(model_class.lower(), None)
+        if not _site_record:
+            raise ImproperlyConfigured(
+                f'SLM_SITE_RECORD "{slm_site_record}" is not a registered ' f"model"
+            )
+        return _site_record
+    except ValueError as ve:
+        raise ImproperlyConfigured(
+            f"SLM_SITE_RECORD value {slm_site_record} is invalid, must be "
+            f'"app_label.ModelClass"'
+        ) from ve
 
 
 def dddmmssss_to_decimal(dddmmssss):
@@ -21,7 +47,7 @@ def dddmmssss_to_decimal(dddmmssss):
         degrees = int(dddmmssss)
         minutes = (dddmmssss - degrees) * 100
         seconds = float((minutes - int(minutes)) * 100)
-        return degrees + int(minutes)/60 + seconds/3600
+        return degrees + int(minutes) / 60 + seconds / 3600
     return None
 
 
@@ -32,7 +58,7 @@ def decimal_to_dddmmssss(dec):
         degrees = int(dec)
         minutes = (dec - degrees) * 60
         seconds = float(minutes - int(minutes)) * 60
-        return degrees*10000 + int(minutes)*100 + seconds
+        return degrees * 10000 + int(minutes) * 100 + seconds
     return None
 
 
@@ -55,22 +81,18 @@ def dddmmss_ss_parts(dec):
 def set_protocol(request):
     global PROTOCOL
     if not PROTOCOL:
-        PROTOCOL = 'https' if request.is_secure() else 'http'
+        PROTOCOL = "https" if request.is_secure() else "http"
 
 
 def get_protocol():
     global PROTOCOL
     if PROTOCOL is not None:
         return PROTOCOL
-    return (
-        'https'
-        if getattr(settings, 'SECURE_SSL_REDIRECT', False) else
-        'http'
-    )
+    return "https" if getattr(settings, "SECURE_SSL_REDIRECT", False) else "http"
 
 
 def build_absolute_url(path, request=None):
-    if path.startswith('mailto:'):
+    if path.startswith("mailto:"):
         return path
     if request:
         return request.build_absolute_uri(path)
@@ -79,21 +101,21 @@ def build_absolute_url(path, request=None):
 
 def get_url():
     from django.contrib.sites.models import Site
-    return f'{get_protocol()}://{Site.objects.get_current().domain}'
+
+    return f"{get_protocol()}://{Site.objects.get_current().domain}"
 
 
 def from_email():
     from django.contrib.sites.models import Site
+
     return getattr(
-        settings,
-        'SERVER_EMAIL',
-        f'noreply@{Site.objects.get_current().domain}'
+        settings, "SERVER_EMAIL", f"noreply@{Site.objects.get_current().domain}"
     )
 
 
 def clear_caches():
-    from slm.models import Site
-    from slm.models import User
+    from slm.models import Site, User
+
     User.is_moderator.cache_clear()
     Site.is_moderator.cache_clear()
 
@@ -102,7 +124,7 @@ def to_bool(bool_str):
     if bool_str is None:
         return None
     if isinstance(bool_str, str):
-        return not bool_str.lower() in ['0', 'no', 'false']
+        return bool_str.lower() not in ["0", "no", "false"]
     return bool(bool_str)
 
 
@@ -112,10 +134,10 @@ def to_snake_case(string):
         snake = string[0].lower()
         new = False
         for char in string[1:]:
-            if char == ' ':
+            if char == " ":
                 new = True
             elif char.isupper() or new:
-                snake += f'_{char.lower()}'
+                snake += f"_{char.lower()}"
                 new = False
             elif char.isalnum():
                 snake += char
@@ -124,8 +146,8 @@ def to_snake_case(string):
 
 def date_to_str(date_obj):
     if date_obj:
-        return f'{date_obj.year}-{date_obj.month:02}-{date_obj.day:02}'
-    return ''
+        return f"{date_obj.year}-{date_obj.month:02}-{date_obj.day:02}"
+    return ""
 
 
 def gps_week(date_obj=datetime.now()):
@@ -145,9 +167,7 @@ def gps_week(date_obj=datetime.now()):
     delta = date_obj - GPS_EPOCH
     if delta.days >= 0:
         return delta.days // 7, delta.days % 7
-    raise ValueError(
-        f'{date_obj} is earlier than the GPS epoch {GPS_EPOCH}.'
-    )
+    raise ValueError(f"{date_obj} is earlier than the GPS epoch {GPS_EPOCH}.")
 
 
 def date_from_gps_week(gps_week, day_of_week=0):
@@ -158,7 +178,7 @@ def date_from_gps_week(gps_week, day_of_week=0):
     :return: Date object
     """
     # todo move this to igs_tools
-    return GPS_EPOCH + timedelta(days=gps_week*7 + day_of_week)
+    return GPS_EPOCH + timedelta(days=gps_week * 7 + day_of_week)
 
 
 def day_of_year(date_obj=datetime.now()):
@@ -177,74 +197,36 @@ def day_of_year(date_obj=datetime.now()):
 
 
 def http_accepts(accepted_types, mimetype):
-    if '*/*' in accepted_types:
+    if "*/*" in accepted_types:
         return True
     if mimetype in accepted_types:
         return True
-    typ, sub_type = mimetype.split('/')
-    if f'{typ}/*' in accepted_types:
+    typ, sub_type = mimetype.split("/")
+    if f"{typ}/*" in accepted_types:
         return True
-    if f'*/{sub_type}' in accepted_types:
+    if f"*/{sub_type}" in accepted_types:
         return True
     return False
 
 
-class _Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
-        '''
-        elif len(args) > 0:
-            config = { }
-            for idx, arg in enumerate(args):
-                config[idx] = arg
-            raise ValueError( self.__class__.__name__ + ' can only be initialized with a configuration once!', config )
-        '''
-
-        return cls._instances[cls]
-
-    @classmethod
-    def is_instantiated(cls, typ):
-        return typ in cls._instances
-
-    @classmethod
-    def destroy(cls, typ):
-        if typ in cls._instances:
-            del cls._instances[typ]
-
-
-class Singleton(_Singleton('SingletonMeta', (object,), {})):
-    pass
-
-
 class SectionEncoder(json.JSONEncoder):
-
     def default(self, obj):
-        from django.db.models import Model, Manager, QuerySet
-        from slm.models import SiteSection, Equipment, Manufacturer
-        if hasattr(obj, 'isoformat'):
+        from django.db.models import Manager, Model, QuerySet
+
+        from slm.models import Equipment, Manufacturer, SiteSection
+
+        if hasattr(obj, "isoformat"):
             return obj.isoformat()
         if isinstance(obj, SiteSection):
-            return {
-                field: getattr(obj, field) for field in obj.site_log_fields()
-            }
+            return {field: getattr(obj, field) for field in obj.site_log_fields()}
         if isinstance(obj, Equipment):
-            return {
-                field: getattr(obj, field) for field in [
-                    'model',
-                    'manufacturer'
-                ]
-            }
+            return {field: getattr(obj, field) for field in ["model", "manufacturer"]}
         if isinstance(obj, Manufacturer):
-            return {
-                field: getattr(obj, field) for field in ['name']
-            }
+            return {field: getattr(obj, field) for field in ["name"]}
 
         if isinstance(obj, Model):
             # catch-all
-            return json.loads(serializers.serialize('json', [obj]))[0]
+            return json.loads(serializers.serialize("json", [obj]))[0]
 
         if isinstance(obj, (Manager, QuerySet)):
             return [related for related in obj.all()]
@@ -256,11 +238,12 @@ class SectionEncoder(json.JSONEncoder):
 
 def get_exif_tags(file_path):
     # not all images have exif, (e.g. gifs)
-    image_exif = getattr(Image.open(file_path), '_getexif', lambda: None)()
+    image_exif = getattr(Image.open(file_path), "_getexif", lambda: None)()
     if image_exif:
         exif = {
-            ExifTags.TAGS[k]: v for k, v in image_exif.items()
-            if k in ExifTags.TAGS and type(v) is not bytes
+            ExifTags.TAGS[k]: v
+            for k, v in image_exif.items()
+            if k in ExifTags.TAGS and not isinstance(v, bytes)
         }
         return exif
     return {}
@@ -273,20 +256,19 @@ def xyz2llh(xyz):
 
     xyz_array = np.array(xyz) / a_e
     (x, y, z) = (xyz_array[0], xyz_array[1], xyz_array[2])
-    e2 = f_e *(2 - f_e)
+    e2 = f_e * (2 - f_e)
     z2 = z**2
     p2 = x**2 + y**2
     p = sqrt(p2)
     r = sqrt(p2 + z2)
     mu = atan2(z * (1 - f_e + e2 / r), p)
     phi = atan2(
-        z * (1 - f_e) + e2 * (sin(mu))**3,
-        (1 - f_e) * (p - e2 * (cos(mu))**3)
+        z * (1 - f_e) + e2 * (sin(mu)) ** 3, (1 - f_e) * (p - e2 * (cos(mu)) ** 3)
     )
     lat = phi * radians2degree
     lon = atan2(y, x) * radians2degree
     if lon < 0:
         lon = lon + 360
-    h = a_e * (p * cos(phi) + z * sin(phi) - sqrt(1 - e2 * (sin(phi))**2))
+    h = a_e * (p * cos(phi) + z * sin(phi) - sqrt(1 - e2 * (sin(phi)) ** 2))
 
     return lat, lon, h

@@ -1,17 +1,16 @@
+from functools import lru_cache
+
+from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import Permission, PermissionsMixin
 from django.contrib.auth.models import UserManager as DjangoUserManager
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext as _
-from django.conf import settings
-from django.contrib.auth.models import Permission
-from functools import lru_cache
 
 
 class UserManager(DjangoUserManager):
-
     use_in_migrations = False
 
     def _create_user(self, email, password, **extra_fields):
@@ -28,112 +27,97 @@ class UserManager(DjangoUserManager):
         return user
 
     def create_user(self, email=None, password=None, **extra_fields):
-        extra_fields.pop('is_staff', None)
-        extra_fields.setdefault('is_superuser', False)
-        extra_fields.setdefault('silence_alerts', getattr(
-            settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
-        ))
+        extra_fields.pop("is_staff", None)
+        extra_fields.setdefault("is_superuser", False)
+        extra_fields.setdefault(
+            "silence_alerts", getattr(settings, "SLM_EMAILS_REQUIRE_LOGIN", True)
+        )
         return self._create_user(email, password, **extra_fields)
 
     def create_superuser(self, email=None, password=None, **extra_fields):
-        extra_fields.pop('is_staff', None)
-        extra_fields['is_superuser'] = True
-        extra_fields.setdefault('silence_alerts', getattr(
-            settings, 'SLM_EMAILS_REQUIRE_LOGIN', True
-        ))
+        extra_fields.pop("is_staff", None)
+        extra_fields["is_superuser"] = True
+        extra_fields.setdefault(
+            "silence_alerts", getattr(settings, "SLM_EMAILS_REQUIRE_LOGIN", True)
+        )
         return self._create_user(email, password, **extra_fields)
 
 
 class UserQueryset(models.QuerySet):
-
     def emails_ok(self, html=None):
         if html is None:
             return self.filter(silence_alerts=False)
         return self.filter(silence_alerts=False, html_emails=html)
 
     def annotate_moderator_status(self):
-        perm = Permission.objects.get_by_natural_key(
-            'moderate_sites', 'slm', 'user'
-        )
+        perm = Permission.objects.get_by_natural_key("moderate_sites", "slm", "user")
         return self.annotate(
             moderator=models.Case(
                 models.When(
-                    Q(groups__permissions=perm) |
-                    Q(user_permissions=perm) |
-                    Q(is_superuser=True),
-                    then=True
+                    Q(groups__permissions=perm)
+                    | Q(user_permissions=perm)
+                    | Q(is_superuser=True),
+                    then=True,
                 ),
                 default=False,
-                output_field=models.BooleanField()
+                output_field=models.BooleanField(),
             )
         )
 
 
 class UserProfile(models.Model):
-
     # contact
     phone1 = models.CharField(
         max_length=20,
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Primary Phone Number'),
-        #help_text=_('Your primary contact phone number.')
+        verbose_name=_("Primary Phone Number"),
+        # help_text=_('Your primary contact phone number.')
     )
     phone2 = models.CharField(
         max_length=20,
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Secondary Phone Number')
+        verbose_name=_("Secondary Phone Number"),
     )
     address1 = models.CharField(
         max_length=255,
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Address Line 1')
+        verbose_name=_("Address Line 1"),
     )
     address2 = models.CharField(
         max_length=255,
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Address Line 2')
+        verbose_name=_("Address Line 2"),
     )
     address3 = models.CharField(
         max_length=255,
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Address Line 3')
+        verbose_name=_("Address Line 3"),
     )
     city = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        default=None,
-        verbose_name=_('City')
+        max_length=100, blank=True, null=True, default=None, verbose_name=_("City")
     )
     state_province = models.CharField(
         max_length=100,
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('State/Province')
+        verbose_name=_("State/Province"),
     )
     country = models.CharField(
-        max_length=75,
-        blank=True,
-        null=True,
-        default=None,
-        verbose_name=_('Country')
+        max_length=75, blank=True, null=True, default=None, verbose_name=_("Country")
     )
     postal_code = models.CharField(
-        max_length=10,
-        blank=True,
-        null=True,
-        verbose_name=_('Postal Code')
+        max_length=10, blank=True, null=True, verbose_name=_("Postal Code")
     )
 
     # affiliation
@@ -142,16 +126,16 @@ class UserProfile(models.Model):
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Registration Agency')
+        verbose_name=_("Registration Agency"),
     )
 
     user = models.OneToOneField(
-        'slm.User',
+        "slm.User",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         default=None,
-        related_name='profile'
+        related_name="profile",
     )
 
     def __str__(self):
@@ -164,33 +148,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     easier to add stuff to a custom user model later rather than having to
     migrate off of django's native user model
     """
+
     email = models.EmailField(
-        verbose_name=_('Email Address'),
-        max_length=255,
-        null=True,
-        unique=True
+        verbose_name=_("Email Address"), max_length=255, null=True, unique=True
     )
 
     first_name = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        default='',
-        verbose_name=_('First Name')
+        max_length=255, null=True, blank=True, default="", verbose_name=_("First Name")
     )
     last_name = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        default='',
-        verbose_name=_('Last Name')
+        max_length=255, null=True, blank=True, default="", verbose_name=_("Last Name")
     )
 
     is_superuser = models.BooleanField(
-        _('Superuser'),
+        _("Superuser"),
         default=False,
-        help_text=_('Designates whether the user has unlimited access.'),
-        db_index=True
+        help_text=_("Designates whether the user has unlimited access."),
+        db_index=True,
     )
 
     @property
@@ -205,39 +179,37 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_superuser
 
     is_active = models.BooleanField(
-        _('Active'),
+        _("Active"),
         default=True,
         help_text=_(
-            'Designates whether this user should be treated as active. '
-            'Unselect this instead of deleting accounts.'
+            "Designates whether this user should be treated as active. "
+            "Unselect this instead of deleting accounts."
         ),
-        db_index=True
+        db_index=True,
     )
 
     date_joined = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_('Date Joined'),
-        db_index=True
+        auto_now_add=True, verbose_name=_("Date Joined"), db_index=True
     )
 
     last_activity = models.DateTimeField(
-        verbose_name=_('Last Activity'),
+        verbose_name=_("Last Activity"),
         editable=False,
         null=True,
         blank=True,
         default=None,
-        db_index=True
+        db_index=True,
     )
 
     agencies = models.ManyToManyField(
-        'slm.Agency',
+        "slm.Agency",
         blank=True,
-        verbose_name=_('Agency'),
+        verbose_name=_("Agency"),
         help_text=_(
             "The agencies this user is a member of. At bare minimum this user "
             "will have edit permissions for all these agency sites."
         ),
-        related_name='users'
+        related_name="users",
     )
 
     silence_alerts = models.BooleanField(
@@ -245,25 +217,25 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=True,
         blank=True,
         help_text=_(
-            'If set to true this user will not be sent any alert emails by '
-            'the system. Note: this does not apply to account related emails '
-            '(i.e. password resets).'
+            "If set to true this user will not be sent any alert emails by "
+            "the system. Note: this does not apply to account related emails "
+            "(i.e. password resets)."
         ),
-        db_index=True
+        db_index=True,
     )
 
     # preferences
     html_emails = models.BooleanField(
         default=True,
         blank=True,
-        verbose_name=_('HTML Emails'),
-        help_text=_('Receive HTML in email communications.'),
-        db_index=True
+        verbose_name=_("HTML Emails"),
+        help_text=_("Receive HTML in email communications."),
+        db_index=True,
     )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        if not hasattr(self, 'profile') or not self.profile:
+        if not hasattr(self, "profile") or not self.profile:
             UserProfile.objects.create(user=self)
 
     @lru_cache(maxsize=32)
@@ -272,15 +244,15 @@ class User(AbstractBaseUser, PermissionsMixin):
             return True
         if station:
             return station.is_moderator(self)
-        elif hasattr(self, 'moderator'):
+        elif hasattr(self, "moderator"):
             return self.moderator
 
         moderate_perm = Permission.objects.get_by_natural_key(
-            'moderate_sites', 'slm', 'user'
+            "moderate_sites", "slm", "user"
         )
         return (
-            self.user_permissions.filter(pk=moderate_perm.pk).exists() or
-            self.groups.filter(permissions__in=[moderate_perm]).exists()
+            self.user_permissions.filter(pk=moderate_perm.pk).exists()
+            or self.groups.filter(permissions__in=[moderate_perm]).exists()
         )
 
     def can_propose_site(self, agencies=None):
@@ -295,17 +267,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         if self.is_superuser:
             return True
-        if not self.has_perm('slm.propose_sites'):
+        if not self.has_perm("slm.propose_sites"):
             return False
         if agencies is None:
             from slm.models import Agency
+
             agencies = Agency.objects.none()
         return not agencies.filter(~Q(pk__in=self.agencies.all())).exists()
 
     @property
     def name(self):
         if self.first_name or self.last_name:
-            return f'{self.first_name} {self.last_name}'
+            return f"{self.first_name} {self.last_name}"
         elif self.email:
             return self.email
         return None
@@ -316,22 +289,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         if self.name:
-            return f'{self.email} | {self.name}'
+            return f"{self.email} | {self.name}"
         return self.email
 
     objects = UserManager.from_queryset(UserQueryset)()
 
-    EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'email'
+    EMAIL_FIELD = "email"
+    USERNAME_FIELD = "email"
 
     class Meta:
         permissions = [
-            (
-                'propose_sites',
-                _('May propose new sites for their agencies.')
-            ),
-            (
-                'moderate_sites',
-                _('May publish logs for sites in their agencies.')
-            )
+            ("propose_sites", _("May propose new sites for their agencies.")),
+            ("moderate_sites", _("May publish logs for sites in their agencies.")),
         ]

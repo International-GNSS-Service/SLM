@@ -4,167 +4,241 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('slm', '0018_afix_deleted'),
+        ("slm", "0018_afix_deleted"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='siteantenna',
-            options={'ordering': ('-edited',)},
+            name="siteantenna",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitecollocation',
-            options={'ordering': ('-edited',)},
+            name="sitecollocation",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitefrequencystandard',
-            options={'ordering': ('-edited',)},
+            name="sitefrequencystandard",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitehumiditysensor',
-            options={'ordering': ('-edited',)},
+            name="sitehumiditysensor",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitelocalepisodiceffects',
-            options={'ordering': ('-edited',)},
+            name="sitelocalepisodiceffects",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitemultipathsources',
-            options={'ordering': ('-edited',)},
+            name="sitemultipathsources",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitepressuresensor',
-            options={'ordering': ('-edited',)},
+            name="sitepressuresensor",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='siteradiointerferences',
-            options={'ordering': ('-edited',)},
+            name="siteradiointerferences",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitereceiver',
-            options={'ordering': ('-edited',)},
+            name="sitereceiver",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitesignalobstructions',
-            options={'ordering': ('-edited',)},
+            name="sitesignalobstructions",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitetemperaturesensor',
-            options={'ordering': ('-edited',)},
+            name="sitetemperaturesensor",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterModelOptions(
-            name='sitewatervaporradiometer',
-            options={'ordering': ('-edited',)},
+            name="sitewatervaporradiometer",
+            options={"ordering": ("-edited",)},
         ),
         migrations.AlterField(
-            model_name='siteantenna',
-            name='custom_graphic',
-            field=models.TextField(blank=True, default='', help_text='A custom graphic may be provided, otherwise the default graphic for the antenna type will be used.', verbose_name='Antenna Graphic'),
+            model_name="siteantenna",
+            name="custom_graphic",
+            field=models.TextField(
+                blank=True,
+                default="",
+                help_text="A custom graphic may be provided, otherwise the default graphic for the antenna type will be used.",
+                verbose_name="Antenna Graphic",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='siteantenna',
-            unique_together={('site', 'published', 'subsection')},
+            name="siteantenna",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitecollocation',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitecollocation",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitefrequencystandard',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitefrequencystandard",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitehumiditysensor',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitehumiditysensor",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitelocalepisodiceffects',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitelocalepisodiceffects",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitemultipathsources',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitemultipathsources",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitepressuresensor',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitepressuresensor",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='siteradiointerferences',
-            unique_together={('site', 'published', 'subsection')},
+            name="siteradiointerferences",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitereceiver',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitereceiver",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitesignalobstructions',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitesignalobstructions",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitetemperaturesensor',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitetemperaturesensor",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AlterUniqueTogether(
-            name='sitewatervaporradiometer',
-            unique_together={('site', 'published', 'subsection')},
+            name="sitewatervaporradiometer",
+            unique_together={("site", "published", "subsection")},
         ),
         migrations.AddConstraint(
-            model_name='siteantenna',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_siteantenna_no_mod_deleted'),
+            model_name="siteantenna",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_siteantenna_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitecollocation',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitecollocation_no_mod_deleted'),
+            model_name="sitecollocation",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitecollocation_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitefrequencystandard',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitefrequencystandard_no_mod_deleted'),
+            model_name="sitefrequencystandard",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitefrequencystandard_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitehumiditysensor',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitehumiditysensor_no_mod_deleted'),
+            model_name="sitehumiditysensor",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitehumiditysensor_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitelocalepisodiceffects',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitelocalepisodiceffects_no_mod_deleted'),
+            model_name="sitelocalepisodiceffects",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitelocalepisodiceffects_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitemultipathsources',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitemultipathsources_no_mod_deleted'),
+            model_name="sitemultipathsources",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitemultipathsources_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='siteotherinstrumentation',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_siteotherinstrumentation_no_mod_deleted'),
+            model_name="siteotherinstrumentation",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_siteotherinstrumentation_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitepressuresensor',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitepressuresensor_no_mod_deleted'),
+            model_name="sitepressuresensor",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitepressuresensor_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='siteradiointerferences',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_siteradiointerferences_no_mod_deleted'),
+            model_name="siteradiointerferences",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_siteradiointerferences_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitereceiver',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitereceiver_no_mod_deleted'),
+            model_name="sitereceiver",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitereceiver_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitesignalobstructions',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitesignalobstructions_no_mod_deleted'),
+            model_name="sitesignalobstructions",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitesignalobstructions_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitesurveyedlocalties',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitesurveyedlocalties_no_mod_deleted'),
+            model_name="sitesurveyedlocalties",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitesurveyedlocalties_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitetemperaturesensor',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitetemperaturesensor_no_mod_deleted'),
+            model_name="sitetemperaturesensor",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitetemperaturesensor_no_mod_deleted",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='sitewatervaporradiometer',
-            constraint=models.CheckConstraint(check=models.Q(('published', False), ('is_deleted', True), _negated=True), name='slm_sitewatervaporradiometer_no_mod_deleted'),
+            model_name="sitewatervaporradiometer",
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    ("published", False), ("is_deleted", True), _negated=True
+                ),
+                name="slm_sitewatervaporradiometer_no_mod_deleted",
+            ),
         ),
     ]

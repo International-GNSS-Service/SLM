@@ -1,80 +1,75 @@
 import json
+from collections import namedtuple
+from datetime import datetime, timezone
+from enum import Enum
+from functools import lru_cache
 
 from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.contrib.auth.models import Permission
+from django.contrib.gis.db import models as gis_models
+from django.core.exceptions import FieldDoesNotExist, ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.db import models, transaction
 from django.db.models import (
+    CheckConstraint,
+    ExpressionWrapper,
     F,
     Max,
-    Q,
-    Value,
     OuterRef,
+    Q,
     Subquery,
-    ExpressionWrapper,
-    DEFERRED
+    Value,
 )
-from django.db.models.functions import Greatest, TruncDate
-from django.contrib.gis.db import models as gis_models
-from django.contrib.auth.models import Permission
-from enum import Enum
 from django.db.models.functions import (
     Cast,
+    Coalesce,
     Concat,
     ExtractDay,
     ExtractMonth,
     ExtractYear,
-    Now,
+    Greatest,
     Lower,
     LPad,
+    Now,
     Substr,
 )
-from django.utils.functional import cached_property
+from django.utils.functional import cached_property, classproperty
+from django.utils.timezone import now
+from django.utils.translation import gettext as _
 from django_enum import EnumField
-from django.core.exceptions import FieldDoesNotExist
+
+from slm import signals as slm_signals
 from slm.defines import (
-    RinexVersion,
-    SiteLogFormat,
+    AlertLevel,
     AntennaReferencePoint,
     Aspiration,
     CollocationStatus,
     FractureSpacing,
     FrequencyStandardType,
     ISOCountry,
+    RinexVersion,
+    SiteLogFormat,
     SiteLogStatus,
     TectonicPlates,
-    AlertLevel
 )
-from slm.models import compat
 from slm.utils import date_to_str
-from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
-from django.utils.timezone import now
-from django.utils.translation import gettext as _
-from slm import signals as slm_signals
 from slm.validators import get_validators
-from functools import lru_cache
-from django.utils.functional import classproperty
-from django.db import transaction
-from django.db.models import CheckConstraint
-from django.db.models.functions import Coalesce
-from collections import namedtuple
-from datetime import datetime, timezone
 
 
 def utc_now_date():
-    return datetime.utcnow().date()
+    return datetime.now(timezone.utc).date()
 
 
 # a named tuple used as meta information to dynamically determine what the
 # section models are and how to access them from the Site model
 Section = namedtuple(
-    'Section',
+    "Section",
     [
-        'field',      # the name of the section for database queries
-        'accessor',   # the section manager attribute on Site instances
-        'cls',      # the section's python model class
-        'subsection'  # true if this is a subsection (i.e. multiple instances)
-    ]
+        "field",  # the name of the section for database queries
+        "accessor",  # the section manager attribute on Site instances
+        "cls",  # the section's python model class
+        "subsection",  # true if this is a subsection (i.e. multiple instances)
+    ],
 )
 
 
@@ -83,25 +78,21 @@ class SubquerySum(Subquery):
     The django ORM is still really clunky around aggregating subqueries.
     https://code.djangoproject.com/ticket/28296
     """
+
     output_field = models.IntegerField()
 
     def __init__(self, *args, **kwargs):
         self.template = (
-            f'(SELECT SUM({kwargs.pop("field")}) '
-            f'FROM (%(subquery)s) _sum)'
+            f'(SELECT SUM({kwargs.pop("field")}) ' f"FROM (%(subquery)s) _sum)"
         )
         super().__init__(*args, **kwargs)
 
 
 def bool_condition(*args, **kwargs):
-    return ExpressionWrapper(
-        Q(*args, **kwargs),
-        output_field=models.BooleanField()
-    )
+    return ExpressionWrapper(Q(*args, **kwargs), output_field=models.BooleanField())
 
 
 class DefaultToStrEncoder(json.JSONEncoder):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -123,24 +114,21 @@ class SiteQuerySet(models.QuerySet):
 
     def annotate_files(self, log_format=SiteLogFormat.LEGACY, prefix=None):
         from slm.models import ArchivedSiteLog
+
         latest_archive = ArchivedSiteLog.objects.filter(
-            Q(site=OuterRef('pk')) & Q(log_format=log_format)
-        ).order_by('-index__begin')
-        size_field = f'{log_format.ext if prefix is None else prefix}_size'
-        file_field = f'{log_format.ext if prefix is None else prefix}_file'
+            Q(site=OuterRef("pk")) & Q(log_format=log_format)
+        ).order_by("-index__begin")
+        size_field = f"{log_format.ext if prefix is None else prefix}_size"
+        file_field = f"{log_format.ext if prefix is None else prefix}_file"
         return self.annotate(
             **{
-                size_field: Subquery(latest_archive.values('size')[:1]),
-                file_field: Subquery(latest_archive.values('pk')[:1])
+                size_field: Subquery(latest_archive.values("size")[:1]),
+                file_field: Subquery(latest_archive.values("pk")[:1]),
             }
         )
 
     def annotate_filenames(
-            self,
-            published=True,
-            name_len=None,
-            field_name='filename',
-            lower_case=False
+        self, published=True, name_len=None, field_name="filename", lower_case=False
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -155,38 +143,34 @@ class SiteQuerySet(models.QuerySet):
         :param lower_case: Filenames will be lowercase if true.
         :return: A queryset with the filename annotation added.
         """
-        name_str = F('name')
+        name_str = F("name")
         if name_len:
-            name_str = Cast(
-                Substr('name', 1, length=name_len), models.CharField()
-            )
+            name_str = Cast(Substr("name", 1, length=name_len), models.CharField())
 
         if lower_case:
             name_str = Lower(name_str)
 
-        form = SiteForm.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=published)
-        )
+        form = SiteForm.objects.filter(Q(site=OuterRef("pk")) & Q(published=published))
 
         return self.annotate(
-            date_prepared=Subquery(form.values('date_prepared')[:1]),
+            date_prepared=Subquery(form.values("date_prepared")[:1]),
             **{
                 field_name: Concat(
                     name_str,
-                    Value('_'),
-                    Cast(ExtractYear('date_prepared'), models.CharField()),
+                    Value("_"),
+                    Cast(ExtractYear("date_prepared"), models.CharField()),
                     LPad(
-                        Cast(ExtractMonth('date_prepared'), models.CharField()),
+                        Cast(ExtractMonth("date_prepared"), models.CharField()),
                         2,
-                        fill_text=Value('0')
+                        fill_text=Value("0"),
                     ),
                     LPad(
-                        Cast(ExtractDay('date_prepared'), models.CharField()),
+                        Cast(ExtractDay("date_prepared"), models.CharField()),
                         2,
-                        fill_text=Value('0')
-                    )
+                        fill_text=Value("0"),
+                    ),
                 )
-            }
+            },
         )
 
     def active(self):
@@ -197,11 +181,13 @@ class SiteQuerySet(models.QuerySet):
         :return:
         """
         return self.public().filter(
-            ~Q(status__in=[
-                SiteLogStatus.PROPOSED,
-                SiteLogStatus.FORMER,
-                SiteLogStatus.SUSPENDED
-            ])
+            ~Q(
+                status__in=[
+                    SiteLogStatus.PROPOSED,
+                    SiteLogStatus.FORMER,
+                    SiteLogStatus.SUSPENDED,
+                ]
+            )
         )
 
     def public(self):
@@ -211,9 +197,11 @@ class SiteQuerySet(models.QuerySet):
         :return:
         """
         from slm.models import Agency, Network
+
         public = Site.objects.filter(
-            Q(agencies__in=Agency.objects.filter(public=True)) &
-            Q(networks__in=Network.objects.filter(public=True)) &
+            Q(agencies__in=Agency.objects.filter(public=True))
+            & Q(networks__in=Network.objects.filter(public=True))
+            &
             # must have been published at least once! - even if in proposed
             # state
             Q(last_publish__isnull=False)
@@ -252,10 +240,10 @@ class SiteQuerySet(models.QuerySet):
         """
         from slm.models import Alert
 
-        max_alert = Alert.objects.for_site(OuterRef('pk')).order_by('-level')
-        self.annotate(
-            _max_alert=Subquery(max_alert.values('level')[:1])
-        ).update(max_alert=F('_max_alert'))
+        max_alert = Alert.objects.for_site(OuterRef("pk")).order_by("-level")
+        self.annotate(_max_alert=Subquery(max_alert.values("level")[:1])).update(
+            max_alert=F("_max_alert")
+        )
         return self
 
     def needs_publish(self):
@@ -263,13 +251,10 @@ class SiteQuerySet(models.QuerySet):
         mod_q = Q()
         for idx, section in enumerate(self.model.sections()):
             mod_qry = section.cls.objects._current(
-                published=False,
-                filter=Q(site=OuterRef('pk'))
+                published=False, filter=Q(site=OuterRef("pk"))
             )
-            qry = qry.annotate(
-                **{f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])}
-            )
-            mod_q |= Q(**{f'_mod{idx}__isnull': False})
+            qry = qry.annotate(**{f"_mod{idx}": Subquery(mod_qry.values("pk")[:1])})
+            mod_q |= Q(**{f"_mod{idx}__isnull": False})
         return qry.filter(mod_q).exists()
 
     def synchronize_denormalized_state(self, skip_form_updates=False):
@@ -288,44 +273,39 @@ class SiteQuerySet(models.QuerySet):
         qry = self
         mod_q = Q()
         for idx, section in enumerate(self.model.sections()):
-
             # head query - exclude deleted
             head_qry = section.cls.objects._current(
-                published=None,
-                include_deleted=False,
-                filter=Q(site=OuterRef('pk'))
+                published=None, include_deleted=False, filter=Q(site=OuterRef("pk"))
             )
 
             mod_qry = section.cls.objects._current(
-                published=False,
-                filter=Q(site=OuterRef('pk'))
+                published=False, filter=Q(site=OuterRef("pk"))
             )
             qry = qry.annotate(
                 **{
-                    f'_num_flags{idx}': SubquerySum(
-                        head_qry.values('num_flags'),
-                        field='num_flags'
+                    f"_num_flags{idx}": SubquerySum(
+                        head_qry.values("num_flags"), field="num_flags"
                     ),
-                    f'_mod{idx}': Subquery(mod_qry.values('pk')[:1])
+                    f"_mod{idx}": Subquery(mod_qry.values("pk")[:1]),
                 }
             )
-            mod_q |= Q(**{f'_mod{idx}__isnull': False})
+            mod_q |= Q(**{f"_mod{idx}__isnull": False})
             if aggregate is None:
-                aggregate = Coalesce(f'_num_flags{idx}', 0)
+                aggregate = Coalesce(f"_num_flags{idx}", 0)
             else:
-                aggregate += Coalesce(f'_num_flags{idx}', 0)
+                aggregate += Coalesce(f"_num_flags{idx}", 0)
 
         qry.order_by().annotate(_num_flags=aggregate).update(
-            num_flags=Coalesce('_num_flags', 0)
+            num_flags=Coalesce("_num_flags", 0)
         )
 
-        update_q = Q(
-            status__in=[SiteLogStatus.UPDATED, SiteLogStatus.PUBLISHED]
-        )
+        update_q = Q(status__in=[SiteLogStatus.UPDATED, SiteLogStatus.PUBLISHED])
         qry.filter(update_q).filter(mod_q).update(status=SiteLogStatus.UPDATED)
-        qry.filter(update_q).filter(~mod_q).update(
-            status=SiteLogStatus.PUBLISHED
-        )
+
+        qry.filter(
+            update_q
+            | Q(status=SiteLogStatus.PROPOSED)  # allow PROPOSED to be PUBLISHED
+        ).filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
 
         # this is the longest operation - there might be a way to squash it
         # into a single query
@@ -337,29 +317,29 @@ class SiteQuerySet(models.QuerySet):
                     form.published = False
                     form.save()
 
-                form.modified_section = ', '.join(site.modified_sections)
+                form.modified_section = ", ".join(site.modified_sections)
+                if site.last_publish and form.report_type == "NEW":
+                    form.report_type = "UPDATE"
                 form.save()
 
     def availability(self):
         from slm.models import DataAvailability
-        last_data_avail = DataAvailability.objects.filter(
-            site=OuterRef('pk')
-        ).order_by('-last')
+
+        last_data_avail = DataAvailability.objects.filter(site=OuterRef("pk")).order_by(
+            "-last"
+        )
         return self.annotate(
-            last_data_time=Subquery(last_data_avail.values('last')[:1]),
-            last_data=Now() - F('last_data_time'),
+            last_data_time=Subquery(last_data_avail.values("last")[:1]),
+            last_data=Now() - F("last_data_time"),
             last_rinex2=Subquery(
-                last_data_avail.filter(
-                    RinexVersion(2).major_q()
-                ).values('last')[:1]),
+                last_data_avail.filter(RinexVersion(2).major_q()).values("last")[:1]
+            ),
             last_rinex3=Subquery(
-                last_data_avail.filter(
-                    RinexVersion(3).major_q()
-                ).values('last')[:1]),
+                last_data_avail.filter(RinexVersion(3).major_q()).values("last")[:1]
+            ),
             last_rinex4=Subquery(
-                last_data_avail.filter(
-                    RinexVersion(4).major_q()
-                ).values('last')[:1])
+                last_data_avail.filter(RinexVersion(4).major_q()).values("last")[:1]
+            ),
         )
 
     def with_last_info(self):
@@ -370,14 +350,15 @@ class SiteQuerySet(models.QuerySet):
         :return: queryset with a last_info field added
         """
         from slm.models import DataAvailability
-        last_data_avail = DataAvailability.objects.filter(
-            site=OuterRef('pk')
-        ).order_by(F('last').desc(nulls_last=True))
+
+        last_data_avail = DataAvailability.objects.filter(site=OuterRef("pk")).order_by(
+            F("last").desc(nulls_last=True)
+        )
         return self.annotate(
             last_info=Greatest(
-                 Subquery(last_data_avail.values('last')[:1]),
-                 'last_publish',
-                 output_field=models.DateTimeField()
+                Subquery(last_data_avail.values("last")[:1]),
+                "last_publish",
+                output_field=models.DateTimeField(),
             )
         )
 
@@ -395,23 +376,22 @@ class SiteQuerySet(models.QuerySet):
         """
         fields = {
             **{field: field for field in fields},
-            **{field: name for field, name in renamed_fields.items()}
+            **{field: name for field, name in renamed_fields.items()},
         }
 
         fields = fields or {
-            **{field: field for field in [
-                'iers_domes_number',
-                'cdp_number'
-            ]}
+            **{field: field for field in ["iers_domes_number", "cdp_number"]}
         }
 
         identification = SiteIdentification.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
+            Q(site=OuterRef("pk")) & Q(published=True)
         )
-        return self.annotate(**{
-            name: Subquery(identification.values(field)[:1])
-            for field, name in fields.items()
-        })
+        return self.annotate(
+            **{
+                name: Subquery(identification.values(field)[:1])
+                for field, name in fields.items()
+            }
+        )
 
     def with_location_fields(self, *fields, **renamed_fields):
         """
@@ -428,33 +408,24 @@ class SiteQuerySet(models.QuerySet):
         """
         fields = {
             **{field: field for field in fields},
-            **{field: name for field, name in renamed_fields.items()}
+            **{field: name for field, name in renamed_fields.items()},
         }
 
         fields = fields or {
-            **{field: field for field in [
-                'xyz',
-                'llh',
-                'city',
-                'state',
-                'country'
-            ]}
+            **{field: field for field in ["xyz", "llh", "city", "state", "country"]}
         }
 
         location = SiteLocation.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
+            Q(site=OuterRef("pk")) & Q(published=True)
         )
-        return self.annotate(**{
-            name: Subquery(location.values(field)[:1])
-            for field, name in fields.items()
-        })
+        return self.annotate(
+            **{
+                name: Subquery(location.values(field)[:1])
+                for field, name in fields.items()
+            }
+        )
 
-    def with_receiver_fields(
-            self,
-            *fields,
-            epoch=None,
-            **renamed_fields
-    ):
+    def with_receiver_fields(self, *fields, epoch=None, **renamed_fields):
         """
         Annotate the given receiver fields valid now or at the given epoch
         onto the site objects in this queryset. The field names should be
@@ -480,35 +451,35 @@ class SiteQuerySet(models.QuerySet):
         """
         fields = {
             **{field: field for field in fields},
-            **{field: name for field, name in renamed_fields.items()}
+            **{field: name for field, name in renamed_fields.items()},
         }
 
         fields = fields or {
-            'receiver_type__model': 'receiver',
-            'serial_number': 'receiver_sn',
-            'firmware': 'receiver_firmware'
+            "receiver_type__model": "receiver",
+            "serial_number": "receiver_sn",
+            "firmware": "receiver_firmware",
         }
 
-        epoch_q = Q() if epoch is None else (
-            (Q(installed__lte=epoch) | Q(installed__isnull=True)) &
-            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+        epoch_q = (
+            Q()
+            if epoch is None
+            else (
+                (Q(installed__lte=epoch) | Q(installed__isnull=True))
+                & (Q(removed__gt=epoch) | Q(removed__isnull=True))
+            )
         )
         receiver = SiteReceiver.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True) & epoch_q
-        ).order_by('-installed')
+            Q(site=OuterRef("pk")) & Q(published=True) & epoch_q
+        ).order_by("-installed")
 
-        return self.annotate(**{
-            name: Subquery(receiver.values(field)[:1])
-            for field, name in fields.items()
-        })
+        return self.annotate(
+            **{
+                name: Subquery(receiver.values(field)[:1])
+                for field, name in fields.items()
+            }
+        )
 
-
-    def with_antenna_fields(
-            self,
-            *fields,
-            epoch=None,
-            **renamed_fields
-    ):
+    def with_antenna_fields(self, *fields, epoch=None, **renamed_fields):
         """
         Annotate the given antenna fields valid now or at the given epoch
         onto the site objects in this queryset. The field names should be
@@ -536,48 +507,48 @@ class SiteQuerySet(models.QuerySet):
         :return: The queryset with the annotations made
         """
         from slm.models import AntCal
+
         fields = {
             **{field: field for field in fields},
-            **{field: name for field, name in renamed_fields.items()}
+            **{field: name for field, name in renamed_fields.items()},
         }
 
         fields = fields or {
-            'antenna_type__model': 'antenna',
-            'radome_type__model': 'radome',
-            'antcal': 'antcal'
+            "antenna_type__model": "antenna",
+            "radome_type__model": "radome",
+            "antcal": "antcal",
         }
 
-        epoch_q = Q() if epoch is None else (
-            (Q(installed__lte=epoch) | Q(installed__isnull=True)) &
-            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+        epoch_q = (
+            Q()
+            if epoch is None
+            else (
+                (Q(installed__lte=epoch) | Q(installed__isnull=True))
+                & (Q(removed__gt=epoch) | Q(removed__isnull=True))
+            )
         )
 
         antenna = SiteAntenna.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True) & epoch_q
-        ).order_by(
-            '-installed'
-        )
-        if 'antcal' in fields:
+            Q(site=OuterRef("pk")) & Q(published=True) & epoch_q
+        ).order_by("-installed")
+        if "antcal" in fields:
             antenna = antenna.annotate(
                 antcal=Subquery(
                     AntCal.objects.filter(
-                        Q(antenna=OuterRef('antenna_type')) &
-                        Q(radome=OuterRef('radome_type'))
-                    ).values('method')[:1]
+                        Q(antenna=OuterRef("antenna_type"))
+                        & Q(radome=OuterRef("radome_type"))
+                    ).values("method")[:1]
                 )
             )
 
-        return self.annotate(**{
-            name: Subquery(antenna.values(field)[:1])
-            for field, name in fields.items()
-        })
+        return self.annotate(
+            **{
+                name: Subquery(antenna.values(field)[:1])
+                for field, name in fields.items()
+            }
+        )
 
-    def with_frequency_standard_fields(
-            self,
-            *fields,
-            epoch=None,
-            **renamed_fields
-    ):
+    def with_frequency_standard_fields(self, *fields, epoch=None, **renamed_fields):
         """
         Annotate the given frequency standard fields valid now or at the given
         epoch onto the site objects in this queryset. The field names should be
@@ -595,25 +566,26 @@ class SiteQuerySet(models.QuerySet):
         """
         fields = {
             **{field: field for field in fields},
-            **{field: name for field, name in renamed_fields.items()}
+            **{field: name for field, name in renamed_fields.items()},
         }
 
-        fields = fields or {
-            'standard_type': 'clock'
-        }
+        fields = fields or {"standard_type": "clock"}
 
-        epoch_q = Q() if epoch is None else (
-            (Q(effective_start__lte=epoch) | Q(effective_start__isnull=True)) &
-            (Q(effective_end__gt=epoch) | Q(effective_end__isnull=True))
+        epoch_q = (
+            Q()
+            if epoch is None
+            else (
+                (Q(effective_start__lte=epoch) | Q(effective_start__isnull=True))
+                & (Q(effective_end__gt=epoch) | Q(effective_end__isnull=True))
+            )
         )
         freq = SiteFrequencyStandard.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True) & epoch_q
-        ).order_by('-effective_start')
+            Q(site=OuterRef("pk")) & Q(published=True) & epoch_q
+        ).order_by("-effective_start")
 
-        return self.annotate(**{
-            name: Subquery(freq.values(field)[:1])
-            for field, name in fields.items()
-        })
+        return self.annotate(
+            **{name: Subquery(freq.values(field)[:1]) for field, name in fields.items()}
+        )
 
     def with_info_fields(self, *fields, **renamed_fields):
         """
@@ -629,32 +601,34 @@ class SiteQuerySet(models.QuerySet):
         """
         fields = {
             **{field: field for field in fields},
-            **{field: name for field, name in renamed_fields.items()}
+            **{field: name for field, name in renamed_fields.items()},
         }
 
         fields = fields or {
-            'primary': 'primary_datacenter',
-            'secondary': 'secondary_datacenter',
+            "primary": "primary_datacenter",
+            "secondary": "secondary_datacenter",
         }
 
         more_info = SiteMoreInformation.objects.filter(
-            Q(site=OuterRef('pk')) & Q(published=True)
+            Q(site=OuterRef("pk")) & Q(published=True)
         )
-        return self.annotate(**{
-            name: Subquery(more_info.values(field)[:1])
-            for field, name in fields.items()
-        })
+        return self.annotate(
+            **{
+                name: Subquery(more_info.values(field)[:1])
+                for field, name in fields.items()
+            }
+        )
 
 
 class Site(models.Model):
     """
-     XXXX Site Information Form (site log)
-     International GNSS Service
-     See Instructions at:
-       https://files.igs.org/pub/station/general/sitelog_instr.txt
+    XXXX Site Information Form (site log)
+    International GNSS Service
+    See Instructions at:
+      https://files.igs.org/pub/station/general/sitelog_instr.txt
     """
 
-    #API_RELATED_FIELD = 'name'
+    # API_RELATED_FIELD = 'name'
 
     objects = SiteManager.from_queryset(SiteQuerySet)()
 
@@ -662,33 +636,29 @@ class Site(models.Model):
         max_length=9,
         unique=True,
         help_text=_(
-            'This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 '
-            'filenames Format: (XXXX - existing four character IGS station '
-            'name, M - Monument or marker number (0-9), R - Receiver number '
-            '(0-9), CCC - Three digit ISO 3166-1 country code)'
+            "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
+            "filenames Format: (XXXX - existing four character IGS station "
+            "name, M - Monument or marker number (0-9), R - Receiver number "
+            "(0-9), CCC - Three digit ISO 3166-1 country code)"
         ),
         db_index=True,
-        validators=[RegexValidator(r'[\w]{4}[\d]{2}[\w]{3}')]
+        validators=[RegexValidator(r"[\w]{4}[\d]{2}[\w]{3}")],
     )
 
     # todo can site exist without agency?
-    agencies = models.ManyToManyField('slm.Agency', related_name='sites')
+    agencies = models.ManyToManyField("slm.Agency", related_name="sites")
 
     # dormant is now deduplicated into status field
     status = EnumField(
         SiteLogStatus,
         default=SiteLogStatus.PROPOSED,
         blank=True,
-        help_text=_('The current status of the site.'),
-        db_index=True
+        help_text=_("The current status of the site."),
+        db_index=True,
     )
 
     owner = models.ForeignKey(
-        'slm.User',
-        null=True,
-        default=None,
-        blank=True,
-        on_delete=models.SET_NULL
+        "slm.User", null=True, default=None, blank=True, on_delete=models.SET_NULL
     )
 
     # Denormalized data ###########################
@@ -697,10 +667,8 @@ class Site(models.Model):
     num_flags = models.PositiveSmallIntegerField(
         default=0,
         blank=True,
-        help_text=_(
-            'The number of flags the most recent site log version has.'
-        ),
-        db_index=True
+        help_text=_("The number of flags the most recent site log version has."),
+        db_index=True,
     )
 
     max_alert = EnumField(
@@ -708,10 +676,8 @@ class Site(models.Model):
         default=None,
         blank=True,
         null=True,
-        help_text=_(
-            'The number of flags the most recent site log version has.'
-        ),
-        db_index=True
+        help_text=_("The number of flags the most recent site log version has."),
+        db_index=True,
     )
     ##############################################
 
@@ -724,26 +690,26 @@ class Site(models.Model):
         auto_now_add=True,
         blank=True,
         null=True,
-        help_text=_('The time this site was first registered.'),
-        db_index=True
+        help_text=_("The time this site was first registered."),
+        db_index=True,
     )
 
     join_date = models.DateField(
         blank=True,
         null=True,
-        help_text=_('The date this site was first published.'),
-        db_index=True
+        help_text=_("The date this site was first published."),
+        db_index=True,
     )
 
     # todo, normalize onto log join
     last_user = models.ForeignKey(
-        'slm.User',
+        "slm.User",
         null=True,
         default=None,
         blank=True,
         on_delete=models.SET_NULL,
-        related_name='recent_sites',
-        help_text=_('The last user to make edits to the site log.')
+        related_name="recent_sites",
+        help_text=_("The last user to make edits to the site log."),
     )
     ######################################
 
@@ -751,16 +717,16 @@ class Site(models.Model):
         null=True,
         blank=True,
         default=None,
-        help_text=_('The publish date of the current log file.'),
-        db_index=True
+        help_text=_("The publish date of the current log file."),
+        db_index=True,
     )
 
     last_update = models.DateTimeField(
         null=True,
         blank=True,
         default=None,
-        help_text=_('The time of the most recent update to the site log.'),
-        db_index=True
+        help_text=_("The time of the most recent update to the site log."),
+        db_index=True,
     )
 
     def needs_publish(self):
@@ -776,20 +742,16 @@ class Site(models.Model):
             return True
         return self.moderators.filter(pk=user.pk).exists()
 
-    def get_filename(
-        self,
-        log_format,
-        epoch=None,
-        name_len=9,
-        lower_case=False
-    ):
+    def get_filename(self, log_format, epoch=None, name_len=9, lower_case=False):
         """
         Get the filename (including extension) to be used for the rendered
         site log given the parameters.
 
         :param log_format: The SiteLogFormat of the rendered log
         :param epoch: The date (or datetime) when the site log was valid. If
-            not given the last published date will be used.
+            not given the last published date will be used, then the time of the
+            last_update, and ultimately if the first two are null the created time
+            will be used.
         :param name_len: The number of characters from the site log name to use
             as the prefix. (default: 9 - all of them)
         :param lower_case: True if the filename should be lower case.
@@ -797,22 +759,23 @@ class Site(models.Model):
         :return: The filename including extension.
         """
         if epoch is None:
-            epoch = self.last_publish
+            epoch = self.last_publish or self.last_update or self.created
         name = self.name[:name_len]
         return (
-            f'{name.lower() if lower_case else name.upper()}_'
-            f'{epoch.year}{epoch.month:02}'
-            f'{epoch.day:02}.{log_format.ext}'
+            f"{name.lower() if lower_case else name.upper()}_"
+            f"{epoch.year}{epoch.month:02}"
+            f"{epoch.day:02}.{log_format.ext}"
         )
 
     def refresh_from_db(self, **kwargs):
-        if hasattr(self, '_max_alert'):
+        if hasattr(self, "_max_alert"):
             del self._max_alert
         return super().refresh_from_db(**kwargs)
 
     @classproperty
     def alert_fields(cls):
         from slm.models import Alert
+
         return [
             field.get_accessor_name()
             for field in cls._meta.related_objects
@@ -828,18 +791,18 @@ class Site(models.Model):
         :return: A queryset containing users with moderate permission for the
             site
         """
-        perm = Permission.objects.get_by_natural_key(
-            'moderate_sites', 'slm', 'user'
-        )
-        return get_user_model().objects.filter(
-            Q(is_superuser=True) |
-            (
-                Q(agencies__in=self.agencies.all()) & (
-                    Q(groups__permissions=perm) |
-                    Q(user_permissions=perm)
+        perm = Permission.objects.get_by_natural_key("moderate_sites", "slm", "user")
+        return (
+            get_user_model()
+            .objects.filter(
+                Q(is_superuser=True)
+                | (
+                    Q(agencies__in=self.agencies.all())
+                    & (Q(groups__permissions=perm) | Q(user_permissions=perm))
                 )
             )
-        ).distinct()
+            .distinct()
+        )
 
     @cached_property
     def editors(self):
@@ -856,7 +819,7 @@ class Site(models.Model):
 
     @classmethod
     def sections(cls):
-        if hasattr(cls, 'sections_'):
+        if hasattr(cls, "sections_"):
             return cls.sections_
 
         cls.sections_ = [
@@ -864,11 +827,10 @@ class Site(models.Model):
                 field=section.name,
                 accessor=section.get_accessor_name(),
                 cls=section.related_model,
-                subsection=SiteSubSection in section.related_model.__mro__
-            ) for section in Site._meta.get_fields()
-            if section.related_model and (
-                SiteSection in section.related_model.__mro__
+                subsection=SiteSubSection in section.related_model.__mro__,
             )
+            for section in Site._meta.get_fields()
+            if section.related_model and (SiteSection in section.related_model.__mro__)
         ]
         return cls.sections_
 
@@ -918,7 +880,7 @@ class Site(models.Model):
         # triggered by a section publish
         if status != self.status and self.status == SiteLogStatus.PUBLISHED:
             self.last_publish = timestamp
-            if hasattr(self, 'review_request'):
+            if hasattr(self, "review_request"):
                 self.review_request.delete()
 
         if save:
@@ -937,34 +899,31 @@ class Site(models.Model):
 
     def head(self, epoch=None, include_deleted=False):
         return self._current(
-            epoch=epoch,
-            published=None,
-            include_deleted=include_deleted
+            epoch=epoch, published=None, include_deleted=include_deleted
         )
 
-    def _current(
-            self,
-            epoch=None,
-            published=None,
-            filter=None,
-            include_deleted=False
-    ):
+    def _current(self, epoch=None, published=None, filter=None, include_deleted=False):
         for section in self.sections():
             setattr(
                 self,
                 section.field,
-                getattr(self, section.accessor)._current(
-                    epoch=epoch,
-                    published=published,
-                    filter=filter,
-                    include_deleted=include_deleted
-                ) if section.subsection else
-                getattr(self, section.accessor)._current(
-                    epoch=epoch,
-                    published=published,
-                    filter=filter,
-                    include_deleted=include_deleted
-                ).first()
+                (
+                    getattr(self, section.accessor)._current(
+                        epoch=epoch,
+                        published=published,
+                        filter=filter,
+                        include_deleted=include_deleted,
+                    )
+                    if section.subsection
+                    else getattr(self, section.accessor)
+                    ._current(
+                        epoch=epoch,
+                        published=published,
+                        filter=filter,
+                        include_deleted=include_deleted,
+                    )
+                    .first()
+                ),
             )
 
     @cached_property
@@ -975,16 +934,13 @@ class Site(models.Model):
                 continue
             if section.subsection:
                 idx = 0
-                for subsection in getattr(
-                    self,
-                    section.accessor
-                ).head().sort():
+                for subsection in getattr(self, section.accessor).head().sort():
                     idx += 1
                     if not subsection.published:
-                        dot_index = f'{subsection.section_number()}'
+                        dot_index = f"{subsection.section_number()}"
                         if subsection.subsection_number():
-                            dot_index += f'.{subsection.subsection_number()}'
-                        dot_index += f'.{idx}'
+                            dot_index += f".{subsection.subsection_number()}"
+                        dot_index += f".{idx}"
                         modified_sections.append(dot_index)
             else:
                 modified = getattr(self, section.accessor).head()
@@ -1012,11 +968,7 @@ class Site(models.Model):
 
         form = self.siteform_set.head()
         if form is None:
-            SiteForm.objects.create(
-                site=self,
-                published=False,
-                report_type='NEW'
-            )
+            SiteForm.objects.create(site=self, published=False, report_type="NEW")
         elif form.published:
             form.pk = None
             form.published = False
@@ -1026,40 +978,36 @@ class Site(models.Model):
         for section in self.sections():
             if section.subsection:
                 for subsection in getattr(self, section.accessor).head(
-                        include_deleted=True
+                    include_deleted=True
                 ):
                     sections_published += int(
                         subsection.publish(
                             request=request,
                             silent=True,
                             timestamp=timestamp,
-                            update_site=False
+                            update_site=False,
                         )
                     )
             else:
-                current = getattr(self, section.accessor).head(
-                    include_deleted=True
-                )
+                current = getattr(self, section.accessor).head(include_deleted=True)
                 if current:
                     sections_published += int(
                         current.publish(
                             request=request,
                             silent=True,
                             timestamp=timestamp,
-                            update_site=False
+                            update_site=False,
                         )
                     )
 
         # this might be an initial PUBLISH when we're in PROPOSED or FORMER
         if sections_published or self.status != SiteLogStatus.PUBLISHED:
             self.last_publish = timestamp
-            self.save()
+            # self.save()
             self.update_status(
-                save=True,
-                user=request.user if request else None,
-                timestamp=timestamp
+                save=True, user=request.user if request else None, timestamp=timestamp
             )
-            if hasattr(self, 'review_request'):
+            if hasattr(self, "review_request"):
                 self.review_request.delete()
             if not silent:
                 slm_signals.site_published.send(
@@ -1068,7 +1016,7 @@ class Site(models.Model):
                     user=request.user if request else None,
                     timestamp=timestamp,
                     request=request,
-                    section=None
+                    section=None,
                 )
         return sections_published
 
@@ -1087,33 +1035,35 @@ class Site(models.Model):
         self.published()
         for receiver in self.sitereceiver_set.all():
             equipment.setdefault(receiver.installed.date(), {})
-            equipment[receiver.installed.date()]['receiver'] = receiver
+            equipment[receiver.installed.date()]["receiver"] = receiver
         for antenna in self.siteantenna_set.all():
             equipment.setdefault(antenna.installed.date(), {})
-            equipment[antenna.installed.date()]['antenna'] = antenna
+            equipment[antenna.installed.date()]["antenna"] = antenna
 
         # build the time ordered list of equipment pairings
         time_ordered = []
         dates = sorted(equipment.keys())
         for idx, eq_date in enumerate(dates):
             time_ordered.append(
-                (eq_date, {
-                     'receiver': equipment[eq_date].get(
-                         'receiver',
-                         None if idx == 0
-                         else time_ordered[idx-1][1]['receiver']
-                     ),
-                    'antenna': equipment[eq_date].get(
-                        'antenna',
-                        None if idx == 0
-                        else time_ordered[idx - 1][1]['antenna']
-                    ),
-                 }))
+                (
+                    eq_date,
+                    {
+                        "receiver": equipment[eq_date].get(
+                            "receiver",
+                            None if idx == 0 else time_ordered[idx - 1][1]["receiver"],
+                        ),
+                        "antenna": equipment[eq_date].get(
+                            "antenna",
+                            None if idx == 0 else time_ordered[idx - 1][1]["antenna"],
+                        ),
+                    },
+                )
+            )
 
         # remove any gaps at the front without full equipment
         start = 0
         for idx, eq in enumerate(time_ordered):
-            if eq[1]['receiver'] and eq[1]['antenna']:
+            if eq[1]["receiver"] and eq[1]["antenna"]:
                 break
             start = idx + 1
 
@@ -1129,11 +1079,10 @@ class Site(models.Model):
 
 
 class SiteSectionManager(gis_models.Manager):
-
     is_head = False
 
     def get_queryset(self):
-        return super().get_queryset().select_related('site')
+        return super().get_queryset().select_related("site")
 
     def revert(self):
         return bool(self.get_queryset().filter(published=False).delete()[0])
@@ -1143,29 +1092,19 @@ class SiteSectionManager(gis_models.Manager):
 
     def head(self, epoch=None, include_deleted=False):
         self.is_head = True
-        return self.get_queryset().head(
-            epoch=epoch,
-            include_deleted=include_deleted
-        )
+        return self.get_queryset().head(epoch=epoch, include_deleted=include_deleted)
 
-    def _current(
-            self,
-            epoch=None,
-            published=None,
-            filter=None,
-            include_deleted=False
-    ):
+    def _current(self, epoch=None, published=None, filter=None, include_deleted=False):
         self.is_head = published is None
         return self.get_queryset()._current(
             epoch=epoch,
             published=published,
             filter=filter,
-            include_deleted=include_deleted
+            include_deleted=include_deleted,
         )
 
 
 class SiteSectionQueryset(gis_models.QuerySet):
-
     is_head = False
 
     def editable_by(self, user):
@@ -1184,29 +1123,23 @@ class SiteSectionQueryset(gis_models.QuerySet):
     def head(self, epoch=None, include_deleted=False):
         self.is_head = True
         return self._current(
-            epoch=epoch,
-            published=None,
-            include_deleted=include_deleted
+            epoch=epoch, published=None, include_deleted=include_deleted
         ).first()
 
-    def _current(
-        self,
-        epoch=None,
-        published=None,
-        filter=None,
-        include_deleted=False
-    ):
+    def _current(self, epoch=None, published=None, filter=None, include_deleted=False):
         self.is_head = published is None
         pub_q = filter or Q()
         if published is not None:
             pub_q &= Q(published=published)
-        if epoch and getattr(self.model, 'valid_time', ''):
+        if epoch and getattr(self.model, "valid_time", ""):
             # todo does epoch make sense for non-subsections??
-            ret = self.filter(pub_q).order_by('published').filter(
-                {f'{self.model.valid_time}__lte': epoch}
-            )[0:1]
+            ret = (
+                self.filter(pub_q)
+                .order_by("published")
+                .filter({f"{self.model.valid_time}__lte": epoch})[0:1]
+            )
         else:
-            ret = self.filter(pub_q).order_by('published')[0:1]
+            ret = self.filter(pub_q).order_by("published")[0:1]
 
         ret.is_head = self.is_head
         return ret
@@ -1220,7 +1153,6 @@ class SiteLocationManager(SiteSectionManager):
 
 
 class SiteLocationQueryset(SiteSectionQueryset):
-
     def countries(self):
         """
         Return the list of unique countries that this queryset of SiteLocations
@@ -1233,41 +1165,36 @@ class SiteLocationQueryset(SiteSectionQueryset):
 
         :return: A list of ISOCountry enumerations.
         """
-        return list(set([
-            country
-            for country in self.values_list(
-                'country',
-                flat=True
-            ).distinct().order_by('country')
-            if isinstance(country, ISOCountry)
-        ]))
+        return list(
+            set(
+                [
+                    country
+                    for country in self.values_list("country", flat=True)
+                    .distinct()
+                    .order_by("country")
+                    if isinstance(country, ISOCountry)
+                ]
+            )
+        )
 
 
 class SiteSection(gis_models.Model):
-
-    site = models.ForeignKey('slm.Site', on_delete=models.CASCADE)
+    site = models.ForeignKey("slm.Site", on_delete=models.CASCADE)
 
     edited = models.DateTimeField(auto_now_add=True, db_index=True, null=False)
 
     published = models.BooleanField(default=False, db_index=True)
 
-    _flags = compat.JSONField(
-        null=False,
-        blank=True,
-        default=dict,
-        encoder=DefaultToStrEncoder
+    _flags = models.JSONField(
+        null=False, blank=True, default=dict, encoder=DefaultToStrEncoder
     )
 
-    num_flags = models.PositiveSmallIntegerField(
-        default=0,
-        null=False,
-        db_index=True
-    )
+    num_flags = models.PositiveSmallIntegerField(default=0, null=False, db_index=True)
 
     objects = SiteSectionManager.from_queryset(SiteSectionQueryset)()
 
     def publishable(self):
-        return not self.published or (getattr(self, 'is_deleted', False))
+        return not self.published or (getattr(self, "is_deleted", False))
 
     @cached_property
     def has_published(self):
@@ -1293,13 +1220,7 @@ class SiteSection(gis_models.Model):
     def dot_index(self):
         return self.section_number()
 
-    def publish(
-        self,
-        request=None,
-        silent=False,
-        timestamp=None,
-        update_site=True
-    ):
+    def publish(self, request=None, silent=False, timestamp=None, update_site=True):
         """
         Publish the current HEAD edits on this section - this will delete the
         last published section instance.
@@ -1320,17 +1241,13 @@ class SiteSection(gis_models.Model):
             timestamp = now()
 
         with transaction.atomic():
-
-            if getattr(self, 'is_deleted', False):
+            if getattr(self, "is_deleted", False):
                 self.delete()
             else:
                 # delete the previously published row if it exists
-                kwargs = {
-                    'site': self.site,
-                    'published': True
-                }
-                if hasattr(self, 'subsection'):
-                    kwargs['subsection'] = self.subsection
+                kwargs = {"site": self.site, "published": True}
+                if hasattr(self, "subsection"):
+                    kwargs["subsection"] = self.subsection
 
                 self.__class__.objects.filter(**kwargs).delete()
 
@@ -1345,14 +1262,18 @@ class SiteSection(gis_models.Model):
                 self.site.save()
                 self.site.update_status(save=True, timestamp=timestamp)
 
-            if not silent:
+            if not silent and self.site.last_publish:
+                # only send this signal if publishing this section results
+                # in a newly published site log. It will not if this section
+                # publish is part of a large site log publish or if the site
+                # log has never been published before.
                 slm_signals.site_published.send(
                     sender=self.site,
                     site=self.site,
                     user=request.user if request else None,
                     timestamp=timestamp,
                     request=request,
-                    section=self
+                    section=self,
                 )
             return True
 
@@ -1391,7 +1312,7 @@ class SiteSection(gis_models.Model):
 
     @property
     def mod_status(self):
-        if getattr(self, 'is_deleted', False):
+        if getattr(self, "is_deleted", False):
             return SiteLogStatus.UPDATED
         if self.published:
             return SiteLogStatus.PUBLISHED
@@ -1402,17 +1323,17 @@ class SiteSection(gis_models.Model):
         Get a dictionary representing the diff with the current published HEAD
         """
         diff = {}
-        if getattr(self, 'is_deleted', None):
+        if getattr(self, "is_deleted", None):
             return {}
 
         if isinstance(self, SiteSubSection):
-            published = self.__class__.objects.filter(
-                site=self.site
-            ).published(subsection=self.subsection, epoch=epoch)
+            published = self.__class__.objects.filter(site=self.site).published(
+                subsection=self.subsection, epoch=epoch
+            )
         else:
-            published = self.__class__.objects.filter(
-                site=self.site
-            ).published(epoch=epoch)
+            published = self.__class__.objects.filter(site=self.site).published(
+                epoch=epoch
+            )
 
         if published and published.id == self.id:
             return diff
@@ -1420,16 +1341,10 @@ class SiteSection(gis_models.Model):
         def transform(value, field_name):
             if isinstance(value, models.Model):
                 return str(value)
-            elif isinstance(
-                self._meta.get_field(field),
-                models.ManyToManyField
-            ):
+            elif isinstance(self._meta.get_field(field), models.ManyToManyField):
                 if value:
-                    return '+'.join([str(val) for val in value.all()])
-            elif isinstance(
-                self._meta.get_field(field),
-                gis_models.PointField
-            ):
+                    return "+".join([str(val) for val in value.all()])
+            elif isinstance(self._meta.get_field(field), gis_models.PointField):
                 if value:
                     return value.coords
             return value
@@ -1442,27 +1357,21 @@ class SiteSection(gis_models.Model):
         for field in self.site_log_fields():
             pub = transform(getattr(published, field, None), field)
             head = transform(getattr(self, field), field)
-            if (
-                differ(head, pub) and
-                head not in [None, ''] and
-                pub not in [None, '']
-            ):
-                diff[field] = {'pub': pub, 'head': head}
+            if differ(head, pub) and head not in [None, ""] and pub not in [None, ""]:
+                diff[field] = {"pub": pub, "head": head}
         return diff
 
     @classmethod
     def section_number(cls):
-        raise NotImplementedError(
-            f'SiteSection models must implement section_number()'
-        )
+        raise NotImplementedError("SiteSection models must implement section_number()")
 
     @classmethod
     def section_name(cls):
-        return cls._meta.verbose_name.replace('site', '').strip().title()
+        return cls._meta.verbose_name.replace("site", "").strip().title()
 
     @classmethod
     def section_slug(cls):
-        return cls.__name__.lower().replace('site', '').strip()
+        return cls.__name__.lower().replace("site", "").strip()
 
     @classmethod
     def site_log_fields(cls):
@@ -1470,18 +1379,21 @@ class SiteSection(gis_models.Model):
         Return the editable fields for the given sitelog section
         """
         return [
-            field.name for field in cls._meta.fields if field.name not in {
-                'id',
-                'site',
-                'edited',
-                'published',
-                'error',
-                'subsection',
-                'is_deleted',
-                'deleted',
-                '_flags',
-                'inserted',
-                'num_flags'
+            field.name
+            for field in cls._meta.fields
+            if field.name
+            not in {
+                "id",
+                "site",
+                "edited",
+                "published",
+                "error",
+                "subsection",
+                "is_deleted",
+                "deleted",
+                "_flags",
+                "inserted",
+                "num_flags",
             }
         ]
 
@@ -1501,7 +1413,7 @@ class SiteSection(gis_models.Model):
         database field or a callable that returns an object coercible to a
         string.
         """
-        #raise NotImplementedError(f'SiteSections must implement structure
+        # raise NotImplementedError(f'SiteSections must implement structure
         # classmethod!')
         return cls.site_log_fields()
 
@@ -1525,8 +1437,7 @@ class SiteSection(gis_models.Model):
         deferred = self.get_deferred_fields()
         for field in self.site_log_fields():
             if field not in deferred and not isinstance(
-                self._meta.get_field(field),
-                (models.ManyToManyField, models.ForeignKey)
+                self._meta.get_field(field), (models.ManyToManyField, models.ForeignKey)
             ):
                 self._init_values_[field] = getattr(self, field)
 
@@ -1541,7 +1452,7 @@ class SiteSection(gis_models.Model):
         """
         if field not in self.site_log_fields():
             raise ValueError(
-                f'Field {field} is not a site log field for {self.__class__}'
+                f"Field {field} is not a site log field for {self.__class__}"
             )
         if field not in self._init_values_:
             current = self.__class__.objects.filter(pk=self.pk).first()
@@ -1558,23 +1469,25 @@ class SiteSection(gis_models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('-edited',)
-        unique_together = ('site', 'published',)
-        index_together = [
-            ('edited', 'published'),
-            ('site', 'edited'),
-            ('site', 'edited', 'published'),
+        ordering = ("-edited",)
+        unique_together = (
+            "site",
+            "published",
+        )
+        indexes = [
+            models.Index(fields=("edited", "published")),
+            models.Index(fields=("site", "edited")),
+            models.Index(fields=("site", "edited", "published")),
         ]
 
 
 class SiteSubSectionManager(SiteSectionManager):
-
     def revert(self):
         reverted = super().revert()
         reverted |= bool(
-            self.get_queryset().filter(
-                Q(published=True) & Q(is_deleted=True)
-            ).update(is_deleted=False)
+            self.get_queryset()
+            .filter(Q(published=True) & Q(is_deleted=True))
+            .update(is_deleted=False)
         )
         return reverted
 
@@ -1582,16 +1495,17 @@ class SiteSubSectionManager(SiteSectionManager):
         # some DBs only support one auto field per table, so we have to
         # manually increment the subsection identifier for new subsections
         # using select_for_update to avoid race conditions
-        if 'subsection' not in kwargs:
-            last = self.model.objects.select_for_update().filter(
-                site=kwargs.get('site')
-            ).aggregate(Max('subsection'))['subsection__max']
-            kwargs['subsection'] = last + 1 if last is not None else 0
+        if "subsection" not in kwargs:
+            last = (
+                self.model.objects.select_for_update()
+                .filter(site=kwargs.get("site"))
+                .aggregate(Max("subsection"))["subsection__max"]
+            )
+            kwargs["subsection"] = last + 1 if last is not None else 0
         return super().create(*args, **kwargs)
 
 
 class SiteSubSectionQuerySet(SiteSectionQueryset):
-
     is_head = False
 
     def last(self):
@@ -1618,7 +1532,7 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
             subsection=subsection,
             epoch=epoch,
             published=None,
-            include_deleted=include_deleted
+            include_deleted=include_deleted,
         )
 
     def _current(
@@ -1627,7 +1541,7 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
         epoch=None,
         published=None,
         filter=None,
-        include_deleted=False
+        include_deleted=False,
     ):
         """
         Fetch the subsection stack that matches the parameters.
@@ -1649,7 +1563,7 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
         section_q = filter or Q()
 
         if epoch and self.model.valid_time is not None:
-            section_q &= Q(**{f'{self.model.valid_time}__lte': epoch})
+            section_q &= Q(**{f"{self.model.valid_time}__lte": epoch})
 
         if published:
             section_q &= Q(published=True)
@@ -1657,22 +1571,17 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
             if not include_deleted:
                 section_q &= Q(is_deleted=False)
         else:
-            section_q &= (Q(published=False) | Q(is_deleted=True))
+            section_q &= Q(published=False) | Q(is_deleted=True)
 
         if subsection is not None:
             return self.filter(Q(subsection=subsection) & section_q).first()
 
         elif published is not None:
-            qry = self.filter(section_q).order_by(
-                self.model.order_field,
-                'subsection'
-            )
+            qry = self.filter(section_q).order_by(self.model.order_field, "subsection")
         else:
-            ordering = ['subsection', 'published']
+            ordering = ["subsection", "published"]
 
-            qry = self.filter(section_q).order_by(
-                *ordering
-            ).distinct('subsection')
+            qry = self.filter(section_q).order_by(*ordering).distinct("subsection")
 
         qry.is_head = self.is_head
         return qry
@@ -1692,8 +1601,8 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
         :param reverse: Reverse the sorted order
         :return: An iterable of sorted objects
         """
-        class OrderTuple:
 
+        class OrderTuple:
             def __init__(self, field, subsection):
                 self.field = field
                 self.subsection = subsection
@@ -1708,23 +1617,18 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
                         return True
                 return self.subsection < other.subsection
 
-        sorter = lambda o: getattr(o, 'subsection')
-        order_field = getattr(self.model, 'order_field', None)
-        if order_field:
-            sorter = (
-                lambda o: OrderTuple(
-                    getattr(o, order_field),
-                    getattr(o, 'subsection')
-                )
-            )
-        sorted_sections = sorted((obj for obj in self), key=sorter)
+        sorted_sections = sorted(
+            (obj for obj in self),
+            key=lambda o: OrderTuple(getattr(o, o.order_field), o.subsection)
+            if getattr(self.model, "order_field", None)
+            else lambda o: o.subsection,
+        )
         if reverse:
             return list(reversed(sorted_sections))
         return list(sorted_sections)
 
 
 class SiteSubSection(SiteSection):
-
     subsection = models.PositiveSmallIntegerField(blank=True, db_index=True)
 
     is_deleted = models.BooleanField(default=False, null=False, blank=True)
@@ -1735,14 +1639,12 @@ class SiteSubSection(SiteSection):
 
     def revert(self):
         reverted = self.__class__.objects.filter(
-            Q(site=self.site) &
-            Q(published=False) &
-            Q(subsection=self.subsection)
+            Q(site=self.site) & Q(published=False) & Q(subsection=self.subsection)
         ).delete()[0] | self.__class__.objects.filter(
-            Q(site=self.site) &
-            Q(published=True) &
-            Q(is_deleted=True) &
-            Q(subsection=self.subsection)
+            Q(site=self.site)
+            & Q(published=True)
+            & Q(is_deleted=True)
+            & Q(subsection=self.subsection)
         ).update(is_deleted=False)
         if reverted:
             self.site.update_status()
@@ -1751,9 +1653,7 @@ class SiteSubSection(SiteSection):
     @cached_property
     def has_published(self):
         return self.__class__.objects.filter(
-            Q(site=self.site) &
-            Q(published=True) &
-            Q(subsection=self.subsection)
+            Q(site=self.site) & Q(published=True) & Q(subsection=self.subsection)
         ).exists()
 
     @property
@@ -1763,22 +1663,24 @@ class SiteSubSection(SiteSection):
         performs a query - it's usually best to compute these indexes during
         serialization or inline when subsections are iterated over.
         """
-        dot_index = f'{self.section_number()}'
+        dot_index = f"{self.section_number()}"
         if self.subsection_number():
-            dot_index += f'.{self.subsection_number()}'
+            dot_index += f".{self.subsection_number()}"
 
         # ordering gets tricky because some legacy data might have nulls in the
         # expected order field
         ordering = (self.order_field, getattr(self, self.order_field))
         if ordering[1] is None:
-            ordering = ('subsection', getattr(self, 'subsection'))
+            ordering = ("subsection", getattr(self, "subsection"))
 
-        list_idx = self.__class__.objects.filter(
-                site=self.site
-            ).published().filter(
-                **{f'{ordering[0]}__lt': ordering[1]}
-            ).count() + 1
-        dot_index += f'.{list_idx}'
+        list_idx = (
+            self.__class__.objects.filter(site=self.site)
+            .published()
+            .filter(**{f"{ordering[0]}__lt": ordering[1]})
+            .count()
+            + 1
+        )
+        dot_index += f".{list_idx}"
         return dot_index
 
     @classproperty
@@ -1788,44 +1690,40 @@ class SiteSubSection(SiteSection):
         subsections should have time ranges of validity.
         :return:
         """
-        for field in ['installed', 'effective_start']:
+        for field in ["installed", "effective_start"]:
             try:
                 return field if cls._meta.get_field(field) else None
             except FieldDoesNotExist:
                 continue
-        raise NotImplementedError(
-            f'{cls} must implement valid_time()'
-        )
+        raise NotImplementedError(f"{cls} must implement valid_time()")
 
     @classproperty
     def order_field(cls):
-        return cls.valid_time if cls.valid_time else 'subsection'
+        return cls.valid_time if cls.valid_time else "subsection"
 
     @property
     def heading(self):
         """
         A brief name for this instance useful for UI display.
         """
-        raise NotImplementedError(
-            f'Site subsection models should implement heading().'
-        )
+        raise NotImplementedError("Site subsection models should implement heading().")
 
     @cached_property
     def subsection_prefix(self):
-        idx = f'{self.section_number()}'
+        idx = f"{self.section_number()}"
         if self.subsection_number():
-            idx += f'.{self.subsection_number()}'
+            idx += f".{self.subsection_number()}"
         return idx
 
     @classmethod
     def subsection_number(cls):
         raise NotImplementedError(
-            f'SiteSubSection models must implement subsection_number()'
+            "SiteSubSection models must implement subsection_number()"
         )
 
     @classmethod
     def subsection_name(cls):
-        return cls._meta.verbose_name.replace('site', '').strip().title()
+        return cls._meta.verbose_name.replace("site", "").strip().title()
 
     """
     @cached_property
@@ -1850,20 +1748,20 @@ class SiteSubSection(SiteSection):
 
     class Meta:
         abstract = True
-        ordering = ('-edited',)
-        unique_together = ('site', 'published', 'subsection')
-        index_together = [
-            ('site', 'edited'),
-            ('site', 'edited', 'published'),
-            ('site', 'edited', 'subsection'),
-            ('site', 'edited', 'published', 'subsection'),
-            ('site', 'subsection', 'published'),
-            ('subsection', 'published'),
+        ordering = ("-edited",)
+        unique_together = ("site", "published", "subsection")
+        indexes = [
+            models.Index(fields=("site", "edited")),
+            models.Index(fields=("site", "edited", "published")),
+            models.Index(fields=("site", "edited", "subsection")),
+            models.Index(fields=("site", "edited", "published", "subsection")),
+            models.Index(fields=("site", "subsection", "published")),
+            models.Index(fields=("subsection", "published")),
         ]
         constraints = [
             CheckConstraint(
                 check=~(Q(published=False) & Q(is_deleted=True)),
-                name='%(app_label)s_%(class)s_no_mod_deleted'
+                name="%(app_label)s_%(class)s_no_mod_deleted",
             )
         ]
 
@@ -1883,10 +1781,10 @@ class SiteForm(SiteSection):
     @classmethod
     def structure(cls):
         return [
-            'prepared_by',
-            'date_prepared',
-            'report_type',
-            (_('If Update'), ('previous_log', 'modified_section')),
+            "prepared_by",
+            "date_prepared",
+            "report_type",
+            (_("If Update"), ("previous_log", "modified_section")),
         ]
 
     @classmethod
@@ -1895,37 +1793,37 @@ class SiteForm(SiteSection):
 
     @classmethod
     def section_header(cls):
-        return 'Form'
+        return "Form"
 
     prepared_by = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name=_('Prepared by (full name)'),
-        help_text=_('Enter the name of who prepared this site log')
+        verbose_name=_("Prepared by (full name)"),
+        help_text=_("Enter the name of who prepared this site log"),
     )
     date_prepared = models.DateField(
         null=True,
         blank=True,
-        verbose_name=_('Date Prepared'),
-        help_text=_('Enter the date the site log was prepared (CCYY-MM-DD).'),
+        verbose_name=_("Date Prepared"),
+        help_text=_("Enter the date the site log was prepared (CCYY-MM-DD)."),
         db_index=True,
-        validators=[MaxValueValidator(utc_now_date)]
+        validators=[MaxValueValidator(utc_now_date)],
     )
 
     report_type = models.CharField(
         max_length=50,
         blank=True,
-        default=None,
-        verbose_name=_('Report Type'),
-        help_text=_('Enter type of report. Example: (UPDATE).')
+        default="NEW",
+        verbose_name=_("Report Type"),
+        help_text=_("Enter type of report. Example: (UPDATE)."),
     )
 
     previous = models.ForeignKey(
-        'slm.ArchiveIndex',
+        "slm.ArchiveIndex",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        default=None
+        default=None,
     )
 
     @property
@@ -1934,7 +1832,7 @@ class SiteForm(SiteSection):
             log_format=SiteLogFormat.LEGACY,
             name_len=4,
             lower_case=True,
-            epoch=self.previous.begin
+            epoch=self.previous.begin,
         )
 
     @property
@@ -1943,7 +1841,7 @@ class SiteForm(SiteSection):
             log_format=SiteLogFormat.GEODESY_ML,
             name_len=4,
             lower_case=True,
-            epoch=self.previous.begin
+            epoch=self.previous.begin,
         )
 
     @property
@@ -1952,27 +1850,28 @@ class SiteForm(SiteSection):
             log_format=SiteLogFormat.JSON,
             name_len=4,
             lower_case=True,
-            epoch=self.previous.begin
+            epoch=self.previous.begin,
         )
 
     modified_section = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Modified/Added Sections'),
+        default="",
+        verbose_name=_("Modified/Added Sections"),
         help_text=_(
-            'Enter the sections which have changed from the previous version '
-            'of the log. Example: (3.2, 4.2)'
-        )
+            "Enter the sections which have changed from the previous version "
+            "of the log. Example: (3.2, 4.2)"
+        ),
     )
 
     def save(self, *args, skip_update=False, **kwargs):
         from slm.models import ArchiveIndex
+
         self.previous = ArchiveIndex.objects.filter(site=self.site).first()
         if self.previous:
-            self.report_type = 'UPDATE'
+            self.report_type = "UPDATE"
         if not skip_update:
             self.modified_section = kwargs.pop(
-                'modified_section', ', '.join(self.site.modified_sections)
+                "modified_section", ", ".join(self.site.modified_sections)
             )
             self.date_prepared = datetime.now(timezone.utc).date()
             self.full_clean()
@@ -1980,29 +1879,24 @@ class SiteForm(SiteSection):
 
     def clean(self):
         from slm.models import ArchiveIndex
+
         super().clean()
         head = ArchiveIndex.objects.filter(
             Q(site=self.site) & Q(end__isnull=True)
         ).first()
         if head and self.date_prepared < head.begin.date():
             raise ValidationError(
-                {'date_prepared': [
-                    _('Date prepared cannot be before the previous log.')
-                ]})
+                {
+                    "date_prepared": [
+                        _("Date prepared cannot be before the previous log.")
+                    ]
+                }
+            )
 
-    def publish(
-        self,
-        request=None,
-        silent=False,
-        timestamp=None,
-        update_site=True
-    ):
+    def publish(self, request=None, silent=False, timestamp=None, update_site=True):
         self.date_prepared = datetime.now(timezone.utc).date()
         return super().publish(
-            request=request,
-            silent=silent,
-            timestamp=timestamp,
-            update_site=update_site
+            request=request, silent=silent, timestamp=timestamp, update_site=update_site
         )
 
 
@@ -2036,30 +1930,31 @@ class SiteIdentification(SiteSection):
         Distance/Activity    : (multiple lines)
     Additional Information   : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'site_name',
-            'four_character_id',
-            'monument_inscription',
-            'iers_domes_number',
-            'cdp_number',
-            ('monument_description', (
-                'monument_height',
-                'monument_foundation',
-                'foundation_depth'
-            )),
-            'marker_description',
-            'date_installed',
-            ('geologic_characteristic', (
-                'bedrock_type',
-                'bedrock_condition',
-                'fracture_spacing',
-                ('fault_zones', (
-                    'distance',
-                ))
-            )),
-            'additional_information'
+            "site_name",
+            "four_character_id",
+            "monument_inscription",
+            "iers_domes_number",
+            "cdp_number",
+            (
+                "monument_description",
+                ("monument_height", "monument_foundation", "foundation_depth"),
+            ),
+            "marker_description",
+            "date_installed",
+            (
+                "geologic_characteristic",
+                (
+                    "bedrock_type",
+                    "bedrock_condition",
+                    "fracture_spacing",
+                    ("fault_zones", ("distance",)),
+                ),
+            ),
+            "additional_information",
         ]
 
     @classmethod
@@ -2068,15 +1963,15 @@ class SiteIdentification(SiteSection):
 
     @classmethod
     def section_header(cls):
-        return 'Site Identification of the GNSS Monument'
+        return "Site Identification of the GNSS Monument"
 
     site_name = models.CharField(
         max_length=255,
         blank=True,
-        default='',
-        verbose_name=_('Site Name'),
-        help_text=_('Enter the name of the site.'),
-        db_index=True
+        default="",
+        verbose_name=_("Site Name"),
+        help_text=_("Enter the name of the site."),
+        db_index=True,
     )
 
     @cached_property
@@ -2085,142 +1980,142 @@ class SiteIdentification(SiteSection):
 
     monument_inscription = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Monument Inscription'),
-        help_text=_('Enter what is stamped on the monument'),
-        db_index=True
+        verbose_name=_("Monument Inscription"),
+        help_text=_("Enter what is stamped on the monument"),
+        db_index=True,
     )
 
     iers_domes_number = models.CharField(
         max_length=9,
         blank=True,
-        default='',
-        verbose_name=_('IERS DOMES Number'),
+        default="",
+        verbose_name=_("IERS DOMES Number"),
         help_text=_(
-            'This is strictly required. '
-            'See https://itrf.ign.fr/en/network/domes/request to obtain one. '
-            'Format: 9 character alphanumeric (A9)'
+            "This is strictly required. "
+            "See https://itrf.ign.fr/en/network/domes/request to obtain one. "
+            "Format: 9 character alphanumeric (A9)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     cdp_number = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('CDP Number'),
+        verbose_name=_("CDP Number"),
         help_text=_(
-            'Enter the NASA CDP identifier if available. '
-            'Format: 4 character alphanumeric (A4)'
+            "Enter the NASA CDP identifier if available. "
+            "Format: 4 character alphanumeric (A4)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     date_installed = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name=_('Date Installed (UTC)'),
+        verbose_name=_("Date Installed (UTC)"),
         help_text=_(
-            'Enter the original date that this site was included in the IGS. '
-            'Format: (CCYY-MM-DDThh:mmZ)'
+            "Enter the original date that this site was included in the IGS. "
+            "Format: (CCYY-MM-DDThh:mmZ)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     # Monument fields
     monument_description = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Monument Description'),
+        verbose_name=_("Monument Description"),
         help_text=_(
-            'Provide a general description of the GNSS monument. '
-            'Format: (PILLAR/BRASS PLATE/STEEL MAST/etc)'
+            "Provide a general description of the GNSS monument. "
+            "Format: (PILLAR/BRASS PLATE/STEEL MAST/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     monument_height = models.FloatField(
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Height of the Monument (m)'),
+        verbose_name=_("Height of the Monument (m)"),
         help_text=_(
-            'Enter the height of the monument above the ground surface in '
-            'meters. Units: (m)'
+            "Enter the height of the monument above the ground surface in "
+            "meters. Units: (m)"
         ),
-        db_index=True
+        db_index=True,
     )
     monument_foundation = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Monument Foundation'),
+        verbose_name=_("Monument Foundation"),
         help_text=_(
-            'Describe how the GNSS monument is attached to the ground. '
-            'Format: (STEEL RODS, CONCRETE BLOCK, ROOF, etc)'
+            "Describe how the GNSS monument is attached to the ground. "
+            "Format: (STEEL RODS, CONCRETE BLOCK, ROOF, etc)"
         ),
-        db_index=True
+        db_index=True,
     )
     foundation_depth = models.FloatField(
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Foundation Depth (m)'),
+        verbose_name=_("Foundation Depth (m)"),
         help_text=_(
-            'Enter the depth of the monument foundation below the ground '
-            'surface in meters. Format: (m)'
+            "Enter the depth of the monument foundation below the ground "
+            "surface in meters. Format: (m)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     marker_description = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Marker Description'),
+        verbose_name=_("Marker Description"),
         help_text=_(
-            'Describe the actual physical marker reference point. '
-            'Format: (CHISELLED CROSS/DIVOT/BRASS NAIL/etc)'
+            "Describe the actual physical marker reference point. "
+            "Format: (CHISELLED CROSS/DIVOT/BRASS NAIL/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     geologic_characteristic = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Geologic Characteristic'),
+        verbose_name=_("Geologic Characteristic"),
         help_text=_(
-            'Describe the general geologic characteristics of the GNSS site. '
-            'Format: (BEDROCK/CLAY/CONGLOMERATE/GRAVEL/SAND/etc)'
+            "Describe the general geologic characteristics of the GNSS site. "
+            "Format: (BEDROCK/CLAY/CONGLOMERATE/GRAVEL/SAND/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     bedrock_type = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Bedrock Type'),
+        verbose_name=_("Bedrock Type"),
         help_text=_(
-            'If the site is located on bedrock, describe the nature of that '
-            'bedrock. Format: (IGNEOUS/METAMORPHIC/SEDIMENTARY)'
+            "If the site is located on bedrock, describe the nature of that "
+            "bedrock. Format: (IGNEOUS/METAMORPHIC/SEDIMENTARY)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     bedrock_condition = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Bedrock Condition'),
+        verbose_name=_("Bedrock Condition"),
         help_text=_(
-            'If the site is located on bedrock, describe the condition of '
-            'that bedrock. Format: (FRESH/JOINTED/WEATHERED)'
+            "If the site is located on bedrock, describe the condition of "
+            "that bedrock. Format: (FRESH/JOINTED/WEATHERED)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     fracture_spacing = EnumField(
@@ -2230,44 +2125,44 @@ class SiteIdentification(SiteSection):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Fracture Spacing'),
+        verbose_name=_("Fracture Spacing"),
         help_text=_(
-            'If known, describe the fracture spacing of the bedrock. '
-            'Format: (1-10 cm/11-50 cm/51-200 cm/over 200 cm)'
+            "If known, describe the fracture spacing of the bedrock. "
+            "Format: (1-10 cm/11-50 cm/51-200 cm/over 200 cm)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     fault_zones = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Fault Zones Nearby'),
+        verbose_name=_("Fault Zones Nearby"),
         help_text=_(
-            'Enter the name of any known faults near the site. '
-            'Format: (YES/NO/Name of the zone)'
+            "Enter the name of any known faults near the site. "
+            "Format: (YES/NO/Name of the zone)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     distance = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Distance/activity'),
+        verbose_name=_("Distance/activity"),
         help_text=_(
-            'Describe proximity of the site to any known faults. '
-            'Format: (multiple lines)'
-        )
+            "Describe proximity of the site to any known faults. "
+            "Format: (multiple lines)"
+        ),
     )
 
     additional_information = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Additional Information'),
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Enter any additional information about the geologic '
-            'characteristics of the GNSS site. Format: (multiple lines)'
-        )
+            "Enter any additional information about the geologic "
+            "characteristics of the GNSS site. Format: (multiple lines)"
+        ),
     )
 
 
@@ -2298,15 +2193,18 @@ class SiteLocation(SiteSection):
     @classmethod
     def structure(cls):
         return [
-            'city',
-            'state',
-            'country',
-            'tectonic',
-            (_('Approximate Position (ITRF)'), (
-                'xyz',
-                'llh',
-            )),
-            'additional_information'
+            "city",
+            "state",
+            "country",
+            "tectonic",
+            (
+                _("Approximate Position (ITRF)"),
+                (
+                    "xyz",
+                    "llh",
+                ),
+            ),
+            "additional_information",
         ]
 
     @classmethod
@@ -2315,23 +2213,23 @@ class SiteLocation(SiteSection):
 
     @classmethod
     def section_header(cls):
-        return 'Site Location Information'
+        return "Site Location Information"
 
     city = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('City or Town'),
-        help_text=_('Enter the city or town the site is located in'),
-        db_index=True
+        default="",
+        verbose_name=_("City or Town"),
+        help_text=_("Enter the city or town the site is located in"),
+        db_index=True,
     )
     state = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('State or Province'),
-        help_text=_('Enter the state or province the site is located in'),
-        db_index=True
+        verbose_name=_("State or Province"),
+        help_text=_("Enter the state or province the site is located in"),
+        db_index=True,
     )
 
     country = EnumField(
@@ -2341,9 +2239,9 @@ class SiteLocation(SiteSection):
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Country or Region'),
-        help_text=_('Enter the country/region the site is located in'),
-        db_index=True
+        verbose_name=_("Country or Region"),
+        help_text=_("Enter the country/region the site is located in"),
+        db_index=True,
     )
 
     tectonic = EnumField(
@@ -2353,11 +2251,9 @@ class SiteLocation(SiteSection):
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Tectonic Plate'),
-        help_text=_(
-            'Select the primary tectonic plate that the GNSS site occupies'
-        ),
-        db_index=True
+        verbose_name=_("Tectonic Plate"),
+        help_text=_("Select the primary tectonic plate that the GNSS site occupies"),
+        db_index=True,
     )
 
     # https://epsg.io/7789
@@ -2367,47 +2263,45 @@ class SiteLocation(SiteSection):
         null=True,
         blank=True,
         db_index=True,
-        help_text=_(
-            'Enter the ITRF position to a one meter precision. Format (m)'
-        ),
-        verbose_name=_('Position (X, Y, Z) (m)'),
+        help_text=_("Enter the ITRF position to a one meter precision. Format (m)"),
+        verbose_name=_("Position (X, Y, Z) (m)"),
     )
 
-    #https://epsg.io/4979
+    # https://epsg.io/4979
     llh = gis_models.PointField(
         srid=4979,
         dim=3,
         null=True,
         blank=False,
-        verbose_name=_('Position (Lat, Lon, Elev (m))'),
+        verbose_name=_("Position (Lat, Lon, Elev (m))"),
         help_text=_(
-            'Enter the ITRF latitude and longitude in decimal degrees and '
-            'elevation in meters to one meter precision. Note, legacy site '
-            'log format is (+/-DDMMSS.SS) and elevation may be given to more '
-            'decimal places than F7.1. F7.1 is the minimum for the SINEX '
-            'format.'
+            "Enter the ITRF latitude and longitude in decimal degrees and "
+            "elevation in meters to one meter precision. Note, legacy site "
+            "log format is (+/-DDMMSS.SS) and elevation may be given to more "
+            "decimal places than F7.1. F7.1 is the minimum for the SINEX "
+            "format."
         ),
-        db_index=True
+        db_index=True,
     )
 
     additional_information = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Additional Information'),
+        default="",
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Describe the source of these coordinates or any other relevant '
-            'information. Format: (multiple lines)'
-        )
+            "Describe the source of these coordinates or any other relevant "
+            "information. Format: (multiple lines)"
+        ),
     )
 
 
 class SiteReceiverManager(SiteSubSectionManager):
-
     def get_queryset(self):
-        return super().get_queryset().select_related(
-            'receiver_type'
-        ).prefetch_related(
-            'satellite_system'
+        return (
+            super()
+            .get_queryset()
+            .select_related("receiver_type")
+            .prefetch_related("satellite_system")
         )
 
 
@@ -2429,26 +2323,27 @@ class SiteReceiver(SiteSubSection):
          Temperature Stabiliz.    : (none or tolerance in degrees C)
          Additional Information   : (multiple lines)
     """
+
     @classmethod
     def site_log_fields(cls):
         # satellite_system is not picked up by the super site_log_fields
         # because its many to many - just establish this list here manually
         # instead
         return [
-            'receiver_type',
-            'satellite_system',
-            'serial_number',
-            'firmware',
-            'elevation_cutoff',
-            'installed',
-            'removed',
-            'temp_stabilized',
-            'temp_nominal',
-            'temp_deviation',
-            'additional_info'
+            "receiver_type",
+            "satellite_system",
+            "serial_number",
+            "firmware",
+            "elevation_cutoff",
+            "installed",
+            "removed",
+            "temp_stabilized",
+            "temp_nominal",
+            "temp_deviation",
+            "additional_info",
         ]
 
-    #objects = SiteReceiverManager.from_queryset(SiteReceiverQueryset)()
+    # objects = SiteReceiverManager.from_queryset(SiteReceiverQueryset)()
 
     @classmethod
     def section_number(cls):
@@ -2456,7 +2351,7 @@ class SiteReceiver(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'GNSS Receiver Information'
+        return "GNSS Receiver Information"
 
     @classmethod
     def subsection_number(cls):
@@ -2469,162 +2364,154 @@ class SiteReceiver(SiteSubSection):
     @property
     def effective(self):
         if self.installed and self.removed:
-            return f'{date_to_str(self.installed)}/{date_to_str(self.removed)}'
+            return f"{date_to_str(self.installed)}/{date_to_str(self.removed)}"
         elif self.installed:
-            return f'{date_to_str(self.installed)}'
-        return ''
+            return f"{date_to_str(self.installed)}"
+        return ""
 
     receiver_type = models.ForeignKey(
-        'slm.Receiver',
+        "slm.Receiver",
         blank=False,
-        verbose_name=_('Receiver Type'),
+        verbose_name=_("Receiver Type"),
         help_text=_(
-            'Please find your receiver in '
-            'https://files.igs.org/pub/station/general/rcvr_ant.tab and use '
-            'the official name, taking care to get capital letters, hyphens, '
-            'etc. exactly correct. If you do not find a listing for your '
-            'receiver, please notify the IGS Central Bureau. '
-            'Format: (A20, from rcvr_ant.tab; see instructions)'
+            "Please find your receiver in "
+            "https://files.igs.org/pub/station/general/rcvr_ant.tab and use "
+            "the official name, taking care to get capital letters, hyphens, "
+            "etc. exactly correct. If you do not find a listing for your "
+            "receiver, please notify the IGS Central Bureau. "
+            "Format: (A20, from rcvr_ant.tab; see instructions)"
         ),
         on_delete=models.PROTECT,
-        related_name='site_receivers'
+        related_name="site_receivers",
     )
 
     satellite_system = models.ManyToManyField(
-        'slm.SatelliteSystem',
-        verbose_name=_('Satellite System'),
+        "slm.SatelliteSystem",
+        verbose_name=_("Satellite System"),
         blank=True,
-        help_text=_('Check all GNSS systems that apply')
+        help_text=_("Check all GNSS systems that apply"),
     )
 
     serial_number = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Serial Number'),
+        default="",
+        verbose_name=_("Serial Number"),
         help_text=_(
-            'Enter the receiver serial number. '
-            'Format: (A20, but note the first A5 is used in SINEX)'
+            "Enter the receiver serial number. "
+            "Format: (A20, but note the first A5 is used in SINEX)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     firmware = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Firmware Version'),
-        help_text=_('Enter the receiver firmware version. Format: (A11)'),
-        db_index=True
+        default="",
+        verbose_name=_("Firmware Version"),
+        help_text=_("Enter the receiver firmware version. Format: (A11)"),
+        db_index=True,
     )
 
     elevation_cutoff = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Elevation Cutoff Setting (°)'),
+        verbose_name=_("Elevation Cutoff Setting (°)"),
         help_text=_(
-            'Please respond with the tracking cutoff as set in the receiver, '
-            'regardless of terrain or obstructions in the area. Format: (deg)'
+            "Please respond with the tracking cutoff as set in the receiver, "
+            "regardless of terrain or obstructions in the area. Format: (deg)"
         ),
-        validators=[
-            MinValueValidator(-5),
-            MaxValueValidator(15)
-        ],
-        db_index=True
+        validators=[MinValueValidator(-5), MaxValueValidator(15)],
+        db_index=True,
     )
 
     installed = models.DateTimeField(
         null=True,
         blank=False,
-        verbose_name=_('Date Installed (UTC)'),
+        verbose_name=_("Date Installed (UTC)"),
         help_text=_(
-            'Enter the date and time the receiver was installed. '
-            'Format: (CCYY-MM-DDThh:mmZ)'
+            "Enter the date and time the receiver was installed. "
+            "Format: (CCYY-MM-DDThh:mmZ)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     removed = models.DateTimeField(
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Date Removed (UTC)'),
+        verbose_name=_("Date Removed (UTC)"),
         help_text=_(
-            'Enter the date and time the receiver was removed. It is important'
-            ' that the date removed is entered BEFORE the addition of a new '
-            'receiver. Format: (CCYY-MM-DDThh:mmZ)'
+            "Enter the date and time the receiver was removed. It is important"
+            " that the date removed is entered BEFORE the addition of a new "
+            "receiver. Format: (CCYY-MM-DDThh:mmZ)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     temp_stabilized = models.BooleanField(
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Temperature Stabilized'),
+        verbose_name=_("Temperature Stabilized"),
         help_text=_(
-            'If null (default) the temperature stabilization status is '
-            'unknown. If true the receiver is in a temperature stabilized '
-            'environment, if false the receiver is not in a temperature '
-            'stabilized environment.'
-        )
+            "If null (default) the temperature stabilization status is "
+            "unknown. If true the receiver is in a temperature stabilized "
+            "environment, if false the receiver is not in a temperature "
+            "stabilized environment."
+        ),
     )
 
     temp_nominal = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Nominal Temperature (°C)'),
+        verbose_name=_("Nominal Temperature (°C)"),
         help_text=_(
-            'If the receiver is in a temperature controlled environment, '
-            'please enter the approximate temperature of that environment. '
-            'Format: (°C)'
+            "If the receiver is in a temperature controlled environment, "
+            "please enter the approximate temperature of that environment. "
+            "Format: (°C)"
         ),
-        db_index=True
+        db_index=True,
     )
     # this field is a string in GeodesyML - therefore leaving it as character
     temp_deviation = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Temperature Deviation (± °C)'),
+        verbose_name=_("Temperature Deviation (± °C)"),
         help_text=_(
-            'If the receiver is in a temperature controlled environment, '
-            'please enter the expected temperature deviation from nominal of '
-            'that environment. Format: (± °C)'
+            "If the receiver is in a temperature controlled environment, "
+            "please enter the expected temperature deviation from nominal of "
+            "that environment. Format: (± °C)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     additional_info = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Additional Information'),
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Enter any additional relevant information about the receiver. '
-            'Format: (multiple lines)'
-        )
+            "Enter any additional relevant information about the receiver. "
+            "Format: (multiple lines)"
+        ),
     )
-
 
     def __str__(self):
         return str(self.receiver_type)
 
     class Meta(SiteSubSection.Meta):
-        index_together = [
-            ('site', 'subsection', 'published', 'installed'),
-            ('subsection', 'published', 'installed'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "installed")),
+            models.Index(fields=("subsection", "published", "installed")),
         ]
 
 
 class SiteAntennaManager(SiteSubSectionManager):
-
     def get_queryset(self):
-        return super().get_queryset().select_related(
-            'antenna_type',
-            'radome_type'
-        )
+        return super().get_queryset().select_related("antenna_type", "radome_type")
 
 
 class SiteAntennaQueryset(SiteSubSectionQuerySet):
@@ -2651,7 +2538,7 @@ class SiteAntenna(SiteSubSection):
          Additional Information   : (multiple lines)
     """
 
-    #objects = SiteAntennaManager.from_queryset(SiteAntennaQueryset)()
+    # objects = SiteAntennaManager.from_queryset(SiteAntennaQueryset)()
 
     @property
     def heading(self):
@@ -2660,10 +2547,10 @@ class SiteAntenna(SiteSubSection):
     @property
     def effective(self):
         if self.installed and self.removed:
-            return f'{date_to_str(self.installed)}/{date_to_str(self.removed)}'
+            return f"{date_to_str(self.installed)}/{date_to_str(self.removed)}"
         elif self.installed:
-            return f'{date_to_str(self.installed)}'
-        return ''
+            return f"{date_to_str(self.installed)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -2671,38 +2558,38 @@ class SiteAntenna(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'GNSS Antenna Information'
+        return "GNSS Antenna Information"
 
     @classmethod
     def subsection_number(cls):
         return None
 
     antenna_type = models.ForeignKey(
-        'slm.Antenna',
+        "slm.Antenna",
         on_delete=models.PROTECT,
         blank=False,
-        verbose_name=_('Antenna Type'),
+        verbose_name=_("Antenna Type"),
         help_text=_(
-            'Please find your antenna radome type in '
-            'https://files.igs.org/pub/station/general/rcvr_ant.tab and use '
-            'the official name, taking care to get capital letters, hyphens, '
-            'etc. exactly correct. The radome code from rcvr_ant.tab must be '
+            "Please find your antenna radome type in "
+            "https://files.igs.org/pub/station/general/rcvr_ant.tab and use "
+            "the official name, taking care to get capital letters, hyphens, "
+            "etc. exactly correct. The radome code from rcvr_ant.tab must be "
             'indicated in columns 17-20 of the Antenna Type, use "NONE" if no '
-            'radome is installed. The antenna+radome pair must have an entry '
-            'in https://files.igs.org/pub/station/general/igs05.atx with '
-            'zenith- and azimuth-dependent calibration values down to the '
-            'horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; '
-            'see instructions)'
+            "radome is installed. The antenna+radome pair must have an entry "
+            "in https://files.igs.org/pub/station/general/igs05.atx with "
+            "zenith- and azimuth-dependent calibration values down to the "
+            "horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; "
+            "see instructions)"
         ),
-        related_name='site_antennas'
+        related_name="site_antennas",
     )
 
     serial_number = models.CharField(
         max_length=128,
         blank=True,
-        verbose_name=_('Serial Number'),
-        help_text=_('Only Alpha Numeric Chars and - . Symbols allowed'),
-        db_index=True
+        verbose_name=_("Serial Number"),
+        help_text=_("Only Alpha Numeric Chars and - . Symbols allowed"),
+        db_index=True,
     )
 
     # todo remove this b/c it belongs solely on antenna type?
@@ -2710,130 +2597,129 @@ class SiteAntenna(SiteSubSection):
         AntennaReferencePoint,
         blank=True,
         default=None,
-        verbose_name=_('Antenna Reference Point'),
+        verbose_name=_("Antenna Reference Point"),
         null=True,
         help_text=_(
-            'Locate your antenna in the file '
-            'https://files.igs.org/pub/station/general/antenna.gra. Indicate '
-            'the three-letter abbreviation for the point which is indicated '
-            'equivalent to ARP for your antenna. Contact the Central Bureau if'
-            ' your antenna does not appear. Format: (BPA/BCR/XXX from '
-            'antenna.gra; see instr.)'
+            "Locate your antenna in the file "
+            "https://files.igs.org/pub/station/general/antenna.gra. Indicate "
+            "the three-letter abbreviation for the point which is indicated "
+            "equivalent to ARP for your antenna. Contact the Central Bureau if"
+            " your antenna does not appear. Format: (BPA/BCR/XXX from "
+            "antenna.gra; see instr.)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     marker_une = gis_models.PointField(
         srid=0,  # env is a local reference frame
         dim=3,
-        verbose_name=_('Marker->ARP UNE Ecc (m)'),
+        verbose_name=_("Marker->ARP UNE Ecc (m)"),
         default=None,
         null=True,
         blank=True,
         help_text=_(
-            'Up-North-East eccentricity is the offset between the ARP and '
-            'marker described in section 1 measured to an accuracy of 1mm. '
-            'Format: (F8.4) Value 0 is OK'
-        )
+            "Up-North-East eccentricity is the offset between the ARP and "
+            "marker described in section 1 measured to an accuracy of 1mm. "
+            "Format: (F8.4) Value 0 is OK"
+        ),
     )
 
     alignment = models.FloatField(
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Alignment from True N (°)'),
+        verbose_name=_("Alignment from True N (°)"),
         help_text=_(
-            'Enter the clockwise offset from true north in degrees. The '
-            'positive direction is clockwise, so that due east would be '
+            "Enter the clockwise offset from true north in degrees. The "
+            "positive direction is clockwise, so that due east would be "
             'equivalent to a response of "+90". '
-            'Format: (deg; + is clockwise/east)'
+            "Format: (deg; + is clockwise/east)"
         ),
         validators=[MinValueValidator(-180), MaxValueValidator(180)],
-        db_index=True
+        db_index=True,
     )
 
     radome_type = models.ForeignKey(
-        'slm.Radome',
+        "slm.Radome",
         blank=False,
-        verbose_name=_('Antenna Radome Type'),
+        verbose_name=_("Antenna Radome Type"),
         help_text=_(
-            'Please find your antenna radome type in '
-            'https://files.igs.org/pub/station/general/rcvr_ant.tab and use '
-            'the official name, taking care to get capital letters, hyphens, '
-            'etc. exactly correct. The radome code from rcvr_ant.tab must be '
+            "Please find your antenna radome type in "
+            "https://files.igs.org/pub/station/general/rcvr_ant.tab and use "
+            "the official name, taking care to get capital letters, hyphens, "
+            "etc. exactly correct. The radome code from rcvr_ant.tab must be "
             'indicated in columns 17-20 of the Antenna Type, use "NONE" if no '
-            'radome is installed. The antenna+radome pair must have an entry '
-            'in https://files.igs.org/pub/station/general/igs05.atx with '
-            'zenith- and azimuth-dependent calibration values down to the '
-            'horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; '
-            'see instructions)'
+            "radome is installed. The antenna+radome pair must have an entry "
+            "in https://files.igs.org/pub/station/general/igs05.atx with "
+            "zenith- and azimuth-dependent calibration values down to the "
+            "horizon. If not, notify the CB. Format: (A20, from rcvr_ant.tab; "
+            "see instructions)"
         ),
         on_delete=models.PROTECT,
-        related_name='site_radomes'
+        related_name="site_radomes",
     )
 
     radome_serial_number = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Radome Serial Number'),
-        help_text=_('Enter the serial number of the radome if available'),
-        db_index=True
+        default="",
+        verbose_name=_("Radome Serial Number"),
+        help_text=_("Enter the serial number of the radome if available"),
+        db_index=True,
     )
 
     cable_type = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Antenna Cable Type'),
+        verbose_name=_("Antenna Cable Type"),
         help_text=_(
-            'Enter the antenna cable specification if know. '
-            'Format: (vendor & type number)'
+            "Enter the antenna cable specification if know. "
+            "Format: (vendor & type number)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     cable_length = models.FloatField(
         null=True,
         default=None,
         blank=True,
-        verbose_name=_('Antenna Cable Length'),
-        help_text=_('Enter the antenna cable length in meters. Format: (m)'),
-        db_index=True
+        verbose_name=_("Antenna Cable Length"),
+        help_text=_("Enter the antenna cable length in meters. Format: (m)"),
+        db_index=True,
     )
 
     installed = models.DateTimeField(
         blank=False,
-        verbose_name=_('Date Installed (UTC)'),
+        verbose_name=_("Date Installed (UTC)"),
         help_text=_(
-            'Enter the date the receiver was installed. '
-            'Format: (CCYY-MM-DDThh:mmZ)'
+            "Enter the date the receiver was installed. " "Format: (CCYY-MM-DDThh:mmZ)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     removed = models.DateTimeField(
         default=None,
         blank=True,
         null=True,
-        verbose_name=_('Date Removed (UTC)'),
+        verbose_name=_("Date Removed (UTC)"),
         help_text=_(
-            'Enter the date the receiver was removed. It is important that '
-            'the date removed is entered before the addition of a new '
-            'receiver. Format: (CCYY-MM-DDThh:mmZ)'
+            "Enter the date the receiver was removed. It is important that "
+            "the date removed is entered before the addition of a new "
+            "receiver. Format: (CCYY-MM-DDThh:mmZ)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     additional_information = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Additional Information'),
+        default="",
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Enter additional relevant information about the antenna, cable '
-            'and radome. Indicate if a signal splitter has been used. '
-            'Format: (multiple lines)'
-        )
+            "Enter additional relevant information about the antenna, cable "
+            "and radome. Indicate if a signal splitter has been used. "
+            "Format: (multiple lines)"
+        ),
     )
 
     @property
@@ -2843,22 +2729,22 @@ class SiteAntenna(SiteSubSection):
         return self.antenna_type.graphic
 
     custom_graphic = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Antenna Graphic'),
+        verbose_name=_("Antenna Graphic"),
         help_text=_(
-            'A custom graphic may be provided, otherwise the default graphic '
-            'for the antenna type will be used.'
-        )
+            "A custom graphic may be provided, otherwise the default graphic "
+            "for the antenna type will be used."
+        ),
     )
 
     def __str__(self):
         return str(self.antenna_type)
 
     class Meta(SiteSubSection.Meta):
-        index_together = [
-            ('site', 'subsection', 'published', 'installed'),
-            ('subsection', 'published', 'installed'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "installed")),
+            models.Index(fields=("subsection", "published", "installed")),
         ]
 
 
@@ -2879,6 +2765,7 @@ class SiteSurveyedLocalTies(SiteSubSection):
          Date Measured            : (CCYY-MM-DDThh:mmZ)
          Additional Information   : (multiple lines)
     """
+
     @classproperty
     def valid_time(cls):
         """
@@ -2890,20 +2777,21 @@ class SiteSurveyedLocalTies(SiteSubSection):
     @classmethod
     def structure(cls):
         return [
-            'name',
-            'usage',
-            'cdp_number',
-            'domes_number',
-            (_(
-                'Differential Components from GNSS Marker to the tied '
-                'monument (ITRS)'
-            ), (
-                'diff_xyz',
-            )),
-            'accuracy',
-            'survey_method',
-            'measured',
-            'additional_information'
+            "name",
+            "usage",
+            "cdp_number",
+            "domes_number",
+            (
+                _(
+                    "Differential Components from GNSS Marker to the tied "
+                    "monument (ITRS)"
+                ),
+                ("diff_xyz",),
+            ),
+            "accuracy",
+            "survey_method",
+            "measured",
+            "additional_information",
         ]
 
     @property
@@ -2913,8 +2801,8 @@ class SiteSurveyedLocalTies(SiteSubSection):
     @property
     def effective(self):
         if self.measured:
-            return f'{date_to_str(self.measured)}'
-        return ''
+            return f"{date_to_str(self.measured)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -2922,7 +2810,7 @@ class SiteSurveyedLocalTies(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'Surveyed Local Ties'
+        return "Surveyed Local Ties"
 
     @classmethod
     def subsection_number(cls):
@@ -2930,42 +2818,38 @@ class SiteSurveyedLocalTies(SiteSubSection):
 
     name = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Tied Marker Name'),
-        help_text=_('Enter name of Tied Marker'),
-        db_index=True
+        verbose_name=_("Tied Marker Name"),
+        help_text=_("Enter name of Tied Marker"),
+        db_index=True,
     )
     usage = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Tied Marker Usage'),
+        verbose_name=_("Tied Marker Usage"),
         help_text=_(
-            'Enter the purpose of the tied marker such as SLR, VLBI, DORIS, '
-            'or other. Format: (SLR/VLBI/LOCAL CONTROL/FOOTPRINT/etc)'
+            "Enter the purpose of the tied marker such as SLR, VLBI, DORIS, "
+            "or other. Format: (SLR/VLBI/LOCAL CONTROL/FOOTPRINT/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
     cdp_number = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Tied Marker CDP Number'),
-        help_text=_(
-            'Enter the NASA CDP identifier if available. Format: (A4)'
-        ),
-        db_index=True
+        verbose_name=_("Tied Marker CDP Number"),
+        help_text=_("Enter the NASA CDP identifier if available. Format: (A4)"),
+        db_index=True,
     )
     domes_number = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Tied Marker DOMES Number'),
-        help_text=_(
-            'Enter the tied marker DOMES number if available. Format: (A9)'
-        ),
-        db_index=True
+        verbose_name=_("Tied Marker DOMES Number"),
+        help_text=_("Enter the tied marker DOMES number if available. Format: (A9)"),
+        db_index=True,
     )
 
     diff_xyz = gis_models.PointField(
@@ -2976,55 +2860,55 @@ class SiteSurveyedLocalTies(SiteSubSection):
         default=None,
         db_index=True,
         help_text=_(
-            'Enter the differential ITRF coordinates to one millimeter '
-            'precision. Format: dx, dy, dz (m)'
+            "Enter the differential ITRF coordinates to one millimeter "
+            "precision. Format: dx, dy, dz (m)"
         ),
-        verbose_name=_('Δ XYZ (m)')
+        verbose_name=_("Δ XYZ (m)"),
     )
 
     accuracy = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Accuracy (mm)'),
-        help_text=_('Enter the accuracy of the tied survey. Format: (mm).'),
-        db_index=True
+        verbose_name=_("Accuracy (mm)"),
+        help_text=_("Enter the accuracy of the tied survey. Format: (mm)."),
+        db_index=True,
     )
 
     survey_method = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Survey method'),
+        verbose_name=_("Survey method"),
         help_text=_(
-            'Enter the source or the survey method used to determine the '
-            'differential coordinates, such as GNSS survey, conventional '
-            'survey, or other. '
-            'Format: (GPS CAMPAIGN/TRILATERATION/TRIANGULATION/etc)'
+            "Enter the source or the survey method used to determine the "
+            "differential coordinates, such as GNSS survey, conventional "
+            "survey, or other. "
+            "Format: (GPS CAMPAIGN/TRILATERATION/TRIANGULATION/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     measured = models.DateTimeField(
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Date Measured (UTC)'),
+        verbose_name=_("Date Measured (UTC)"),
         help_text=_(
-            'Enter the date of the survey local ties measurement. '
-            'Format: (CCYY-MM-DDThh:mmZ)'
+            "Enter the date of the survey local ties measurement. "
+            "Format: (CCYY-MM-DDThh:mmZ)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     additional_information = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Additional Information'),
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Enter any additional information relevant to surveyed local ties.'
-            ' Format: (multiple lines)'
-        )
+            "Enter any additional information relevant to surveyed local ties."
+            " Format: (multiple lines)"
+        ),
     )
 
 
@@ -3037,15 +2921,10 @@ class SiteFrequencyStandard(SiteSubSection):
            Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
            Notes                  : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
-        return [
-            ('standard_type', (
-                'input_frequency',
-                'effective_dates',
-                'notes'
-            ))
-        ]
+        return [("standard_type", ("input_frequency", "effective_dates", "notes"))]
 
     @property
     def heading(self):
@@ -3058,11 +2937,13 @@ class SiteFrequencyStandard(SiteSubSection):
     @property
     def effective(self):
         if self.effective_start and self.effective_end:
-            return f'{date_to_str(self.effective_start)}/' \
-                   f'{date_to_str(self.effective_end)}'
+            return (
+                f"{date_to_str(self.effective_start)}/"
+                f"{date_to_str(self.effective_end)}"
+            )
         elif self.effective_start:
-            return f'{date_to_str(self.effective_start)}'
-        return ''
+            return f"{date_to_str(self.effective_start)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -3070,7 +2951,7 @@ class SiteFrequencyStandard(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'Frequency Standard'
+        return "Frequency Standard"
 
     @classmethod
     def subsection_number(cls):
@@ -3083,32 +2964,32 @@ class SiteFrequencyStandard(SiteSubSection):
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Standard Type'),
+        verbose_name=_("Standard Type"),
         help_text=_(
-            'Select whether the frequency standard is INTERNAL or EXTERNAL '
-            'and describe the oscillator type. '
-            'Format: (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)'
+            "Select whether the frequency standard is INTERNAL or EXTERNAL "
+            "and describe the oscillator type. "
+            "Format: (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     input_frequency = models.FloatField(
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Input Frequency (MHz)'),
-        help_text=_('Enter the input frequency in MHz if known.'),
-        db_index=True
+        verbose_name=_("Input Frequency (MHz)"),
+        help_text=_("Enter the input frequency in MHz if known."),
+        db_index=True,
     )
 
     notes = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Notes'),
+        default="",
+        verbose_name=_("Notes"),
         help_text=_(
-            'Enter any additional information relevant to frequency standard. '
-            'Format: (multiple lines)'
-        )
+            "Enter any additional information relevant to frequency standard. "
+            "Format: (multiple lines)"
+        ),
     )
 
     effective_start = models.DateField(
@@ -3116,10 +2997,10 @@ class SiteFrequencyStandard(SiteSubSection):
         null=True,
         default=None,
         help_text=_(
-            'Enter the effective start date for the frequency standard. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective start date for the frequency standard. "
+            "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     effective_end = models.DateField(
@@ -3127,21 +3008,22 @@ class SiteFrequencyStandard(SiteSubSection):
         null=True,
         default=None,
         help_text=_(
-            'Enter the effective end date for the frequency standard. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective end date for the frequency standard. "
+            "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     def effective_dates(self):
         return self.effective
+
     effective_dates.field = (effective_start, effective_end)
-    effective_dates.verbose_name = _('Effective Dates')
+    effective_dates.verbose_name = _("Effective Dates")
 
     class Meta(SiteSubSection.Meta):
-        index_together = [
-            ('site', 'subsection', 'published', 'effective_start'),
-            ('subsection', 'published', 'effective_start'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "effective_start")),
+            models.Index(fields=("subsection", "published", "effective_start")),
         ]
 
 
@@ -3162,13 +3044,7 @@ class SiteCollocation(SiteSubSection):
 
     @classmethod
     def structure(cls):
-        return [
-            ('instrument_type', (
-                'status',
-                'effective_dates',
-                'notes'
-            ))
-        ]
+        return [("instrument_type", ("status", "effective_dates", "notes"))]
 
     @property
     def heading(self):
@@ -3177,11 +3053,13 @@ class SiteCollocation(SiteSubSection):
     @property
     def effective(self):
         if self.effective_start and self.effective_end:
-            return f'{date_to_str(self.effective_start)}/' \
-                   f'{date_to_str(self.effective_end)}'
+            return (
+                f"{date_to_str(self.effective_start)}/"
+                f"{date_to_str(self.effective_end)}"
+            )
         elif self.effective_start:
-            return f'{date_to_str(self.effective_start)}'
-        return ''
+            return f"{date_to_str(self.effective_start)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -3193,15 +3071,15 @@ class SiteCollocation(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'Collocation Information'
+        return "Collocation Information"
 
     instrument_type = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Instrumentation Type'),
-        help_text=_('Select all collocated instrument types that apply'),
-        db_index=True
+        default="",
+        verbose_name=_("Instrumentation Type"),
+        help_text=_("Select all collocated instrument types that apply"),
+        db_index=True,
     )
 
     status = EnumField(
@@ -3211,19 +3089,19 @@ class SiteCollocation(SiteSubSection):
         blank=True,
         null=True,
         default=None,
-        verbose_name=_('Status'),
-        help_text=_('Select appropriate status'),
-        db_index=True
+        verbose_name=_("Status"),
+        help_text=_("Select appropriate status"),
+        db_index=True,
     )
 
     notes = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Notes'),
+        default="",
+        verbose_name=_("Notes"),
         help_text=_(
-            'Enter any additional information relevant to collocation. '
-            'Format: (multiple lines)'
-        )
+            "Enter any additional information relevant to collocation. "
+            "Format: (multiple lines)"
+        ),
     )
 
     effective_start = models.DateField(
@@ -3232,10 +3110,10 @@ class SiteCollocation(SiteSubSection):
         null=True,
         default=None,
         help_text=_(
-            'Enter the effective start date of the collocated instrument. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective start date of the collocated instrument. "
+            "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
     effective_end = models.DateField(
         max_length=50,
@@ -3243,21 +3121,22 @@ class SiteCollocation(SiteSubSection):
         null=True,
         default=None,
         help_text=_(
-            'Enter the effective end date of the collocated instrument. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective end date of the collocated instrument. "
+            "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     def effective_dates(self):
         return self.effective
+
     effective_dates.field = (effective_start, effective_end)
-    effective_dates.verbose_name = _('Effective Dates')
+    effective_dates.verbose_name = _("Effective Dates")
 
     class Meta(SiteSubSection.Meta):
-        index_together = [
-            ('site', 'subsection', 'published', 'effective_start'),
-            ('subsection', 'published', 'effective_start'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "effective_start")),
+            models.Index(fields=("subsection", "published", "effective_start")),
         ]
 
 
@@ -3273,25 +3152,28 @@ class MeteorologicalInstrumentation(SiteSubSection):
        Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
        Notes                  : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'manufacturer',
-            'serial_number',
-            'height_diff',
-            'calibration',
-            'effective_dates',
-            'notes'
+            "manufacturer",
+            "serial_number",
+            "height_diff",
+            "calibration",
+            "effective_dates",
+            "notes",
         ]
 
     @property
     def effective(self):
         if self.effective_start and self.effective_end:
-            return f'{date_to_str(self.effective_start)}/' \
-                   f'{date_to_str(self.effective_end)}'
+            return (
+                f"{date_to_str(self.effective_start)}/"
+                f"{date_to_str(self.effective_end)}"
+            )
         elif self.effective_start:
-            return f'{date_to_str(self.effective_start)}'
-        return ''
+            return f"{date_to_str(self.effective_start)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -3299,94 +3181,92 @@ class MeteorologicalInstrumentation(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'Meteorological Instrumentation'
+        return "Meteorological Instrumentation"
 
     manufacturer = models.CharField(
         max_length=255,
         blank=True,
-        default='',
-        verbose_name=_('Manufacturer'),
+        default="",
+        verbose_name=_("Manufacturer"),
         help_text=_("Enter manufacturer's name"),
-        db_index=True
+        db_index=True,
     )
     serial_number = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Serial Number'),
-        help_text=_('Enter the serial number of the sensor'),
-        db_index=True
+        default="",
+        verbose_name=_("Serial Number"),
+        help_text=_("Enter the serial number of the sensor"),
+        db_index=True,
     )
 
     height_diff = models.FloatField(
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Height Diff to Ant (m)'),
+        verbose_name=_("Height Diff to Ant (m)"),
         help_text=_(
-            'In meters, enter the difference in height between the sensor and '
-            'the GNSS antenna. Positive number indicates the sensor is above '
-            'the GNSS antenna. Decimeter accuracy preferred. Format: (m)'
+            "In meters, enter the difference in height between the sensor and "
+            "the GNSS antenna. Positive number indicates the sensor is above "
+            "the GNSS antenna. Decimeter accuracy preferred. Format: (m)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     calibration = models.DateField(
         null=True,
         blank=True,
         default=None,
-        verbose_name=_('Calibration Date'),
-        help_text=_(
-            'Enter the date the sensor was calibrated. Format: (CCYY-MM-DD)'
-        ),
-        db_index=True
+        verbose_name=_("Calibration Date"),
+        help_text=_("Enter the date the sensor was calibrated. Format: (CCYY-MM-DD)"),
+        db_index=True,
     )
 
     def calibration_date(self):
         return date_to_str(self.calibration)
-    calibration_date.verbose_name = _('Calibration Date')
+
+    calibration_date.verbose_name = _("Calibration Date")
     calibration_date.field = calibration
 
     effective_start = models.DateField(
         blank=False,
         null=True,
         help_text=_(
-            'Enter the effective start date for the sensor. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective start date for the sensor. " "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
     effective_end = models.DateField(
         null=True,
         blank=True,
         default=None,
         help_text=_(
-            'Enter the effective end date for the sensor. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective end date for the sensor. " "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     notes = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Notes'),
+        default="",
+        verbose_name=_("Notes"),
         help_text=_(
-            'Enter any additional information relevant to the sensor.'
-            ' Format: (multiple lines)'
-        )
+            "Enter any additional information relevant to the sensor."
+            " Format: (multiple lines)"
+        ),
     )
 
     def effective_dates(self):
         return self.effective
+
     effective_dates.field = (effective_start, effective_end)
-    effective_dates.verbose_name = _('Effective Dates')
+    effective_dates.verbose_name = _("Effective Dates")
 
     class Meta(SiteSubSection.Meta):
         abstract = True
-        index_together = [
-            ('site', 'subsection', 'published', 'effective_start'),
-            ('subsection', 'published', 'effective_start'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "effective_start")),
+            models.Index(fields=("subsection", "published", "effective_start")),
         ]
 
 
@@ -3403,19 +3283,20 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
            Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
            Notes                  : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'model',
-            'manufacturer',
-            'serial_number',
-            'sampling_interval',
-            'accuracy',
-            'aspiration',
-            'height_diff',
-            'calibration_date',
-            'effective_dates',
-            'notes'
+            "model",
+            "manufacturer",
+            "serial_number",
+            "sampling_interval",
+            "accuracy",
+            "aspiration",
+            "height_diff",
+            "calibration_date",
+            "effective_dates",
+            "notes",
         ]
 
     @property
@@ -3429,30 +3310,28 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
     model = models.CharField(
         max_length=255,
         blank=True,
-        default='',
-        verbose_name=_('Humidity Sensor Model'),
-        help_text=_('Enter humidity sensor model'),
-        db_index=True
+        default="",
+        verbose_name=_("Humidity Sensor Model"),
+        help_text=_("Enter humidity sensor model"),
+        db_index=True,
     )
 
     sampling_interval = models.PositiveSmallIntegerField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Data Sampling Interval (sec)'),
-        help_text=_('Enter the sample interval in seconds. Format: (sec)'),
-        db_index=True
+        verbose_name=_("Data Sampling Interval (sec)"),
+        help_text=_("Enter the sample interval in seconds. Format: (sec)"),
+        db_index=True,
     )
 
     accuracy = models.FloatField(
         default=None,
         blank=True,
         null=True,
-        verbose_name=_('Accuracy (% rel h)'),
-        help_text=_(
-            'Enter the accuracy in % relative humidity. Format: (% rel h)'
-        ),
-        db_index=True
+        verbose_name=_("Accuracy (% rel h)"),
+        help_text=_("Enter the accuracy in % relative humidity. Format: (% rel h)"),
+        db_index=True,
     )
 
     aspiration = EnumField(
@@ -3462,12 +3341,12 @@ class SiteHumiditySensor(MeteorologicalInstrumentation):
         blank=True,
         strict=False,
         max_length=50,
-        verbose_name=_('Aspiration'),
+        verbose_name=_("Aspiration"),
         help_text=_(
-            'Enter the aspiration type if known. '
-            'Format: (UNASPIRATED/NATURAL/FAN/etc)'
+            "Enter the aspiration type if known. "
+            "Format: (UNASPIRATED/NATURAL/FAN/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
 
@@ -3483,18 +3362,19 @@ class SitePressureSensor(MeteorologicalInstrumentation):
        Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
        Notes                  : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'model',
-            'manufacturer',
-            'serial_number',
-            'sampling_interval',
-            'accuracy',
-            'height_diff',
-            'calibration_date',
-            'effective_dates',
-            'notes'
+            "model",
+            "manufacturer",
+            "serial_number",
+            "sampling_interval",
+            "accuracy",
+            "height_diff",
+            "calibration_date",
+            "effective_dates",
+            "notes",
         ]
 
     @property
@@ -3508,27 +3388,27 @@ class SitePressureSensor(MeteorologicalInstrumentation):
     model = models.CharField(
         max_length=255,
         blank=False,
-        verbose_name=_('Pressure Sensor Model'),
-        help_text=_('Enter pressure sensor model'),
-        db_index=True
+        verbose_name=_("Pressure Sensor Model"),
+        help_text=_("Enter pressure sensor model"),
+        db_index=True,
     )
 
     sampling_interval = models.PositiveSmallIntegerField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Data Sampling Interval'),
-        help_text=_('Enter the sample interval in seconds. Format: (sec)'),
-        db_index=True
+        verbose_name=_("Data Sampling Interval"),
+        help_text=_("Enter the sample interval in seconds. Format: (sec)"),
+        db_index=True,
     )
 
     accuracy = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Accuracy (hPa)'),
-        help_text=_('Enter the accuracy in hectopascal. Format: (hPa)'),
-        db_index=True
+        verbose_name=_("Accuracy (hPa)"),
+        help_text=_("Enter the accuracy in hectopascal. Format: (hPa)"),
+        db_index=True,
     )
 
 
@@ -3549,16 +3429,16 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
     @classmethod
     def structure(cls):
         return [
-            'model',
-            'manufacturer',
-            'serial_number',
-            'sampling_interval',
-            'accuracy',
-            'aspiration',
-            'height_diff',
-            'calibration_date',
-            'effective_dates',
-            'notes'
+            "model",
+            "manufacturer",
+            "serial_number",
+            "sampling_interval",
+            "accuracy",
+            "aspiration",
+            "height_diff",
+            "calibration_date",
+            "effective_dates",
+            "notes",
         ]
 
     @property
@@ -3572,30 +3452,28 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
     model = models.CharField(
         max_length=255,
         blank=True,
-        default='',
-        verbose_name=_('Temp. Sensor Model'),
-        help_text=_('Enter temperature sensor model'),
-        db_index=True
+        default="",
+        verbose_name=_("Temp. Sensor Model"),
+        help_text=_("Enter temperature sensor model"),
+        db_index=True,
     )
 
     sampling_interval = models.PositiveSmallIntegerField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Data Sampling Interval'),
-        help_text=_('Enter the sample interval in seconds. Format: (sec)'),
-        db_index=True
+        verbose_name=_("Data Sampling Interval"),
+        help_text=_("Enter the sample interval in seconds. Format: (sec)"),
+        db_index=True,
     )
 
     accuracy = models.FloatField(
         default=None,
         null=True,
         blank=True,
-        verbose_name=_('Accuracy (deg C)'),
-        help_text=_(
-            'Enter the accuracy in degrees Centigrade. Format: (deg C)'
-        ),
-        db_index=True
+        verbose_name=_("Accuracy (deg C)"),
+        help_text=_("Enter the accuracy in degrees Centigrade. Format: (deg C)"),
+        db_index=True,
     )
 
     aspiration = EnumField(
@@ -3605,12 +3483,12 @@ class SiteTemperatureSensor(MeteorologicalInstrumentation):
         blank=True,
         strict=False,
         max_length=50,
-        verbose_name=_('Aspiration'),
+        verbose_name=_("Aspiration"),
         help_text=_(
-            'Enter the aspiration type if known. '
-            'Format: (UNASPIRATED/NATURAL/FAN/etc)'
+            "Enter the aspiration type if known. "
+            "Format: (UNASPIRATED/NATURAL/FAN/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
 
@@ -3625,17 +3503,18 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
        Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
        Notes                  : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'model',
-            'manufacturer',
-            'serial_number',
-            'distance_to_antenna',
-            'height_diff',
-            'calibration_date',
-            'effective_dates',
-            'notes'
+            "model",
+            "manufacturer",
+            "serial_number",
+            "distance_to_antenna",
+            "height_diff",
+            "calibration_date",
+            "effective_dates",
+            "notes",
         ]
 
     @property
@@ -3649,22 +3528,22 @@ class SiteWaterVaporRadiometer(MeteorologicalInstrumentation):
     model = models.CharField(
         max_length=255,
         blank=True,
-        default='',
-        verbose_name=_('Water Vapor Radiometer'),
-        help_text=_('Enter water vapor radiometer'),
-        db_index=True
+        default="",
+        verbose_name=_("Water Vapor Radiometer"),
+        help_text=_("Enter water vapor radiometer"),
+        db_index=True,
     )
 
     distance_to_antenna = models.FloatField(
         default=None,
         blank=True,
         null=True,
-        verbose_name=_('Distance to Antenna (m)'),
+        verbose_name=_("Distance to Antenna (m)"),
         help_text=_(
-            'Enter the horizontal distance between the WVR and the GNSS '
-            'antenna to the nearest meter. Format: (m)'
+            "Enter the horizontal distance between the WVR and the GNSS "
+            "antenna to the nearest meter. Format: (m)"
         ),
-        db_index=True
+        db_index=True,
     )
 
 
@@ -3672,13 +3551,14 @@ class SiteOtherInstrumentation(SiteSubSection):
     """
     8.5.x Other Instrumentation   : (multiple lines)
     """
+
     @classproperty
     def valid_time(cls):
         return None
 
     @classmethod
     def structure(cls):
-        return ['instrumentation']
+        return ["instrumentation"]
 
     @property
     def heading(self):
@@ -3686,7 +3566,7 @@ class SiteOtherInstrumentation(SiteSubSection):
 
     @property
     def effective(self):
-        return ''
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -3702,14 +3582,13 @@ class SiteOtherInstrumentation(SiteSubSection):
 
     instrumentation = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Other Instrumentation'),
+        default="",
+        verbose_name=_("Other Instrumentation"),
         help_text=_(
-            'Enter any other relevant information regarding meteorological '
-            'instrumentation near the site. Format: (multiple lines)'
-        )
+            "Enter any other relevant information regarding meteorological "
+            "instrumentation near the site. Format: (multiple lines)"
+        ),
     )
-
 
 
 class Condition(SiteSubSection):
@@ -3723,11 +3602,13 @@ class Condition(SiteSubSection):
     @property
     def effective(self):
         if self.effective_start and self.effective_end:
-            return f'{date_to_str(self.effective_start)}/' \
-                   f'{date_to_str(self.effective_end)}'
+            return (
+                f"{date_to_str(self.effective_start)}/"
+                f"{date_to_str(self.effective_end)}"
+            )
         elif self.effective_start:
-            return f'{date_to_str(self.effective_start)}'
-        return ''
+            return f"{date_to_str(self.effective_start)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -3735,17 +3616,16 @@ class Condition(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'Local Ongoing Conditions Possibly Affecting Computed Position'
+        return "Local Ongoing Conditions Possibly Affecting Computed Position"
 
     effective_start = models.DateField(
         blank=True,
         null=True,
         default=None,
         help_text=_(
-            'Enter the effective start date for the condition. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective start date for the condition. " "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     effective_end = models.DateField(
@@ -3753,32 +3633,32 @@ class Condition(SiteSubSection):
         null=True,
         default=None,
         help_text=_(
-            'Enter the effective end date for the condition. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective end date for the condition. " "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     additional_information = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Additional Information'),
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Enter additional relevant information about any radio '
-            'interferences. Format: (multiple lines)'
-        )
+            "Enter additional relevant information about any radio "
+            "interferences. Format: (multiple lines)"
+        ),
     )
 
     def effective_dates(self):
         return self.effective
+
     effective_dates.field = (effective_start, effective_end)
-    effective_dates.verbose_name = _('Effective Dates')
+    effective_dates.verbose_name = _("Effective Dates")
 
     class Meta(SiteSubSection.Meta):
         abstract = True
-        index_together = [
-            ('site', 'subsection', 'published', 'effective_start'),
-            ('subsection', 'published', 'effective_start'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "effective_start")),
+            models.Index(fields=("subsection", "published", "effective_start")),
         ]
 
 
@@ -3791,13 +3671,14 @@ class SiteRadioInterferences(Condition):
            Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
            Additional Information : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'interferences',
-            'degradations',
-            'effective_dates',
-            'additional_information'
+            "interferences",
+            "degradations",
+            "effective_dates",
+            "additional_information",
         ]
 
     @property
@@ -3810,26 +3691,26 @@ class SiteRadioInterferences(Condition):
 
     interferences = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Radio Interferences'),
+        verbose_name=_("Radio Interferences"),
         help_text=_(
-            'Enter all sources of radio interference near the GNSS station. '
-            'Format: (TV/CELL PHONE ANTENNA/RADAR/etc)'
+            "Enter all sources of radio interference near the GNSS station. "
+            "Format: (TV/CELL PHONE ANTENNA/RADAR/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
     degradations = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Observed Degradations'),
+        verbose_name=_("Observed Degradations"),
         help_text=_(
-            'Describe any observed degradations in the GNSS data that are '
-            'presumed to result from radio interference. '
-            'Format: (SN RATIO/DATA GAPS/etc)'
+            "Describe any observed degradations in the GNSS data that are "
+            "presumed to result from radio interference. "
+            "Format: (SN RATIO/DATA GAPS/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
 
@@ -3842,11 +3723,7 @@ class SiteMultiPathSources(Condition):
 
     @classmethod
     def structure(cls):
-        return [
-            'sources',
-            'effective_dates',
-            'additional_information'
-        ]
+        return ["sources", "effective_dates", "additional_information"]
 
     @property
     def heading(self):
@@ -3858,14 +3735,14 @@ class SiteMultiPathSources(Condition):
 
     sources = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Multipath Sources'),
+        verbose_name=_("Multipath Sources"),
         help_text=_(
-            'Describe any potential multipath sources near the GNSS station. '
-            'Format: .(METAL ROOF/DOME/VLBI ANTENNA/etc)'
+            "Describe any potential multipath sources near the GNSS station. "
+            "Format: .(METAL ROOF/DOME/VLBI ANTENNA/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
 
@@ -3875,13 +3752,10 @@ class SiteSignalObstructions(Condition):
        Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
        Additional Information : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
-        return [
-            'obstructions',
-            'effective_dates',
-            'additional_information'
-        ]
+        return ["obstructions", "effective_dates", "additional_information"]
 
     @property
     def heading(self):
@@ -3893,14 +3767,14 @@ class SiteSignalObstructions(Condition):
 
     obstructions = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Signal Obstructions'),
+        verbose_name=_("Signal Obstructions"),
         help_text=_(
-            'Describe any potential signal obstructions near the GNSS station.'
-            ' Format: (TREES/BUILDLINGS/etc)'
+            "Describe any potential signal obstructions near the GNSS station."
+            " Format: (TREES/BUILDLINGS/etc)"
         ),
-        db_index=True
+        db_index=True,
     )
 
 
@@ -3914,10 +3788,7 @@ class SiteLocalEpisodicEffects(SiteSubSection):
 
     @classmethod
     def structure(cls):
-        return [
-            'date',
-            'event'
-        ]
+        return ["date", "event"]
 
     @property
     def heading(self):
@@ -3926,11 +3797,13 @@ class SiteLocalEpisodicEffects(SiteSubSection):
     @property
     def effective(self):
         if self.effective_start and self.effective_end:
-            return f'{date_to_str(self.effective_start)}/' \
-                   f'{date_to_str(self.effective_end)}'
+            return (
+                f"{date_to_str(self.effective_start)}/"
+                f"{date_to_str(self.effective_end)}"
+            )
         elif self.effective_start:
-            return f'{date_to_str(self.effective_start)}'
-        return ''
+            return f"{date_to_str(self.effective_start)}"
+        return ""
 
     @classmethod
     def section_number(cls):
@@ -3942,27 +3815,27 @@ class SiteLocalEpisodicEffects(SiteSubSection):
 
     @classmethod
     def section_header(cls):
-        return 'Local Episodic Effects Possibly Affecting Data Quality'
+        return "Local Episodic Effects Possibly Affecting Data Quality"
 
     event = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Event'),
+        verbose_name=_("Event"),
         help_text=_(
-            'Describe any events near the GNSS station that may affect data '
-            'quality such as tree clearing, construction, or weather events. '
-            'Format: (TREE CLEARING/CONSTRUCTION/etc)'
-        )
+            "Describe any events near the GNSS station that may affect data "
+            "quality such as tree clearing, construction, or weather events. "
+            "Format: (TREE CLEARING/CONSTRUCTION/etc)"
+        ),
     )
     effective_start = models.DateField(
         blank=True,
         default=None,
         null=True,
         help_text=_(
-            'Enter the effective start date for the local episodic effect. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective start date for the local episodic effect. "
+            "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     effective_end = models.DateField(
@@ -3970,180 +3843,188 @@ class SiteLocalEpisodicEffects(SiteSubSection):
         default=None,
         null=True,
         help_text=_(
-            'Enter the effective end date for the local episodic effect. '
-            'Format: (CCYY-MM-DD)'
+            "Enter the effective end date for the local episodic effect. "
+            "Format: (CCYY-MM-DD)"
         ),
-        db_index=True
+        db_index=True,
     )
 
     def date(self):
         return self.effective
+
     date.field = (effective_start, effective_end)
-    date.verbose_name = _('Date')
+    date.verbose_name = _("Date")
 
     class Meta(SiteSubSection.Meta):
-        index_together = [
-            ('site', 'subsection', 'published', 'effective_start'),
-            ('subsection', 'published', 'effective_start'),
+        indexes = [
+            models.Index(fields=("site", "subsection", "published", "effective_start")),
+            models.Index(fields=("subsection", "published", "effective_start")),
         ]
 
 
 class AgencyPOC(SiteSection):
     """
-     Agency                   : (multiple lines)
-     Preferred Abbreviation   : (A10)
-     Mailing Address          : (multiple lines)
-     Primary Contact
-       Contact Name           :
-       Telephone (primary)    :
-       Telephone (secondary)  :
-       Fax                    :
-       E-mail                 :
-     Secondary Contact
-       Contact Name           :
-       Telephone (primary)    :
-       Telephone (secondary)  :
-       Fax                    :
-       E-mail                 :
-     Additional Information   : (multiple lines)
+    Agency                   : (multiple lines)
+    Preferred Abbreviation   : (A10)
+    Mailing Address          : (multiple lines)
+    Primary Contact
+      Contact Name           :
+      Telephone (primary)    :
+      Telephone (secondary)  :
+      Fax                    :
+      E-mail                 :
+    Secondary Contact
+      Contact Name           :
+      Telephone (primary)    :
+      Telephone (secondary)  :
+      Fax                    :
+      E-mail                 :
+    Additional Information   : (multiple lines)
     """
+
     @classmethod
     def structure(cls):
         return [
-            'agency',
-            'preferred_abbreviation',
-            'mailing_address',
-            (_('Primary Contact (Organization Only)'), (
-                'primary_name',
-                'primary_phone1',
-                'primary_phone2',
-                'primary_fax',
-                'primary_email')
-             ),
-            (_('Secondary Contact'), (
-                'secondary_name',
-                'secondary_phone1',
-                'secondary_phone2',
-                'secondary_fax',
-                'secondary_email')
-             ),
-            'additional_information',
+            "agency",
+            "preferred_abbreviation",
+            "mailing_address",
+            (
+                _("Primary Contact (Organization Only)"),
+                (
+                    "primary_name",
+                    "primary_phone1",
+                    "primary_phone2",
+                    "primary_fax",
+                    "primary_email",
+                ),
+            ),
+            (
+                _("Secondary Contact"),
+                (
+                    "secondary_name",
+                    "secondary_phone1",
+                    "secondary_phone2",
+                    "secondary_fax",
+                    "secondary_email",
+                ),
+            ),
+            "additional_information",
         ]
 
     agency = models.TextField(
         max_length=300,
         blank=True,
-        default='',
-        verbose_name=_('Agency'),
-        help_text=_('Enter contact agency name')
+        default="",
+        verbose_name=_("Agency"),
+        help_text=_("Enter contact agency name"),
     )
     preferred_abbreviation = models.CharField(
         max_length=50,  # todo A10
         blank=True,
-        default='',
-        verbose_name=_('Preferred Abbreviation'),
+        default="",
+        verbose_name=_("Preferred Abbreviation"),
         help_text=_("Enter the contact agency's preferred abbreviation"),
-        db_index=True
+        db_index=True,
     )
     mailing_address = models.TextField(
         max_length=300,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Mailing Address'),
-        help_text=_('Enter agency mailing address')
+        verbose_name=_("Mailing Address"),
+        help_text=_("Enter agency mailing address"),
     )
 
     primary_name = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Contact Name'),
-        help_text=_('Enter primary contact organization name'),
-        db_index=True
+        default="",
+        verbose_name=_("Contact Name"),
+        help_text=_("Enter primary contact organization name"),
+        db_index=True,
     )
     primary_phone1 = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Telephone (primary)'),
-        help_text=_('Enter primary contact primary phone number'),
-        db_index=True
+        default="",
+        verbose_name=_("Telephone (primary)"),
+        help_text=_("Enter primary contact primary phone number"),
+        db_index=True,
     )
     primary_phone2 = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Telephone (secondary)'),
-        help_text=_('Enter primary contact secondary phone number'),
-        db_index=True
+        verbose_name=_("Telephone (secondary)"),
+        help_text=_("Enter primary contact secondary phone number"),
+        db_index=True,
     )
     primary_fax = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Fax'),
-        help_text=_('Enter primary contact organization fax number'),
-        db_index=True
+        verbose_name=_("Fax"),
+        help_text=_("Enter primary contact organization fax number"),
+        db_index=True,
     )
     primary_email = models.EmailField(
         blank=True,
-        default='',
-        verbose_name=_('E-mail'),
+        default="",
+        verbose_name=_("E-mail"),
         help_text=_(
-            'Enter primary contact organization email address. MUST be a '
-            'generic email, no personal email addresses.'
+            "Enter primary contact organization email address. MUST be a "
+            "generic email, no personal email addresses."
         ),
-        db_index=True
+        db_index=True,
     )
 
     secondary_name = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Contact Name'),
-        help_text=_('Enter secondary contact name'),
-        db_index=True
+        verbose_name=_("Contact Name"),
+        help_text=_("Enter secondary contact name"),
+        db_index=True,
     )
     secondary_phone1 = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Telephone (primary)'),
-        help_text=_('Enter secondary contact primary phone number'),
-        db_index=True
+        verbose_name=_("Telephone (primary)"),
+        help_text=_("Enter secondary contact primary phone number"),
+        db_index=True,
     )
     secondary_phone2 = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Telephone (secondary)'),
-        help_text=_('Enter secondary contact secondary phone number'),
-        db_index=True
+        verbose_name=_("Telephone (secondary)"),
+        help_text=_("Enter secondary contact secondary phone number"),
+        db_index=True,
     )
     secondary_fax = models.CharField(
         max_length=50,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Fax'),
-        help_text=_('Enter secondary contact fax number'),
-        db_index=True
+        verbose_name=_("Fax"),
+        help_text=_("Enter secondary contact fax number"),
+        db_index=True,
     )
     secondary_email = models.EmailField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('E-mail'),
-        help_text=_('Enter secondary contact email address'),
-        db_index=True
+        verbose_name=_("E-mail"),
+        help_text=_("Enter secondary contact email address"),
+        db_index=True,
     )
 
     additional_information = models.TextField(
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Additional Information'),
+        verbose_name=_("Additional Information"),
         help_text=_(
-            'Enter additional relevant information regarding operational '
-            'contacts. Format: (multiple lines).'
-        )
+            "Enter additional relevant information regarding operational "
+            "contacts. Format: (multiple lines)."
+        ),
     )
 
     class Meta:
@@ -4178,7 +4059,7 @@ class SiteOperationalContact(AgencyPOC):
 
     @classmethod
     def section_header(cls):
-        return 'On-Site, Point of Contact Agency Information'
+        return "On-Site, Point of Contact Agency Information"
 
 
 class SiteResponsibleAgency(AgencyPOC):
@@ -4209,7 +4090,7 @@ class SiteResponsibleAgency(AgencyPOC):
 
     @classmethod
     def section_header(cls):
-        return 'Responsible Agency'
+        return "Responsible Agency"
 
 
 class SiteMoreInformation(SiteSection):
@@ -4228,21 +4109,25 @@ class SiteMoreInformation(SiteSection):
      Additional Information   : (multiple lines)
      Antenna Graphics with Dimensions
     """
+
     @classmethod
     def structure(cls):
         return [
-            'primary',
-            'secondary',
-            'more_info',
-            (_('Hardcopy on File'), (
-                'sitemap',
-                'site_diagram',
-                'horizon_mask',
-                'monument_description',
-                'site_picture')
-             ),
-            'additional_information',
-            #(_('Antenna Graphics with Dimensions'), ('antenna_graphic',))
+            "primary",
+            "secondary",
+            "more_info",
+            (
+                _("Hardcopy on File"),
+                (
+                    "sitemap",
+                    "site_diagram",
+                    "horizon_mask",
+                    "monument_description",
+                    "site_picture",
+                ),
+            ),
+            "additional_information",
+            # (_('Antenna Graphics with Dimensions'), ('antenna_graphic',))
         ]
 
     @classmethod
@@ -4251,85 +4136,83 @@ class SiteMoreInformation(SiteSection):
 
     @classmethod
     def section_header(cls):
-        return 'More Information'
+        return "More Information"
 
     primary = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Primary Data Center'),
-        help_text=_('Enter the name of the primary operational data center'),
-        db_index=True
+        default="",
+        verbose_name=_("Primary Data Center"),
+        help_text=_("Enter the name of the primary operational data center"),
+        db_index=True,
     )
     secondary = models.CharField(
         max_length=50,
         blank=True,
-        default='',
-        verbose_name=_('Secondary Data Center'),
-        help_text=_('Enter the name of the secondary or backup data center'),
-        db_index=True
+        default="",
+        verbose_name=_("Secondary Data Center"),
+        help_text=_("Enter the name of the secondary or backup data center"),
+        db_index=True,
     )
 
     more_info = models.URLField(
-        default='',
+        default="",
         null=False,
         blank=True,
-        verbose_name=_('URL for More Information'),
-        db_index=True
+        verbose_name=_("URL for More Information"),
+        db_index=True,
     )
 
     sitemap = models.CharField(
         max_length=255,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Site Map'),
-        help_text=_('Enter the site map URL'),
-        db_index=True
+        verbose_name=_("Site Map"),
+        help_text=_("Enter the site map URL"),
+        db_index=True,
     )
     site_diagram = models.CharField(
         max_length=255,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Site Diagram'),
-        help_text=_('Enter URL for site diagram'),
-        db_index=True
+        verbose_name=_("Site Diagram"),
+        help_text=_("Enter URL for site diagram"),
+        db_index=True,
     )
     horizon_mask = models.CharField(
         max_length=255,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Horizon Mask'),
-        help_text=_('Enter Horizon mask URL'),
-        db_index=True
+        verbose_name=_("Horizon Mask"),
+        help_text=_("Enter Horizon mask URL"),
+        db_index=True,
     )
     monument_description = models.CharField(
         max_length=255,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Monument Description'),
-        help_text=_('Enter monument description URL'),
-        db_index=True
+        verbose_name=_("Monument Description"),
+        help_text=_("Enter monument description URL"),
+        db_index=True,
     )
     site_picture = models.CharField(
         max_length=255,
-        default='',
+        default="",
         blank=True,
-        verbose_name=_('Site Pictures'),
-        help_text=_('Enter site pictures URL'),
-        db_index=True
+        verbose_name=_("Site Pictures"),
+        help_text=_("Enter site pictures URL"),
+        db_index=True,
     )
 
     additional_information = models.TextField(
         blank=True,
-        default='',
-        verbose_name=_('Additional Information'),
-        help_text=_(
-            'Enter additional relevant information. Format: (multiple lines)'
-        )
+        default="",
+        verbose_name=_("Additional Information"),
+        help_text=_("Enter additional relevant information. Format: (multiple lines)"),
     )
 
-    #def antenna_graphic(self):
+    # def antenna_graphic(self):
     #    return self.site.siteantenna_set.first().graphic
 
-    #antenna_graphic.verbose_name = _('')
-    #antenna_graphic.no_indent = True
+    # antenna_graphic.verbose_name = _('')
+    # antenna_graphic.no_indent = True

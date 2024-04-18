@@ -18,7 +18,7 @@ TODO
 * Documentation
 * Linting
 ** Data Model Refactor - normalize log entries??
-** Vue.js integration
+** htmx integration
 
 
 

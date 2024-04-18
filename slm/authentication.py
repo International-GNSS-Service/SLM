@@ -5,20 +5,20 @@ There is an http signature IETF standard in the works, presumably a more mature 
 library will emerge at some point - when that happens this should be replaced with that one.
 """
 
+from functools import lru_cache
+
 from allauth.account import app_settings
 from allauth.account.adapter import get_adapter
 from allauth.account.app_settings import AuthenticationMethod  # do not remove!
 from allauth.account.forms import EmailAwarePasswordResetTokenGenerator
 from allauth.account.utils import user_pk_to_url_str, user_username
 from allauth.utils import build_absolute_uri
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
-from rest_framework import authentication, exceptions
 from django.utils.module_loading import import_string
-from django.conf import settings
-from functools import lru_cache
-
+from rest_framework import authentication, exceptions
 
 """
 Reusing failure exceptions serves several purposes:
@@ -30,11 +30,10 @@ Reusing failure exceptions serves several purposes:
     rather than generated on every failure, which could lead to higher loads
     or memory usage in high-volume attack scenarios.
 """
-FAILED = exceptions.AuthenticationFailed('Invalid signature.')
+FAILED = exceptions.AuthenticationFailed("Invalid signature.")
 
 
 class SignatureAuthentication(authentication.BaseAuthentication):
-
     """
     DRF authentication class for HTTP Signature support.
 
@@ -54,7 +53,7 @@ class SignatureAuthentication(authentication.BaseAuthentication):
     www_authenticate_realm = "api"
     required_headers = ["date"]
 
-    def fetch_user_data(self, api_key, algorithm='hmac-sha256'):
+    def fetch_user_data(self, api_key, algorithm="hmac-sha256"):
         """Retuns a tuple (User, secret) or (None, None)."""
         try:
             user = get_user_model().objects.get(username=api_key)
@@ -92,7 +91,7 @@ class SignatureAuthentication(authentication.BaseAuthentication):
         method, fields = utils.parse_authorization_header(auth_header)
 
         # Ignore foreign Authorization headers.
-        if method.lower() != 'signature':
+        if method.lower() != "signature":
             return None
 
         # Verify basic header structure.
@@ -105,8 +104,7 @@ class SignatureAuthentication(authentication.BaseAuthentication):
 
         # Fetch the secret associated with the keyid
         user, secret = self.fetch_user_data(
-            fields["keyid"],
-            algorithm=fields["algorithm"]
+            fields["keyid"], algorithm=fields["algorithm"]
         )
 
         if not (user and secret):
@@ -116,9 +114,8 @@ class SignatureAuthentication(authentication.BaseAuthentication):
         # https://docs.djangoproject.com/en/1.6/ref/request-response/#django.http.HttpRequest.META
         headers = {}
         for key in request.META.keys():
-            if key.startswith("HTTP_") or \
-                    key in ("CONTENT_TYPE", "CONTENT_LENGTH"):
-                header = key[5:].lower().replace('_', '-')
+            if key.startswith("HTTP_") or key in ("CONTENT_TYPE", "CONTENT_LENGTH"):
+                header = key[5:].lower().replace("_", "-")
                 headers[header] = request.META[key]
 
         # Verify headers
@@ -127,7 +124,7 @@ class SignatureAuthentication(authentication.BaseAuthentication):
             secret,
             required_headers=self.required_headers,
             method=request.method.lower(),
-            path=request.get_full_path()
+            path=request.get_full_path(),
         )
 
         # All of that just to get to this.
@@ -150,7 +147,6 @@ def initiate_password_resets(users, request=None):
     token_generator = EmailAwarePasswordResetTokenGenerator()
 
     for user in users:
-
         temp_key = token_generator.make_token(user)
 
         # send the password reset email
@@ -180,15 +176,14 @@ def permissions():
     try:
         return import_string(
             getattr(
-                settings,
-                'SLM_PERMISSIONS',
-                'slm.authentication.default_permissions'
+                settings, "SLM_PERMISSIONS", "slm.authentication.default_permissions"
             )
         )().all()
     except ImportError:
         # this is not critical don't make it mean! - so we fail quietly
         # a check for this setting is performed in check
         from django.contrib.auth.models import Permission
+
         return Permission.objects.all()
 
 
@@ -196,11 +191,8 @@ def default_permissions():
     from django.contrib.auth import get_user_model
     from django.contrib.auth.models import Permission
     from django.contrib.contenttypes.models import ContentType
+
     return Permission.objects.filter(
-        content_type=ContentType.objects.get_for_model(
-            get_user_model()
-        ),
-        codename__in=[
-            perm[0] for perm in get_user_model()._meta.permissions
-        ]
+        content_type=ContentType.objects.get_for_model(get_user_model()),
+        codename__in=[perm[0] for perm in get_user_model()._meta.permissions],
     )

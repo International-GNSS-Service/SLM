@@ -1,33 +1,38 @@
+"""
+Configuration file for the Sphinx documentation builder.
+
+This file only contains a selection of the most common options. For a full
+list see the documentation:
+https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""
+
 from datetime import datetime
 import sys
 from pathlib import Path
 from sphinx.ext.autodoc import between
+import os
+import django
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
-import slm
-
-# Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'slm.tests.settings')
+django.setup()
 
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
+# sys.path.append(str(Path(__file__).parent / 'slm' / 'examples'))
+# sys.path.append(str(Path(__file__).parent / 'slm' / 'tests'))
+
+sys.path.append(str(Path(__file__).parent.parent.parent))
+import slm
 
 # -- Project information -----------------------------------------------------
 
-project = 'django_enum'
+project = 'IGS Site Log Manager'
 copyright = f'2022-{datetime.now().year}, NASA/Jet Propulsion Laboratory'
-author = ['Ashley Santiago', 'Rachel Pham', 'Brian Kohan']
+author = ", ".join(['Ashley Santiago', 'Rachel Pham', 'Brian Kohan'])
 
 # The full version, including alpha/beta/rc tags
 release = slm.__version__

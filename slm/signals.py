@@ -6,9 +6,11 @@ All signals contain a request object that holds the request that initiated the
 event. This object is provided mostly for logging purposes and is not
 guaranteed to be non-null.
 """
+
+import sys
+
 from django.dispatch import Signal
 from django.utils.module_loading import import_string
-import sys
 
 """
 Signal sent when a new site is proposed.
@@ -225,8 +227,8 @@ alert_cleared = Signal()
 
 
 _signal_names_ = {
-    value: f'slm.signals.{key}' for key, value in
-    sys._getframe().f_globals.items()
+    value: f"slm.signals.{key}"
+    for key, value in sys._getframe().f_globals.items()
     if isinstance(value, Signal)
 }
 
@@ -242,8 +244,7 @@ def signal_name(signal):
     if name:
         return name
     return {
-        value: f'{signal.__module__}.{key}' for key, value in
-        vars(import_string(signal.__module__)).items()
+        value: f"{signal.__module__}.{key}"
+        for key, value in vars(import_string(signal.__module__)).items()
         if isinstance(value, Signal)
     }.get(signal, str(signal))
-

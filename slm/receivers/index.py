@@ -1,4 +1,5 @@
 from django.dispatch import receiver
+
 from slm import signals as slm_signals
 from slm.defines import SiteLogStatus
 
@@ -6,9 +7,10 @@ from slm.defines import SiteLogStatus
 @receiver(slm_signals.site_status_changed)
 def index_site(sender, site, previous_status, new_status, **kwargs):
     from slm.models import ArchiveIndex
+
     if site.last_publish and (
-        previous_status in SiteLogStatus.active_states() and
-        new_status not in SiteLogStatus.active_states()
+        previous_status in SiteLogStatus.active_states()
+        and new_status not in SiteLogStatus.active_states()
     ):
         ArchiveIndex.objects.close_index(site)
 
@@ -16,6 +18,7 @@ def index_site(sender, site, previous_status, new_status, **kwargs):
 @receiver(slm_signals.site_published)
 def publish_site(sender, site, **kwargs):
     from slm.models import ArchiveIndex
+
     ArchiveIndex.objects.add_index(site)
 
 
@@ -27,38 +30,28 @@ def publish_site(sender, site, **kwargs):
 # The current approach is fine for now - the attachments are largely of
 # ancillary benefit.
 @receiver(slm_signals.site_file_published)
-def log_file_published(
-    sender, site, user, timestamp, request, upload, **kwargs
-):
-    from slm.models import ArchiveIndex
+def log_file_published(sender, site, user, timestamp, request, upload, **kwargs):
     from slm.defines import SiteLogFormat
-    ArchiveIndex.objects.regenerate(
-        site,
-        log_format=SiteLogFormat.GEODESY_ML
-    )
+    from slm.models import ArchiveIndex
+
+    ArchiveIndex.objects.regenerate(site, log_format=SiteLogFormat.GEODESY_ML)
 
 
 @receiver(slm_signals.site_file_unpublished)
-def log_file_unpublished(
-    sender, site, user, timestamp, request, upload, **kwargs
-):
-    from slm.models import ArchiveIndex
+def log_file_unpublished(sender, site, user, timestamp, request, upload, **kwargs):
     from slm.defines import SiteLogFormat
-    ArchiveIndex.objects.regenerate(
-        site,
-        log_format=SiteLogFormat.GEODESY_ML
-    )
+    from slm.models import ArchiveIndex
+
+    ArchiveIndex.objects.regenerate(site, log_format=SiteLogFormat.GEODESY_ML)
 
 
 @receiver(slm_signals.site_file_deleted)
 def log_file_deleted(sender, site, user, timestamp, request, upload, **kwargs):
-    from slm.defines import SLMFileType, SiteFileUploadStatus, SiteLogFormat
+    from slm.defines import SiteFileUploadStatus, SiteLogFormat, SLMFileType
     from slm.models import ArchiveIndex
-    if (
-        upload.status is SiteFileUploadStatus.PUBLISHED and
-        upload.file_type in [SLMFileType.SITE_IMAGE, SLMFileType.ATTACHMENT]
-    ):
-        ArchiveIndex.objects.regenerate(
-            site,
-            log_format=SiteLogFormat.GEODESY_ML
-        )
+
+    if upload.status is SiteFileUploadStatus.PUBLISHED and upload.file_type in [
+        SLMFileType.SITE_IMAGE,
+        SLMFileType.ATTACHMENT,
+    ]:
+        ArchiveIndex.objects.regenerate(site, log_format=SiteLogFormat.GEODESY_ML)

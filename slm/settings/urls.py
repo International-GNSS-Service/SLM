@@ -49,6 +49,7 @@ the myapp path you might do this:
     ]
 
 """
+
 from importlib import import_module
 
 from django.conf import settings
@@ -57,12 +58,10 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-
 APIS = {}
 
 
 class ReregisterableRouter(DefaultRouter):
-
     def register(self, prefix, viewset, base_name=None):
         if base_name is None:
             base_name = self.get_default_base_name(viewset)
@@ -77,13 +76,12 @@ class ReregisterableRouter(DefaultRouter):
 
 
 def bring_in_urls(urlpatterns):
-
     routers = {}
 
     for app in reversed(settings.INSTALLED_APPS):
         try:
-            url_module = import_module(f'{app}.urls')
-            api = getattr(url_module, 'APIS', None)
+            url_module = import_module(f"{app}.urls")
+            api = getattr(url_module, "APIS", None)
             if api:
                 for api, endpoints in api.items():
                     if api not in routers:
@@ -94,35 +92,33 @@ def bring_in_urls(urlpatterns):
                             endpoint[0],
                             endpoint[1],
                             base_name=(
-                                endpoint[0] if len(endpoint) < 3
-                                else endpoint[2]
-                            )
+                                endpoint[0] if len(endpoint) < 3 else endpoint[2]
+                            ),
                         )
 
         except ImportError:
-            if app in {'slm', 'slm.map', 'network_map', 'igs_ext'}:
+            if app in {"slm", "slm.map", "network_map", "igs_ext"}:
                 raise
             pass
 
     for api, router in routers.items():
         # todo how to nest under slm?
         pattern = path(
-            f'api/{api}/',
-            include((router.urls, 'slm'), namespace=f'slm_{api}_api')
+            f"api/{api}/", include((router.urls, "slm"), namespace=f"slm_{api}_api")
         )
         urlpatterns.append(pattern)
-        APIS.setdefault(f'{api}_api', []).append(pattern)
+        APIS.setdefault(f"{api}_api", []).append(pattern)
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
-    path('', include('slm.urls'))
+    path("admin/", admin.site.urls),
+    path("accounts/", include("allauth.urls")),
+    path("ckeditor/", include("ckeditor_uploader.urls")),
+    path("", include("slm.urls")),
 ]
 
-if getattr(settings, 'DJANGO_DEBUG_TOOLBAR', False):
-    urlpatterns.append(path('__debug__/', include('debug_toolbar.urls')))
+if getattr(settings, "DJANGO_DEBUG_TOOLBAR", False):
+    urlpatterns.append(path("__debug__/", include("debug_toolbar.urls")))
 
 # allows us to use static files like images
 urlpatterns += staticfiles_urlpatterns()

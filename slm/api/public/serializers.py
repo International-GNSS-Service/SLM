@@ -1,18 +1,18 @@
 from rest_framework import serializers
+
 from slm.models import (
     Agency,
-    Network,
-    SiteFileUpload,
-    Site,
-    Equipment,
-    Receiver,
     Antenna,
-    Radome,
     ArchivedSiteLog,
+    Equipment,
+    Network,
+    Radome,
+    Receiver,
     SatelliteSystem,
-    SiteTideGauge
+    Site,
+    SiteFileUpload,
+    SiteTideGauge,
 )
-from slm.defines import SiteLogStatus
 from slm.utils import build_absolute_url
 
 """
@@ -26,37 +26,26 @@ class DOMESSerializer(serializers.Serializer):
         )
 """
 
+
 class EquipmentSerializer(serializers.ModelSerializer):
-    manufacturer = serializers.CharField(
-        source='manufacturer.name',
-        allow_null=True
-    )
+    manufacturer = serializers.CharField(source="manufacturer.name", allow_null=True)
 
     class Meta:
         model = Equipment
-        fields = [
-            'id',
-            'model',
-            'description',
-            'state',
-            'manufacturer'
-        ]
+        fields = ["id", "model", "description", "state", "manufacturer"]
 
 
 class AntennaSerializer(EquipmentSerializer):
-
     class Meta(EquipmentSerializer.Meta):
         model = Antenna
 
 
 class ReceiverSerializer(EquipmentSerializer):
-
     class Meta(EquipmentSerializer.Meta):
         model = Receiver
 
 
 class RadomeSerializer(EquipmentSerializer):
-
     class Meta(EquipmentSerializer.Meta):
         model = Radome
 
@@ -64,58 +53,46 @@ class RadomeSerializer(EquipmentSerializer):
 class AgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Agency
-        fields = [
-            'id',
-            'name',
-            'shortname',
-            'country'
-        ]
+        fields = ["id", "name", "shortname", "country"]
 
 
 class NetworkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Network
-        fields = [
-            'id',
-            'name'
-        ]
+        fields = ["id", "name"]
 
 
 class StationNameSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Site
-        fields = ('id', 'name',)
+        fields = (
+            "id",
+            "name",
+        )
 
 
 class SatelliteSystemSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = SatelliteSystem
-        fields = ('name',)
+        fields = ("name",)
 
 
 class SiteTideGaugeSerializer(serializers.ModelSerializer):
-
     name = serializers.SerializerMethodField()
-    link = serializers.URLField(source='gauge.link')
+    link = serializers.URLField(source="gauge.link")
 
     def get_name(self, obj):
         return obj.gauge.name
 
     class Meta:
         model = SiteTideGauge
-        fields = ('name', 'link', 'distance')
+        fields = ("name", "link", "distance")
 
 
 class StationListSerializer(serializers.ModelSerializer):
-
     agencies = AgencySerializer(many=True)
     networks = NetworkSerializer(many=True)
-    tide_gauges = SiteTideGaugeSerializer(
-        source='tide_gauge_distances',
-        many=True
-    )
+    tide_gauges = SiteTideGaugeSerializer(source="tide_gauge_distances", many=True)
 
     satellite_system = serializers.SerializerMethodField()
 
@@ -161,7 +138,7 @@ class StationListSerializer(serializers.ModelSerializer):
             return (
                 obj.antenna_marker_une[0],
                 obj.antenna_marker_une[1],
-                obj.antenna_marker_une[2]
+                obj.antenna_marker_une[2],
             )
         return None, None, None
 
@@ -170,10 +147,7 @@ class StationListSerializer(serializers.ModelSerializer):
         This should produce no additional queries b/c of the prefetching.
         """
         for receiver in obj.sitereceiver_set.all():
-            return [
-                sys.name
-                for sys in receiver.satellite_system.all()
-            ]
+            return [sys.name for sys in receiver.satellite_system.all()]
         return []
 
     def get_last_data(self, obj):
@@ -184,78 +158,65 @@ class StationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
         fields = [
-            'name',
-            'status',
-            'agencies',
-            'networks',
-            'join_date',
-            'last_publish',
-            'xyz',
-            'llh',
-            'city',
-            'state',
-            'country',
-            'antenna_type',
-            'antenna_serial_number',
-            'antenna_marker_une',
-            'radome_type',
-            'antcal',
-            'receiver_type',
-            'serial_number',
-            'firmware',
-            'frequency_standard',
-            'domes_number',
-            'satellite_system',
-            'tide_gauges',
-            'data_center',
-            'last_rinex2',
-            'last_rinex3',
-            'last_rinex4',
-            'last_data_time',
-            'last_data'
+            "name",
+            "status",
+            "agencies",
+            "networks",
+            "join_date",
+            "last_publish",
+            "xyz",
+            "llh",
+            "city",
+            "state",
+            "country",
+            "antenna_type",
+            "antenna_serial_number",
+            "antenna_marker_une",
+            "radome_type",
+            "antcal",
+            "receiver_type",
+            "serial_number",
+            "firmware",
+            "frequency_standard",
+            "domes_number",
+            "satellite_system",
+            "tide_gauges",
+            "data_center",
+            "last_rinex2",
+            "last_rinex3",
+            "last_rinex4",
+            "last_data_time",
+            "last_data",
         ]
 
 
 class SiteFileUploadSerializer(serializers.ModelSerializer):
-
-    site = serializers.CharField(source='site.name', allow_null=True)
+    site = serializers.CharField(source="site.name", allow_null=True)
     download = serializers.SerializerMethodField()
 
     def get_download(self, obj):
-        return build_absolute_url(
-            obj.link,
-            request=self.context.get('request', None)
-        )
+        return build_absolute_url(obj.link, request=self.context.get("request", None))
 
     class Meta:
         model = SiteFileUpload
         fields = [
-            'id',
-            'site',
-            'name',
-            'timestamp',
-            'created',
-            'download',
-            'mimetype',
-            'description',
-            'direction'
+            "id",
+            "site",
+            "name",
+            "timestamp",
+            "created",
+            "download",
+            "mimetype",
+            "description",
+            "direction",
         ]
         read_only_fields = fields
 
 
 class ArchiveSerializer(serializers.ModelSerializer):
-
-    site = serializers.CharField(source='site.name', allow_null=True)
+    site = serializers.CharField(source="site.name", allow_null=True)
 
     class Meta:
         model = ArchivedSiteLog
-        fields = [
-            'id',
-            'site',
-            'name',
-            'timestamp',
-            'mimetype',
-            'log_format',
-            'size'
-        ]
+        fields = ["id", "site", "name", "timestamp", "mimetype", "log_format", "size"]
         read_only_fields = fields

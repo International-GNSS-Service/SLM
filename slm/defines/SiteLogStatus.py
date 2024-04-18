@@ -3,59 +3,46 @@ from django_enum import IntegerChoices
 from enum_properties import p, s
 
 
-class SiteLogStatus(IntegerChoices, p('help')):
-
-    _symmetric_builtins_ = [s('name', case_fold=True)]
+class SiteLogStatus(IntegerChoices, p("help")):
+    _symmetric_builtins_ = [s("name", case_fold=True)]
 
     FORMER = (
         1,
-        _('Former'),
-        _('Site is no longer maintained and logs are not published.')
+        _("Former"),
+        _("Site is no longer maintained and logs are not published."),
     )
 
     PROPOSED = (
         2,
-        _('Proposed'),
-        _(
-            'This is a new Site that has never been published.'
-        )
+        _("Proposed"),
+        _("This is a new Site that has never been published."),
     )
 
-    UPDATED = (
-        3,
-        _('Updated'),
-        _('Site log or section has unpublished updates.')
-    )
+    UPDATED = (3, _("Updated"), _("Site log or section has unpublished updates."))
 
     PUBLISHED = (
         4,
-        _('Published'),
-        _('Site log or section is published with no unpublished changes.')
+        _("Published"),
+        _("Site log or section is published with no unpublished changes."),
     )
 
-    EMPTY = (
-        5,
-        _('Empty'),
-        _('Site log section is empty or deleted.')
-    )
+    EMPTY = (5, _("Empty"), _("Site log section is empty or deleted."))
 
     SUSPENDED = (
         6,
-        _('Suspended'),
-        _(
-            'Site has been temporarily suspended and does not appear in public'
-            ' data.'
-        )
+        _("Suspended"),
+        _("Site has been temporarily suspended and does not appear in public" " data."),
     )
 
     @property
     def css(self):
         return f'slm-status-{self.label.lower().replace(" ", "-")}'
-    
+
     @property
     def color(self):
         from django.conf import settings
-        return getattr(settings, 'SLM_STATUS_COLORS', {}).get(self, None)
+
+        return getattr(settings, "SLM_STATUS_COLORS", {}).get(self, None)
 
     def merge(self, sibling):
         """
@@ -74,7 +61,7 @@ class SiteLogStatus(IntegerChoices, p('help')):
         if self in {
             SiteLogStatus.PUBLISHED,
             SiteLogStatus.UPDATED,
-            SiteLogStatus.EMPTY
+            SiteLogStatus.EMPTY,
         }:
             return child
         return self.merge(child)

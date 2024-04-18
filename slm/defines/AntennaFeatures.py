@@ -4,10 +4,7 @@ from enum_properties import s
 
 
 class AntennaFeatures(IntegerChoices):
-
-    _symmetric_builtins_ = [
-        s('name', case_fold=True)
-    ]
+    _symmetric_builtins_ = [s("name", case_fold=True)]
 
     MMI = 1, _("(MMI) Man-Machine Interface")
     NOM = 2, _("(NOM) North Orientation Mark")

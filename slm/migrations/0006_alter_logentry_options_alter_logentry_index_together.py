@@ -4,18 +4,21 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('slm', '0005_alter_logentry_options_alter_logentry_section_and_more'),
+        ("slm", "0005_alter_logentry_options_alter_logentry_section_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='logentry',
-            options={'ordering': ('-timestamp',), 'verbose_name': 'Log Entry', 'verbose_name_plural': 'Log Entries'},
+            name="logentry",
+            options={
+                "ordering": ("-timestamp",),
+                "verbose_name": "Log Entry",
+                "verbose_name_plural": "Log Entries",
+            },
         ),
         migrations.AlterIndexTogether(
-            name='logentry',
+            name="logentry",
             index_together=set(),
         ),
     ]

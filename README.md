@@ -1,4 +1,17 @@
-# ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) Site Log Manager (SLM)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm/)
+[![PyPI djversions](https://img.shields.io/pypi/djversions/igs-slm.svg)](https://pypi.org/project/igs-slm/)
+[![PyPI status](https://img.shields.io/pypi/status/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm)
+[![Documentation Status](https://readthedocs.org/projects/igs-slm/badge/?version=latest)](http://igs-slm.readthedocs.io/?badge=latest/)
+[![Code Cov](https://codecov.io/gh/bckohan/igs-slm/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/bckohan/igs-slm)
+[![Test Status](https://github.com/bckohan/igs-slm/workflows/test/badge.svg)](https://github.com/bckohan/igs-slm/actions/workflows/test.yml)
+[![Lint Status](https://github.com/bckohan/igs-slm/workflows/lint/badge.svg)](https://github.com/bckohan/igs-slm/actions/workflows/lint.yml)
+[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
+# ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) 
+Site Log Manager (SLM)
 
 The Site Log Manager (SLM) is a web platform that aims to provide:
 

@@ -16,11 +16,10 @@ r"""
 *******************************************************************************
 """
 
-
 VERSION = (0, 2, 1)
 
-__title__ = 'IGS/Site Log Manager'
-__version__ = '.'.join(str(i) for i in VERSION)
-__author__ = ['Ashley Santiago', 'Brian Kohan', 'Rachel Pham']
-__license__ = 'MIT'
-__copyright__ = 'Copyright 2022-2024 NASA/Jet Propulsion Laboratory'
+__title__ = "IGS/Site Log Manager"
+__version__ = ".".join(str(i) for i in VERSION)
+__author__ = ["Ashley Santiago", "Brian Kohan", "Rachel Pham"]
+__license__ = "MIT"
+__copyright__ = "Copyright 2022-2024 NASA/Jet Propulsion Laboratory"

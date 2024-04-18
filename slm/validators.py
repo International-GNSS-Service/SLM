@@ -1,25 +1,26 @@
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timezone
 
-from slm.defines import FlagSeverity
-from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext as _
+from django.core.validators import RegexValidator
 from django.db.models import Model
-from slm.defines import EquipmentState
+from django.utils.translation import gettext as _
 
+from slm.defines import EquipmentState, FlagSeverity
 
 # we can't use actual nulls for times because it breaks things like
 # Greatest on MYSQL
-NULL_TIME = datetime.utcfromtimestamp(0)
-NULL_VALUES = [None, '', NULL_TIME]
+# NULL_TIME = datetime.utcfromtimestamp(0)
+NULL_TIME = datetime.fromtimestamp(0, timezone.utc)
+NULL_VALUES = [None, "", NULL_TIME]
 
 
-Flag = namedtuple('Flag', 'message manual severity')
+Flag = namedtuple("Flag", "message manual severity")
 
 
 def get_validators(model, field):
     from django.conf import settings
+
     """
     Get the validator list for a given model and field from validation 
     settings.
@@ -28,14 +29,11 @@ def get_validators(model, field):
     :param field: The field name 
     :return:
     """
-    if (
-        isinstance(model, Model) or
-        (isinstance(model, type) and issubclass(model, Model))
+    if isinstance(model, Model) or (
+        isinstance(model, type) and issubclass(model, Model)
     ):
         model = model._meta.label
-    return getattr(
-        settings, 'SLM_DATA_VALIDATORS', {}
-    ).get(model, {}).get(field, [])
+    return getattr(settings, "SLM_DATA_VALIDATORS", {}).get(model, {}).get(field, [])
 
 
 # toggle this flag to allow save block bypassing.
@@ -59,17 +57,17 @@ def bypass_block():
     :return: True if we should bypass any save blocks
     """
     from django.conf import settings
+
     if BYPASS_BLOCKS is None:
-        return getattr(settings, 'SLM_VALIDATION_BYPASS_BLOCK')
+        return getattr(settings, "SLM_VALIDATION_BYPASS_BLOCK")
     return bool(BYPASS_BLOCKS)
 
 
 class SLMValidator:
-
     severity = FlagSeverity.NOTIFY
 
     def __init__(self, *args, **kwargs):
-        self.severity = kwargs.pop('severity', self.severity)
+        self.severity = kwargs.pop("severity", self.severity)
         super().__init__(*args, **kwargs)
 
     def __call__(self, instance, field, value):
@@ -96,9 +94,8 @@ class SLMValidator:
 
 
 class FieldRequired(SLMValidator):
-
-    required_msg = _('This field is required.')
-    desired_msg = _('This field is desired.')
+    required_msg = _("This field is required.")
+    desired_msg = _("This field is desired.")
 
     allow_legacy_nulls = False
 
@@ -114,9 +111,9 @@ class FieldRequired(SLMValidator):
             value = value.strip()
         if value in NULL_VALUES:
             if (
-                self.desired or
-                not self.allow_legacy_nulls or
-                instance.get_initial_value(field.name) in NULL_VALUES
+                self.desired
+                or not self.allow_legacy_nulls
+                or instance.get_initial_value(field.name) in NULL_VALUES
             ):
                 self.throw_flag(self.desired_msg, instance, field)
             else:
@@ -124,8 +121,7 @@ class FieldRequired(SLMValidator):
 
 
 class EnumValidator(SLMValidator):
-
-    statement = _('Value not in Enumeration.')
+    statement = _("Value not in Enumeration.")
 
     def __call__(self, instance, field, value):
         if isinstance(value, str):
@@ -138,8 +134,7 @@ class EnumValidator(SLMValidator):
 
 
 class VerifiedEquipmentValidator(SLMValidator):
-
-    statement = _('This equipment has not been verified.')
+    statement = _("This equipment has not been verified.")
 
     def __call__(self, instance, field, value):
         if value.state == EquipmentState.UNVERIFIED:
@@ -147,8 +142,7 @@ class VerifiedEquipmentValidator(SLMValidator):
 
 
 class NonEmptyValidator(SLMValidator):
-
-    statement = _('More than zero selections should be made.')
+    statement = _("More than zero selections should be made.")
 
     def __call__(self, instance, field, value):
         if not value.all():
@@ -156,31 +150,23 @@ class NonEmptyValidator(SLMValidator):
 
 
 class FourIDValidator(SLMValidator):
-
-    regex_val = RegexValidator(regex=r'[A-Z0-9]{4}')
+    regex_val = RegexValidator(regex=r"[A-Z0-9]{4}")
 
     def __call__(self, instance, field, value):
-        self.validate(
-            instance,
-            field,
-            lambda: self.regex_val(value)
-        )
+        self.validate(instance, field, lambda: self.regex_val(value))
         if not instance.site.name.startswith(value):
             self.throw_error(
-                f'{field.verbose_name} '
+                f"{field.verbose_name} "
                 f'{_("must be the prefix of the 9 character site name")}.',
                 instance,
-                field
+                field,
             )
 
 
 class ARPValidator(SLMValidator):
-
     def __call__(self, instance, field, value):
         at_arp = getattr(
-            getattr(instance, 'antenna_type', None),
-            'reference_point',
-            None
+            getattr(instance, "antenna_type", None), "reference_point", None
         )
         if at_arp != value:
             self.throw_error(
@@ -188,7 +174,7 @@ class ARPValidator(SLMValidator):
                 f'{_("must does not match the antenna reference point: ")}'
                 f'{getattr(at_arp, "name", None)}.',
                 instance,
-                field
+                field,
             )
 
 
@@ -198,61 +184,58 @@ class TimeRangeBookendValidator(SLMValidator):
     are properly bookended - i.e. that the time range fields are closed before
     the next section starts.
     """
+
     accessor: str
     bookend_field: str
 
     def __init__(
-        self,
-        *args,
-        bookend_field = 'installed',
-        severity=FlagSeverity.NOTIFY,
-        **kwargs
+        self, *args, bookend_field="installed", severity=FlagSeverity.NOTIFY, **kwargs
     ):
         self.bookend_field = bookend_field
-        assert self.bookend_field, 'Bookend field must be specified.'
+        assert self.bookend_field, "Bookend field must be specified."
         super().__init__(*args, severity=severity, **kwargs)
 
     def __call__(self, instance, field, value):
-        sections = getattr(
-            instance.site,
-            instance._meta.get_field('site').remote_field.get_accessor_name()
-        ).head().sort(reverse=True)
+        sections = (
+            getattr(
+                instance.site,
+                instance._meta.get_field("site").remote_field.get_accessor_name(),
+            )
+            .head()
+            .sort(reverse=True)
+        )
         last = sections[0]
         for section in sections[1:]:
             # todo - this should be unnecessary when validation system is made
             #   more robust
-            if 'Must end before' in section._flags.get(field.name, ''):
+            if "Must end before" in section._flags.get(field.name, ""):
                 del section._flags[field.name]
                 section.save()
             ######
 
             last_start = getattr(last, self.bookend_field, None)
-            if (
-                getattr(section, field.name, None) is None or (
-                    last_start and
-                    last_start < getattr(section, field.name)
-                )
+            if getattr(section, field.name, None) is None or (
+                last_start and last_start < getattr(section, field.name)
             ):
                 self.throw_error(
-                    _('Must end before {} starts {}.').format(
-                        last,
-                        getattr(last, self.bookend_field, None)
+                    _("Must end before {} starts {}.").format(
+                        last, getattr(last, self.bookend_field, None)
                     ),
                     section,
-                    field
+                    field,
                 )
 
             last = section
 
-class TimeRangeValidator(SLMValidator):
 
+class TimeRangeValidator(SLMValidator):
     start_field = None
     end_field = None
 
     def __init__(self, *args, severity=FlagSeverity.BLOCK_SAVE, **kwargs):
-        self.start_field = kwargs.pop('start_field', None)
-        self.end_field = kwargs.pop('end_field', None)
-        assert(not (self.start_field and self.end_field))
+        self.start_field = kwargs.pop("start_field", None)
+        self.end_field = kwargs.pop("end_field", None)
+        assert not (self.start_field and self.end_field)
         super().__init__(*args, severity=severity, **kwargs)
 
     def __call__(self, instance, field, value):
@@ -261,11 +244,11 @@ class TimeRangeValidator(SLMValidator):
             if start is not None and start != NULL_TIME and value:
                 if start > value:
                     self.throw_error(
-                        f'{field.verbose_name} '
+                        f"{field.verbose_name} "
                         f'{_("must be greater than")} '
-                        f'{instance._meta.get_field(self.start_field).verbose_name}',
+                        f"{instance._meta.get_field(self.start_field).verbose_name}",
                         instance,
-                        field
+                        field,
                     )
         if self.end_field:
             end = getattr(instance, self.end_field, None)
@@ -278,17 +261,17 @@ class TimeRangeValidator(SLMValidator):
                 ):
                     self.throw_error(
                         f'{_("Cannot define")} '
-                        f'{instance._meta.get_field(self.end_field).verbose_name} '
+                        f"{instance._meta.get_field(self.end_field).verbose_name} "
                         f'{_("without defining")} '
-                        f'{field.verbose_name}.',
+                        f"{field.verbose_name}.",
                         instance,
-                        field
+                        field,
                     )
                 elif end < value:
                     self.throw_error(
-                        f'{field.verbose_name} '
+                        f"{field.verbose_name} "
                         f'{_("must be less than")} '
-                        f'{instance._meta.get_field(self.end_field).verbose_name}',
+                        f"{instance._meta.get_field(self.end_field).verbose_name}",
                         instance,
-                        field
+                        field,
                     )

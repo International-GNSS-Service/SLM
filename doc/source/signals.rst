@@ -1,4 +1,4 @@
-.. include:: signals.rst
+.. include:: refs.rst
 
 =======
 Signals

@@ -1,46 +1,42 @@
-from django.http import QueryDict
-from django_filters import (
-    BaseInFilter,
-    NumberFilter,
-    DateTimeFilter,
-    FilterSet
-)
+from collections import namedtuple
+
+import django_filters
+from dateutil import parser
+from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django_filters import compat
-from django_filters.filterset import BaseFilterSet
 from django.forms import DateTimeField
 from django.forms.utils import from_current_timezone
-from django.core.exceptions import ValidationError
-from dateutil import parser
+from django.http import QueryDict
+from django.utils.functional import cached_property
+from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from django_filters import BooleanFilter
-from slm.forms import SLMBooleanField
-from rest_framework.filters import SearchFilter
-import django_filters
-from slm.defines import (
-    ISOCountry,
-    FrequencyStandardType,
-    SiteLogStatus,
-    AlertLevel
+from django_filters import (
+    BaseInFilter,
+    BooleanFilter,
+    DateTimeFilter,
+    FilterSet,
+    NumberFilter,
+    compat,
 )
+from django_filters.filterset import BaseFilterSet
+from rest_framework.filters import SearchFilter
+
+from slm.defines import AlertLevel, FrequencyStandardType, ISOCountry, SiteLogStatus
+from slm.forms import SLMBooleanField
 from slm.models import (
-    Site,
     Agency,
-    Network,
-    Receiver,
-    Antenna,
-    Radome,
-    SatelliteSystem,
     Alert,
-    SiteReceiver,
+    Antenna,
+    Network,
+    Radome,
+    Receiver,
+    SatelliteSystem,
+    Site,
     SiteAntenna,
     SiteIdentification,
-    SiteMoreInformation
+    SiteMoreInformation,
+    SiteReceiver,
 )
-from django.utils.timezone import now, is_naive, make_aware
-from django.utils.functional import cached_property
-from collections import namedtuple
-from dateutil import parser
 
 
 class SiteSearchFilter(SearchFilter):
@@ -70,99 +66,113 @@ class SiteSearchFilter(SearchFilter):
         searches asynchronously.
         """
         terms = [
-            term.lstrip(',').rstrip(',').strip()
+            term.lstrip(",").rstrip(",").strip()
             for term in self.get_search_terms(request)
         ]
         searched = Q()
         if terms:
             try:
-                epoch = parser.parse(request.GET.get('epoch', None)) or now()
+                epoch = parser.parse(request.GET.get("epoch", None)) or now()
             except (parser.ParserError, TypeError, ValueError):
                 epoch = now()
 
             for search_term in terms:
-
                 site_ids = set(
-                    Site.objects.filter(
-                        name__icontains=search_term
-                    ).order_by().values_list('pk', flat=True)
+                    Site.objects.filter(name__icontains=search_term)
+                    .order_by()
+                    .values_list("pk", flat=True)
                 )
 
                 site_ids.update(
                     Site.objects.filter(
-                        networks__in=Network.objects.filter(
-                            name__icontains=search_term
-                        )
-                    ).order_by().distinct().values_list('pk', flat=True)
+                        networks__in=Network.objects.filter(name__icontains=search_term)
+                    )
+                    .order_by()
+                    .distinct()
+                    .values_list("pk", flat=True)
                 )
 
                 site_ids.update(
                     Site.objects.filter(
                         agencies__in=Agency.objects.filter(
-                            Q(name__icontains=search_term) |
-                            Q(shortname__icontains=search_term)
+                            Q(name__icontains=search_term)
+                            | Q(shortname__icontains=search_term)
                         )
-                    ).order_by().distinct().values_list('pk', flat=True)
+                    )
+                    .order_by()
+                    .distinct()
+                    .values_list("pk", flat=True)
                 )
 
                 site_receivers = SiteReceiver.objects.filter(
-                    Q(published=True) & (
-                        Q(receiver_type__in=Receiver.objects.filter(
-                            model__icontains=search_term)
-                        ) |
-                        Q(firmware__icontains=search_term) |
-                        Q(serial_number__icontains=search_term) &
-                        (
-                            (Q(installed__lte=epoch) |
-                             Q(installed__isnull=True)) &
-                            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+                    Q(published=True)
+                    & (
+                        Q(
+                            receiver_type__in=Receiver.objects.filter(
+                                model__icontains=search_term
+                            )
+                        )
+                        | Q(firmware__icontains=search_term)
+                        | Q(serial_number__icontains=search_term)
+                        & (
+                            (Q(installed__lte=epoch) | Q(installed__isnull=True))
+                            & (Q(removed__gt=epoch) | Q(removed__isnull=True))
                         )
                     )
                 ).order_by()
                 site_antennas = SiteAntenna.objects.filter(
-                    Q(published=True) & (
-                        Q(antenna_type__in=Antenna.objects.filter(
-                            model__icontains=search_term
-                        )) |
-                        Q(radome_type__in=Radome.objects.filter(
-                            model__icontains=search_term
-                        )) &
-                        (
-                            (Q(installed__lte=epoch) |
-                             Q(installed__isnull=True)) &
-                            (Q(removed__gt=epoch) | Q(removed__isnull=True))
+                    Q(published=True)
+                    & (
+                        Q(
+                            antenna_type__in=Antenna.objects.filter(
+                                model__icontains=search_term
+                            )
+                        )
+                        | Q(
+                            radome_type__in=Radome.objects.filter(
+                                model__icontains=search_term
+                            )
+                        )
+                        & (
+                            (Q(installed__lte=epoch) | Q(installed__isnull=True))
+                            & (Q(removed__gt=epoch) | Q(removed__isnull=True))
                         )
                     )
                 ).order_by()
 
-                site_ids.update(Site.objects.filter(
-                    siteantenna__in=site_antennas
-                ).order_by().distinct().values_list('pk', flat=True))
-
                 site_ids.update(
-                    Site.objects.filter(
-                        siteidentification__in=
-                        SiteIdentification.objects.filter(
-                            Q(published=True) &
-                            Q(iers_domes_number__icontains=search_term)
-                        ).order_by()
-                    ).order_by().values_list('pk', flat=True)
+                    Site.objects.filter(siteantenna__in=site_antennas)
+                    .order_by()
+                    .distinct()
+                    .values_list("pk", flat=True)
                 )
 
                 site_ids.update(
                     Site.objects.filter(
-                        sitemoreinformation__in=
-                        SiteMoreInformation.objects.filter(
-                            Q(published=True) &
-                            Q(primary__icontains=search_term)
+                        siteidentification__in=SiteIdentification.objects.filter(
+                            Q(published=True)
+                            & Q(iers_domes_number__icontains=search_term)
                         ).order_by()
-                    ).order_by().values_list('pk', flat=True)
+                    )
+                    .order_by()
+                    .values_list("pk", flat=True)
                 )
 
                 site_ids.update(
                     Site.objects.filter(
-                        sitereceiver__in=site_receivers
-                    ).order_by().distinct().values_list('pk', flat=True)
+                        sitemoreinformation__in=SiteMoreInformation.objects.filter(
+                            Q(published=True) & Q(primary__icontains=search_term)
+                        ).order_by()
+                    )
+                    .order_by()
+                    .values_list("pk", flat=True)
+                )
+
+                site_ids.update(
+                    Site.objects.filter(sitereceiver__in=site_receivers)
+                    .order_by()
+                    .distinct()
+                    .values_list("pk", flat=True)
                 )
 
                 searched &= Q(pk__in=site_ids)
@@ -187,14 +197,13 @@ class CrispyFormCompat:
             from crispy_forms.helper import FormHelper
             from crispy_forms.layout import Layout, Submit
 
-            helper = getattr(form, 'helper', None)
+            helper = getattr(form, "helper", None)
             if helper:
                 # add on a submit button if one does not exist on the form
                 def has_submit(fields):
                     for field in fields:
-                        if (
-                            isinstance(field, Submit) or
-                            has_submit(getattr(field, 'fields', []))
+                        if isinstance(field, Submit) or has_submit(
+                            getattr(field, "fields", [])
                         ):
                             return True
                     return False
@@ -202,14 +211,14 @@ class CrispyFormCompat:
                 if not has_submit(form.helper.layout.fields):
                     helper.layout = Layout(
                         *helper.layout.fields,
-                        Submit('', _('Submit'), css_class='btn btn-primary')
+                        Submit("", _("Submit"), css_class="btn btn-primary"),
                     )
             else:
                 form.helper = FormHelper()
-                form.helper.form_method = 'GET'
+                form.helper.form_method = "GET"
                 form.helper.layout = Layout(
                     *form.fields.keys(),
-                    Submit('', _('Submit'), css_class='btn btn-primary')
+                    Submit("", _("Submit"), css_class="btn btn-primary"),
                 )
         return form
 
@@ -227,7 +236,7 @@ class AcceptListArguments:
         if data:
             stripped = QueryDict(mutable=True)
             for key in data.keys():
-                if key.endswith('[]'):
+                if key.endswith("[]"):
                     stripped.setlist(key[0:-2], data.getlist(key))
                 else:
                     stripped.setlist(key, data.getlist(key))
@@ -238,8 +247,7 @@ class AcceptListArguments:
 
 
 class MustIncludeThese(BaseInFilter, NumberFilter):
-
-    def __init__(self, field_name='pk', *args, **kwargs):
+    def __init__(self, field_name="pk", *args, **kwargs):
         super().__init__(field_name=field_name, *args, **kwargs)
 
     def filter(self, qs, value):
@@ -253,6 +261,7 @@ class SLMDateTimeField(DateTimeField):
     A DateTimeField that uses dateutil to parse datetimes. Much more lenient
     than the default parsers.
     """
+
     def to_python(self, value):
         try:
             return super().to_python(value)
@@ -261,13 +270,11 @@ class SLMDateTimeField(DateTimeField):
                 return from_current_timezone(parser.parse(value))
             except parser.ParserError as pe:
                 raise ValidationError(
-                    _("Invalid date/time: {error}").format(str(pe)),
-                    code="invalid"
+                    _("Invalid date/time: {error}").format(str(pe)), code="invalid"
                 )
 
 
 class SLMDateTimeFilter(DateTimeFilter):
-
     field_class = SLMDateTimeField
 
 
@@ -283,7 +290,7 @@ class InitialValueFilterSet(FilterSet):
             # get a mutable copy of the QueryDict
             data = data.copy()
             for name, f in self.base_filters.items():
-                initial = f.extra.get('initial')
+                initial = f.extra.get("initial")
                 # filter param is either missing or empty, use initial as
                 # default
                 if not data.get(name) and initial:
@@ -293,27 +300,17 @@ class InitialValueFilterSet(FilterSet):
 
 
 class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
-
-    EQLookup = namedtuple('EQLookup', 'relation field start end')
+    EQLookup = namedtuple("EQLookup", "relation field start end")
     EQUIPMENT_TABLE = {
-        'satellite_system': EQLookup(
-            'sitereceiver', 'satellite_system', 'installed', 'removed'
+        "satellite_system": EQLookup(
+            "sitereceiver", "satellite_system", "installed", "removed"
         ),
-        'receiver': EQLookup(
-            'sitereceiver', 'receiver_type', 'installed', 'removed'
+        "receiver": EQLookup("sitereceiver", "receiver_type", "installed", "removed"),
+        "antenna": EQLookup("siteantenna", "antenna_type", "installed", "removed"),
+        "radome": EQLookup("siteantenna", "radome_type", "installed", "removed"),
+        "frequency_standard": EQLookup(
+            "sitefrequencystandard", "standard_type", "effective_start", "effective_end"
         ),
-        'antenna': EQLookup(
-            'siteantenna', 'antenna_type', 'installed', 'removed'
-        ),
-        'radome': EQLookup(
-            'siteantenna', 'radome_type', 'installed', 'removed'
-        ),
-        'frequency_standard': EQLookup(
-            'sitefrequencystandard',
-            'standard_type',
-            'effective_start',
-            'effective_end'
-        )
     }
 
     SITE_FILTER = Site.objects.all()
@@ -325,27 +322,25 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     def published_q(self, lookup):
         if self.restrict_published:
             if lookup:
-                lookup += '__'
-            return Q(**{f'{lookup}published': True})
+                lookup += "__"
+            return Q(**{f"{lookup}published": True})
         return Q()
 
     @property
     def current_equipment(self):
-        return self.form.cleaned_data.get('current', None)
-
-    @property
-    def query_epoch(self):
-        return now()
+        return self.form.cleaned_data.get("current", None)
 
     @cached_property
     def alert_fields(self):
         """
         Fetch the mapping of alert names to related fields.
         """
+
         def get_related_field(alert):
             for obj in Site._meta.related_objects:
                 if obj.related_model is alert:
                     return obj.name
+
         return {
             alert.__name__.lower(): get_related_field(alert)
             for alert in Alert.objects.site_alerts()
@@ -353,36 +348,30 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
 
     @property
     def query_epoch(self):
-        return self.form.cleaned_data.get('epoch', now())
+        return self.form.cleaned_data.get("epoch", now())
 
-    epoch = django_filters.DateTimeFilter(
-        field_name='epoch',
-        method='at_epoch'
-    )
+    epoch = django_filters.DateTimeFilter(field_name="epoch", method="at_epoch")
 
     def at_epoch(self, queryset, name, value):
         return queryset.at_epoch(epoch=value)
 
     name = django_filters.CharFilter(
-        field_name='name',
-        lookup_expr='icontains',
-        distinct=True
+        field_name="name", lookup_expr="icontains", distinct=True
     )
 
     station = django_filters.ModelMultipleChoiceFilter(
-        field_name='name',
-        to_field_name='name',
+        field_name="name",
+        to_field_name="name",
         queryset=SITE_FILTER,
-        #method='filter_stations',
-        null_value='',
-        null_label=''
+        # method='filter_stations',
+        null_value="",
+        null_label="",
     )
 
     id = MustIncludeThese()
 
     status = django_filters.MultipleChoiceFilter(
-        choices=SiteLogStatus.choices,
-        distinct=True
+        choices=SiteLogStatus.choices, distinct=True
     )
 
     alert = django_filters.MultipleChoiceFilter(
@@ -390,74 +379,55 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
             (alert.__name__, alert._meta.verbose_name.title())
             for alert in Alert.objects.site_alerts()
         ],
-        method='filter_alerts',
-        distinct=True
+        method="filter_alerts",
+        distinct=True,
     )
 
     alert_level = django_filters.MultipleChoiceFilter(
         choices=[(level.value, level.label) for level in AlertLevel],
-        method='filter_alert_level'
+        method="filter_alert_level",
     )
 
     agency = django_filters.ModelMultipleChoiceFilter(
-        field_name='agencies',
-        queryset=Agency.objects.all(),
-        distinct=True
+        field_name="agencies", queryset=Agency.objects.all(), distinct=True
     )
 
     network = django_filters.ModelMultipleChoiceFilter(
-        field_name='networks',
-        queryset=Network.objects.all(),
-        distinct=True
+        field_name="networks", queryset=Network.objects.all(), distinct=True
     )
 
     receiver = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=Receiver.objects.all(),
-        distinct=True
+        method="filter_equipment", queryset=Receiver.objects.all(), distinct=True
     )
 
     antenna = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=Antenna.objects.all(),
-        distinct=True
+        method="filter_equipment", queryset=Antenna.objects.all(), distinct=True
     )
 
     radome = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=Radome.objects.all(),
-        distinct=True
+        method="filter_equipment", queryset=Radome.objects.all(), distinct=True
     )
 
     satellite_system = django_filters.ModelMultipleChoiceFilter(
-        method='filter_equipment',
-        queryset=SatelliteSystem.objects.all()
+        method="filter_equipment", queryset=SatelliteSystem.objects.all()
     )
 
     frequency_standard = django_filters.MultipleChoiceFilter(
-        choices=FrequencyStandardType.choices,
-        method='filter_equipment'
+        choices=FrequencyStandardType.choices, method="filter_equipment"
     )
 
     country = django_filters.MultipleChoiceFilter(
-        choices=ISOCountry.choices,
-        method='filter_country'
+        choices=ISOCountry.choices, method="filter_country"
     )
 
-    current = SLMBooleanFilter(
-        method='noop',
-        distinct=True,
-        field_name='current'
-    )
+    current = SLMBooleanFilter(method="noop", distinct=True, field_name="current")
 
-    geography = django_filters.CharFilter(
-        method='filter_geography'
-    )
+    geography = django_filters.CharFilter(method="filter_geography")
 
     def filter_geography(self, queryset, name, value):
         qry = Q()
         for poly in value:
-            qry |= Q(**{'sitelocation__llh__within': poly})
+            qry |= Q(**{"sitelocation__llh__within": poly})
         qry &= Q(sitelocation__published=True)
         return queryset.filter(qry)
 
@@ -466,17 +436,14 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
 
     def filter_country(self, queryset, name, value):
         return queryset.filter(
-            Q(sitelocation__country__in=value) &
-            Q(self.published_q('sitelocation'))
+            Q(sitelocation__country__in=value) & Q(self.published_q("sitelocation"))
         )
 
     def filter_alerts(self, queryset, name, value):
         if value:
             alert_q = Q()
             for alert in value:
-                alert_q |= Q(
-                    **{f'{self.alert_fields[alert.lower()]}__isnull': False}
-                )
+                alert_q |= Q(**{f"{self.alert_fields[alert.lower()]}__isnull": False})
             return queryset.filter(alert_q)
         return queryset
 
@@ -484,9 +451,7 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
         if value:
             level_q = Q()
             for alerts in Site.alert_fields:
-                level_q |= Q(
-                    **{f'{alerts}__level__in': value}
-                )
+                level_q |= Q(**{f"{alerts}__level__in": value})
             return queryset.filter(level_q)
         return queryset
 
@@ -495,52 +460,45 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
             lookup = self.EQUIPMENT_TABLE[name]
             if self.current_equipment:
                 return queryset.filter(
-                    Q(**{f'{lookup.relation}__{lookup.field}__in': value}) &
-                    self.published_q(lookup.relation) &
-                    (
-                        Q(**{
-                            f'{lookup.relation}__{lookup.start}__lte':
-                                self.query_epoch
-                        }) | Q(**{
-                            f'{lookup.relation}__{lookup.start}__isnull': True
-                        })
-                    ) &
-                    (
-                        Q(**{
-                            f'{lookup.relation}__{lookup.end}__gt':
-                                self.query_epoch
-                        }) | Q(**{
-                            f'{lookup.relation}__{lookup.end}__isnull': True
-                        })
+                    Q(**{f"{lookup.relation}__{lookup.field}__in": value})
+                    & self.published_q(lookup.relation)
+                    & (
+                        Q(
+                            **{
+                                f"{lookup.relation}__{lookup.start}__lte": self.query_epoch
+                            }
+                        )
+                        | Q(**{f"{lookup.relation}__{lookup.start}__isnull": True})
+                    )
+                    & (
+                        Q(**{f"{lookup.relation}__{lookup.end}__gt": self.query_epoch})
+                        | Q(**{f"{lookup.relation}__{lookup.end}__isnull": True})
                     )
                 ).distinct()
             else:
                 return queryset.filter(
-                    Q(**{
-                        f'{lookup.relation}__{lookup.field}__in':
-                            value
-                    }) &
-                    self.published_q(lookup.relation)
+                    Q(**{f"{lookup.relation}__{lookup.field}__in": value})
+                    & self.published_q(lookup.relation)
                 ).distinct()
         return queryset
 
     class Meta:
         model = Site
         fields = (
-            'id',
-            'status',
-            'alert_level',
-            'station',
-            'name',
-            'agency',
-            'network',
-            'receiver',
-            'antenna',
-            'radome',
-            'country',
-            'current',
-            'epoch',
-            'satellite_system',
-            'frequency_standard'
+            "id",
+            "status",
+            "alert_level",
+            "station",
+            "name",
+            "agency",
+            "network",
+            "receiver",
+            "antenna",
+            "radome",
+            "country",
+            "current",
+            "epoch",
+            "satellite_system",
+            "frequency_standard",
         )
         distinct = True

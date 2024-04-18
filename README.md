@@ -4,9 +4,9 @@
 [![PyPI djversions](https://img.shields.io/pypi/djversions/igs-slm.svg)](https://pypi.org/project/igs-slm/)
 [![PyPI status](https://img.shields.io/pypi/status/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm)
 [![Documentation Status](https://readthedocs.org/projects/igs-slm/badge/?version=latest)](http://igs-slm.readthedocs.io/?badge=latest/)
-[![Code Cov](https://codecov.io/gh/bckohan/igs-slm/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/bckohan/igs-slm)
-[![Test Status](https://github.com/bckohan/igs-slm/workflows/test/badge.svg)](https://github.com/bckohan/igs-slm/actions/workflows/test.yml)
-[![Lint Status](https://github.com/bckohan/igs-slm/workflows/lint/badge.svg)](https://github.com/bckohan/igs-slm/actions/workflows/lint.yml)
+[![Code Cov](https://codecov.io/gh/International-GNSS-Service/SLM/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/International-GNSS-Service/SLM)
+[![Test Status](https://github.com/International-GNSS-Service/SLM/workflows/test/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml)
+[![Lint Status](https://github.com/International-GNSS-Service/SLM/workflows/lint/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 # ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) 

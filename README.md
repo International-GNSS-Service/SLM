@@ -7,8 +7,7 @@
 [![Code Cov](https://codecov.io/gh/bckohan/igs-slm/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/bckohan/igs-slm)
 [![Test Status](https://github.com/bckohan/igs-slm/workflows/test/badge.svg)](https://github.com/bckohan/igs-slm/actions/workflows/test.yml)
 [![Lint Status](https://github.com/bckohan/igs-slm/workflows/lint/badge.svg)](https://github.com/bckohan/igs-slm/actions/workflows/lint.yml)
-[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 # ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) 
 Site Log Manager (SLM)

@@ -29,6 +29,9 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+      # - name: Install GIS Libs
+      #   run: |
+      #     sudo apt install gdal
       - name: Install Release Dependencies
         run: |
           poetry config virtualenvs.in-project true

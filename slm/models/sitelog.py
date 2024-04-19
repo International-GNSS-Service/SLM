@@ -843,6 +843,12 @@ class Site(models.Model):
         ]
         return cls.sections_
 
+    def is_publishable(self):
+        has_required_sections = Q(id=self.id)
+        for required_section in getattr(settings, 'SLM_REQUIRED_SECTIONS_TO_PUBLISH', []):
+            has_required_sections &= Q(**{f'{required_section}__isnull': False})
+        return bool(Site.objects.filter(has_required_sections).count())
+
     def can_publish(self, user):
         """
         This is a future hook to use for instances where non-moderators are
@@ -852,7 +858,11 @@ class Site(models.Model):
         :return:
         """
         if user:
-            return self.is_moderator(user)
+            # cannot publish without these minimum sectons
+            has_required_sections = Q(id=self.id)
+            for required_section in getattr(settings, 'SLM_REQUIRED_SECTIONS_TO_PUBLISH', []):
+                has_required_sections &= Q(**{f'{required_section}__isnull': False})
+            return self.is_moderator(user) and self.is_publishable()
         return False
 
     def can_edit(self, user):

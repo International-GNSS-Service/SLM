@@ -45,8 +45,8 @@ SLM_REQUIRED_SECTIONS_TO_PUBLISH = [
     # 'sitesignalobstructions',
     # 'sitelocalepisodiceffects',
     'siteoperationalcontact',
-    'siteresponsibleagency',
-    'sitemoreinformation'
+    # 'siteresponsibleagency',
+    # 'sitemoreinformation'
 ]
 
 # the model field to validator map

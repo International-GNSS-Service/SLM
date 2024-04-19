@@ -172,6 +172,7 @@ class StationContextView(SLMView):
                 "can_publish": (
                     self.site.can_publish(self.request.user) if self.site else None
                 ),
+                "is_publishable": self.site.is_publishable(),
                 "link_view": (
                     "slm:edit"
                     if self.request.resolver_match.view_name

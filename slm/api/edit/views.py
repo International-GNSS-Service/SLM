@@ -1269,7 +1269,8 @@ class SiteFileUploadViewSet(
                 site=self.site,
                 file=request.FILES["file"],
                 name=request.FILES["file"].name[:255],
-                user=request.user,
+                mimetype=request.FILES["file"].content_type,
+                user=request.user
             )
             upload.save()
             slm_signals.site_file_uploaded.send(

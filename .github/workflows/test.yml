@@ -49,6 +49,10 @@ jobs:
           --health-retries 5
         
     steps:
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'on' }}
+        run: |
+          sudo apt install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'on' }}
         uses: mxschmitt/action-tmate@v3

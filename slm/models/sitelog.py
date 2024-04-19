@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from functools import lru_cache
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.gis.db import models as gis_models
@@ -299,12 +300,20 @@ class SiteQuerySet(models.QuerySet):
             num_flags=Coalesce("_num_flags", 0)
         )
 
-        update_q = Q(status__in=[SiteLogStatus.UPDATED, SiteLogStatus.PUBLISHED])
-        qry.filter(update_q).filter(mod_q).update(status=SiteLogStatus.UPDATED)
-
         qry.filter(
-            update_q
-            | Q(status=SiteLogStatus.PROPOSED)  # allow PROPOSED to be PUBLISHED
+            Q(status__in=[SiteLogStatus.UPDATED, SiteLogStatus.PUBLISHED])
+        ).filter(mod_q).update(status=SiteLogStatus.UPDATED)
+
+        exists_q = Q()
+        for required_section in getattr(settings, 'SLM_REQUIRED_SECTIONS_TO_PUBLISH', []):
+            exists_q &= Q(**{f'{required_section}__isnull': False})
+        qry.filter(
+            Q(status__in=[
+                SiteLogStatus.UPDATED,
+                SiteLogStatus.PUBLISHED,
+                SiteLogStatus.PROPOSED
+            ])  # allow PROPOSED to be PUBLISHED
+            & exists_q
         ).filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
 
         # this is the longest operation - there might be a way to squash it

@@ -25,6 +25,30 @@ from slm.validators import (
 # from doing so - instead flags will be issued.
 SLM_VALIDATION_BYPASS_BLOCK = False
 
+# do not allow a log to be published without these sections
+SLM_REQUIRED_SECTIONS_TO_PUBLISH = [
+    'siteform',
+    'siteidentification',
+    'sitelocation',
+    'sitereceiver',
+    'siteantenna',
+    # 'sitesurveyedlocalties',
+    # 'sitefrequencystandard',
+    # 'sitecollocation',
+    # 'sitehumiditysensor',
+    # 'sitepressuresensor',
+    # 'sitetemperaturesensor',
+    # 'sitewatervaporradiometer',
+    # 'siteotherinstrumentation',
+    # 'siteradiointerferences',
+    # 'sitemultipathsources',
+    # 'sitesignalobstructions',
+    # 'sitelocalepisodiceffects',
+    'siteoperationalcontact',
+    'siteresponsibleagency',
+    'sitemoreinformation'
+]
+
 # the model field to validator map
 SLM_DATA_VALIDATORS = {
     "slm.SiteIdentification": {

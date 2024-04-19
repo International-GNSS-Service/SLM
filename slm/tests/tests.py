@@ -24,8 +24,8 @@ import json
 
 from slm import signals as slm_signals
 from slm.api.edit import views as edit_views
-from slm.defines import SiteLogStatus
-from slm.models import Agency, Network, Site
+from slm.defines import SiteLogStatus, EquipmentState
+from slm.models import Agency, Network, Site, Radome, Antenna, Receiver
 from slm.tests.defines.ISOCountry import TestISOCountry  # dont remove
 from slm.tests.defines.SiteLogStatus import TestSiteLogStatus  # dont remove
 from slm.tests.parsing.legacy import TestLegacyParser  # dont remove
@@ -116,6 +116,10 @@ class TestEditAPI(SLMSignalTracker, TestCase):
     test_moderator = None
     test_superuser = None
 
+    receiver = None
+    antenna = None
+    radome = None
+
     def setUp(self):
         self.clear_signals()
         self.test_agency_1 = Agency.objects.create(name="Test Agency 1")
@@ -147,6 +151,19 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             last_name="Superuser",
         )
 
+        # set up equipment
+        self.receiver = Receiver.objects.create(
+            model="JAVAD TRE_3 DELTA",
+            state=EquipmentState.ACTIVE
+        )
+        self.antenna = Antenna.objects.create(
+            model="JAV_GRANT-G3T",
+            state=EquipmentState.ACTIVE
+        )
+        self.radome = Radome.objects.create(
+            model="JVDM",
+            state=EquipmentState.ACTIVE
+        )
         super().setUp()
 
     def test_propose(self):
@@ -361,6 +378,116 @@ class TestEditAPI(SLMSignalTracker, TestCase):
         )
 
         self.assertTrue(site.siteidentification_set.count(), 2)
+
+        sections = {
+            'sitereceiver': {
+                "site": site.id,
+                "receiver_type": "JAVAD TRE_3 DELTA",
+                "satellite_system": [
+                    "GPS",
+                    "GLO",
+                    "GAL",
+                    "BDS"
+                ],
+                "serial_number": "JV1234AB5678",
+                "firmware": "4.3.00",
+                "elevation_cutoff": None,
+                "installed": "2023-04-03T00:00:00Z",
+                "removed": "2023-11-06T00:00:00Z",
+                "temp_stabilized": True,
+                "temp_nominal": 24.0,
+                "temp_deviation": 5.0,
+                "additional_info": "",
+                "heading": "JAVAD TRE_3 DELTA",
+                "effective": "2023-04-03/2023-11-06"
+            },
+            'siteantenna': {
+                "site": site.id,
+                "antenna_type": "JAV_GRANT-G3T",
+                "serial_number": "ANT-987654321",
+                "reference_point": 1,
+                "marker_une": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "alignment": 1.0,
+                "radome_type": "JVDM",
+                "radome_serial_number": "",
+                "cable_type": "",
+                "cable_length": None,
+                "installed": "2023-04-03T00:00:00Z",
+                "removed": None,
+                "additional_information": "",
+                "custom_graphic": "",
+                "heading": "JAV_GRANT-G3T",
+                "effective": "2023-04-03"
+            },
+            'siteoperationalcontact': {
+                "site": site.id,
+                "agency": "Test Sites",
+                "preferred_abbreviation": "TEST",
+                "mailing_address": "",
+                "primary_name": "Brian Kohan",
+                "primary_phone1": "9196324982",
+                "primary_phone2": "",
+                "primary_fax": "",
+                "primary_email": "bckohan@gmail.com",
+                "secondary_name": "",
+                "secondary_phone1": "",
+                "secondary_phone2": "",
+                "secondary_fax": "",
+                "secondary_email": "",
+                "additional_information": ""
+            },
+            'siteresponsibleagency': {
+                "site": site.id,
+                "agency": "Test Sites",
+                "preferred_abbreviation": "TEST",
+                "mailing_address": "",
+                "primary_name": "Brian Kohan",
+                "primary_phone1": "5556324982",
+                "primary_phone2": "",
+                "primary_fax": "",
+                "primary_email": "bckohan@ggmail.com",
+                "secondary_name": "",
+                "secondary_phone1": "",
+                "secondary_phone2": "",
+                "secondary_fax": "",
+                "secondary_email": "",
+                "additional_information": ""
+            },
+            'sitemoreinformation': {
+                "site": site.id,
+                "published": False,
+                "can_publish": True,
+                "primary": "JPL",
+                "secondary": "BKG",
+                "more_info": "",
+                "sitemap": "",
+                "site_diagram": "",
+                "horizon_mask": "",
+                "monument_description": "",
+                "site_picture": "",
+                "additional_information": ""
+            }
+        }
+
+        for section, data in sections.items():
+            ret = c.post(
+                reverse(f"slm_edit_api:{section}-list"),
+                data=data,
+                follow=True,
+                secure=True,
+                format='json'
+            )
+            site.refresh_from_db()
+            self.assertEqual(site.status, SiteLogStatus.PROPOSED)
+            try:
+                self.assertTrue(ret.status_code < 300)
+            except:
+                import ipdb
+                ipdb.set_trace()
 
         self.clear_signals()
         self.assertTrue(c.login(email="editor@example.com", password="password"))

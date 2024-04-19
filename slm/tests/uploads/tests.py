@@ -113,8 +113,12 @@ class TestUploads(SLMSignalTracker, TestCase):
             Site.objects.get(name="AAA600USA").status, SiteLogStatus.PROPOSED
         )
 
-        self.assertGreater(len(self.signals), 10)
+        self.assertEqual(len(self.signals), 13)
         self.assertEqual(self.signals[0].signal, slm_signals.site_file_uploaded)
+        for received in self.signals[1:-1]:
+            self.assertEqual(received.signal, slm_signals.section_added)
+
+        self.assertEqual(self.signals[-1].signal, slm_signals.section_edited)
 
         aaa600.refresh_from_db()
         self.assertEqual(aaa600.siteform_set.count(), 1)
@@ -137,4 +141,3 @@ class TestUploads(SLMSignalTracker, TestCase):
         self.assertEqual(aaa600.siteoperationalcontact_set.count(), 1)
         self.assertEqual(aaa600.siteresponsibleagency_set.count(), 1)
         self.assertEqual(aaa600.sitemoreinformation_set.count(), 1)
-

@@ -32,6 +32,8 @@ jobs:
           POSTGRES_DB: slm_test
           POSTGRES_USER: slm
           POSTGRES_PASSWORD: slm!test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
         ports:
           - 5432:5432
         # Options to set health checks

@@ -1,6 +1,7 @@
 from pathlib import Path
 import platform
 from split_settings.tools import include
+import os
 
 from slm.settings import resource
 
@@ -15,9 +16,9 @@ include(resource("slm.settings", "root.py"))
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": "slm_test",
-        "USER": "",
-        "PASSWORD": "",
+        "NAME": os.environ.get("POSTGRES_DB", "slm_test"),
+        "USER": os.environ.get('POSTGRES_USER', ''),
+        "PASSWORD": os.environ.get('POSTGRES_PASSWORD', ''),
         "HOST": "",
         "PORT": "",
     }

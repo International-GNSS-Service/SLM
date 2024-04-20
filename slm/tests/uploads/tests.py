@@ -4,12 +4,13 @@ from django.contrib.auth.models import Permission
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
-from slm.models import Agency, Site, Antenna, Receiver, Radome
+from slm.models import Agency, Site, Antenna, Receiver, Radome, SiteFileUpload
 from ..tests import SLMSignalTracker
 from django.core.files.uploadedfile import SimpleUploadedFile
 from pathlib import Path
-from slm.defines import SiteLogStatus, EquipmentState
+from slm.defines import SiteLogStatus, EquipmentState, SiteFileUploadStatus, SLMFileType
 from slm import signals as slm_signals
+import os
 
 AAA600USA = Path(__file__).parent / 'files' / 'AAA600USA_20240418.log'
 JPLM_JPG = Path(__file__).parent / 'files' / 'jplm.jpg'
@@ -163,6 +164,8 @@ class TestUploads(SLMSignalTracker, TestCase):
         aaa700 = Site.objects.get(name="AAA700USA")
 
         self.clear_signals()
+        
+        self.assertEqual(SiteFileUpload.objects.filter(site=aaa700).count(), 0)
 
         response = self.client.post(
             reverse('slm_edit_api:files-list', kwargs={'site': 'AAA700USA'}),
@@ -181,3 +184,24 @@ class TestUploads(SLMSignalTracker, TestCase):
         self.assertEqual(len(self.signals), 2)
         self.assertEqual(self.signals[0].signal, slm_signals.alert_issued)
         self.assertEqual(self.signals[1].signal, slm_signals.site_file_uploaded)
+
+        uploaded = SiteFileUpload.objects.filter(site=aaa700, name='jplm.jpg')
+        self.assertEqual(uploaded.count(), 1)
+        uploaded = uploaded.first()
+        self.assertEqual(uploaded.status, SiteFileUploadStatus.UNPUBLISHED)
+        self.assertEqual(uploaded.file_type, SLMFileType.SITE_IMAGE)
+
+        # should have created a thumbnail
+        self.assertTrue(Path(uploaded.thumbnail.path).exists())
+        self.assertGreater(os.path.getsize(Path(uploaded.thumbnail.path)), 0)
+
+        # try publish
+        response = self.client.patch(
+            reverse('slm_edit_api:files-detail', kwargs={'site': 'AAA700USA', 'pk': uploaded.pk}),
+            {'status': SiteFileUploadStatus.PUBLISHED.value},
+            format='json',
+            secure=True
+        )
+        self.assertLess(response.status_code, 400)
+        uploaded.refresh_from_db()
+        self.assertEqual(uploaded.status, SiteLogStatus.PUBLISHED)

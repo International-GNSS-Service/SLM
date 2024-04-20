@@ -747,9 +747,11 @@ class Site(models.Model):
 
     @lru_cache(maxsize=32)
     def is_moderator(self, user):
-        if user.is_superuser:
-            return True
-        return self.moderators.filter(pk=user.pk).exists()
+        if user:
+            if user.is_superuser:
+                return True
+            return self.moderators.filter(pk=user.pk).exists()
+        return False
 
     def get_filename(self, log_format, epoch=None, name_len=9, lower_case=False):
         """

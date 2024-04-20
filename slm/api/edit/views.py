@@ -1414,7 +1414,7 @@ class SiteFileUploadViewSet(
         if (
             serializer.validated_data.get("status", None) is not None
             and serializer.validated_data["status"] != serializer.instance.status
-            and not self.site.can_publish(self.request.user)
+            and not self.site.is_moderator(self.request.user)
         ):
             raise PermissionDenied("Must be a moderator to publish site files.")
         if serializer.validated_data.get("status", None) and (

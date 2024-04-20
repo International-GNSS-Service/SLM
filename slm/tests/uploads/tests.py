@@ -204,4 +204,4 @@ class TestUploads(SLMSignalTracker, TestCase):
         )
         self.assertLess(response.status_code, 400)
         uploaded.refresh_from_db()
-        self.assertEqual(uploaded.status, SiteLogStatus.PUBLISHED)
+        self.assertEqual(uploaded.status, SiteFileUploadStatus.PUBLISHED)

@@ -2,26 +2,30 @@
 Update the data availability information for each station.
 """
 
-import logging
-
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.management import BaseCommand, CommandError
-from django.utils.translation import gettext as _
+from django.core.management import CommandError
+from django.utils.translation import gettext_lazy as _
+from django_typer import TyperCommand
 
 
-class Command(BaseCommand):
+class Command(TyperCommand):
     help = _(
         "Set the Django Site database object to reflect SLM_SITE_NAME and "
         "SLM_ORG_NAME in settings."
     )
 
-    logger = logging.getLogger(__name__ + ".Command")
+    suppressed_base_arguments = {
+        *TyperCommand.suppressed_base_arguments,
+        "version",
+        "pythonpath",
+        "settings",
+        "skip-checks",
+    }
+    requires_migrations_checks = False
+    requires_system_checks = []
 
-    def add_arguments(self, parser):
-        pass
-
-    def handle(self, *args, **options):
+    def handle(self):
         domain = getattr(settings, "SLM_SITE_NAME", None)
         org = getattr(settings, "SLM_ORG_NAME", None)
         if domain and org:

@@ -2,64 +2,63 @@
 Update the data availability information for each station.
 """
 
-import logging
+import typing as t
 
 from django.core.exceptions import ValidationError
-from django.core.management import BaseCommand
 from django.db import transaction
-from django.db.models import Sum
-from django.utils.translation import gettext as _
+from django.db.models import Q, Sum
+from django.utils.translation import gettext_lazy as _
+from django_typer import TyperCommand, model_parser_completer
 from tqdm import tqdm
+from typer import Argument, Option
+from typing_extensions import Annotated
 
 from slm.defines import SiteLogStatus
 from slm.models import GeodesyMLInvalid, Site
 
 
-class Command(BaseCommand):
+class Command(TyperCommand):
     help = _(
         "Validate and update status of head state of all existing site logs. "
         "This might be necessary to run if the validation configuration is "
         "updated."
     )
 
-    logger = logging.getLogger(__name__ + ".Command")
+    suppressed_base_arguments = {
+        *TyperCommand.suppressed_base_arguments,
+        "version",
+        "pythonpath",
+        "settings",
+    }
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "sites",
-            metavar="S",
-            nargs="*",
-            help=_("The name of the site(s). Default - all sites."),
-        )
-
-        parser.add_argument(
-            "--clear",
-            dest="clear",
-            action="store_true",
-            default=False,
-            help=_("Clear existing validation flags."),
-        )
-
-        parser.add_argument(
-            "--schema",
-            dest="schema",
-            action="store_true",
-            default=False,
-            help=_(
-                "Also perform validation of generated GeodesyML files "
-                "against the latest schema."
+    def handle(
+        self,
+        sites: Annotated[
+            t.Optional[t.List[Site]],
+            Argument(
+                **model_parser_completer(
+                    Site, lookup_field="name", case_insensitive=True
+                ),
+                help=_("The name of the site(s). Default - all sites."),
             ),
-        )
-
-        parser.add_argument(
-            "--all",
-            dest="all",
-            action="store_true",
-            default=False,
-            help=_("Validate all sites, not just the currently public sites."),
-        )
-
-    def handle(self, *args, **options):
+        ] = None,
+        clear: Annotated[
+            bool, Option(help=_("Clear existing validation flags."))
+        ] = False,
+        schema: Annotated[
+            bool,
+            Option(
+                help=_(
+                    "Also perform validation of generated GeodesyML files "
+                    "against the latest schema."
+                )
+            ),
+        ] = False,
+        all: Annotated[
+            bool,
+            Option(help=_("Validate all sites, not just the currently public sites.")),
+        ] = False,
+    ):
         from slm.validators import set_bypass
 
         set_bypass(True)
@@ -68,20 +67,16 @@ class Command(BaseCommand):
         critical = 0
         old_flag_count = Site.objects.aggregate(Sum("num_flags"))["num_flags__sum"]
         with transaction.atomic():
-            sites = Site.objects.filter(
-                status__in=[SiteLogStatus.PUBLISHED, SiteLogStatus.UPDATED]
-            )
-            if options["all"]:
-                sites = Site.objects.all()
-
-            if options["sites"]:
+            sites = sites or Site.objects.all()
+            if not all:
                 sites = Site.objects.filter(
-                    name__in=[site.upper() for site in options["sites"]]
+                    Q(pk__in=[site.pk for site in sites])
+                    & Q(status__in=[SiteLogStatus.PUBLISHED, SiteLogStatus.UPDATED])
                 )
 
             with tqdm(
                 total=sites.count(),
-                desc="Validating",
+                desc=_("Validating"),
                 unit="sites",
                 postfix={"site": ""},
             ) as p_bar:
@@ -95,7 +90,7 @@ class Command(BaseCommand):
                             else:
                                 head = []
                         for obj in head:
-                            if options["clear"]:
+                            if clear:
                                 obj._flags = {}
                             try:
                                 obj.clean()
@@ -123,7 +118,7 @@ class Command(BaseCommand):
                                         err.message for err in errors
                                     )
 
-                    if options["schema"]:
+                    if schema:
                         alert = GeodesyMLInvalid.objects.check_site(site=site)
                         if alert:
                             invalid += 1
@@ -135,15 +130,21 @@ class Command(BaseCommand):
 
             Site.objects.synchronize_denormalized_state(skip_form_updates=True)
 
-        if options["schema"]:
+        if schema:
             if valid:
                 self.stdout.write(
-                    self.style.SUCCESS(f"{valid} sites had valid GeodesyML documents.")
+                    self.style.SUCCESS(
+                        _("{valid} sites had valid GeodesyML documents.").format(
+                            valid=valid
+                        )
+                    )
                 )
             if invalid:
                 self.stdout.write(
                     self.style.ERROR(
-                        f"{invalid} sites do not have valid GeodesyML " f"documents."
+                        _(
+                            "{invalid} sites do not have valid GeodesyML documents."
+                        ).format(invalid=invalid)
                     )
                 )
 
@@ -156,11 +157,21 @@ class Command(BaseCommand):
         else:
             change = "removed"
 
-        self.stdout.write(self.style.NOTICE(f"{abs(delta)} flags were {change}."))
+        self.stdout.write(
+            self.style.NOTICE(
+                _("{delta} flags were {change}.").format(
+                    delta=abs(delta), change=change
+                )
+            )
+        )
 
         self.stdout.write(
             self.style.NOTICE(
-                f"There are a total of validation {new_flags} across "
-                f"{sites.count()} sites. {critical} are critical."
+                _(
+                    "There are a total of validation {new_flags} across "
+                    "{site_count} sites. {critical} are critical."
+                ).format(
+                    new_flags=new_flags, site_count=sites.count(), critical=critical
+                )
             )
         )

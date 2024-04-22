@@ -3,16 +3,20 @@ Update the data availability information for each station.
 """
 
 import html
-import logging
 import re
+import typing as t
 import zlib
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 import requests
-from django.core.management import BaseCommand, CommandError
+from django.core.management import CommandError
 from django.db.models import Prefetch
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
+from django_typer import TyperCommand, model_parser_completer
+from typer import Argument, Option
+from typing_extensions import Annotated
 
 from slm.defines import ISOCountry
 from slm.models import Network, Site, SiteAntenna, SiteReceiver
@@ -64,10 +68,8 @@ def date2YYdoy(date):
     return int(_y), int(_doy), int(second)
 
 
-class Command(BaseCommand):
-    help = "Generate the sinex files for each station."
-
-    logger = logging.getLogger(__name__ + ".Command")
+class Command(TyperCommand):
+    help = _("Generate the sinex files for each station.")
 
     used_antennas: set
     sinex_code: str = ""
@@ -75,56 +77,53 @@ class Command(BaseCommand):
     atx: dict
     sat_phase_center: dict
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "destination",
-            metavar="D",
-            nargs="?",
-            type=str,
-            help=_(
-                "The destination to write the sinex file to, if none "
-                "provided will print to stdout."
+    suppressed_base_arguments = {
+        *TyperCommand.suppressed_base_arguments,
+        "version",
+        "pythonpath",
+        "settings",
+        "skip-checks",
+    }
+    requires_migrations_checks = False
+    requires_system_checks = []
+    
+    def handle(
+        self,
+        destination: Annotated[
+            t.Optional[Path],
+            Argument(
+                dir_okay=False,
+                help=_(
+                    "The destination to write the sinex file to, if none "
+                    "provided will print to stdout."
+                ),
             ),
-        )
-
-        parser.add_argument(
-            "--antex-file",
-            dest="antex_file",
-            default=DEFAULT_ANTEX,
-            type=str,
-            help=_("The antex file to use. Default: %s") % (DEFAULT_ANTEX,),
-        )
-
-        parser.add_argument(
-            "--include-network",
-            dest="include_networks",
-            action="append",
-            default=[],
-            help=_("Include non-public sites in the given networks."),
-        )
-
-        parser.add_argument(
-            "--include-former",
-            dest="include_former",
-            action="store_true",
-            default=False,
-            help=_("Include former sites in the list."),
-        )
-
-    def handle(self, *args, **options):
+        ] = None,
+        antex_file: Annotated[
+            str, Option(help=_("The antex file to use."))
+        ] = DEFAULT_ANTEX,
+        include_networks: Annotated[
+            t.Optional[t.List[Network]],
+            Option(
+                **model_parser_completer(
+                    Network, lookup_field="name", case_insensitive=True
+                ),
+                help=_("Include non-public sites in the given networks."),
+            ),
+        ] = None,
+        include_former: Annotated[
+            bool, Option(help=_("Include former sites in the list."))
+        ] = False,
+    ):
         self.sinex_code = ""
         self.siteAnt = rec_dd()
         self.atx = rec_dd()
         self.sat_phase_center = rec_dd()
 
         sites = Site.objects.all().order_by("name")
-        sites = sites.public() if options["include_former"] else sites.active()
-        networks = [
-            Network.objects.get(name__iexact=network)
-            for network in options["include_networks"]
-        ]
-        if networks:
-            sites |= sites.filter(networks__in=networks)
+        sites = sites.public() if include_former else sites.active()
+        if include_networks:
+            sites |= sites.filter(networks__in=include_networks)
 
         sites = sites.distinct()
 
@@ -138,14 +137,14 @@ class Command(BaseCommand):
             ]
         )
 
-        self.build_antex_index(options["antex_file"])
+        self.build_antex_index(antex_file)
 
         output = self.stdout
-        if options["destination"]:
-            output = open(options["destination"], "w")
+        if destination:
+            output = open(destination, "w")
 
         # write header
-        for line in self.header(options["antex_file"]):
+        for line in self.header(antex_file):
             output.write(f"{line}\n")
 
         # write SITE/ID section
@@ -184,7 +183,7 @@ class Command(BaseCommand):
         for line in self.footer():
             output.write(f"{line}\n")
 
-        if options["destination"]:
+        if destination:
             output.close()
 
     def header(self, antex_file):

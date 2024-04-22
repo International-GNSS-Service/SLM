@@ -20,6 +20,7 @@ from polymorphic.models import PolymorphicModel
 
 from slm.defines import (
     CardinalDirection,
+    GeodesyMLVersion,
     LogEntryType,
     SiteFileUploadStatus,
     SiteLogFormat,
@@ -226,6 +227,14 @@ class SiteFile(models.Model):
         default=None,
         db_index=True,
         help_text=_("The site log format. (Only if file_type is Site Log)"),
+    )
+
+    gml_version = EnumField(
+        GeodesyMLVersion,
+        null=True,
+        default=None,
+        db_index=True,
+        help_text=_("The Geodesy ML version. (Only if file_type is GeodesyML)"),
     )
 
     def rotate(self, degrees_ccw=90):

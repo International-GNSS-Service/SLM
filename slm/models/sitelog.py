@@ -305,14 +305,18 @@ class SiteQuerySet(models.QuerySet):
         ).filter(mod_q).update(status=SiteLogStatus.UPDATED)
 
         exists_q = Q()
-        for required_section in getattr(settings, 'SLM_REQUIRED_SECTIONS_TO_PUBLISH', []):
-            exists_q &= Q(**{f'{required_section}__isnull': False})
+        for required_section in getattr(
+            settings, "SLM_REQUIRED_SECTIONS_TO_PUBLISH", []
+        ):
+            exists_q &= Q(**{f"{required_section}__isnull": False})
         qry.filter(
-            Q(status__in=[
-                SiteLogStatus.UPDATED,
-                SiteLogStatus.PUBLISHED,
-                SiteLogStatus.PROPOSED
-            ])  # allow PROPOSED to be PUBLISHED
+            Q(
+                status__in=[
+                    SiteLogStatus.UPDATED,
+                    SiteLogStatus.PUBLISHED,
+                    SiteLogStatus.PROPOSED,
+                ]
+            )  # allow PROPOSED to be PUBLISHED
             & exists_q
         ).filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
 
@@ -847,8 +851,10 @@ class Site(models.Model):
 
     def is_publishable(self):
         has_required_sections = Q(id=self.id)
-        for required_section in getattr(settings, 'SLM_REQUIRED_SECTIONS_TO_PUBLISH', []):
-            has_required_sections &= Q(**{f'{required_section}__isnull': False})
+        for required_section in getattr(
+            settings, "SLM_REQUIRED_SECTIONS_TO_PUBLISH", []
+        ):
+            has_required_sections &= Q(**{f"{required_section}__isnull": False})
         return bool(Site.objects.filter(has_required_sections).count())
 
     def can_publish(self, user):
@@ -862,8 +868,10 @@ class Site(models.Model):
         if user:
             # cannot publish without these minimum sectons
             has_required_sections = Q(id=self.id)
-            for required_section in getattr(settings, 'SLM_REQUIRED_SECTIONS_TO_PUBLISH', []):
-                has_required_sections &= Q(**{f'{required_section}__isnull': False})
+            for required_section in getattr(
+                settings, "SLM_REQUIRED_SECTIONS_TO_PUBLISH", []
+            ):
+                has_required_sections &= Q(**{f"{required_section}__isnull": False})
             return self.is_moderator(user) and self.is_publishable()
         return False
 

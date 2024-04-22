@@ -2,51 +2,47 @@
 Update the data availability information for each station.
 """
 
-import logging
-
-from django.core.management import BaseCommand
 from django.db import transaction
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
+from django_typer import TyperCommand
 from tqdm import tqdm
+from typer import Option
+from typing_extensions import Annotated
 
 from slm.defines import SiteLogStatus
 from slm.models import ArchiveIndex, Site
 
 
-class Command(BaseCommand):
-    help = (
+class Command(TyperCommand):
+    help = _(
         "Update the site index from the current data or rebuild from "
         "archives. Note - this will generate new serialized files for all"
         "published data that is not up to date in the archive."
     )
+    suppressed_base_arguments = {
+        *TyperCommand.suppressed_base_arguments,
+        "version",
+        "pythonpath",
+        "settings",
+    }
 
-    logger = logging.getLogger(__name__ + ".Command")
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--rebuild",
-            dest="rebuild",
-            action="store_true",
-            default=False,
-            help=_("Clear the existing index first. WARNING: cannot be undone."),
-        )
-
-        parser.add_argument(
-            "-a",
-            "--archive",
-            dest="archive",
-            type=str,
-            default=False,
-            help=_("Build index from the archive directory."),
-        )
-
-    def handle(self, *args, **options):
+    def handle(
+        self,
+        rebuild: Annotated[
+            bool,
+            Option(help="Clear the existing index first. WARNING: cannot be undone."),
+        ] = False,
+        archive: Annotated[
+            bool,
+            Option("--archive", "-a", help="Build index from the archive directory."),
+        ] = False,
+    ):
         with transaction.atomic():
 
             def yes(ipt):
                 return ipt.lower() in {"y", "yes", "true", "continue"}
 
-            if options["rebuild"]:
+            if rebuild:
                 if yes(
                     input(
                         _(
@@ -60,7 +56,7 @@ class Command(BaseCommand):
                 else:
                     return
 
-            if options["archive"]:
+            if archive:
                 # todo
                 raise NotImplementedError("Rebuild from archive not implemented yet!")
 

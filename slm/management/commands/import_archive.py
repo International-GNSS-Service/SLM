@@ -3,19 +3,22 @@ Import an archive file of old site logs - creating indexes and
 ArchivedLogFiles.
 """
 
-import logging
 import os
 import re
 import tarfile
 from datetime import date, datetime
+from pathlib import Path
 
 from dateutil import parser
 from django.core.files.base import ContentFile
-from django.core.management import BaseCommand, CommandError
+from django.core.management import CommandError
 from django.db import transaction
 from django.utils.timezone import make_aware, utc
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
+from django_typer import TyperCommand
 from tqdm import tqdm
+from typer import Argument
+from typing_extensions import Annotated
 
 from slm.defines import SiteLogFormat, SLMFileType
 from slm.models import Antenna, ArchivedSiteLog, ArchiveIndex, Radome, Receiver, Site
@@ -26,45 +29,49 @@ from slm.utils import dddmmssss_to_decimal
 FILE_NAME_REGEX = re.compile(r"^([a-zA-Z\d]{4,9})\D*(\d{4,8}).*log$")
 
 
-class Command(BaseCommand):
-    help = (
+class Command(TyperCommand):
+    help = _(
         "Import an archive file of old site logs - creating indexes and "
         "ArchivedLogFiles."
     )
 
-    logger = logging.getLogger(__name__ + ".Command")
+    suppressed_base_arguments = {
+        *TyperCommand.suppressed_base_arguments,
+        "version",
+        "pythonpath",
+        "settings",
+    }
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "file",
-            metavar="F",
-            nargs="?",
-            type=str,
-            help=_(
-                "The path to the archive containing the legacy site logs to " "import."
+    def handle(
+        self,
+        file: Annotated[
+            Path,
+            Argument(
+                exists=True,
+                dir_okay=False,
+                help=_(
+                    "The path to the archive containing the legacy site logs to "
+                    "import."
+                ),
             ),
-        )
-
-    def handle(self, *args, **options):
+        ],
+    ):
         count = 0
         prep_less = 0
         prep_eq = 0
         prep_more = 0
         no_prep = 0
         unresolved = set()
-        if not options["file"]:
-            file_path = os.path.expanduser(input(_("Archive tar file path: ")))
-        else:
-            file_path = os.path.expanduser(options["file"])
+        file = Path(os.path.expanduser(file))
 
-        if not os.path.exists(file_path):
-            raise CommandError(_(f"{file_path} is not a file."))
+        if not file.is_file():
+            raise CommandError(_(f"{file} is not a file."))
 
         with transaction.atomic():
-            with tarfile.open(file_path, "r") as archive:
+            with tarfile.open(file, "r") as archive:
                 with tqdm(
                     total=len(archive.getnames()),
-                    desc="Importing",
+                    desc=_("Importing"),
                     unit="logs",
                     postfix={"log": ""},
                 ) as p_bar:

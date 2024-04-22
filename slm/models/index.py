@@ -15,7 +15,13 @@ from django.db.models.functions import (
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from slm.defines import RinexVersion, SiteLogFormat, SiteLogStatus, SLMFileType
+from slm.defines import (
+    GeodesyMLVersion,
+    RinexVersion,
+    SiteLogFormat,
+    SiteLogStatus,
+    SLMFileType,
+)
 from slm.models.data import DataAvailability
 from slm.models.system import SiteFile
 
@@ -302,6 +308,11 @@ class ArchivedSiteLogManager(models.Manager):
                     name=index.site.get_filename(
                         log_format=log_format, epoch=index.begin
                     ),
+                ),
+                gml_version=(
+                    GeodesyMLVersion.latest()
+                    if log_format is SiteLogFormat.GEODESY_ML
+                    else None
                 ),
             )
         return None

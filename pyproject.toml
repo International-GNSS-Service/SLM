@@ -85,6 +85,8 @@ numpy = [
 ]
 chardet = "^5.1.0"
 psycopg = {extras = ["binary"], version = "^3.1.12"}
+django-typer = "^1.1.1"
+rich = "^13.7.1"
 
 [tool.poetry.group.dev.dependencies]
 django-extensions = "^3.1.5"

@@ -27,11 +27,11 @@ SLM_VALIDATION_BYPASS_BLOCK = False
 
 # do not allow a log to be published without these sections
 SLM_REQUIRED_SECTIONS_TO_PUBLISH = [
-    'siteform',
-    'siteidentification',
-    'sitelocation',
-    'sitereceiver',
-    'siteantenna',
+    "siteform",
+    "siteidentification",
+    "sitelocation",
+    "sitereceiver",
+    "siteantenna",
     # 'sitesurveyedlocalties',
     # 'sitefrequencystandard',
     # 'sitecollocation',
@@ -44,7 +44,7 @@ SLM_REQUIRED_SECTIONS_TO_PUBLISH = [
     # 'sitemultipathsources',
     # 'sitesignalobstructions',
     # 'sitelocalepisodiceffects',
-    'siteoperationalcontact',
+    "siteoperationalcontact",
     # 'siteresponsibleagency',
     # 'sitemoreinformation'
 ]

@@ -4,7 +4,7 @@
 [![PyPI djversions](https://img.shields.io/pypi/djversions/igs-slm.svg)](https://pypi.org/project/igs-slm/)
 [![PyPI status](https://img.shields.io/pypi/status/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm)
 [![Documentation Status](https://readthedocs.org/projects/igs-slm/badge/?version=latest)](http://igs-slm.readthedocs.io/?badge=latest/)
-[![Code Cov](https://codecov.io/gh/International-GNSS-Service/SLM/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/International-GNSS-Service/SLM)
+[![codecov](https://codecov.io/github/International-GNSS-Service/SLM/graph/badge.svg?token=PQVWN1LNM3)](https://codecov.io/github/International-GNSS-Service/SLM)
 [![Test Status](https://github.com/International-GNSS-Service/SLM/workflows/test/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml)
 [![Lint Status](https://github.com/International-GNSS-Service/SLM/workflows/lint/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)

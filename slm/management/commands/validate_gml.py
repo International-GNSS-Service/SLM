@@ -9,7 +9,7 @@ from django.core.management import CommandError
 from django.utils.translation import gettext as _
 from django_typer import TyperCommand
 from lxml import etree
-from typer import Argument, Option, secho
+from typer import Argument, Option
 from typing_extensions import Annotated
 
 from slm.defines import GeodesyMLVersion
@@ -21,7 +21,7 @@ class Command(TyperCommand):
 
     suppressed_base_arguments = {
         *TyperCommand.suppressed_base_arguments,
-    #    "version",
+        #    "version",
         "pythonpath",
         "settings",
         "skip-checks",
@@ -54,9 +54,7 @@ class Command(TyperCommand):
                 root.nsmap.get(root.prefix, GeodesyMLVersion.latest())
             )
 
-        self.stdout.write(
-            _("Validating against: {version}").format(version=version)
-        )
+        self.stdout.write(_("Validating against: {version}").format(version=version))
 
         result = version.schema.validate(doc)
 

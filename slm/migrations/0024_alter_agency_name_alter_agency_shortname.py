@@ -4,22 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('slm', '0023_archivedsitelog_gml_version_and_more'),
+        ("slm", "0023_archivedsitelog_gml_version_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='agency',
-            name='name',
-            field=models.CharField(db_index=True, default='BLANK', max_length=100),
+            model_name="agency",
+            name="name",
+            field=models.CharField(db_index=True, default="BLANK", max_length=100),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='agency',
-            name='shortname',
-            field=models.CharField(db_index=True, default='BLANK', max_length=20),
+            model_name="agency",
+            name="shortname",
+            field=models.CharField(db_index=True, default="BLANK", max_length=20),
             preserve_default=False,
         ),
     ]

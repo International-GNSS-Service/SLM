@@ -86,7 +86,7 @@ class Command(TyperCommand):
     }
     requires_migrations_checks = False
     requires_system_checks = []
-    
+
     def handle(
         self,
         destination: Annotated[

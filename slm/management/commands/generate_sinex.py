@@ -13,7 +13,7 @@ from pathlib import Path
 import requests
 from django.core.management import CommandError
 from django.db.models import Prefetch
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand, model_parser_completer
 from typer import Argument, Option
 from typing_extensions import Annotated

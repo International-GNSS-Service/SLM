@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 from django.core.management import CommandError
 from django.db import transaction
 from django.utils.timezone import make_aware, utc
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand
 from tqdm import tqdm
 from typer import Argument

@@ -349,7 +349,7 @@ class AntennaCalibrationAdmin(admin.ModelAdmin):
     list_display = ("antenna", "radome", "method_label", "calibrated")
     list_filter = ("method",)
 
-    ordering = ("antenna__name",)
+    ordering = ("-calibrated",)
 
     def method_label(self, obj):
         return str(obj.method.label)

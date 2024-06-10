@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.core.management import CommandError
 from django.db.models import Q
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand, command, initialize, model_parser_completer
 from typer import Argument, Option
 from typing_extensions import Annotated

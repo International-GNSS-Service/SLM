@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_gis",
     "render_static",
+    "django_routines",
     "django_typer",
     "django_filters",
     "compressor",

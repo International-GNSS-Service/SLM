@@ -6,10 +6,10 @@ import typing as t
 from pathlib import Path
 
 from django.core.management import CommandError
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand
 from lxml import etree
-from typer import Argument, Option
+from typer import Argument, Option, secho
 from typing_extensions import Annotated
 
 from slm.defines import GeodesyMLVersion
@@ -21,7 +21,7 @@ class Command(TyperCommand):
 
     suppressed_base_arguments = {
         *TyperCommand.suppressed_base_arguments,
-        "version",
+    #    "version",
         "pythonpath",
         "settings",
         "skip-checks",
@@ -32,7 +32,7 @@ class Command(TyperCommand):
     def handle(
         self,
         file: Annotated[Path, Argument(help=_("Path to the GML file to validate."))],
-        gml_version: Annotated[
+        version: Annotated[
             t.Optional[GeodesyMLVersion],
             Option(
                 "--version",
@@ -49,19 +49,19 @@ class Command(TyperCommand):
         doc = etree.parse(file)
         root = doc.getroot()
 
-        if not gml_version:
-            gml_version = GeodesyMLVersion(
+        if not version:
+            version = GeodesyMLVersion(
                 root.nsmap.get(root.prefix, GeodesyMLVersion.latest())
             )
 
         self.stdout.write(
-            _("Validating against: {version}").format(version=gml_version)
+            _("Validating against: {version}").format(version=version)
         )
 
-        result = gml_version.schema.validate(doc)
+        result = version.schema.validate(doc)
 
         if not result:
-            for error in gml_version.schema.error_log:
+            for error in version.schema.error_log:
                 self.stdout.write(
                     self.style.ERROR(
                         _("[{line}] {message}").format(

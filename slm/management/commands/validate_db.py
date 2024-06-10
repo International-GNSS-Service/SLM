@@ -7,7 +7,7 @@ import typing as t
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q, Sum
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand, model_parser_completer
 from tqdm import tqdm
 from typer import Argument, Option

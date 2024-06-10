@@ -6,7 +6,7 @@ import typing as t
 
 from django.db import transaction
 from django.db.models import Q
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand, model_parser_completer
 from typer import Argument
 from typing_extensions import Annotated

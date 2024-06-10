@@ -61,7 +61,7 @@ importlib-resources = ">1.3.0"
 django-allauth = "^0.62.1"
 django-widget-tweaks = "^1.4.12"
 djangorestframework = "^3.15.1"
-django-render-static = "^2.2.1"
+django-render-static = "^3.0.0"
 django-compressor = "^4.0"
 django-filter = "^24.2"
 python-dateutil = "^2.8.2"
@@ -85,7 +85,8 @@ numpy = [
 ]
 chardet = "^5.1.0"
 psycopg = {extras = ["binary"], version = "^3.1.12"}
-django-typer = "^1.1.1"
+django-typer = "^2.1.2"
+django-routines = "^1.1.0"
 rich = "^13.7.1"
 
 [tool.poetry.group.dev.dependencies]

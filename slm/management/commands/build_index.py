@@ -3,7 +3,7 @@ Update the data availability information for each station.
 """
 
 from django.db import transaction
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand
 from tqdm import tqdm
 from typer import Option

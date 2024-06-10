@@ -68,8 +68,8 @@ class AgencyQuerySet(models.QuerySet):
 
 class Agency(models.Model):
     id = models.AutoField(primary_key=True)  # Field name made lowercase.
-    name = models.CharField(max_length=100, blank=True, null=True, db_index=True)
-    shortname = models.CharField(max_length=20, blank=True, null=True, db_index=True)
+    name = models.CharField(max_length=100, blank=False, null=False, db_index=True)
+    shortname = models.CharField(max_length=20, blank=False, null=False, db_index=True)
 
     url = models.URLField(max_length=255, blank=True, null=True)
 

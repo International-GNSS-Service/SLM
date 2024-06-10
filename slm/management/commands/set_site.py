@@ -5,7 +5,7 @@ Update the data availability information for each station.
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.management import CommandError
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django_typer import TyperCommand
 
 

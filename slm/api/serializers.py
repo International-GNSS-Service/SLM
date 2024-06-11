@@ -95,7 +95,11 @@ class SiteLogSerializer(serializers.BaseSerializer):
         # todo put this logic on the site model?
         graphic = ""
         if self.published_param:
-            graphic = self.site.siteantenna_set.published(epoch=self.epoch_param).last()
+            graphic = (
+                self.site.siteantenna_set.published(epoch=self.epoch_param)
+                .last()
+                .graphic
+            )
         else:
             antennas = self.site.siteantenna_set.head(
                 epoch=self.epoch_param, include_deleted=False

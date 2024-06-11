@@ -307,10 +307,15 @@ class SatelliteSystemAdmin(admin.ModelAdmin):
 
 
 class AntennaForm(forms.ModelForm):
+    graphic = forms.CharField(
+        strip=False,
+        widget=GraphicTextarea,
+        help_text=Antenna._meta.get_field("graphic").help_text,
+    )
+
     class Meta:
         model = Antenna
         fields = "__all__"
-        widgets = {"graphic": GraphicTextarea}
 
 
 class AntennaAdmin(admin.ModelAdmin):

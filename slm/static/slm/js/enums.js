@@ -201,6 +201,7 @@ class SiteFileUploadStatus {
 }
 class SiteLogFormat {
 	
+	static ASCII_9CHAR = new SiteLogFormat(4, "ASCII_9CHAR", "ASCII (9-Char)", "text/plain", "bi bi-file-text", "log", ["text", "txt"]);
 	static LEGACY = new SiteLogFormat(1, "LEGACY", "Legacy (ASCII)", "text/plain", "bi bi-file-text", "log", ["text", "txt"]);
 	static GEODESY_ML = new SiteLogFormat(2, "GEODESY_ML", "GeodesyML", "application/xml", "bi bi-filetype-xml", "xml", ["xml"]);
 	static JSON = new SiteLogFormat(3, "JSON", "JSON", "application/json", "bi bi-filetype-json", "json", ["json", "js"]);
@@ -238,21 +239,11 @@ class SiteLogFormat {
 				return en;
 			}
 		}
-		for (const en of this) {
-			if (this.ciCompare(en.mimetype, value)) {
-				return en;
-			}
-		}
-		for (const en of this) {
-			if (this.ciCompare(en.ext, value)) {
-				return en;
-			}
-		}
 		return null;
 	}
 	
 	static [Symbol.iterator]() {
-		return [SiteLogFormat.LEGACY, SiteLogFormat.GEODESY_ML, SiteLogFormat.JSON][Symbol.iterator]();
+		return [SiteLogFormat.ASCII_9CHAR, SiteLogFormat.LEGACY, SiteLogFormat.GEODESY_ML, SiteLogFormat.JSON][Symbol.iterator]();
 	}
 }
 class SLMFileType {

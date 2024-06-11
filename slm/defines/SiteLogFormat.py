@@ -36,6 +36,14 @@ class SiteLogFormat(
         "json",
         ["json", "js"],
     )
+    ASCII_9CHAR = (
+        4,
+        _("ASCII (9-Char)"),
+        "text/plain",
+        "bi bi-file-text",
+        "log",
+        ["text", "txt"],
+    )
 
     def __str__(self):
         return str(self.label)

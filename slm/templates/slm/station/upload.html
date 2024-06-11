@@ -67,6 +67,8 @@ Template for Download page.
               {% if file.file_type == SLMFileType.SITE_LOG %}
                   {% if file.log_format == SiteLogFormat.LEGACY %}
                     {% include 'slm/station/uploads/legacy.html' %}
+                  {% elif file.log_format == SiteLogFormat.ASCII_9CHAR %}
+                    {% include 'slm/station/uploads/legacy.html' %}
                   {% elif file.log_format == SiteLogFormat.GEODESY_ML %}
                     {% include 'slm/station/uploads/geodesyml.html' %}
                   {% elif file.log_format == SiteLogFormat.JSON %}

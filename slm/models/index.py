@@ -43,6 +43,7 @@ class ArchiveIndexManager(models.Manager):
         return new_file
 
     def add_index(self, site):
+        assert site.last_publish, "last_publish must be set before calling add_index"
         existing = self.filter(site=site, begin=site.last_publish).first()
         if existing:
             return existing

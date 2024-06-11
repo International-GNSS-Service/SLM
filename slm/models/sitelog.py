@@ -314,9 +314,9 @@ class SiteQuerySet(models.QuerySet):
                 status__in=[
                     SiteLogStatus.UPDATED,
                     SiteLogStatus.PUBLISHED,
-                    SiteLogStatus.PROPOSED,
+                    # SiteLogStatus.PROPOSED,
                 ]
-            )  # allow PROPOSED to be PUBLISHED
+            )  # do not allow PROPOSED to be transitioned to PUBLISHED without explicit top level change
             & exists_q
         ).filter(~mod_q).update(status=SiteLogStatus.PUBLISHED)
 
@@ -743,7 +743,7 @@ class Site(models.Model):
     )
 
     def needs_publish(self):
-        if self.status == SiteLogStatus.UPDATED:
+        if self.status in [SiteLogStatus.PROPOSED, SiteLogStatus.UPDATED]:
             return True
         elif self.status == SiteLogStatus.PUBLISHED:
             return False
@@ -757,7 +757,7 @@ class Site(models.Model):
             return self.moderators.filter(pk=user.pk).exists()
         return False
 
-    def get_filename(self, log_format, epoch=None, name_len=9, lower_case=False):
+    def get_filename(self, log_format, epoch=None, name_len=None, lower_case=False):
         """
         Get the filename (including extension) to be used for the rendered
         site log given the parameters.
@@ -775,6 +775,8 @@ class Site(models.Model):
         """
         if epoch is None:
             epoch = self.last_publish or self.last_update or self.created
+        if name_len is None and log_format is SiteLogFormat.LEGACY:
+            name_len = 4
         name = self.name[:name_len]
         return (
             f"{name.lower() if lower_case else name.upper()}_"
@@ -882,7 +884,7 @@ class Site(models.Model):
             return user.agencies.filter(pk__in=self.agencies.all()).count() > 0
         return False
 
-    def update_status(self, save=True, user=None, timestamp=None):
+    def update_status(self, save=True, user=None, timestamp=None, first_publish=False):
         """
         Update the denormalized data that is too expensive to query on the
         fly. This includes flag count, moderation status and DateTimes. Also
@@ -897,6 +899,8 @@ class Site(models.Model):
             timestamp = now()
 
         self.last_update = timestamp
+        if first_publish:
+            self.last_publish = timestamp
 
         if user:
             self.last_user = user
@@ -907,8 +911,11 @@ class Site(models.Model):
         # if in either of these two states - status update must come from
         # a global publish of the site log, not from this which can be
         # triggered by a section publish
-        if status != self.status and self.status == SiteLogStatus.PUBLISHED:
+        if first_publish or (
+            status != self.status and self.status == SiteLogStatus.PUBLISHED
+        ):
             self.last_publish = timestamp
+            self.status = SiteLogStatus.PUBLISHED
             if hasattr(self, "review_request"):
                 self.review_request.delete()
 
@@ -1034,7 +1041,10 @@ class Site(models.Model):
             self.last_publish = timestamp
             # self.save()
             self.update_status(
-                save=True, user=request.user if request else None, timestamp=timestamp
+                save=True,
+                user=request.user if request else None,
+                timestamp=timestamp,
+                first_publish=(self.status is SiteLogStatus.PROPOSED),
             )
             if hasattr(self, "review_request"):
                 self.review_request.delete()
@@ -1859,7 +1869,14 @@ class SiteForm(SiteSection):
     def previous_log(self):
         return self.site.get_filename(
             log_format=SiteLogFormat.LEGACY,
-            name_len=4,
+            lower_case=True,
+            epoch=self.previous.begin,
+        )
+
+    @property
+    def previous_log_9char(self):
+        return self.site.get_filename(
+            log_format=SiteLogFormat.ASCII_9CHAR,
             lower_case=True,
             epoch=self.previous.begin,
         )
@@ -1868,7 +1885,6 @@ class SiteForm(SiteSection):
     def previous_xml(self):
         return self.site.get_filename(
             log_format=SiteLogFormat.GEODESY_ML,
-            name_len=4,
             lower_case=True,
             epoch=self.previous.begin,
         )
@@ -1892,12 +1908,13 @@ class SiteForm(SiteSection):
         ),
     )
 
-    def save(self, *args, skip_update=False, **kwargs):
+    def save(self, *args, skip_update=False, set_previous=True, **kwargs):
         from slm.models import ArchiveIndex
 
-        self.previous = ArchiveIndex.objects.filter(site=self.site).first()
-        if self.previous:
-            self.report_type = "UPDATE"
+        if set_previous:
+            self.previous = ArchiveIndex.objects.filter(site=self.site).first()
+            if self.previous:
+                self.report_type = "UPDATE"
         if not skip_update:
             self.modified_section = kwargs.pop(
                 "modified_section", ", ".join(self.site.modified_sections)

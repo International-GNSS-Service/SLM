@@ -25,6 +25,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
     graphic = ""
 
     text_tmpl = get_template("slm/sitelog/legacy.log")
+    text_9char_tmpl = get_template("slm/sitelog/ascii_9char.log")
 
     xml_parser = etree.XMLParser(remove_blank_text=True)
 
@@ -71,6 +72,8 @@ class SiteLogSerializer(serializers.BaseSerializer):
     def format(self, log_format, version=None):
         if log_format == SiteLogFormat.LEGACY:
             return self.text
+        elif log_format == SiteLogFormat.ASCII_9CHAR:
+            return self.text_9char
         elif log_format == SiteLogFormat.GEODESY_ML:
             return self.xml(version=(version or GeodesyMLVersion.latest()))
         raise NotImplementedError(
@@ -122,3 +125,7 @@ class SiteLogSerializer(serializers.BaseSerializer):
     @cached_property
     def text(self):
         return self.text_tmpl.render({**self.context, "include_templates": True})
+
+    @cached_property
+    def text_9char(self):
+        return self.text_9char_tmpl.render({**self.context, "include_templates": True})

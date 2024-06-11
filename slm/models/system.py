@@ -258,7 +258,7 @@ class SiteFile(models.Model):
         return super().save(*args, **kwargs)
 
     def _discover_type(self):
-        if not self.mimetype:
+        if not self.mimetype or self.mimetype == "application/octet-stream":
             import mimetypes
 
             self.mimetype = mimetypes.guess_type(self.file.path)[0]
@@ -282,6 +282,8 @@ class SiteFile(models.Model):
                 and b"GNSS Receiver Information" in content
                 and b"GNSS Antenna Information" in content
             ):
+                if b"Nine Character ID" in content:
+                    return SLMFileType.SITE_LOG, SiteLogFormat.ASCII_9CHAR
                 return SLMFileType.SITE_LOG, SiteLogFormat.LEGACY
         elif mimetype == SiteLogFormat.GEODESY_ML.mimetype:
             # todo - determine if this is the right schema etc, otherwise

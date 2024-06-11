@@ -13,6 +13,16 @@ def index_site(sender, site, previous_status, new_status, **kwargs):
         and new_status not in SiteLogStatus.active_states()
     ):
         ArchiveIndex.objects.close_index(site)
+    elif (
+        site.last_publish
+        and previous_status in SiteLogStatus.active_states()
+        and previous_status is not SiteLogStatus.PUBLISHED
+        and new_status is SiteLogStatus.PUBLISHED
+    ):
+        # catch an edge case where a section publish triggers a whole log publish
+        # these signals/edit state diagram needs to be cleaned up. this code is
+        # too hard to follow.
+        ArchiveIndex.objects.add_index(site)
 
 
 @receiver(slm_signals.site_published)

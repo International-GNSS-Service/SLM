@@ -456,7 +456,7 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
                     filename=site.get_filename(
                         log_format=request.accepted_renderer.format,
                         epoch=datetime.now(),
-                        name_len=request.GET.get("name_len", 9),
+                        name_len=request.GET.get("name_len", None),
                         lower_case=request.GET.get("lower_case", False),
                     ),
                 )
@@ -1285,7 +1285,10 @@ class SiteFileUploadViewSet(
             if upload.file_type is SLMFileType.SITE_LOG:
                 from slm.parsing.legacy import SiteLogBinder, SiteLogParser
 
-                if upload.log_format is SiteLogFormat.LEGACY:
+                if upload.log_format in [
+                    SiteLogFormat.LEGACY,
+                    SiteLogFormat.ASCII_9CHAR,
+                ]:
                     with upload.file.open() as uplf:
                         content = uplf.read()
                         encoding = detect(content).get("encoding", "utf-8")

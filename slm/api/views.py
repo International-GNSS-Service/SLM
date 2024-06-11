@@ -117,7 +117,7 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
             filename=index.site.get_filename(
                 log_format=request.accepted_renderer.format,
                 epoch=index.begin,
-                name_len=request.GET.get("name_len", 9),
+                name_len=request.GET.get("name_len", None),
                 lower_case=request.GET.get("lower_case", False),
             ),
         )

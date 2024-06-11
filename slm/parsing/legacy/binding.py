@@ -231,6 +231,7 @@ class SiteLogBinder(BaseBinder):
             reg(log_name, 1, bindings): bindings
             for log_name, bindings in [
                 ("Site Name", ("site_name", to_str)),
+                ("Nine Character ID", ("four_character_id", ignored)),
                 ("Four Character ID", ("four_character_id", ignored)),
                 ("Monument Inscription", ("monument_inscription", to_str)),
                 ("IERS DOMES Number", ("iers_domes_number", to_str)),
@@ -263,6 +264,10 @@ class SiteLogBinder(BaseBinder):
                     ("State or Province", ("state", to_str)),
                     (
                         "Country",
+                        ("country", partial(to_enum, ISOCountry, strict=False)),
+                    ),
+                    (
+                        "Country or Region",
                         ("country", partial(to_enum, ISOCountry, strict=False)),
                     ),
                     ("Tectonic Plate", ("tectonic", partial(to_enum, TectonicPlates))),

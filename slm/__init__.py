@@ -16,7 +16,7 @@ r"""
 *******************************************************************************
 """
 
-VERSION = (0, 2, 1)
+VERSION = (0, 3, 0)
 
 __title__ = "IGS/Site Log Manager"
 __version__ = ".".join(str(i) for i in VERSION)

@@ -231,8 +231,8 @@ class SiteLogBinder(BaseBinder):
             reg(log_name, 1, bindings): bindings
             for log_name, bindings in [
                 ("Site Name", ("site_name", to_str)),
-                ("Nine Character ID", ("four_character_id", ignored)),
-                ("Four Character ID", ("four_character_id", ignored)),
+                ("Nine Character ID", ("nine_character_id", ignored)),
+                ("Four Character ID", ("nine_character_id", ignored)),
                 ("Monument Inscription", ("monument_inscription", to_str)),
                 ("IERS DOMES Number", ("iers_domes_number", to_str)),
                 ("CDP Number", ("cdp_number", to_str)),

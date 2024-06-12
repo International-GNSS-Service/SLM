@@ -574,8 +574,8 @@ class SiteFormForm(SectionForm):
 
 class SiteIdentificationForm(SectionForm):
     # we only include this for legacy purposes - this is not an editable value
-    four_character_id = forms.CharField(
-        label=_("Four Character ID"),
+    nine_character_id = forms.CharField(
+        label=_("Nine Character ID"),
         help_text=_(
             "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
             "filenames. Format: (XXXX - existing four character IGS station "
@@ -591,7 +591,7 @@ class SiteIdentificationForm(SectionForm):
         fields = [
             *SectionForm.Meta.fields,
             *SiteIdentification.site_log_fields(),
-            "four_character_id",
+            "nine_character_id",
         ]
         field_classes = {"date_installed": SLMDateTimeField}
 

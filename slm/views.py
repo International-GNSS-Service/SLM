@@ -17,7 +17,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.db.models.fields import NOT_PROVIDED
 from django.http import Http404, HttpResponseNotFound
 from django.template.exceptions import TemplateDoesNotExist
@@ -562,25 +562,34 @@ class UserActivityLogView(SLMView):
 class StationReviewView(StationContextView):
     template_name = "slm/station/review.html"
 
-    LOG_FORMATS = {fmt for fmt in SiteLogFormat if fmt not in {SiteLogFormat.JSON}}
+    LOG_FORMATS = {
+        fmt
+        for fmt in SiteLogFormat
+        if fmt not in {SiteLogFormat.JSON, SiteLogFormat.LEGACY}
+    }
 
     def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # we use legacy log files on the ascii 9 char review stack if no 9 char file is available
+        review_stack = {fmt: [] for fmt in self.LOG_FORMATS}
+        for fmt in self.LOG_FORMATS:
+            fmt_q = Q(log_format=fmt)
+            if fmt is SiteLogFormat.ASCII_9CHAR:
+                fmt_q |= Q(log_format=SiteLogFormat.LEGACY)
+            for archive in (
+                ArchivedSiteLog.objects.filter(Q(site=self.site) & fmt_q)
+                .order_by("-index__begin", "-log_format")
+                .values_list("index__begin", "id")
+                .distinct("index__begin")
+            ):
+                review_stack[fmt].append((archive[0], archive[1]))
         ctx = {
-            **super().get_context_data(**kwargs),
+            **ctx,
             "richtextform": RichTextForm(),
-            "default_format": SiteLogFormat.LEGACY,
+            "default_format": SiteLogFormat.ASCII_9CHAR,
             "log_formats": self.LOG_FORMATS,
-            "review_stack": {
-                fmt: [
-                    (archive[0], archive[1])
-                    for archive in ArchivedSiteLog.objects.filter(
-                        site=self.site, log_format=fmt
-                    )
-                    .order_by("-index__begin")
-                    .values_list("index__begin", "id")
-                ]
-                for fmt in self.LOG_FORMATS
-            },
+            "review_stack": review_stack,
             "needs_publish": self.station.needs_publish(),
         }
         if ctx["needs_publish"]:

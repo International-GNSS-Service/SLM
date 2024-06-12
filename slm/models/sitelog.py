@@ -1875,11 +1875,13 @@ class SiteForm(SiteSection):
 
     @property
     def previous_log_9char(self):
-        return self.site.get_filename(
-            log_format=SiteLogFormat.ASCII_9CHAR,
-            lower_case=True,
-            epoch=self.previous.begin,
-        )
+        if self.previous.files.filter(log_format=SiteLogFormat.ASCII_9CHAR).exists():
+            return self.site.get_filename(
+                log_format=SiteLogFormat.ASCII_9CHAR,
+                lower_case=True,
+                epoch=self.previous.begin,
+            )
+        return self.previous_log
 
     @property
     def previous_xml(self):
@@ -1981,7 +1983,8 @@ class SiteIdentification(SiteSection):
     def structure(cls):
         return [
             "site_name",
-            "four_character_id",
+            # "four_character_id",
+            "nine_character_id",
             "monument_inscription",
             "iers_domes_number",
             "cdp_number",
@@ -2023,6 +2026,10 @@ class SiteIdentification(SiteSection):
     @cached_property
     def four_character_id(self):
         return self.site.name[0:4].upper()
+
+    @cached_property
+    def nine_character_id(self):
+        return self.site.name.upper()
 
     monument_inscription = models.CharField(
         max_length=50,

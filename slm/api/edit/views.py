@@ -939,6 +939,10 @@ class SectionViewSet(type):
                                 "required": False,
                                 "read_only": True,
                             },
+                            "nine_character_id": {  # special case
+                                "required": False,
+                                "read_only": True,
+                            },
                             "custom_graphic": {"trim_whitespace": False},
                         }
                         if issubclass(ModelClass, SiteSubSection)

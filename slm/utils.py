@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import date, datetime, timedelta
 from math import atan2, cos, sin, sqrt
 
@@ -272,3 +273,27 @@ def xyz2llh(xyz):
     h = a_e * (p * cos(phi) + z * sin(phi) - sqrt(1 - e2 * (sin(phi)) ** 2))
 
     return lat, lon, h
+
+
+def convert_9to4(text: str, name: str) -> str:
+    """
+    In any text convert the 9 character string to the equivalent 4 character site name.
+    """
+    return re.compile(re.escape(name), re.IGNORECASE).sub(
+        lambda match: match.group(0)[0:4], text
+    )
+
+
+def convert_4to9(text: str, name: str) -> str:
+    """
+    In any text convert the 4 character string to the equivalent 9 character site name.
+    """
+
+    def match_case(match: str) -> str:
+        if match.isupper():
+            return name.upper()
+        elif match.islower():
+            return name.lower()
+        return name
+
+    return re.compile(re.escape(name[0:4]), re.IGNORECASE).sub(match_case, text)

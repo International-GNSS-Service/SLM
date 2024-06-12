@@ -24,6 +24,18 @@ class LegacyRenderer(renderers.BaseRenderer):
         return b""
 
 
+class ASCIIRenderer(renderers.BaseRenderer):
+    """
+    Renderer which serializes to legacy format.
+    """
+
+    media_type = SiteLogFormat.ASCII_9CHAR.mimetype
+    format = SiteLogFormat.ASCII_9CHAR
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return b""
+
+
 class GeodesyMLRenderer(renderers.BaseRenderer):
     """
     Renderer which serializes to GeodesyML format.
@@ -49,11 +61,11 @@ class JSONRenderer(renderers.BaseRenderer):
 
 
 class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    renderer_classes = [LegacyRenderer, GeodesyMLRenderer]
+    renderer_classes = [ASCIIRenderer, LegacyRenderer, GeodesyMLRenderer]
 
     site = None
 
-    lookup_field = "site__name"
+    lookup_field = "site__name__istartswith"
     lookup_url_kwarg = "site"
 
     queryset = ArchiveIndex.objects.all()
@@ -93,7 +105,19 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
     filterset_class = ArchiveIndexFilter
 
     def get_format_suffix(self, **kwargs):
-        return SiteLogFormat(super().get_format_suffix(**kwargs))
+        requested_format = super().get_format_suffix(**kwargs)
+
+        # if the site name is a 4-id return the old 4char log format
+        if "site" in kwargs and len(kwargs["site"]) == 4 and requested_format == "log":
+            return SiteLogFormat.LEGACY
+
+        # match suffix first
+        for fmt in reversed(SiteLogFormat):
+            if fmt.ext == requested_format:
+                return fmt
+
+        # if that fails accept alts by priority
+        return SiteLogFormat(requested_format)
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -110,12 +134,13 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
         :return:
         """
         index = self.get_object()
+        archived = ArchivedSiteLog.objects.from_index(
+            index=index, log_format=request.accepted_renderer.format
+        )
         return FileResponse(
-            ArchivedSiteLog.objects.from_index(
-                index=index, log_format=request.accepted_renderer.format
-            ).file,
+            archived.file,
             filename=index.site.get_filename(
-                log_format=request.accepted_renderer.format,
+                log_format=archived.log_format,
                 epoch=index.begin,
                 name_len=request.GET.get("name_len", None),
                 lower_case=request.GET.get("lower_case", False),

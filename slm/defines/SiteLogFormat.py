@@ -18,7 +18,7 @@ class SiteLogFormat(
         "text/plain",
         "bi bi-file-text",
         "log",
-        ["text", "txt"],
+        ["text", "txt", "legacy"],
     )
     GEODESY_ML = (
         2,
@@ -42,7 +42,7 @@ class SiteLogFormat(
         "text/plain",
         "bi bi-file-text",
         "log",
-        ["text", "txt"],
+        ["text", "txt", "9char"],
     )
 
     def __str__(self):

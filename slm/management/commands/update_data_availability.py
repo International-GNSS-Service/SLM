@@ -55,13 +55,16 @@ class Command(TyperCommand):
             str,
             Option(
                 prompt=True,
-                confirmation_prompt=True,
+                prompt_required=True,
                 hide_input=True,
                 help=_("Password to login to ftp."),
             ),
         ] = "",
         lookback: Annotated[
-            int, Option(help=_("The number of days into the past to look."))
+            int,
+            Option(
+                "-l", "--lookback", help=_("The number of days into the past to look.")
+            ),
         ] = LOOKBACK,
         data_rates: Annotated[
             t.Optional[t.List[DataRate]],

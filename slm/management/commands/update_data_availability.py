@@ -55,7 +55,7 @@ class Command(TyperCommand):
             str,
             Option(
                 prompt=True,
-                prompt_required=True,
+                prompt_required=False,
                 hide_input=True,
                 help=_("Password to login to ftp."),
             ),
@@ -104,7 +104,7 @@ class Command(TyperCommand):
         availability = {}
         unrecognized = set()
         for listing in DirectoryListing(
-            stations=[site.name for site in sites],
+            stations=[site.name for site in sites or Site.objects.active()],
             start=now(),
             end=now() - timedelta(days=lookback),
             username=username,

@@ -36,16 +36,6 @@ class Command(TyperCommand):
     requires_migrations_checks = False
     requires_system_checks = []
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--center",
-            dest="data_centers",
-            action="append",
-            default=[],
-            type=DataCenter,
-            choices=[str(dc) for dc in DataCenter],
-        )
-
     def handle(
         self,
         sites: Annotated[
@@ -76,6 +66,7 @@ class Command(TyperCommand):
         data_rates: Annotated[
             t.Optional[t.List[DataRate]],
             Option(
+                "--rate",
                 parser=EnumParser(DataRate, field="slug"),
                 help=_(
                     "Restrict the data rates to update availability for. {rates}"
@@ -85,6 +76,7 @@ class Command(TyperCommand):
         rinex_versions: Annotated[
             t.Optional[t.List[RinexVersion]],
             Option(
+                "--rinex",
                 parser=EnumParser(RinexVersion, field="slug"),
                 help=_(
                     "Restrict rinex versions to update availability for ({versions})."
@@ -98,6 +90,7 @@ class Command(TyperCommand):
         data_centers: Annotated[
             t.Optional[t.List[DataCenter]],
             Option(
+                "--center",
                 parser=EnumParser(DataCenter, field="label"),
                 help=_(
                     "Restrict data centers to update availability for ({centers})."

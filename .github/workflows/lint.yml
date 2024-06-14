@@ -60,7 +60,6 @@ jobs:
           poetry run ruff check slm
           poetry check
           poetry run pip check
-          poetry run safety check --full-report
           poetry run python -m readme_renderer ./README.md
           cd ./doc
           poetry run doc8 --ignore-path build --max-line-length 100

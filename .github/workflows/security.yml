@@ -1,4 +1,4 @@
-name: lint
+name: security
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 
 jobs:
 
-  linting:
+  security:
     runs-on: ubuntu-latest
     strategy:
       matrix:

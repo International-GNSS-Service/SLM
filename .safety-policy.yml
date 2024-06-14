@@ -18,7 +18,10 @@ report:
         environment-results: true
         unpinned-requirements: true
       cvss-severity: []
-
+      vulnerabilities:
+        70612:
+          reason: We do not use untrusted Jinja2 templates.
+          expires: '2050-01-01'
 
 fail-scan-with-exit-code:
   dependency-vulnerabilities:

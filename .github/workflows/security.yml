@@ -37,6 +37,7 @@ jobs:
           virtualenvs-in-project: true
       - name: Refresh Requirements
         run: |
+          poetry run pip install poetry-plugin-export
           poetry export -f requirements.txt --output requirements.txt --without-hashes --without dev
       - uses: pyupio/safety-action@v1
         with:

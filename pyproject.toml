@@ -108,6 +108,7 @@ doc8 = "^1.1.1"
 django-debug-toolbar = "^4.1.0"
 pygount = "^1.4.0"
 ruff = "^0.4.1"
+poetry-plugin-export = "^1.8.0"
 
 
 [build-system]

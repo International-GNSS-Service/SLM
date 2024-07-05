@@ -52,6 +52,7 @@ exclude = ["slm/tests"]
 
 [tool.poetry.scripts]
 manage = 'slm.manage:main'
+slm-startproject = 'slm.bin.startproject:app'
 
 [tool.poetry.dependencies]
 python = "^3.8"

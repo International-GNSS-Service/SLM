@@ -58,15 +58,15 @@ environment(s):
        be installed manually.
    * - pgAdmin_
      - >=7.0
-     - 
+     -
      - A graphical PostgreSQL management utility. Recommended for local development.
    * - Poetry_
      - >=1.8
-     - 
+     -
      - A python build and package management system. Used by :ref:`slm-startproject`
    * - pyenv_
      - >=2.3
-     - 
+     -
      - A python management system. Not required but recommended for local development.
 
 |
@@ -80,7 +80,7 @@ Platform specific Installation guidance.
 
        * By far and away the easiest way to install PostgreSQL_ and PostGIS_ in OSX is to use
          Postgres.app_. This will also install all the necessary GeoDjango_ dependencies.
-       * The GeoDjango_ documentation has 
+       * The GeoDjango_ documentation has
          `a few additional instructions <https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/#postgres-app>`_
        * OSX uses z-shell_ by default. If you would like to enable tab completions for slm
          management commands, you will want to use homebrew_ to
@@ -96,7 +96,7 @@ Platform specific Installation guidance.
        * If you want `shell tab completions <https://django-typer.readthedocs.io/en/latest/shell_completion.html>`_
          to work for your management commands, you will probably want to
          `install PowerShell <https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows>`_.
-       
+
 
     .. tab:: Linux
 
@@ -139,7 +139,7 @@ a compeling reason to do so you should use the release on pypi.
         ?> cd SLM
         ?> poetry install
 
-Now you should have a command available on your terminal called slm-startproject_ and when you 
+Now you should have a command available on your terminal called slm-startproject_ and when you
 run
 
 .. code:: bash
@@ -248,18 +248,19 @@ the first question you can just hit enter to accept the defaults:
 (4) Import Existing Logs and Deploy
 -----------------------------------
 
-The SLM ships with a number of :ref:`pre-defined routines <routines>`. If you do not have any existing
-logs to import you'll probably just want to run :ref:`routine_deploy`. Otherwise gather your logs into
-a single directory or tar file and run the :ref:`routine_install` routine:
+The SLM ships with a number of :ref:`pre-defined routines <routines>`. If you do not have any
+existing logs to import you'll probably just want to run :ref:`routine_deploy`. Otherwise gather
+your logs into a single directory or tar file and run the :ref:`routine_install` routine:
 
   .. code-block:: bash
-    
+
     ?> <slm> routine install
 
 **<slm> is the name of your management script. In our example it would be called 'network'.**
 
-The data import will both generate logs and record import errors and warnings as alerts and validation
-flags in the database so you can manually go through the web interface and correct any errors.
+The data import will both generate logs and record import errors and warnings as alerts and
+validation flags in the database so you can manually go through the web interface and correct any
+errors.
 
 (5) Run the Development Server
 ------------------------------

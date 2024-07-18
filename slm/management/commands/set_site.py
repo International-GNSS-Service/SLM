@@ -8,7 +8,7 @@ from SLM specific settings:
     * SLM_ORG_NAME
 
 .. note::
-    
+
     The sites framework is typically used to support serving multiple domains off the same
     software stack. In our experience it is usually preferable to serve separate domains
     off customized software stacks because their requirements may differ substantially.

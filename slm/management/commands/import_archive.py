@@ -10,7 +10,7 @@ This command will perform #1 and optionally call :ref:`command_head_from_index` 
 imported stations to also perform #2.
 
 .. tip::
-    
+
     Rich HTML logs of the import process will be written to:
 
         ``settings.LOG_DIR / import_archive.TIMESTAMP``
@@ -19,7 +19,7 @@ Logs will be parsed and errors reported, but parsing errors will not prevent log
 being indexed.
 
 .. warning::
-    
+
     If timestamps cannot be determined for files they will not be indexed
     because each entry in the file index requires a begin and end time.
 """
@@ -35,9 +35,9 @@ from pathlib import Path
 
 from dateutil.parser import ParserError
 from dateutil.parser import parse as parse_datetime
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management import CommandError
-from django.conf import settings
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.timezone import is_naive, make_aware
@@ -353,9 +353,7 @@ class Command(TyperCommand):
         logs: Annotated[
             Path,
             Option(
-                help=_(
-                    "Write parser logs to this directory."
-                ),
+                help=_("Write parser logs to this directory."),
                 shell_complete=complete_directory,
             ),
         ] = logs,
@@ -397,7 +395,7 @@ class Command(TyperCommand):
         self.logs = Path(
             str(logs).format(
                 LOG_DIR=getattr(settings, "LOG_DIR", "./"),
-                TIMESTAMP=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                TIMESTAMP=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
             )
         )
         self.formats = [SiteLogFormat(fmt) for fmt in formats]

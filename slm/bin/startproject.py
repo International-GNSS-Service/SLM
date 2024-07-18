@@ -82,7 +82,7 @@ def main(
         str,
         Option(
             prompt="What is the name of your organization?",
-            help="What is the name of your organization?"
+            help="What is the name of your organization?",
         ),
     ] = "",
     project_dir: Annotated[
@@ -135,7 +135,7 @@ def main(
             prompt="Use IGS sitelog validation defaults?",
             help="Use IGS sitelog validation defaults?",
         ),
-    ] = False
+    ] = False,
 ):
     netloc = (urlparse(netloc).netloc or netloc).lower()
     parts = netloc.split(".")
@@ -146,7 +146,10 @@ def main(
         subdomain = parts[0]
         domain = parts[1]
     else:
-        secho("Unable to interpret network location: {netloc}".format(netloc=netloc), fg="red")
+        secho(
+            "Unable to interpret network location: {netloc}".format(netloc=netloc),
+            fg="red",
+        )
         sys.exit(1)
 
     if extension_app == "slm":

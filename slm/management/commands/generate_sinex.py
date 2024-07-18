@@ -1,5 +1,5 @@
 """
-Generates a SINEX_ file from the current published database state. 
+Generates a SINEX_ file from the current published database state.
 
 The default antex file used is https://files.igs.org/pub/station/general/igs20.atx.gz
 """

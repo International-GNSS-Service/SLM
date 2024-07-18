@@ -52,7 +52,7 @@ Here's an example of a typical SLM management script:
         # mode.
         if len(sys.argv) > 1 and sys.argv[1] != "runserver":
             os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
-        
+
         # Django bootstraps off the settings file defined in this import path.
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', default_settings)
 
@@ -340,7 +340,7 @@ artifacts and copy those artifacts to where the webserver expects.
   control and we do not want to accidently generate files and apply them to the database in
   production. This would likely cause conflicting migration files to be generated in development
   and production.
-  
+
   migrate_ will warn if the code is out of sync with the database structure. And you should
   always run makemigrations_ before packaging a new version of your software for deployment.
 

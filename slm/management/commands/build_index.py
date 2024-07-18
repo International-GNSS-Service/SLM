@@ -12,15 +12,16 @@ log files of the specified formats.
 """
 
 import typing as t
+
 from django.db import transaction
 from django.utils.translation import gettext as _
-from django_typer.management import TyperCommand
 from django_typer.completers import these_strings
+from django_typer.management import TyperCommand
 from tqdm import tqdm
 from typer import Option
 from typing_extensions import Annotated
 
-from slm.defines import SiteLogStatus, SiteLogFormat
+from slm.defines import SiteLogFormat, SiteLogStatus
 from slm.models import ArchiveIndex, Site
 
 
@@ -36,7 +37,7 @@ class Command(TyperCommand):
         "pythonpath",
         "settings",
     }
-    
+
     formats: t.List[t.Union[str, SiteLogFormat]] = list(
         set([fmt.ext for fmt in SiteLogFormat])
     )

@@ -42,12 +42,12 @@ class Command(TyperCommand, rich_markup_mode="markdown", chain=True):
         "equipment encodings used by IGS, see: "
         "https://files.igs.org/pub/station/general/rcvr_ant.tab"
     )
-    
+
     suppressed_base_arguments = {
         *TyperCommand.suppressed_base_arguments,
         "version",
         "pythonpath",
-        "settings"
+        "settings",
     }
 
     remove: bool = False
@@ -169,12 +169,13 @@ class Command(TyperCommand, rich_markup_mode="markdown", chain=True):
                 if created:
                     self.manufacturers_added.add(manufacturer)
 
-        self.secho(_(
-            "Added {added} manufacturers from {sources}."
-        ).format(
-            added=len(self.manufacturers_added),
-            sources=sources[0] if len(sources) == 1 else sources
-        ), fg="green")
+        self.secho(
+            _("Added {added} manufacturers from {sources}.").format(
+                added=len(self.manufacturers_added),
+                sources=sources[0] if len(sources) == 1 else sources,
+            ),
+            fg="green",
+        )
 
         if self.remove:
             to_delete = Manufacturer.objects.filter(
@@ -221,12 +222,13 @@ class Command(TyperCommand, rich_markup_mode="markdown", chain=True):
                 if created:
                     self.antennas_added.add(antenna)
 
-        self.secho(_(
-            "Added {added} antennas from {sources}."
-        ).format(
-            added=len(self.antennas_added),
-            sources=sources[0] if len(sources) == 1 else sources
-        ), fg="green")
+        self.secho(
+            _("Added {added} antennas from {sources}.").format(
+                added=len(self.antennas_added),
+                sources=sources[0] if len(sources) == 1 else sources,
+            ),
+            fg="green",
+        )
 
         for ant, replaced in replacements.items():
             ant.replaced.set(Antenna.objects.filter(model__in=replaced))
@@ -276,12 +278,13 @@ class Command(TyperCommand, rich_markup_mode="markdown", chain=True):
                 if created:
                     self.receivers_added.add(receiver)
 
-        self.secho(_(
-            "Added {added} receivers from {sources}."
-        ).format(
-            added=len(self.receivers_added),
-            sources=sources[0] if len(sources) == 1 else sources
-        ), fg="green")
+        self.secho(
+            _("Added {added} receivers from {sources}.").format(
+                added=len(self.receivers_added),
+                sources=sources[0] if len(sources) == 1 else sources,
+            ),
+            fg="green",
+        )
 
         for ant, replaced in replacements.items():
             ant.replaced.set(Receiver.objects.filter(model__in=replaced))
@@ -331,12 +334,13 @@ class Command(TyperCommand, rich_markup_mode="markdown", chain=True):
                 if created:
                     self.radomes_added.add(radome)
 
-        self.secho(_(
-            "Added {added} radomes from {sources}."
-        ).format(
-            added=len(self.radomes_added),
-            sources=sources[0] if len(sources) == 1 else sources
-        ), fg="green")
+        self.secho(
+            _("Added {added} radomes from {sources}.").format(
+                added=len(self.radomes_added),
+                sources=sources[0] if len(sources) == 1 else sources,
+            ),
+            fg="green",
+        )
 
         for ant, replaced in replacements.items():
             ant.replaced.set(Radome.objects.filter(model__in=replaced))

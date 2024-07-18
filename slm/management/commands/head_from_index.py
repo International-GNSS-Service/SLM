@@ -4,7 +4,7 @@ If your site log file index is more current than the database state
 from the most recent indexed files into the database.
 
 .. tip::
-    
+
     By default, rich HTML logs of the import process will be written to:
 
         ``settings.LOG_DIR / head_from_index.TIMESTAMP``
@@ -23,8 +23,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.conf import settings
+from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.db import DatabaseError, models, transaction
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
@@ -185,7 +185,7 @@ class Command(TyperCommand):
         self.logs = Path(
             str(logs).format(
                 LOG_DIR=getattr(settings, "LOG_DIR", "./"),
-                TIMESTAMP=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                TIMESTAMP=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
             )
         )
         self.verbosity = verbosity
@@ -239,8 +239,8 @@ class Command(TyperCommand):
                             defaults={
                                 "level": AlertLevel.ERROR,
                                 "header": _("Import from index failed."),
-                                "detail": record.failed
-                            }
+                                "detail": record.failed,
+                            },
                         )
                 except Exception as err:
                     if self.traceback:
@@ -256,8 +256,8 @@ class Command(TyperCommand):
                         defaults={
                             "level": AlertLevel.ERROR,
                             "header": _("Import from index failed."),
-                            "detail": record.failed
-                        }
+                            "detail": record.failed,
+                        },
                     )
                 p_bar.update(n=1)
 

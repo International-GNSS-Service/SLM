@@ -15,7 +15,7 @@ Same process can be applied for unregistering a model
 group (same command with unregister).
 
 More info:
-https://docs.djangoproject.com/en/3.2/ref/contrib/admin/
+https://docs.djangoproject.com/en/stable/ref/contrib/admin/
 """
 
 from django import forms
@@ -25,6 +25,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.db.models import BooleanField, Count, Q
+from django.db.models.expressions import ExpressionWrapper
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from polymorphic.admin import (
@@ -34,6 +36,7 @@ from polymorphic.admin import (
 )
 
 from slm.authentication import initiate_password_resets, permissions
+from slm.defines import SiteLogStatus
 from slm.models import (
     About,
     Agency,
@@ -44,6 +47,7 @@ from slm.models import (
     ArchivedSiteLog,
     ArchiveIndex,
     DataCenter,
+    Equipment,
     GeodesyMLInvalid,
     Help,
     LogEntry,
@@ -306,35 +310,6 @@ class SatelliteSystemAdmin(admin.ModelAdmin):
     pass
 
 
-class AntennaForm(forms.ModelForm):
-    graphic = forms.CharField(
-        strip=False,
-        widget=GraphicTextarea,
-        help_text=Antenna._meta.get_field("graphic").help_text,
-    )
-
-    class Meta:
-        model = Antenna
-        fields = "__all__"
-
-
-class AntennaAdmin(admin.ModelAdmin):
-    form = AntennaForm
-
-    search_fields = ("model",)
-    list_filter = ("state",)
-
-
-class ReceiverAdmin(admin.ModelAdmin):
-    search_fields = ("model",)
-    list_filter = ("state",)
-
-
-class RadomeAdmin(admin.ModelAdmin):
-    search_fields = ("model",)
-    list_filter = ("state",)
-
-
 class TideGaugeAdmin(admin.ModelAdmin):
     search_fields = ("name", "sonel_id")
     list_display = ("name", "sonel_link")
@@ -374,10 +349,6 @@ class LogEntryAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return self.model.objects.select_related("section", "file", "site", "user")
-
-
-class ManufacturerAdmin(admin.ModelAdmin):
-    ordering = ("name",)
 
 
 class HelpAdmin(admin.ModelAdmin):
@@ -544,6 +515,147 @@ class SLMAdminSite(admin.AdminSite):
 
 # admin.site = SLMAdminSite()
 
+
+@admin.register(Manufacturer)
+class ManufacturerAdmin(admin.ModelAdmin):
+    search_fields = ("name", "full_name")
+    ordering = ("name",)
+    list_display = ("name", "full_name", "url")
+
+
+class EquipmentForm(forms.ModelForm):
+    class Meta:
+        model = Equipment
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        obj = kwargs.get("instance", None)
+        self.fields["replaced"].required = False
+        if obj:
+            self.fields["replaced"].queryset = self.Meta.model.objects.filter(
+                manufacturer=obj.manufacturer
+            )
+
+
+class EquipmentAdmin(admin.ModelAdmin):
+    search_fields = ("model",)
+    ordering = ("model",)
+    list_display = ("model", "manufacturer", "state", "references", "active")
+    list_filter = ("state", "manufacturer")
+
+    @admin.display(ordering="references")
+    def references(self, obj):
+        return obj.references
+
+    @admin.display(ordering="active")
+    def active(self, obj):
+        return obj.active
+
+    related_siteform = None  # deriving classes must set this
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("manufacturer")
+            .annotate(
+                references=Count(
+                    self.related_siteform,
+                    filter=(Q(**{f"{self.related_siteform}__published": True})),
+                    distinct=True,
+                ),
+                active=Count(
+                    f"{self.related_siteform}__site",
+                    filter=(
+                        Q(**{f"{self.related_siteform}__published": True})
+                        & Q(**{f"{self.related_siteform}__removed__isnull": True})
+                        & Q(
+                            **{
+                                f"{self.related_siteform}__site__status__in": SiteLogStatus.active_states()
+                            }
+                        )
+                    ),
+                    distinct=True,
+                ),
+            )
+        )
+
+
+class HasGraphicListFilter(admin.SimpleListFilter):
+    title = _("Has Graphic?")
+
+    parameter_name = "graphic"
+
+    def lookups(self, request, model_admin):
+        return (
+            (True, _("Yes")),
+            (False, _("No")),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset
+        qry = ~Q(graphic__isnull=True) & ~Q(graphic="")
+        if self.value().lower() == "false":
+            qry = ~qry
+        return queryset.filter(qry)
+
+
+@admin.register(Antenna)
+class AntennaAdmin(EquipmentAdmin):
+    class AntennaForm(EquipmentForm):
+        graphic = forms.CharField(
+            strip=False,
+            widget=GraphicTextarea,
+            help_text=Antenna._meta.get_field("graphic").help_text,
+        )
+
+        class Meta(EquipmentForm.Meta):
+            model = Antenna
+
+    form = AntennaForm
+    related_siteform = "site_antennas"
+
+    list_display = (*EquipmentAdmin.list_display, "has_graphic")
+    list_filter = (HasGraphicListFilter, *EquipmentAdmin.list_filter)
+
+    def has_graphic(self, obj):
+        return _("Yes") if obj.has_graphic else _("No")
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                has_graphic=ExpressionWrapper(
+                    ~Q(graphic__isnull=True) & ~Q(graphic=""),
+                    output_field=BooleanField(),
+                )
+            )
+        )
+
+
+@admin.register(Receiver)
+class ReceiverAdmin(EquipmentAdmin):
+    class ReceiverForm(EquipmentForm):
+        class Meta(EquipmentForm.Meta):
+            model = Receiver
+
+    form = ReceiverForm
+    related_siteform = "site_receivers"
+
+
+@admin.register(Radome)
+class RadomeAdmin(EquipmentAdmin):
+    class RadomeForm(EquipmentForm):
+        class Meta(EquipmentForm.Meta):
+            model = Radome
+
+    form = RadomeForm
+    related_siteform = "site_radomes"
+
+
 admin.site.site_header = _("SLM Admin")
 
 admin.site.register(get_user_model(), UserAdmin)
@@ -551,10 +663,6 @@ admin.site.register(Group, GroupAdmin)
 admin.site.register(Agency, AgencyAdmin)
 admin.site.register(TideGauge, TideGaugeAdmin)
 admin.site.register(SatelliteSystem, SatelliteSystemAdmin)
-admin.site.register(Antenna, AntennaAdmin)
-admin.site.register(Receiver, ReceiverAdmin)
-admin.site.register(Radome, RadomeAdmin)
-admin.site.register(Manufacturer, ManufacturerAdmin)
 admin.site.register(SiteFileUpload, SiteFileUploadAdmin)
 admin.site.register(Help, HelpAdmin)
 admin.site.register(About, AboutAdmin)

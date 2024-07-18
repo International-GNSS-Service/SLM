@@ -1,5 +1,10 @@
 """
-Update the data availability information for each station.
+The SLM supports pluggable validation logic for all site log sections and fields. Since
+this logic is configuraton specific, it may change, diverging from the validation flags
+recorded against the previous validation configuration in the database.
+
+Run this command to run all validation routines against all current sitelog fields
+in the database.
 """
 
 import typing as t
@@ -8,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.utils.translation import gettext as _
-from django_typer import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand, model_parser_completer
 from tqdm import tqdm
 from typer import Argument, Option
 from typing_extensions import Annotated
@@ -43,20 +48,24 @@ class Command(TyperCommand):
             ),
         ] = None,
         clear: Annotated[
-            bool, Option(help=_("Clear existing validation flags."))
+            bool, Option("--clear", help=_("Clear existing validation flags."))
         ] = False,
         schema: Annotated[
             bool,
             Option(
+                "--schema",
                 help=_(
                     "Also perform validation of generated GeodesyML files "
                     "against the latest schema."
-                )
+                ),
             ),
         ] = False,
         all: Annotated[
             bool,
-            Option(help=_("Validate all sites, not just the currently public sites.")),
+            Option(
+                "--all",
+                help=_("Validate all sites, not just the currently public sites."),
+            ),
         ] = False,
     ):
         from slm.validators import set_bypass
@@ -168,7 +177,7 @@ class Command(TyperCommand):
         self.stdout.write(
             self.style.NOTICE(
                 _(
-                    "There are a total of validation {new_flags} across "
+                    "There are a total of {new_flags} validation flags across "
                     "{site_count} sites. {critical} are critical."
                 ).format(
                     new_flags=new_flags, site_count=sites.count(), critical=critical

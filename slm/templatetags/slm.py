@@ -253,6 +253,8 @@ def file_icon(file):
 
 @register.filter(name="file_lines")
 def file_lines(file):
+    if isinstance(file, str):
+        return file.split("\n")
     if file and os.path.exists(file.file.path):
         content = file.file.open().read()
         try:

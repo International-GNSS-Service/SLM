@@ -1,5 +1,15 @@
 """
-Update the data availability information for each station.
+To keep the SLM APIs performant some database state is
+`denormalized <https://en.wikipedia.org/wiki/Denormalization>`_. In normal
+operations this state is synchronized when it needs to be, but if for
+whatever reason the denormalized state becomes unsynchronized, this command
+can be manually invoked to force synchronization.
+
+Some examples of denormalized state in the SLM include:
+
+    * Counts of validation flags
+    * Maximum alert levels for stations
+    * Sitelog status indicators (PUBLISHED/UNPUBLISHED) for stations.
 """
 
 import typing as t
@@ -7,7 +17,7 @@ import typing as t
 from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import gettext as _
-from django_typer import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand, model_parser_completer
 from typer import Argument
 from typing_extensions import Annotated
 
@@ -37,8 +47,8 @@ class Command(TyperCommand):
                     Site, lookup_field="name", case_insensitive=True
                 ),
                 help=_(
-                    "The station(s) to update, if unspecified, update data "
-                    "availability information for all of them."
+                    "The station(s) to synchronize, if unspecified, synchronize all "
+                    "of them."
                 ),
             ),
         ] = None,

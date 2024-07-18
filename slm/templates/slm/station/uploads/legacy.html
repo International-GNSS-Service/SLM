@@ -1,25 +1,8 @@
 {% load slm compress i18n %}
 
-
-<hr/>
-
-{% if finding_errors is not None or finding_warnings is not None %}
-<h4>
-{% if finding_errors %}
-{% trans 'This log was rejected because' %} <span style="color: red">{{ finding_errors }} {% trans 'errors were found.' %}</span> {% trans 'Scroll down to see the errors. Please correct them and resubmit.' %}
-{% elif finding_warnings %}
-{% trans 'This log was accepted with' %} {{ finding_warnings }} {% trans 'warnings. Please correct the warnings if possible. To publish this log please' %} <a href="{% url 'slm:review' station=station %}">{% trans 'submit it for review.' %}</a>
-{% elif finding_errors == 0 %}
-{% trans 'This log was accepted. To publish these changes please' %} <a href="{% url 'slm:review' station=station %}">{% trans 'submit it for review.' %}</a>
-{% endif %}
-</h4>
-<hr/>
-{% endif %}
-
 <pre id="slm-parsed-legacy">{% for line in file|file_lines %}{% with idx=forloop.counter0 %}
-<span data-line-number={{ idx }} class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-custom-class="{{ findings|finding_class:idx }}" data-bs-html="true" data-bs-content="{{ findings|finding_content:idx }}"{% endif %}>{{ line }}</span>{% endwith %}{% endfor %}
+<span data-line-number={{ idx }} class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-custom-class="{{ findings|finding_class:idx }}" data-bs-html="true" data-bs-content="<pre>{{ findings|finding_content:idx }}</pre>"{% endif %}>{{ line }}</span>{% endwith %}{% endfor %}
 </pre>
-
 
 {% compress css inline %}
 <style>
@@ -67,6 +50,14 @@
     div.popover.slm-parse-ignore h3 {
         background-color: darkgray;
         color: white;
+    }
+    
+    .popover-body pre {
+      white-space: pre-wrap;       /* CSS3 */
+      white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+      white-space: -pre-wrap;      /* Opera 4-6 */
+      white-space: -o-pre-wrap;    /* Opera 7 */
+      word-wrap: break-word;       /* Internet Explorer 5.5+ */
     }
 }
 

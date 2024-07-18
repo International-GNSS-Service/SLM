@@ -147,6 +147,7 @@ cython_debug/
 .idea/
 .vscode/
 .python-version
+.ruff_cache/
 misc/slmprod_20220110.sql
 .DS_Store
 sites/**/local.py

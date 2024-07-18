@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "{{ package_name }}"
+version = "0.1.0"
+description = ""
+authors = []
+
+packages = [
+    { include = "{{ extension_app }}" },
+    { include = "sites" },
+]
+
+exclude = ["**/test"]
+
+[tool.poetry.scripts]
+{{ site }} = "sites.{{ site }}.manage:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+{% if local_slm %}
+igs-slm = { path = "{{ local_slm }}", develop = true }
+#igs-slm = "^{{ slm_version }}"
+{% else %}
+igs-slm = "^{{ slm_version }}"
+{% endif %}
+
+[tool.poetry.group.dev.dependencies]
+django-extensions = "^3.1.5"
+ipython = "^8.12.2"
+ipdb = "^0.12"
+django-debug-toolbar = "^4.0.0"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -568,9 +568,42 @@ class ImportAlert(Alert):
         null=False,
     )
 
+    file_contents = models.TextField(
+        blank=True,
+        default="",
+        help_text=_(
+            "The text contents of the file that import was attempted from (if applicable)."
+        ),
+    )
+
+    findings = models.JSONField(null=True, default=None)
+
+    log_format = EnumField(SiteLogFormat, null=True, default=None)
+
+    @property
+    def context(self):
+        return {
+            **super().context,
+            "findings": self.findings,
+            "site": self.site,
+            "file": self.file_contents,
+            "upload_tmpl": self.upload_tmpl,
+        }
+
     @property
     def target(self):
         return self.site
+
+    @property
+    def upload_tmpl(self):
+        if self.log_format:
+            if self.log_format in [SiteLogFormat.LEGACY, SiteLogFormat.ASCII_9CHAR]:
+                return "slm/station/uploads/legacy.html"
+            elif self.log_format is SiteLogFormat.GEODESY_ML:
+                return "slm/station/uploads/geodesyml.html"
+            elif self.log_format is SiteLogFormat.JSON:
+                return "slm/station/uploads/json.html"
+        return None
 
     def __str__(self):
         if self.site:
@@ -681,7 +714,7 @@ class GeodesyMLInvalidManager(AlertManager):
         geo_version = GeodesyMLVersion.latest()
         serializer = SiteLogSerializer(instance=site, published=published)
         xml_str = serializer.format(SiteLogFormat.GEODESY_ML, version=geo_version)
-        parser = SiteLogParser(xml_str)
+        parser = SiteLogParser(xml_str, site_name=site.name)
         if parser.errors:
             xml_file = ContentFile(
                 xml_str.encode("utf-8"),

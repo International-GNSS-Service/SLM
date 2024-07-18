@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from django_typer import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand, model_parser_completer
 from typer import Argument, Option
 from typing_extensions import Annotated
 

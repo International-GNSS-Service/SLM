@@ -1,13 +1,4 @@
-from jinja2 import Environment, Undefined, select_autoescape
-
-from slm.templatetags import slm
-
-
-def site_log_rendering(**options):
-    env = Environment(**{**options, "undefined": Undefined})
-    env.filters.update(slm.register.filters)
-    return env
-
+from jinja2 import select_autoescape
 
 TEMPLATES = [
     {
@@ -32,7 +23,7 @@ TEMPLATES = [
                 default_for_string=True,
                 default=True,
             ),
-            "environment": "slm.settings.templates.site_log_rendering",
+            "environment": "slm.templatetags.jinja2.compat",
         },
     },
 ]

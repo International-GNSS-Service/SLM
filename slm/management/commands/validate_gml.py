@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.core.management import CommandError
 from django.utils.translation import gettext as _
-from django_typer import TyperCommand
+from django_typer.management import TyperCommand
 from lxml import etree
 from typer import Argument, Option
 from typing_extensions import Annotated

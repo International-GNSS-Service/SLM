@@ -147,7 +147,7 @@ class Network(models.Model):
 def site_upload_path(instance, filename):
     """
      file will be saved to:
-        MEDIA_ROOT/uploads/<9-char site name>/filename
+        MEDIA_ROOT/uploads/<site name>/filename
 
     :param instance: The SiteFile instance
     :param filename: The name of the file
@@ -236,6 +236,24 @@ class SiteFile(models.Model):
         db_index=True,
         help_text=_("The Geodesy ML version. (Only if file_type is GeodesyML)"),
     )
+
+    def update_directory(self):
+        for file in [self.file, self.thumbnail]:
+            if not file or not file.path:
+                continue
+
+            old_file_path = file.path
+            new_name = file.field.upload_to(self, os.path.basename(file.name))
+            new_file_path = file.storage.path(new_name)
+
+            if old_file_path != new_file_path:
+                os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+                file.name = new_name
+                os.rename(old_file_path, new_file_path)
+                self.save()
+                old_dir = os.path.dirname(old_file_path)
+                if not os.listdir(old_dir):
+                    os.rmdir(old_dir)
 
     def rotate(self, degrees_ccw=90):
         if self.file and self.file_type is SLMFileType.SITE_IMAGE:

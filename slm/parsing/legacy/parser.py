@@ -39,7 +39,7 @@ class SubHeading:
 
 
 class ParsedParameter(BaseParameter):
-    REGEX = re.compile(r"\s+([\w\s/().,_<>+%-]+)\s+:\s*(.*)?")
+    REGEX = re.compile(r"\s*([\w\s/().,_<>+%-]+)\s*:\s*(.*)?")
     REGEX_MULTI = re.compile(r"\s+:\s+(.*)?")
 
     REGEX_PLACEHOLDER = re.compile(r"\([^()]+\)")
@@ -68,7 +68,7 @@ class ParsedParameter(BaseParameter):
 
 class ParsedSection(BaseSection):
     REGEX = re.compile(
-        r"([0-9]+)[.](?:([0-9xX]+)[.]?)?(?:([0-9xX]+)[.]?)?\s+([\w\s().,-]+)?"
+        r"([0-9]+)[.](?:([0-9xX]+)[.]?)?(?:([0-9xX]+)[.]?)?\s*([\w\s().,-]+)?"
     )
 
     line_no = None
@@ -145,9 +145,10 @@ class SiteLogParser(BaseParser):
     # one of the above a warning will be logged
     IGNORED_LINES = {
         normalize("If Update:"),
+        normalize("Approximate Position"),
         normalize("Approximate Position (ITRF)"),
         normalize(
-            "Differential Components from GNSS Marker to the tied monument " "(ITRS)"
+            "Differential Components from GNSS Marker to the tied monument (ITRS)"
         ),
         normalize("Hardcopy on File"),
         normalize("Antenna Graphics with Dimensions"),
@@ -254,6 +255,9 @@ class SiteLogParser(BaseParser):
                     or f"{self.site_name[0:4].upper()} " in line.upper()
                 ):
                     self.name_matched = True
+                    header_site_name = line.split()[0].upper()
+                    if self.site_name.upper() in header_site_name:
+                        self.site_name = header_site_name
                     return idx + 1
                 elif (
                     "site" in line.lower()
@@ -287,6 +291,7 @@ class SiteLogParser(BaseParser):
             self.lines[idx].strip()
         ):
             for section_breaker in self.SECTION_BREAKERS:
+                # TODO - shouldn't break section if not an *expected* param - see MOIN00CRI
                 if section_breaker in section.parameters:
                     return idx
 

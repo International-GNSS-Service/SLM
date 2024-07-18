@@ -1,3 +1,4 @@
+import sys
 from pprint import pformat
 
 from django.apps import AppConfig, apps
@@ -13,7 +14,6 @@ from django.db.models.signals import (
 from django.dispatch import Signal
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext as _
-from tqdm import tqdm
 
 from slm.defines import GeodesyMLVersion
 from slm.signals import signal_name
@@ -312,14 +312,12 @@ class SLMConfig(AppConfig):
         xsd_preload = getattr(
             settings, "SLM_PRELOAD_SCHEMAS", [geo for geo in GeodesyMLVersion]
         )
-        if xsd_preload and not getattr(settings, "SLM_MANAGEMENT_MODE", False):
-            with tqdm(
-                total=len(xsd_preload),
-                desc="Loading",
-                unit="schema",
-                postfix={"xsd": None},
-            ) as p_bar:
-                for geo_version in xsd_preload:
-                    p_bar.set_postfix({"xsd": str(geo_version)})
-                    getattr(geo_version, "schema")
-                    p_bar.update(n=1)
+
+        if (
+            xsd_preload
+            and not getattr(settings, "SLM_MANAGEMENT_MODE", False)
+            and not (len(sys.argv) >= 2 and sys.argv[1] == "runserver")
+        ):
+            from slm.parsing.xsd import load_schemas
+
+            load_schemas()

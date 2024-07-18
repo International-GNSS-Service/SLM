@@ -1,0 +1,71 @@
+{% block batch_report %}
+<div style="text-align: center;" class="container mt-5">
+<h4>Import Archive Log - {{ runtime }}</h4>
+<div style="font-family: monospace; padding: 10px; background-color: #f4f4f4; border: 1px solid #ccc; color: #333; border-radius: 5px;">{{ command }}</div>
+{% if head_logs %}
+<hr/>
+<h5><a href="{{ head_logs }}">Station data was synchronized to the index head - check the log here.</a></h5>
+<hr/>
+{% endif %}
+</div>
+<div class="container mt-5">
+  <h4 style="text-align: center;">Indexed Files</h4>
+  <div class="accordion" id="siteAccordion">
+    {% for site, files in sites.items %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingSite{{ forloop.counter0 }}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSite{{ forloop.counter0 }}" aria-expanded="false" aria-controls="collapseSite{{ forloop.counter0 }}">
+          {{ site.name }}
+        </button>
+      </h2>
+      <div id="collapseSite{{ forloop.counter0 }}" class="accordion-collapse collapse" aria-labelledby="headingSite{{ forloop.counter0 }}" data-bs-parent="#siteAccordion">
+        <div class="accordion-body p-0">
+          <table class="table table-striped">
+            <thead class="thead-dark">
+              <tr>
+                <th>Filename</th>
+                <th>Timestamp</th>
+                <th>Warnings</th>
+                <th>Errors</th>
+                <th>Indexed?</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for file in files %}
+              <tr>
+                <td><a href="./{{ site.name.upper }}/{{ file.filename }}.html">{{ file.filename }}</a></td>
+                <td>{{ file.index.begin }}</td>
+                <td>{{ file.warnings|length }}</td>
+                <td>{{ file.errors|length }}</td>
+                <td>{% if file.archived_log %}Yes{% else %}No{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="container mt-5">
+  <h4 style="text-align: center;">Unindexed Files</h4>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Filename</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for file, reason in unresolved %}
+      <tr>
+        <td>{{ file }}</td>
+        <td>{{ reason }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock batch_report %}

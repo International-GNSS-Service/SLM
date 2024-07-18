@@ -1,3 +1,5 @@
+import os
+
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import F, OuterRef, Q, Subquery, Value
@@ -12,6 +14,7 @@ from django.db.models.functions import (
     Now,
     Substr,
 )
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
@@ -24,6 +27,9 @@ from slm.defines import (
 )
 from slm.models.data import DataAvailability
 from slm.models.system import SiteFile
+from slm.parsing import BaseBinder
+from slm.parsing import legacy as legacy_parsing
+from slm.parsing import xsd as xsd_parsing
 
 
 class ArchiveIndexManager(models.Manager):
@@ -42,7 +48,7 @@ class ArchiveIndexManager(models.Manager):
         )
         return new_file
 
-    def add_index(self, site):
+    def add_index(self, site, formats=list(SiteLogFormat)):
         assert site.last_publish, "last_publish must be set before calling add_index"
         existing = self.filter(site=site, begin=site.last_publish).first()
         if existing:
@@ -52,7 +58,7 @@ class ArchiveIndexManager(models.Manager):
 
         new_index = self.create(site=site, begin=site.last_publish, end=None)
 
-        for log_format in SiteLogFormat:
+        for log_format in formats:
             if log_format in {SiteLogFormat.JSON}:
                 continue  # todo - remove
             ArchivedSiteLog.objects.from_site(site=site, log_format=log_format)
@@ -379,6 +385,44 @@ class ArchivedSiteLog(SiteFile):
     name = models.CharField(max_length=50)
 
     objects = ArchivedSiteLogManager.from_queryset(ArchivedSiteLogQuerySet)()
+
+    def __str__(self):
+        if self.name:
+            return f"[{self.index}] {self.name}"
+        return f"[{self.index}] {os.path.basename(self.file.path)}"
+
+    def parse(self) -> BaseBinder:
+        if self.log_format is SiteLogFormat.GEODESY_ML:
+            return xsd_parsing.SiteLogBinder(
+                xsd_parsing.SiteLogParser(self.contents, site_name=self.site.name)
+            )
+        elif self.log_format in [SiteLogFormat.LEGACY, SiteLogFormat.ASCII_9CHAR]:
+            return legacy_parsing.SiteLogBinder(
+                legacy_parsing.SiteLogParser(self.contents, site_name=self.site.name)
+            )
+        raise NotImplementedError(
+            _("{format} is not currently supported for site log parsing.").format(
+                format=self.log_format
+            )
+        )
+
+    @cached_property
+    def contents(self) -> str:
+        """
+        Decode the contents of a log file. The site log format has been around since the
+        early 1990s so we may encounter exotic encodings.
+
+        :param contents: The bytes of the log file contents.
+        :return a decoded string of the contents
+        """
+        file_bytes = self.file.open("rb").read()
+        try:
+            return file_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            try:
+                return file_bytes.decode("ascii")
+            except UnicodeDecodeError:
+                return file_bytes.decode("latin")
 
     class Meta:
         unique_together = ("index", "log_format")

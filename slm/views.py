@@ -8,7 +8,7 @@ Data processing, validation, etc. lives here.
 ADD MORE COMMENTS
 
 MORE INFO:
-https://docs.djangoproject.com/en/3.2/topics/http/views/
+https://docs.djangoproject.com/en/stable/topics/http/views/
 """
 
 from enum import Enum
@@ -141,7 +141,7 @@ class StationContextView(SLMView):
         if self.site:
             self.agencies = [agency for agency in self.site.agencies.all()]
             location = SiteLocation.objects.filter(site=self.site).head()
-            if location:
+            if location and location.llh:
                 context["station_position"] = (location.llh[0], location.llh[1])
             context["attn_files"] = (
                 self.site.sitefileuploads.available_to(self.request.user)

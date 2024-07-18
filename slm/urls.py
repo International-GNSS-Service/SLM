@@ -63,6 +63,7 @@ APIS = {
         ("receiver", public_views.ReceiverViewSet),
         ("antenna", public_views.AntennaViewSet),
         ("radome", public_views.RadomeViewSet),
+        ("manufacturer", public_views.ManufacturerViewSet),
         ("download", public_views.SiteLogDownloadViewSet),
         ("files", public_views.SiteFileUploadViewSet),
         ("archive", public_views.ArchiveViewSet),
@@ -84,7 +85,7 @@ class SiteLogFormatConverter:
 
 
 class StationConverter:
-    regex = "[0-9a-zA-Z]{9}"
+    regex = "[0-9a-zA-Z]+"
     placeholder = "AAAAAAAAA"
 
     def to_python(self, value):

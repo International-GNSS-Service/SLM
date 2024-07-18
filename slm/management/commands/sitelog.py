@@ -1,3 +1,13 @@
+"""
+Generate a serialized site log of the given format for a station's published or
+unpublished head state. Optionally the file will be pulled from the index of archived
+site log files.
+
+It is usually more convenient to go through the web interface if you just want to view
+a sitelog, but this command can be useful for entering into the debugger to troubleshoot
+parts of this pipeline.
+"""
+
 import typing as t
 from datetime import datetime
 from pathlib import Path
@@ -5,7 +15,12 @@ from pathlib import Path
 from django.core.management import CommandError
 from django.db.models import Q
 from django.utils.translation import gettext as _
-from django_typer import TyperCommand, command, initialize, model_parser_completer
+from django_typer.management import (
+    TyperCommand,
+    command,
+    initialize,
+    model_parser_completer,
+)
 from typer import Argument, Option
 from typing_extensions import Annotated
 
@@ -49,7 +64,10 @@ class Command(TyperCommand):
             ),
         ],
         head: Annotated[
-            bool, Option(help=_("Generate the log from the head edits (unpublished)."))
+            bool,
+            Option(
+                "--head", help=_("Generate the log from the head edits (unpublished).")
+            ),
         ] = False,
         archive: Annotated[  # todo, should be mutually exclusive with head
             t.Optional[datetime],

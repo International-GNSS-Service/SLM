@@ -47,7 +47,7 @@
        Z coordinate (m)       : {% if location %}{{ location.xyz.2|precision_full(4) }}{% endif %}
        Latitude (N is +)      : {% if location %}{{ location.llh.0|iso6709(6) }}{% else %}(+/-DDMMSS.SS){% endif %}
        Longitude (E is +)     : {% if location %}{{ location.llh.1|iso6709(7) }}{% else %}(+/-DDDMMSS.SS){% endif %}
-       Elevation (m,ellips.)  : {% if location %}{{ location.llh.2|precision_full(1) }}{% else %}(F7.1){% endif %}
+       Elevation (m)          : {% if location %}{{ location.llh.2|precision_full(1) }}{% else %}(F7.1){% endif %}
      Additional Information   : {% if location %}{{ location.additional_information|multi_line }}{% else %}(multiple lines){% endif %}
 
 

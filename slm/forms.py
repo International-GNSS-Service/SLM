@@ -5,10 +5,10 @@ management.
 There is a form for each sitelog section.
 
 More info on forms:
-https://docs.djangoproject.com/en/3.2/topics/forms/
+https://docs.djangoproject.com/en/stable/topics/forms/
 
 More info on field types:
-https://docs.djangoproject.com/en/3.2/ref/models/fields/
+https://docs.djangoproject.com/en/stable/ref/models/fields/
 """
 
 import json

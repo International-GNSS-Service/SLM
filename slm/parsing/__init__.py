@@ -1,17 +1,73 @@
-from datetime import date, datetime
-from typing import Dict, List, Optional, Tuple, Union
+import re
+from dataclasses import dataclass
+from datetime import date, datetime, timezone
+from functools import partial
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from dateutil.parser import parse as parse_date
+from dateutil.tz.tz import tzlocal
+from django.contrib.gis.geos import Point
 
 from slm.models.equipment import Antenna, Radome, Receiver, SatelliteSystem
 from slm.utils import dddmmssss_to_decimal
 
 SPECIAL_CHARACTERS = "().,-_[]{}<>+%"
-NUMERIC_CHARACTERS = {".", "+", "-"}
+NUMERIC_CHARACTERS = ".+-Ee"
+SKIPPED_NUMERICS = "',()"
+NULL_VALUES = [
+    "unknown",
+    "unkn",
+    "n/a",
+    "none",
+    "not measured",
+    "provisional",
+    "?",
+    "programmable",
+]
+
+ACCURACY_PREFIXES = [
+    "approx.",
+    "approx",
+    "+-",
+    "-+",
+    "+/-",
+    "-/+",
+    "±",
+    "~",
+    "<",
+    "Better than",
+    "=/-",
+    "+/_",  # common QWERTY typos
+]
+METERS = ["m", "m.", "meter", "meters"]
+
+TZ_INFOS = {"UT": timezone.utc, "UTUT": timezone.utc}
 
 
+def remove_from_start(value: str, prefixes: List[str]):
+    pattern = re.compile(
+        r"^("
+        + "|".join(
+            [re.escape(prefix.strip()).replace(r"\ ", r"\s*") for prefix in prefixes]
+        )
+        + r")\s*",
+        re.IGNORECASE,
+    )
+    result = pattern.sub("", value).strip()
+    return result
+
+
+@dataclass
 class _Ignored:
-    pass
+    msg: str
+
+
+@dataclass
+class _Warning:
+    """Used to wrap a warning message with a value as the return type for binding functions"""
+
+    msg: str
+    value: Any
 
 
 def normalize(name):
@@ -29,6 +85,8 @@ class Finding:
     """
     A base class for parser/binding findings.
     """
+
+    priority: int = 0
 
     def __init__(
         self, lineno, parser, message, section=None, parameter=None, line=None
@@ -48,7 +106,7 @@ class Finding:
         )
 
     @property
-    def level(self):
+    def level(self) -> str:
         return self.__class__.__name__.lower()
 
 
@@ -57,10 +115,14 @@ class Ignored(Finding):
 
 
 class Error(Finding):
+    priority = 5
+
     level = "E"
 
 
 class Warn(Finding):
+    priority = 4
+
     level = "W"
 
 
@@ -130,7 +192,7 @@ class BaseSection:
     order = None
     header = ""
 
-    parameters = None
+    parameters: Dict[str, BaseParameter]
     example = False
 
     _param_binding_: Dict[str, List[BaseParameter]] = None
@@ -286,7 +348,7 @@ class BaseParser:
         return dict(sorted(self._findings_.items()))
 
     @property
-    def findings_context(self) -> Dict[int, str]:
+    def findings_context(self) -> Dict[int, Tuple[str, str]]:
         return {
             int(line): (finding.level, finding.message)
             for line, finding in self.findings.items()
@@ -379,6 +441,31 @@ class BaseParser:
         self._findings_ = {}
 
 
+def try_prefixes(value, converter, delimiter=" "):
+    """
+    A wrapper for converter functions that tries successively shorter strings
+    as determined by the given delimiter. Think of this as being robust to junk
+    at the end of a value.
+    """
+
+    def try_parse(prefix):
+        return converter(prefix)
+
+    parts = value.split(delimiter)
+    trailing = []
+    while parts:
+        try:
+            success = try_parse(" ".join(parts))
+            if trailing:
+                return _Warning(
+                    msg=f"Unexpected trailing characters: {' '.join(reversed(trailing))}",
+                    value=success.value if isinstance(success, _Warning) else success,
+                )
+            return success
+        except ValueError:
+            trailing.append(parts.pop())
+
+
 def to_antenna(value):
     antenna = value.strip()
     parts = value.split()
@@ -387,7 +474,7 @@ def to_antenna(value):
     try:
         return Antenna.objects.get(model__iexact=antenna).model
     except Antenna.DoesNotExist:
-        antennas = "\n".join([ant.model for ant in Antenna.objects.all()])
+        antennas = "\n".join([ant.model for ant in Antenna.objects.public()])
         raise ValueError(
             f"Unexpected antenna model {antenna}. Must be one of " f"\n{antennas}"
         )
@@ -398,7 +485,7 @@ def to_radome(value):
     try:
         return Radome.objects.get(model__iexact=radome).model
     except Radome.DoesNotExist:
-        radomes = "\n".join([rad.model for rad in Radome.objects.all()])
+        radomes = "\n".join([rad.model for rad in Radome.objects.public()])
         raise ValueError(
             f"Unexpected radome model {radome}. Must be one of " f"\n{radomes}"
         )
@@ -409,7 +496,7 @@ def to_receiver(value):
     try:
         return Receiver.objects.get(model__iexact=receiver).model
     except Receiver.DoesNotExist:
-        receivers = "\n".join([rec.model for rec in Receiver.objects.all()])
+        receivers = "\n".join([rec.model for rec in Receiver.objects.public()])
         raise ValueError(
             f"Unexpected receiver model {receiver}. Must be one of " f"\n{receivers}"
         )
@@ -420,6 +507,13 @@ def to_satellites(value):
     bad_sats = set()
     for sat in [sat for sat in value.split("+") if sat]:
         try:
+            upper_sat = sat.upper()
+            if upper_sat == "GLONASS":
+                sat = "GLO"
+            elif upper_sat == "BEIDOU":
+                sat = "BDS"
+            elif upper_sat == "GALILEO":
+                sat = "GAL"
             sats.append(SatelliteSystem.objects.get(name__iexact=sat).pk)
         except SatelliteSystem.DoesNotExist:
             bad_sats.add(sat)
@@ -434,50 +528,132 @@ def to_satellites(value):
     return sats
 
 
-def to_enum(enum_cls, value, strict=False, blank=None):
+def to_enum(enum_cls, value, strict=False, blank=None, ignored=None):
     if value:
-        try:
-            return enum_cls(value).value
-        except ValueError as ve:
-            if not strict:
-                return value.strip()
-            valid_list = "  \n".join(en.label for en in enum_cls)
-            raise ValueError(
-                f"Invalid value {value} must be one of:\n" f"{valid_list}"
-            ) from ve
+        ignored = ignored or []
+        if value.lower() in [ign.lower() for ign in ignored]:
+            return _Ignored(msg=f"{value} is a placeholder.")
+
+        parts = value.split()
+        idx = len(parts)
+        while idx > 0:
+            try:
+                return enum_cls(" ".join(parts[0:idx]))
+            except ValueError:
+                idx -= 1
+
+        if not strict:
+            return value.strip()
+
+        valid_list = "  \n".join(en.label for en in enum_cls)
+        raise ValueError(f"Invalid value {value} must be one of:\n" f"{valid_list}")
     return blank
 
 
-def to_numeric(numeric_type, value):
+def to_numeric(
+    numeric_type,
+    value: str,
+    units: Optional[List[str]] = None,
+    prefixes: Optional[List[str]] = None,
+    take_first: Optional[bool] = None,
+):
     """
     The strategy for converting string parameter values to numerics is to chop
     the numeric off the front of the string. If there's any more numeric
-    characters in the remainder its an error.
+    characters in the remainder its an error if they are not in units. Prefixes
+    are also tolerated at the start. Certain delimiters are tolerated but complained about.
+
+    :param numeric_type: The python type to return
+    :param value: The string to parse
+    :param units: Expected unit strings that will not be warned about.
+    :param prefixes: Prefixes that if present will be removed and ignored
+    :param take_first: If specified and the value is a range (e.g. 2-3) return the first element if True,
+        return the second element if False and raise ValueError if None
+    :return the parsed number of type numeric_type - it may also return _Ignored or a _Warning
+    :raises: ValueError if no numeric could be parsed
     """
     if not value:
         return None
 
-    # just try to chop the numbers off the front of the string
+    if prefixes:
+        value = remove_from_start(value, prefixes).strip()
+
+    unit_start = None
+    if units:
+        # add parenthesis around units if they arent on
+        units = [
+            *units,
+            *[
+                f"({unit})"
+                for unit in units
+                if not (unit[0] == "(" and unit[-1] == ")")
+            ],
+        ]
+        for unit in units:
+            if value.endswith(unit):
+                unit_start = -len(unit)
+                break
+
     digits = ""
-    for char in value:
+    end = None
+    skipped = set()
+    for end, char in enumerate(value[0:unit_start]):
+        if char == " " and (not digits or not digits.isdigit()):
+            continue
         if char.isdigit() or char in NUMERIC_CHARACTERS:
             digits += char
+        elif char in SKIPPED_NUMERICS:
+            skipped.add(char)
+            continue
+        else:
+            break
 
-    if not digits:
+    if not digits or digits.lower().endswith("e"):
+        if value.startswith("("):
+            return _Ignored("Looks like a placeholder.")
+        for null in NULL_VALUES:
+            if null in value.lower():
+                return _Ignored("Looks like a null value.")
+        if value.lower() in units or all(
+            [part in units for part in value.lower().split(" ")]
+        ):
+            # some systems spit out a unit or units for when no value is present
+            return _Ignored("Looks like a null value.")
         raise ValueError(f"Could not convert {value} to type {numeric_type.__name__}.")
 
-    # there should not be any other numbers in the string!
-    for char in value.replace(digits, ""):
-        if char.isdigit():
-            raise ValueError(
-                f"Could not convert {value} to type {numeric_type.__name__}."
-            )
+    # there should not be any trailing text in the string unless they are expected units
+    skipped = f"Unexpected delimiters: ({' '.join(list(skipped))})" if skipped else None
+    if len(digits) < len(value[0:unit_start].strip()) and (
+        not units or value[end:].strip().lower() not in [unt.lower() for unt in units]
+    ):
+        msg = f"{skipped} and u" if skipped else "U"
+        return _Warning(
+            msg=f"{msg}nexpected trailing characters: {value[end:]}",
+            value=numeric_type(digits),
+        )
+    if skipped:
+        return _Warning(msg=skipped, value=numeric_type(digits))
 
-    return numeric_type(digits)
+    try:
+        return numeric_type(digits)
+    except ValueError:
+        if take_first is None:
+            raise
+        numeric = numeric_type(digits.split("-")[0 if take_first else -1])
+        return _Warning(
+            msg=f"Used {'first' if take_first else 'second'} value ({numeric}).",
+            value=numeric,
+        )
 
 
-def to_float(value):
-    return to_numeric(numeric_type=float, value=value)
+def to_float(value, units=None, prefixes=None, take_first=None):
+    return to_numeric(
+        numeric_type=float,
+        value=value,
+        units=units,
+        prefixes=prefixes,
+        take_first=take_first,
+    )
 
 
 def to_decimal_degrees(value):
@@ -486,19 +662,65 @@ def to_decimal_degrees(value):
     :param value:
     :return:
     """
+    flt = to_float(value)
+    if isinstance(flt, _Warning):
+        return _Warning(msg=flt.msg, value=dddmmssss_to_decimal(flt.value))
+    if flt is _Ignored or isinstance(flt, _Ignored):
+        return flt
     return dddmmssss_to_decimal(to_float(value))
 
 
-def to_int(value):
-    return to_numeric(numeric_type=int, value=value)
+def to_int(value, units=None, prefixes=None):
+    try:
+        to_numeric(numeric_type=int, value=value, units=units, prefixes=prefixes)
+    except ValueError:
+        from_float = to_numeric(
+            numeric_type=float, value=value, units=units, prefixes=prefixes
+        )
+        return _Warning(
+            msg="Value should be an integer.",
+            value=int(
+                from_float.value if isinstance(from_float, _Warning) else from_float
+            ),
+        )
 
 
-def to_date(value):
+def to_seconds(value):
+    seconds = to_int(
+        value, units=["sec", "second", "seconds", "s.", "s"], prefixes=["every"]
+    )
+    if isinstance(seconds, _Warning):
+        low_val = value.lower()
+        if "hour" in low_val or "hr" in low_val:
+            seconds = seconds.value * 3600
+            return _Warning(msg=f"Converted to {seconds} seconds!", value=seconds)
+        elif "minute" in low_val or "min" in low_val:
+            seconds = seconds.value * 60
+            return _Warning(msg=f"Converted to {seconds} seconds!", value=seconds)
+    return seconds
+
+
+def to_pressure(value):
+    hpa = to_float(
+        value, units=["%", "hPa", "% hPa"], prefixes=ACCURACY_PREFIXES, take_first=False
+    )
+    if isinstance(hpa, _Warning):
+        low_val = value.lower()
+        if "mb" in low_val or "mbar" in low_val:
+            hpa = hpa.value * 100
+            return _Warning(msg=f"Converted to {hpa:0.01f} hPa", value=hpa)
+        if "mm" in low_val:
+            hpa = hpa.value * 133.3
+            return _Warning(msg=f"Converted to {hpa:0.01f} hPa", value=hpa)
+    return hpa
+
+
+def _to_date(value):
     if value.strip():
         if "CCYY-MM-DD" in value.upper():
             return _Ignored
         try:
-            return parse_date(value).date()
+            return parse_date(value, tzinfos=TZ_INFOS).date()
         except Exception as exc:
             raise ValueError(
                 f"Unable to parse {value} into a date. Expected " f"format: CCYY-MM-DD"
@@ -506,18 +728,41 @@ def to_date(value):
     return None
 
 
-def to_datetime(value):
+def _to_datetime(value):
     if value.strip():
         if "CCYY-MM-DD" in value.upper():
             return _Ignored
         try:
-            return parse_date(value)
+            # UT and UTUT has been seen as a timezone specifier in the wild
+            dt = parse_date(value, tzinfos=TZ_INFOS)
+            if not dt.tzinfo or dt.tzinfo == tzlocal():
+                return dt.replace(tzinfo=timezone.utc)
+            return dt
         except Exception as exc:
             raise ValueError(
                 f"Unable to parse {value} into a date and time. Expected "
                 f"format: CCYY-MM-DDThh:mmZ"
             ) from exc
     return None
+
+
+to_date = partial(try_prefixes, converter=_to_date)
+to_datetime = partial(try_prefixes, converter=_to_datetime)
+
+
+def to_point(x, y, z):
+    if x is None or y is None or z is None:
+        return None
+    return Point(x, y, z)
+
+
+def to_alignment(value):
+    try:
+        return to_float(value, units=["deg", "degrees"])
+    except ValueError:
+        if "true north" in value.lower():
+            return _Warning(msg="Interpreted as zero.", value=0)
+        raise
 
 
 def to_str(value):

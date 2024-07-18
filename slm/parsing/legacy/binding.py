@@ -2,7 +2,6 @@ import re
 from functools import partial
 from typing import Any, Callable, Dict, List, Tuple, Union
 
-from django.contrib.gis.geos import Point
 from django.utils.translation import gettext as _
 
 from slm.defines import (
@@ -16,19 +15,26 @@ from slm.defines import (
 )
 from slm.models import SatelliteSystem
 from slm.parsing import (
+    ACCURACY_PREFIXES,
+    METERS,
     BaseBinder,
     Finding,
     _Ignored,
+    _Warning,
+    remove_from_start,
+    to_alignment,
     to_antenna,
     to_date,
     to_datetime,
     to_decimal_degrees,
     to_enum,
     to_float,
-    to_int,
+    to_point,
+    to_pressure,
     to_radome,
     to_receiver,
     to_satellites,
+    to_seconds,
     to_str,
 )
 from slm.parsing.legacy.parser import (
@@ -49,6 +55,10 @@ TEMP_STAB_REGEX = re.compile(
     r"(?:\+/?-))?\s*(\d+(?:[.]\d*)?)?[\s()°degrsDEGRSCc]*"
 )
 
+DATE_PLACEHOLDERS = ["CCYY-MM-DD", "DD-MMM-YYYY"]
+
+TEMP_STAB_PREFIXES = ["Tolerance = ", "Tolerance", "=", "~"]
+
 param_registry = {}
 
 
@@ -58,11 +68,14 @@ def reg(name, header_index, bindings):
     return normalize(name)
 
 
-def ignored(value):
+def ignored(_, msg=""):
+    if msg:
+        return _Ignored(msg)
     return _Ignored
 
 
 def to_temp_stab(value):
+    value = remove_from_start(value, TEMP_STAB_PREFIXES)
     value = value.replace("º", "") if value else value
     if value.strip().lower() == "none":
         return False, None, None
@@ -75,7 +88,7 @@ def to_temp_stab(value):
             if range_mtch:
                 v1 = float(range_mtch.group(1))
                 v2 = float(range_mtch.group(2))
-                return (v1 + v2) / 2, abs(v1 - v2) / 2
+                return True, (v1 + v2) / 2, abs(v1 - v2) / 2
 
             deviation_mtch = TEMP_STAB_REGEX.match(value)
             if deviation_mtch:
@@ -104,6 +117,11 @@ def to_temp_stab(value):
             == "degc+/-degc"
         ):
             return _Ignored, _Ignored, _Ignored
+
+        if "yes" in value.lower() or "indoors" in value.lower():
+            return _Warning(value=True, msg="Interpreted as 'stabilized'"), None, None
+        if value.startswith("("):
+            return _Ignored("Looks like a placeholder."), None, None
         raise ValueError(
             f'Unable to parse "{value}" into a temperature stabilization. '
             f"format: deg C +/- deg C"
@@ -113,10 +131,15 @@ def to_temp_stab(value):
 
 def effective_start(value):
     try:
+        start_str = ""
         if value.strip():
-            return to_date(value.split("/")[0])
+            sep = "/" if "/" in value else " - "
+            start_str = value.split(sep)[0]
+            return to_date(start_str)
         return None
     except ValueError as ve:
+        if start_str.upper() in DATE_PLACEHOLDERS:
+            return None
         raise ValueError(
             f"Unable to parse {value} into an expected start date. Expected "
             f"format: CCYY-MM-DD/CCYY-MM-DD"
@@ -125,12 +148,17 @@ def effective_start(value):
 
 def effective_end(value):
     try:
+        end_str = ""
         if value.strip():
-            splt = value.split("/")
+            sep = "/" if "/" in value else " - "
+            splt = value.split(sep)
             if len(splt) > 1:
-                return to_date(value.split("/")[1])
+                end_str = value.split(sep)[1]
+                return to_date(end_str)
         return None
     except ValueError as ve:
+        if end_str.upper() in DATE_PLACEHOLDERS:
+            return None
         raise ValueError(
             f"Unable to parse {value} into an expected end date. Expected "
             f"format: CCYY-MM-DD/CCYY-MM-DD"
@@ -162,7 +190,13 @@ class SiteLogBinder(BaseBinder):
     METEROLOGICAL_TRANSLATION = [
         ("Manufacturer", ("manufacturer", to_str)),
         ("Serial Number", ("serial_number", to_str)),
-        ("Height Diff to Ant", ("height_diff", to_float)),
+        (
+            "Height Diff to Ant",
+            (
+                "height_diff",
+                partial(to_float, units=METERS, prefixes=ACCURACY_PREFIXES),
+            ),
+        ),
         ("Calibration date", ("calibration", to_date)),
         *EFFECTIVE_DATES,
         ("Notes", ("notes", to_str)),
@@ -220,29 +254,46 @@ class SiteLogBinder(BaseBinder):
         0: {
             reg(log_name, 0, bindings): bindings
             for log_name, bindings in [
+                ("Prepared By", ("prepared_by", to_str)),
                 ("Prepared by (full name)", ("prepared_by", to_str)),
-                ("Date Prepared", ("date_prepared", ignored)),
-                ("Report Type", ("report_type", ignored)),
+                ("Date", ("date_prepared", to_date)),
+                ("Date Prepared", ("date_prepared", to_date)),
+                ("Report Type", ("report_type", to_str)),
+                ("If Update", ("", ignored)),
                 ("Previous Site Log", ("previous_log", ignored)),
-                ("Modified/Added Sections", ("modified_section", ignored)),
+                ("Modified/Added Sections", ("modified_section", to_str)),
             ]
         },
         1: {
             reg(log_name, 1, bindings): bindings
             for log_name, bindings in [
                 ("Site Name", ("site_name", to_str)),
-                ("Nine Character ID", ("nine_character_id", ignored)),
+                ("4 char ID", ("nine_character_id", ignored)),
                 ("Four Character ID", ("nine_character_id", ignored)),
+                ("Nine Character ID", ("nine_character_id", ignored)),
                 ("Monument Inscription", ("monument_inscription", to_str)),
                 ("IERS DOMES Number", ("iers_domes_number", to_str)),
                 ("CDP Number", ("cdp_number", to_str)),
+                ("Date", ("date_installed", to_datetime)),
                 ("Date Installed", ("date_installed", to_datetime)),
                 ("Monument Description", ("monument_description", to_str)),
-                ("Height of the Monument", ("monument_height", to_float)),
-                ("Height of the Monument (m)", ("monument_height", to_float)),
+                (
+                    "Height of the Monument (m)",
+                    ("monument_height", partial(to_float, units=METERS)),
+                ),
+                (
+                    "Height of the Monument",
+                    ("monument_height", partial(to_float, units=METERS)),
+                ),
                 ("Monument Foundation", ("monument_foundation", to_str)),
-                ("Foundation Depth", ("foundation_depth", to_float)),
-                ("Foundation Depth (m)", ("foundation_depth", to_float)),
+                (
+                    "Foundation Depth (m)",
+                    ("foundation_depth", partial(to_float, units=METERS)),
+                ),
+                (
+                    "Foundation Depth",
+                    ("foundation_depth", partial(to_float, units=METERS)),
+                ),
                 ("Marker Description", ("marker_description", to_str)),
                 ("Geologic Characteristic", ("geologic_characteristic", to_str)),
                 ("Bedrock Type", ("bedrock_type", to_str)),
@@ -260,6 +311,7 @@ class SiteLogBinder(BaseBinder):
             **{
                 reg(log_name, 2, bindings): bindings
                 for log_name, bindings in [
+                    ("City", ("city", to_str)),
                     ("City or Town", ("city", to_str)),
                     ("State or Province", ("state", to_str)),
                     (
@@ -271,12 +323,16 @@ class SiteLogBinder(BaseBinder):
                         ("country", partial(to_enum, ISOCountry, strict=False)),
                     ),
                     ("Tectonic Plate", ("tectonic", partial(to_enum, TectonicPlates))),
+                    ("Approximate Position", ("", ignored)),
                     ("X coordinate", ("x", to_float)),
                     ("Y coordinate", ("y", to_float)),
                     ("Z coordinate", ("z", to_float)),
                     ("Latitude", ("latitude", to_decimal_degrees)),
                     ("Longitude", ("longitude", to_decimal_degrees)),
                     ("Elevation", ("elevation", to_float)),
+                    ("Latitude (deg)", ("latitude", to_decimal_degrees)),
+                    ("Longitude (deg)", ("longitude", to_decimal_degrees)),
+                    ("Elevation (m)", ("elevation", to_float)),
                     ("X coordinate (m)", ("x", to_float)),
                     ("Y coordinate (m)", ("y", to_float)),
                     ("Z coordinate (m)", ("z", to_float)),
@@ -287,13 +343,14 @@ class SiteLogBinder(BaseBinder):
                 ]
             },
             "collations": (
-                (("x", "y", "z"), "xyz", Point),
-                (("latitude", "longitude", "elevation"), "llh", Point),
+                (("x", "y", "z"), "xyz", to_point),
+                (("latitude", "longitude", "elevation"), "llh", to_point),
             ),
         },
         3: {
             reg(log_name, 3, bindings): bindings
             for log_name, bindings in [
+                ("Type", ("receiver_type", to_receiver)),
                 ("Receiver Type", ("receiver_type", to_receiver)),
                 (
                     "Satellite System",
@@ -301,7 +358,11 @@ class SiteLogBinder(BaseBinder):
                 ),
                 ("Serial Number", ("serial_number", to_str)),
                 ("Firmware Version", ("firmware", to_str)),
-                ("Elevation Cutoff Setting", ("elevation_cutoff", to_float)),
+                (
+                    "Elevation Cutoff Setting",
+                    ("elevation_cutoff", partial(to_float, units=["deg", "degrees"])),
+                ),
+                ("Date", ("installed", to_datetime)),
                 ("Date Installed", ("installed", to_datetime)),
                 ("Date Removed", ("removed", to_datetime)),
                 (
@@ -319,36 +380,84 @@ class SiteLogBinder(BaseBinder):
             **{
                 reg(log_name, 4, bindings): bindings
                 for log_name, bindings in [
+                    ("Type", ("antenna_type", to_antenna)),
                     ("Antenna Type", ("antenna_type", to_antenna)),
                     ("Serial Number", ("serial_number", to_str)),
                     (
                         "Antenna Reference Point",
-                        ("reference_point", partial(to_enum, AntennaReferencePoint)),
+                        (
+                            "reference_point",
+                            partial(
+                                to_enum, AntennaReferencePoint, ignored=["ARP", "n/a"]
+                            ),
+                        ),
                     ),
-                    ("Marker->ARP Up Ecc.", ("marker_up", to_float)),
-                    ("Marker->ARP North Ecc", ("marker_north", to_float)),
-                    ("Marker->ARP East Ecc", ("marker_east", to_float)),
-                    ("Marker->ARP Up Ecc. (m)", ("marker_up", to_float)),
-                    ("Marker->ARP North Ecc(m)", ("marker_north", to_float)),
-                    ("Marker->ARP East Ecc(m)", ("marker_east", to_float)),
-                    ("Alignment from True N", ("alignment", to_float)),
+                    (
+                        "Marker->ARP Up Ecc.",
+                        ("marker_up", partial(to_float, units=METERS)),
+                    ),
+                    (
+                        "Marker->ARP North Ecc",
+                        ("marker_north", partial(to_float, units=METERS)),
+                    ),
+                    (
+                        "Marker->ARP East Ecc",
+                        ("marker_east", partial(to_float, units=METERS)),
+                    ),
+                    (
+                        "Marker->ARP Up Ecc. (m)",
+                        ("marker_up", partial(to_float, units=METERS)),
+                    ),
+                    (
+                        "Marker->ARP North Ecc(m)",
+                        ("marker_north", partial(to_float, units=METERS)),
+                    ),
+                    (
+                        "Marker->ARP East Ecc(m)",
+                        ("marker_east", partial(to_float, units=METERS)),
+                    ),
+                    # this legacy parameter was replaced by marker_une, but lots of older files
+                    # have it so might as well parse it.
+                    (
+                        "Antenna Height",
+                        ("antenna_height", partial(to_float, units=METERS)),
+                    ),
+                    (
+                        "Antenna Height (m)",
+                        ("antenna_height", partial(to_float, units=METERS)),
+                    ),
+                    ############################################################################
+                    ("Alignment from True N", ("alignment", to_alignment)),
+                    ("Degree Offset from North", ("alignment", to_alignment)),
                     ("Antenna Radome Type", ("radome_type", to_radome)),
                     ("Radome Serial Number", ("radome_serial_number", to_str)),
                     ("Antenna Cable Type", ("cable_type", to_str)),
-                    ("Antenna Cable Length", ("cable_length", to_float)),
+                    (
+                        "Antenna Cable Length",
+                        (
+                            "cable_length",
+                            partial(to_float, units=METERS, prefixes=ACCURACY_PREFIXES),
+                        ),
+                    ),
                     ("Date Installed", ("installed", to_datetime)),
+                    ("Date", ("installed", to_datetime)),
                     ("Date Removed", ("removed", to_datetime)),
                     ("Additional Information", ("additional_information", to_str)),
                 ]
             },
             "collations": (
-                (("marker_up", "marker_north", "marker_east"), "marker_une", Point),
+                (("marker_up", "marker_north", "marker_east"), "marker_une", to_point),
             ),
+            "optional": {"antenna_height"},
         },
         5: {
             **{
                 reg(log_name, 5, bindings): bindings
                 for log_name, bindings in [
+                    # older names
+                    ("Monument Name", ("name", to_str)),
+                    ("Site Ref CDP Number", ("cdp_number", to_str)),
+                    ("Site Ref Domes Number", ("domes_number", to_str)),
                     ("Tied Marker Name", ("name", to_str)),
                     ("Tied Marker Usage", ("usage", to_str)),
                     ("Tied Marker CDP Number", ("cdp_number", to_str)),
@@ -359,14 +468,37 @@ class SiteLogBinder(BaseBinder):
                     ("dx (m)", ("dx", to_float)),
                     ("dy (m)", ("dy", to_float)),
                     ("dz (m)", ("dz", to_float)),
-                    ("Accuracy", ("accuracy", to_float)),
-                    ("Accuracy (mm)", ("accuracy", to_float)),
+                    (
+                        "Accuracy",
+                        (
+                            "accuracy",
+                            partial(
+                                to_float,
+                                units=["mm"],
+                                prefixes=ACCURACY_PREFIXES,
+                                take_first=False,
+                            ),
+                        ),
+                    ),
+                    (
+                        "Accuracy (mm)",
+                        (
+                            "accuracy",
+                            partial(
+                                to_float,
+                                units=["mm"],
+                                prefixes=ACCURACY_PREFIXES,
+                                take_first=False,
+                            ),
+                        ),
+                    ),
                     ("Survey method", ("survey_method", to_str)),
+                    ("Date", ("measured", to_datetime)),
                     ("Date Measured", ("measured", to_datetime)),
                     ("Additional Information", ("additional_information", to_str)),
                 ]
             },
-            "collations": ((("dx", "dy", "dz"), "diff_xyz", Point),),
+            "collations": ((("dx", "dy", "dz"), "diff_xyz", to_point),),
         },
         6: {
             reg(log_name, 6, bindings): bindings
@@ -375,7 +507,11 @@ class SiteLogBinder(BaseBinder):
                     "Standard Type",
                     ("standard_type", partial(to_enum, FrequencyStandardType)),
                 ),
-                ("Input Frequency", ("input_frequency", to_float)),
+                (
+                    "Input Frequency",
+                    ("input_frequency", partial(to_float, units=["MHz"])),
+                ),
+                ("Frequency", ("input_frequency", partial(to_float, units=["MHz"]))),
                 *EFFECTIVE_DATES,
                 ("Notes", ("notes", to_str)),
             ]
@@ -392,10 +528,32 @@ class SiteLogBinder(BaseBinder):
         (8, 1): {
             reg(log_name, (8, 1), bindings): bindings
             for log_name, bindings in [
-                ("Accuracy", ("accuracy", to_float)),
+                (
+                    "Accuracy",
+                    (
+                        "accuracy",
+                        partial(
+                            to_float,
+                            units=["%", "rel h", "% rel h"],
+                            prefixes=ACCURACY_PREFIXES,
+                            take_first=False,
+                        ),
+                    ),
+                ),
                 ("Humidity Sensor Model", ("model", to_str)),
-                ("Data Sampling Interval", ("sampling_interval", to_int)),
-                ("Accuracy (% rel h)", ("accuracy", to_float)),
+                ("Data Sampling Interval", ("sampling_interval", to_seconds)),
+                (
+                    "Accuracy (% rel h)",
+                    (
+                        "accuracy",
+                        partial(
+                            to_float,
+                            units=["%", "rel h", "% rel h"],
+                            prefixes=ACCURACY_PREFIXES,
+                            take_first=False,
+                        ),
+                    ),
+                ),
                 ("Aspiration", ("aspiration", partial(to_enum, Aspiration))),
                 *METEROLOGICAL_TRANSLATION,
             ]
@@ -404,8 +562,8 @@ class SiteLogBinder(BaseBinder):
             reg(log_name, (8, 2), bindings): bindings
             for log_name, bindings in [
                 ("Pressure Sensor Model", ("model", to_str)),
-                ("Data Sampling Interval", ("sampling_interval", to_int)),
-                ("Accuracy", ("accuracy", to_float)),
+                ("Data Sampling Interval", ("sampling_interval", to_seconds)),
+                ("Accuracy", ("accuracy", to_pressure)),
                 *METEROLOGICAL_TRANSLATION,
             ]
         },
@@ -413,8 +571,19 @@ class SiteLogBinder(BaseBinder):
             reg(log_name, (8, 3), bindings): bindings
             for log_name, bindings in [
                 ("Temp. Sensor Model", ("model", to_str)),
-                ("Data Sampling Interval", ("sampling_interval", to_int)),
-                ("Accuracy", ("accuracy", to_float)),
+                ("Data Sampling Interval", ("sampling_interval", to_seconds)),
+                (
+                    "Accuracy",
+                    (
+                        "accuracy",
+                        partial(
+                            to_float,
+                            units=["deg C", "C"],
+                            prefixes=ACCURACY_PREFIXES,
+                            take_first=False,
+                        ),
+                    ),
+                ),
                 ("Aspiration", ("aspiration", partial(to_enum, Aspiration))),
                 *METEROLOGICAL_TRANSLATION,
             ]
@@ -423,7 +592,10 @@ class SiteLogBinder(BaseBinder):
             reg(log_name, (8, 4), bindings): bindings
             for log_name, bindings in [
                 ("Water Vapor Radiometer", ("model", to_str)),
-                ("Distance to Antenna", ("distance_to_antenna", to_float)),
+                (
+                    "Distance to Antenna",
+                    ("distance_to_antenna", partial(to_float, units=METERS)),
+                ),
                 *METEROLOGICAL_TRANSLATION,
             ]
         },
@@ -530,8 +702,9 @@ class SiteLogBinder(BaseBinder):
         expected = set()
         binding_errors = set()
         ignored = set()
+        optional = translations.get("optional", set())
         for _1, bindings in translations.items():
-            if _1 == "collations":
+            if _1 in ["collations", "optional"]:
                 continue
             for param in bindings if isinstance(bindings, list) else [bindings]:
                 expected.add(param[0])
@@ -565,16 +738,26 @@ class SiteLogBinder(BaseBinder):
                         if parameter.is_placeholder
                         else parse(parameter.value)
                     )
-                    if value == _Ignored:
+                    if value == _Ignored or isinstance(value, _Ignored):
                         self.parsed.add_finding(
                             Ignored(
                                 parameter.line_no,
                                 self.parsed,
-                                _("Parameter is ignored"),
+                                getattr(value, "msg", _("Parameter is ignored")),
                                 section=section,
                             )
                         )
                         ignored.add(param)
+                    elif isinstance(value, _Warning):
+                        self.parsed.add_finding(
+                            Warn(
+                                parameter.line_no,
+                                self.parsed,
+                                value.msg,
+                                section=section,
+                            )
+                        )
+                        parameter.bind(param, value.value)
                     else:
                         parameter.bind(param, value)
                         for finding in value_check(
@@ -594,16 +777,18 @@ class SiteLogBinder(BaseBinder):
         missing = [
             param
             for param in expected
-            if not section.get_params(param)
+            if param
+            and not section.get_params(param)
             and param not in binding_errors
             and param not in ignored
+            and param not in optional
         ]
         if missing and not self.parsed.findings.get(section.line_no):
             missing = "\n".join(
                 {param_registry[section.heading_index][missing] for missing in missing}
             )
             self.parsed.add_finding(
-                Error(
+                Warn(
                     section.line_no,
                     self.parsed,
                     f"Missing parameters:\n{missing}",

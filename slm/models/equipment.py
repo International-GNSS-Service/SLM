@@ -25,10 +25,25 @@ class SatelliteSystem(models.Model):
         ordering = ("order",)
 
 
+class ManufacturerManager(models.Manager):
+    def get_by_natural_key(self, name):
+        return self.get(name__iexact=name)
+
+
 class Manufacturer(models.Model):
     name = models.CharField(max_length=45, unique=True, db_index=True)
+    full_name = models.CharField(max_length=255, default="", blank=True)
+
+    url = models.URLField(
+        null=True, default=None, help_text=_("The manufacturer's website.")
+    )
+
+    objects = ManufacturerManager()
 
     def __str__(self):
+        return self.name
+
+    def natural_key(self):
         return self.name
 
     class Meta:
@@ -36,7 +51,8 @@ class Manufacturer(models.Model):
 
 
 class EquipmentManager(models.Manager):
-    pass
+    def get_by_natural_key(self, model):
+        return self.get(model__iexact=model)
 
 
 class EquipmentQuerySet(models.QuerySet):
@@ -80,6 +96,9 @@ class Equipment(models.Model):
         related_name="%(class)ss",
     )
 
+    def natural_key(self):
+        return self.model
+
     def __str__(self):
         return self.model
 
@@ -101,8 +120,8 @@ class Antenna(Equipment):
             "Locate your antenna in the file "
             "https://files.igs.org/pub/station/general/antenna.gra. Indicate "
             "the three-letter abbreviation for the point which is indicated "
-            "equivalent to ARP for your antenna. Contact the Central Bureau if"
-            " your antenna does not appear. Format: (BPA/BCR/XXX from "
+            "equivalent to ARP for your antenna. Contact the Central Bureau if "
+            "your antenna does not appear. Format: (BPA/BCR/XXX from "
             "antenna.gra; see instr.)"
         ),
         db_index=True,
@@ -126,16 +145,30 @@ class Antenna(Equipment):
             f"{self.features.label}"
         )
 
+    replaced = models.ManyToManyField(
+        "slm.Antenna",
+        help_text=_("The old codings for this antenna if any exist."),
+        related_name="replaced_by",
+    )
+
     def __str__(self):
         return self.model
 
 
 class Receiver(Equipment):
-    pass
+    replaced = models.ManyToManyField(
+        "slm.Receiver",
+        help_text=_("The old codings for this receiver if any exist."),
+        related_name="replaced_by",
+    )
 
 
 class Radome(Equipment):
-    pass
+    replaced = models.ManyToManyField(
+        "slm.Radome",
+        help_text=_("The old codings for this radome if any exist."),
+        related_name="replaced_by",
+    )
 
 
 class AntCal(models.Model):

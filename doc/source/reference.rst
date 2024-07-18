@@ -4,14 +4,14 @@
 Reference
 =========
 
-.. autosummary::
-   :toctree: modules
+.. .. autosummary::
+..    :toctree: modules
 
-   slm
-   slm.api
-   slm.api.public
-   slm.api.edit
-   slm.defines
-   slm.management.commands
-   slm.models
-   slm.settings
+..    slm
+..    slm.api
+..    slm.api.public
+..    slm.api.edit
+..    slm.defines
+..    slm.management.commands
+..    slm.models
+..    slm.settings

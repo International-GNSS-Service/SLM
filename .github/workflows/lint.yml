@@ -57,12 +57,5 @@ jobs:
           poetry run pip install -U "django~=${{ matrix.django-version }}"
       - name: Run Static Analysis
         run: |
-          poetry run ruff format slm
-          poetry run ruff check --fix --select I slm
-          poetry run ruff check slm
-          poetry check
-          poetry run pip check
+          ./check.sh --no-fix
           poetry run python -m readme_renderer ./README.md
-          cd ./doc
-          poetry run doc8 --ignore-path build --max-line-length 100
-          poetry run make html

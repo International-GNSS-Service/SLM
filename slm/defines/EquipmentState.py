@@ -4,18 +4,18 @@ from enum_properties import p, s
 
 
 class EquipmentState(IntegerChoices, p("help_text")):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+    _symmetric_builtins_ = [s("name", case_fold=True), s("label", case_fold=True)]
 
-    ACTIVE = 100, _("Active"), _("This equipment is in active use.")
+    ACTIVE = 100, _("In Use"), _("This coding is in active use.")
     LEGACY = (
         101,
-        _("Legacy"),
-        _("This equipment is not in active use or its coding has changed."),
+        _("Retired"),
+        _("This equipment coding has changed."),
     )
     UNVERIFIED = (
         102,
         _("Unverified"),
-        _("This equipment information has not been vetted."),
+        _("This equipment coding has not been verified."),
     )
 
     def __str__(self):

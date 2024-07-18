@@ -1,0 +1,55 @@
+{% block batch_report %}
+<div style="text-align: center;" class="container mt-5">
+<h4>Head From Index Log - {{ runtime }}</h4>
+<div style="font-family: monospace; padding: 10px; background-color: #f4f4f4; border: 1px solid #ccc; color: #333; border-radius: 5px;">{{ command }}</div>
+</div>
+
+{% if imports %}
+<div class="container mt-5">
+  <h4 style="text-align: center;">Imported Stations</h4>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Station</th>
+        <th>Timestamp</th>
+        <th>Warnings ({{ total_warnings }})</th>
+        <th>Errors ({{ total_errors }})</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in imports %}
+      <tr>
+        <td><a href="./{{ record.index.site }}.html">{{ record.index.site }}</a></td>
+        <td>{{ record.index.begin }}</td>
+        <td {% if record.bound.parsed.warnings %}style="background-color: yellow;"{% endif %}>{{ record.bound.parsed.warnings|length }}</td>
+        <td {% if record.bound.parsed.errors %}style="background-color: red;"{% endif %}>{{ record.bound.parsed.errors|length }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+
+{% if failed_imports %}
+<div class="container mt-5">
+  <h4 style="text-align: center;">Failed Imports</h4>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Station</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in failed_imports %}
+      <tr>
+        <td><a href="./{{ record.index.site }}.html">{{ record.index.site }}</a></td>
+        <td>{{ record.failed }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock batch_report %}

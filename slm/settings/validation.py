@@ -12,6 +12,7 @@ The format of SLM_DATA_VALIDATORS is
 """
 
 from slm.validators import (
+    ActiveEquipmentValidator,
     ARPValidator,
     EnumValidator,
     FieldRequired,
@@ -65,7 +66,7 @@ SLM_DATA_VALIDATORS = {
         "llh": [FieldRequired()],
     },
     "slm.SiteReceiver": {
-        "receiver_type": [VerifiedEquipmentValidator()],
+        "receiver_type": [VerifiedEquipmentValidator(), ActiveEquipmentValidator()],
         "satellite_system": [NonEmptyValidator()],
         "serial_number": [FieldRequired()],
         "firmware": [FieldRequired()],
@@ -76,8 +77,8 @@ SLM_DATA_VALIDATORS = {
         ],
     },
     "slm.SiteAntenna": {
-        "antenna_type": [VerifiedEquipmentValidator()],
-        "radome_type": [VerifiedEquipmentValidator()],
+        "antenna_type": [VerifiedEquipmentValidator(), ActiveEquipmentValidator()],
+        "radome_type": [VerifiedEquipmentValidator(), ActiveEquipmentValidator()],
         "serial_number": [FieldRequired()],
         "reference_point": [FieldRequired(), ARPValidator(), EnumValidator()],
         "installed": [FieldRequired(), TimeRangeValidator(end_field="removed")],

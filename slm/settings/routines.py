@@ -1,6 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 from django_routines import command, routine
 
+
 routine(
     "deploy",
     _(
@@ -14,11 +15,29 @@ routine(
     },
 )
 
+routine(
+    "import",
+    _("Import equipment from the IGS and site log data from your own archive."),
+)
+
+routine(
+    "install",
+    _("Install a fresh deployment of the SLM and import data from external sources."),
+)
+
 command("deploy", "check", "--deploy")
+command("deploy", "shellcompletion", "install", switches=["initial"])
 command("deploy", "migrate", priority=11)
 command("deploy", "renderstatic", priority=20)
 command("deploy", "collectstatic", "--no-input", priority=21)
 command("deploy", "set_site", priority=22)
-command("deploy", "createsuperuser", priority=100, switches=["initial"])
-command("deploy", "synchronize", priority=110, switches=["initial", "validate"])
-command("deploy", "shellcompletion", "install", priority=120, switches=["initial"])
+command("deploy", "validate_db", "--schema", priority=30, switches=["re-validate"])
+command("deploy", "synchronize", priority=32, switches=["re-validate"])
+
+command("import", "import_equipment", "antennas", "radomes", "receivers", priority=10)
+command("import", "import_archive", priority=20)
+command("import", "validate_db", "--schema", priority=30)
+
+command("install", "routine", "deploy", "--initial", priority=0)
+command("install", "createsuperuser", priority=10)
+command("install", "routine", "import", priority=20)

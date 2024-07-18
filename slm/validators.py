@@ -134,11 +134,31 @@ class EnumValidator(SLMValidator):
 
 
 class VerifiedEquipmentValidator(SLMValidator):
-    statement = _("This equipment has not been verified.")
+    statement = _("This equipment code has not been verified.")
 
     def __call__(self, instance, field, value):
         if value.state == EquipmentState.UNVERIFIED:
             self.throw_error(self.statement, instance, field)
+        elif value.state == EquipmentState.LEGACY:
+            self.throw_error(self.statement, instance, field)
+
+
+class ActiveEquipmentValidator(SLMValidator):
+    statement = _("This equipment code is no longer in use.")
+    replaced_statement = _("This equipment code has been replaced by: {}.")
+
+    def __call__(self, instance, field, value):
+        if value.state == EquipmentState.LEGACY:
+            if value.replaced_by.exists():
+                self.throw_error(
+                    self.replaced_statement.format(
+                        ", ".join([eq.model for eq in value.replaced_by.all()])
+                    ),
+                    instance,
+                    field,
+                )
+            else:
+                self.throw_error(self.statement, instance, field)
 
 
 class NonEmptyValidator(SLMValidator):

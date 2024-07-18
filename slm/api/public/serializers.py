@@ -5,6 +5,7 @@ from slm.models import (
     Antenna,
     ArchivedSiteLog,
     Equipment,
+    Manufacturer,
     Network,
     Radome,
     Receiver,
@@ -32,22 +33,48 @@ class EquipmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Equipment
-        fields = ["id", "model", "description", "state", "manufacturer"]
+        fields = ["model", "description", "state", "manufacturer"]
+
+
+class ManufacturerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manufacturer
+        fields = ["name", "full_name", "url"]
+
+
+class RelatedEquipmentModelField(serializers.RelatedField):
+    def to_representation(self, value):
+        return str(value.model)
 
 
 class AntennaSerializer(EquipmentSerializer):
+    replaced = RelatedEquipmentModelField(many=True, read_only=True)
+
     class Meta(EquipmentSerializer.Meta):
         model = Antenna
+        fields = [
+            *EquipmentSerializer.Meta.fields,
+            "features",
+            "reference_point",
+            "graphic",
+            "replaced",
+        ]
 
 
 class ReceiverSerializer(EquipmentSerializer):
+    replaced = RelatedEquipmentModelField(many=True, read_only=True)
+
     class Meta(EquipmentSerializer.Meta):
         model = Receiver
+        fields = [*EquipmentSerializer.Meta.fields, "replaced"]
 
 
 class RadomeSerializer(EquipmentSerializer):
+    replaced = RelatedEquipmentModelField(many=True, read_only=True)
+
     class Meta(EquipmentSerializer.Meta):
         model = Radome
+        fields = [*EquipmentSerializer.Meta.fields, "replaced"]
 
 
 class AgencySerializer(serializers.ModelSerializer):

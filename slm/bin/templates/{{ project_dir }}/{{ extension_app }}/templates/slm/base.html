@@ -1,0 +1,8 @@
+{% extends "slm/base.html" %}
+{% load static %}
+
+{% block branding %}
+<div class="d-flex align-items-center w-50">
+    <a href="{% url "slm:home" %}" class="navbar-brand"><img id="logo" class="me-4" src="{% static 'slm/img/slm-logo.svg' %}" alt="SLM"> Site Log Manager 2.0</a>
+</div>
+{% endblock branding %}

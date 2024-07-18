@@ -102,9 +102,11 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
   <div id="top-bar">
     <nav class="navbar navbar-dark bg-igs-blue border-bottom border-dark navbar-expand-xl bg-faded justify-content-between">
       <div class="container-fluid mx-4">
+        {% block branding %}
         <div class="d-flex align-items-center w-50">
           <a href="{% url "slm:home" %}" class="navbar-brand"><img id="logo" class="me-4" src="{% static 'slm/img/slm-logo.svg' %}" alt="SLM"> Site Log Manager 2.0</a>
         </div>
+        {% endblock branding %}
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsingNavbar3" title="Navigation">
             <span class="navbar-toggler-icon"></span>
           </button>

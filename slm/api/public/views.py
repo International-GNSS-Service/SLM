@@ -4,6 +4,7 @@ from datetime import datetime
 import django_filters
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Field, Fieldset, Layout, Submit
+from django import forms
 from django.db.models import Prefetch, Q
 from django.http import FileResponse
 from django.utils.translation import gettext as _
@@ -24,6 +25,7 @@ from slm.api.public.serializers import (  # DOMESSerializer
     AgencySerializer,
     AntennaSerializer,
     ArchiveSerializer,
+    ManufacturerSerializer,
     NetworkSerializer,
     RadomeSerializer,
     ReceiverSerializer,
@@ -32,13 +34,15 @@ from slm.api.public.serializers import (  # DOMESSerializer
     StationNameSerializer,
 )
 from slm.api.views import BaseSiteLogDownloadViewSet
-from slm.defines import SiteLogFormat, SiteLogStatus
-from slm.forms import SLMBooleanField
+from slm.defines import EquipmentState, SiteLogFormat, SiteLogStatus
+from slm.forms import EnumMultipleChoiceField, SLMBooleanField
 from slm.forms import StationFilterForm as BaseStationFilterForm
 from slm.models import (
     Agency,
     Antenna,
     ArchivedSiteLog,
+    Equipment,
+    Manufacturer,
     Network,
     Radome,
     Receiver,
@@ -342,25 +346,83 @@ class DOMESViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 """
 
 
+class EquipmentFilterForm(CrispyFormCompat, forms.Form):
+    model = forms.CharField(required=False)
+
+    state = EnumMultipleChoiceField(
+        EquipmentState,
+        help_text=_("Include equipment codings in these states."),
+        label=_("Coding Status"),
+        required=False,
+    )
+    in_use = forms.BooleanField(
+        required=False,
+        help_text=_("Only equipment that is in active use."),
+        label=_("In Use"),
+    )
+
+    manufacturer = forms.CharField(required=False)
+
+
+class EquipmentFilter(CrispyFormCompat, FilterSet):
+    model = django_filters.CharFilter(lookup_expr="icontains")
+    in_use = django_filters.BooleanFilter(
+        method="in_use_filter", distinct=True, label="In Use"
+    )
+    manufacturer = django_filters.CharFilter(method="manufacturer_filter")
+    state = django_filters.MultipleChoiceFilter(
+        choices=EquipmentState.choices, distinct=True
+    )
+    related_formfield = None
+
+    def manufacturer_filter(self, queryset, name, value):
+        if value:
+            return queryset.filter(manufacturer__name__icontains=value).distinct()
+        return queryset
+
+    def in_use_filter(self, queryset, name, value):
+        if value:
+            return queryset.filter(
+                Q(**{f"{self.related_formfield}__isnull": False})
+                & Q(**{f"{self.related_formfield}__published": True})
+                & Q(**{f"{self.related_formfield}__removed__isnull": True})
+                & Q(
+                    **{
+                        f"{self.related_formfield}__site__status__in": SiteLogStatus.active_states()
+                    }
+                )
+            ).distinct()
+        return queryset
+
+    def get_form_class(self):
+        return EquipmentFilterForm
+
+    def filter_queryset(self, queryset):
+        """
+        By default
+        """
+        qryst = super().filter_queryset(queryset)
+        if self.data.get("state", None):
+            return qryst
+        return qryst.filter(state=EquipmentState.ACTIVE)
+
+    class Meta:
+        model = Equipment
+        fields = ("model", "in_use", "manufacturer", "state")
+        distinct = True
+
+
 class ReceiverViewSet(
     mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
 ):
     serializer_class = ReceiverSerializer
     permission_classes = []
 
-    class ReceiverFilter(CrispyFormCompat, FilterSet):
-        model = django_filters.CharFilter(lookup_expr="icontains")
-        in_use = django_filters.BooleanFilter(method="in_use_filter", distinct=True)
+    class ReceiverFilter(EquipmentFilter):
+        related_formfield = "site_receivers"
 
-        def in_use_filter(self, queryset, name, value):
-            if value:
-                return queryset.filter(site_receivers__isnull=False).distinct()
-            return queryset
-
-        class Meta:
+        class Meta(EquipmentFilter.Meta):
             model = Receiver
-            fields = ("model", "in_use")
-            distinct = True
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = ReceiverFilter
@@ -368,7 +430,9 @@ class ReceiverViewSet(
     ordering = ("model",)
 
     def get_queryset(self):
-        return Receiver.objects.public().select_related("manufacturer")
+        return Receiver.objects.select_related("manufacturer").prefetch_related(
+            "replaced"
+        )
 
 
 class AntennaViewSet(
@@ -377,19 +441,11 @@ class AntennaViewSet(
     serializer_class = AntennaSerializer
     permission_classes = []
 
-    class AntennaFilter(CrispyFormCompat, FilterSet):
-        model = django_filters.CharFilter(lookup_expr="icontains")
-        in_use = django_filters.BooleanFilter(method="in_use_filter", distinct=True)
+    class AntennaFilter(EquipmentFilter):
+        related_formfield = "site_antennas"
 
-        def in_use_filter(self, queryset, name, value):
-            if value:
-                return queryset.filter(site_antennas__isnull=False).distinct()
-            return queryset
-
-        class Meta:
+        class Meta(EquipmentFilter.Meta):
             model = Antenna
-            fields = ("model", "in_use")
-            distinct = True
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = AntennaFilter
@@ -397,7 +453,9 @@ class AntennaViewSet(
     ordering = ("model",)
 
     def get_queryset(self):
-        return Antenna.objects.public().select_related("manufacturer")
+        return Antenna.objects.select_related("manufacturer").prefetch_related(
+            "replaced"
+        )
 
 
 class RadomeViewSet(
@@ -406,19 +464,11 @@ class RadomeViewSet(
     serializer_class = RadomeSerializer
     permission_classes = []
 
-    class RadomeFilter(CrispyFormCompat, FilterSet):
-        model = django_filters.CharFilter(lookup_expr="icontains")
-        in_use = django_filters.BooleanFilter(method="in_use_filter", distinct=True)
+    class RadomeFilter(EquipmentFilter):
+        related_formfield = "site_radomes"
 
-        def in_use_filter(self, queryset, name, value):
-            if value:
-                return queryset.filter(site_radomes__isnull=False).distinct()
-            return queryset
-
-        class Meta:
+        class Meta(EquipmentFilter.Meta):
             model = Radome
-            fields = ("model",)
-            distinct = True
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = RadomeFilter
@@ -426,7 +476,32 @@ class RadomeViewSet(
     ordering = ("model",)
 
     def get_queryset(self):
-        return Radome.objects.public().select_related("manufacturer")
+        return Radome.objects.select_related("manufacturer").prefetch_related(
+            "replaced"
+        )
+
+
+class ManufacturerViewSet(
+    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
+    serializer_class = ManufacturerSerializer
+    permission_classes = []
+
+    class ManufacturerFilter(CrispyFormCompat, FilterSet):
+        name = django_filters.CharFilter(lookup_expr="icontains")
+
+        class Meta:
+            model = Manufacturer
+            fields = ("name",)
+            distinct = True
+
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filterset_class = ManufacturerFilter
+    ordering_fields = ("name",)
+    ordering = ("name",)
+
+    def get_queryset(self):
+        return Manufacturer.objects.all()
 
 
 class AgencyViewSet(

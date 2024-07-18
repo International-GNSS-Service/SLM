@@ -1,0 +1,10 @@
+{% extends "slm/alerts/alert.html" %}
+
+{% block alert_content %}
+{{ block.super }}
+{% if findings %}
+<div style="color: initial;">
+{% include upload_tmpl %}
+</div>
+{% endif %}
+{% endblock alert_content %}

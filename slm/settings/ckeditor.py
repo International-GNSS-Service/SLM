@@ -1,4 +1,4 @@
-from slm.settings import get_setting
+from slm.settings import get_setting, set_default
 
 # your webserver should be configured to bypass Django and server
 # MEDIA_ROOT / CKEDITOR_UPLOAD_PATH directly
@@ -10,3 +10,5 @@ CKEDITOR_CONFIGS = {
     },
     "default": {},
 }
+
+set_default("SILENCED_SYSTEM_CHECKS", []).append("ckeditor.W001")

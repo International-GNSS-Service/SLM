@@ -200,8 +200,14 @@ class SiteQuerySet(models.QuerySet):
         from slm.models import Agency, Network
 
         public = Site.objects.filter(
-            Q(agencies__in=Agency.objects.filter(public=True))
-            & Q(networks__in=Network.objects.filter(public=True))
+            (
+                Q(agencies__in=Agency.objects.filter(public=True))
+                | Q(agencies__isnull=True)
+            )
+            & (
+                Q(networks__in=Network.objects.filter(public=True))
+                | Q(networks__isnull=True)
+            )
             &
             # must have been published at least once! - even if in proposed
             # state
@@ -1111,8 +1117,10 @@ class Site(models.Model):
     def __str__(self):
         return self.name
 
-    def synchronize(self, refresh=True):
-        Site.objects.filter(pk=self.pk).synchronize_denormalized_state()
+    def synchronize(self, refresh=True, skip_form_updates=False):
+        Site.objects.filter(pk=self.pk).synchronize_denormalized_state(
+            skip_form_updates=skip_form_updates
+        )
         if refresh:
             self.refresh_from_db()
 

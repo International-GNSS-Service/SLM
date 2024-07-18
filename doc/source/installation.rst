@@ -128,7 +128,16 @@ itself yet though.
 
     .. code:: bash
 
-        pip install igs-slm
+        ?> pip install igs-slm
+
+You also have the option of working with our development version from github, but unless you have
+a compeling reason to do so you should use the release on pypi.
+
+    .. code:: bash
+
+        ?> git clone https://github.com/International-GNSS-Service/SLM.git
+        ?> cd SLM
+        ?> poetry install
 
 Now you should have a command available on your terminal called slm-startproject_ and when you 
 run

@@ -18,7 +18,6 @@ build:
     post_create_environment:
       - pip install poetry==1.7.1  # 1.8 has a bug preventing this build from working
       - poetry config virtualenvs.create false
-      - sudo apt-get install   
     post_install:
       - poetry install
 

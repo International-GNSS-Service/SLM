@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "igs-slm"
-version = "0.1.3b"
+version = "0.1.4b"
 description = "IGS Site Log Manager"
 authors = [
     "Ashley Santiago <ashley.k.santiago@jpl.nasa.gov>",

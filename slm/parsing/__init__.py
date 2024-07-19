@@ -672,7 +672,7 @@ def to_decimal_degrees(value):
 
 def to_int(value, units=None, prefixes=None):
     try:
-        to_numeric(numeric_type=int, value=value, units=units, prefixes=prefixes)
+        return to_numeric(numeric_type=int, value=value, units=units, prefixes=prefixes)
     except ValueError:
         from_float = to_numeric(
             numeric_type=float, value=value, units=units, prefixes=prefixes

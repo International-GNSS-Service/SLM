@@ -304,7 +304,7 @@ class SiteFileUploadViewSet(
 
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = FileFilter
-    ordering_fields = ["-timestamp", "name", "site"]
+    ordering_fields = ("timestamp", "name", "site")
 
     def get_queryset(self):
         return SiteFileUpload.objects.public().select_related("site")

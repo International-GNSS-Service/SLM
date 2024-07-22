@@ -54,8 +54,8 @@ environment(s):
    * - Django_ & GeoDjango_
      - >=4.2
      - ✅
-     - Will be installed automatically, but GeoDjango_ has external depdendencies that may need to
-       be installed manually.
+     - Django will be installed automatically, but GeoDjango_ has external depdendencies that may
+       need to be installed manually.
    * - pgAdmin_
      - >=7.0
      -

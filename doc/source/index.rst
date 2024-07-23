@@ -12,8 +12,7 @@ for understanding how the SLM is put together.
 
 You can report bugs and discuss features on the `issues page <https://github.com/igs/slm/issues>`_.
 
-`Contributions <https://github.com/igs/slm/blob/main/CONTRIBUTING.md>`_ from
-the community are encouraged!
+Contributions_ from the community are encouraged!
 
 .. toctree::
    :maxdepth: 2

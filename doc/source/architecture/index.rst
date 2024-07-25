@@ -19,7 +19,7 @@ Architecture
 SLM is built in Python_ using the Django_ website development framework.
 `Django is well documented <https://docs.djangoproject.com/>`_. A basic understanding of how it
 works is imperative to understand how SLM is put together. In addition to the good
-`intro tutorials <https://docs.djangoproject.com/en/stable/intro/tutorial01/>`, it's helpful to
+`intro tutorials <https://docs.djangoproject.com/en/stable/intro/tutorial01/>`_, it's helpful to
 understand `how reusable Django apps work <https://docs.djangoproject.com/en/stable/intro/reusable-apps/>`_,
 `how settings files work <https://docs.djangoproject.com/en/stable/topics/settings/>`_ and
 `how management commands work <https://docs.djangoproject.com/en/stable/howto/custom-management-commands/>`_.

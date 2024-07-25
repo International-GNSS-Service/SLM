@@ -2,7 +2,7 @@
 Station equipment including Antennas, Radomes and Receivers are coded by IGS and
 those standard codes are used to uniquely identify equipment in site log files.
 
-The full IGS changelog for equipment codes is recorded in rcvr_ant.tab_.
+The full IGS change log for equipment codes is recorded in rcvr_ant.tab_.
 
 The SLM stores these codes in database tables, so it is possible to instantiate an
 SLM with a different set of equipment codes. This command can be used to load codes

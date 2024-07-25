@@ -10,6 +10,7 @@ from datetime import datetime
 import sys
 from pathlib import Path
 from sphinx.ext.autodoc import between
+import warnings
 import os
 import django
 
@@ -48,8 +49,19 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinxcontrib.typer',
-    'sphinx_tabs.tabs'
+    'sphinx_tabs.tabs',
+    'sphinxcontrib.cairosvgconverter'
 ]
+
+try:
+    import enchant
+    extensions.append('sphinxcontrib.spelling')
+except ImportError as err:
+    warnings.warn(f"Spell checker not available: {err}", UserWarning)
+
+spelling_show_suggestions = True
+spelling_lang = 'en_US'
+spelling_word_list_filename = ['ignored_spellings.txt']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,7 +69,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['build', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------

@@ -17,6 +17,7 @@ poetry run pip check
 poetry export -f requirements.txt --output requirements.txt --without-hashes
 cd ./doc
 poetry run doc8 --ignore-path build --max-line-length 100 -q
+poetry run make spelling
 # check for broken links in the docs ############
 set +e
 

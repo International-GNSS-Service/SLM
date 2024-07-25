@@ -1,8 +1,15 @@
 .. include:: refs.rst
 
+.. _reference:
+
 =========
 Reference
 =========
+
+.. todo::
+
+    Auto-doc source code references.
+
 
 .. .. autosummary::
 ..    :toctree: modules

@@ -1,5 +1,7 @@
 .. include:: refs.rst
 
+.. _installation:
+
 ============
 Installation
 ============
@@ -27,7 +29,7 @@ Dependencies
 ############
 
 Most of the dependencies will be the same between different deployments, but production will
-require a webserver and other production specific requirements. The following table lists
+require a web server and other production specific requirements. The following table lists
 the major dependencies that will most likely need to be manually installed depending on your
 environment(s):
 
@@ -54,7 +56,7 @@ environment(s):
    * - Django_ & GeoDjango_
      - >=4.2
      - ✅
-     - Django will be installed automatically, but GeoDjango_ has external depdendencies that may
+     - Django will be installed automatically, but GeoDjango_ has external dependencies that may
        need to be installed manually.
    * - pgAdmin_
      - >=7.0
@@ -131,7 +133,7 @@ itself yet though.
         ?> pip install igs-slm
 
 You also have the option of working with our development version from github, but unless you have
-a compeling reason to do so you should use the release on pypi.
+a compelling reason to do so you should use the release on pypi.
 
     .. code:: bash
 

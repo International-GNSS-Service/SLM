@@ -14,6 +14,7 @@ build:
     - binutils
     - libproj-dev
     - gdal-bin
+    - python3-enchant
   jobs:
     post_create_environment:
       - pip install poetry==1.7.1  # 1.8 has a bug preventing this build from working

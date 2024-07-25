@@ -1,6 +1,6 @@
 .. include:: refs.rst
 
-.. _ref-commands:
+.. _commands:
 
 ========
 Commands
@@ -9,7 +9,7 @@ Commands
 The SLM provides some
 `Django management commands <https://docs.djangoproject.com/en/stable/ref/django-admin/>`_
 out of the box. Management commands are a standard way to implement routine tasks that are
-installable with your site and may interface with the database using a fully boostrapped Django
+installable with your site and may interface with the database using a fully bootstrapped Django
 stack configured for your site.
 
 The SLM management commands are implemented using django-typer_ which extends Django's base command
@@ -18,7 +18,7 @@ to work with the Typer_ CLI library. This also gives us some convenient extra fe
 
 Most of our SLM management commands manipulate data in ways that would be difficult or too time
 consuming through the web interface. We also provide some commands that perform backup and restore
-operatons.
+operations.
 
 We use django-routines_ to provide a few named routines to execute batched groups of commands
 for typical work flows like are required during installation and update deployment.
@@ -86,7 +86,7 @@ Here's an example of a typical SLM management script:
    * - :ref:`command_generate_sinex`
      - Generate a SINEX file from the published database state.
    * - :ref:`command_head_from_index`
-     - Import data into the database from the latest sitelog(s) from the file index.
+     - Import data into the database from the latest site log(s) from the file index.
    * - :ref:`command_import_archive`
      - Add site log files to the file index.
    * - :ref:`command_import_equipment`
@@ -132,7 +132,7 @@ In addition to the SLM specific commands, the common Django commands you will ne
      - Launch an interactive shell with your site bootstrapped and a live connection to the
        database.
 
-Commands installed by third party apps that may also be usefull or necessary:
+Commands installed by third party apps that may also be useful or necessary:
 
 .. list-table:: Third Party Management Commands
    :header-rows: 1
@@ -332,12 +332,12 @@ deploy
 The deploy routine includes a collection of commands that should be run each time an updated
 version of the SLM code base is deployed on a system. These commands will do things
 like bring the database structure into compliance with the code base, render any static
-artifacts and copy those artifacts to where the webserver expects.
+artifacts and copy those artifacts to where the web server expects.
 
 .. warning::
 
   **deploy** does not run makemigrations_ because these files should be checked into version
-  control and we do not want to accidently generate files and apply them to the database in
+  control and we do not want to accidentally generate files and apply them to the database in
   production. This would likely cause conflicting migration files to be generated in development
   and production.
 
@@ -351,7 +351,7 @@ If the SLM validation configuration has changed you will likely want to run depl
 
     <slm> routine deploy --re-validate
 
-You may also wish to not revalidate everything and instead let the new validation routines
+You may also wish to not re-validate everything and instead let the new validation routines
 be run each time a stations data is updated.
 
 .. typer:: django_routines.management.commands.routine.Command::typer_app::deploy

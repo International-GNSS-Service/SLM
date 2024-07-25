@@ -1,9 +1,9 @@
 """
 The SLM supports pluggable validation logic for all site log sections and fields. Since
-this logic is configuraton specific, it may change, diverging from the validation flags
+this logic is configuration specific, it may change, diverging from the validation flags
 recorded against the previous validation configuration in the database.
 
-Run this command to run all validation routines against all current sitelog fields
+Run this command to run all validation routines against all current site log fields
 in the database.
 """
 

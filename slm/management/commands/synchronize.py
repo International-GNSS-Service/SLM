@@ -9,7 +9,7 @@ Some examples of denormalized state in the SLM include:
 
     * Counts of validation flags
     * Maximum alert levels for stations
-    * Sitelog status indicators (PUBLISHED/UNPUBLISHED) for stations.
+    * Site log status indicators (PUBLISHED/UNPUBLISHED) for stations.
 """
 
 import typing as t

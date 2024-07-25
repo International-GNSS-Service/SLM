@@ -33,3 +33,6 @@
 .. _rcvr_ant.tab: https://files.igs.org/pub/station/general/rcvr_ant.tab
 .. _contributions: https://github.com/International-GNSS-Service/SLM/blob/master/CONTRIBUTING.md
 .. _RDBMS: https://en.wikipedia.org/wiki/Relational_database
+.. _discussions: https://github.com/International-GNSS-Service/SLM/discussions
+.. _projects: https://github.com/International-GNSS-Service/SLM/projects
+.. _issues: https://github.com/International-GNSS-Service/SLM/issues

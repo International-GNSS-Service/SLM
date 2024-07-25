@@ -13,6 +13,11 @@ if platform.system().lower() == 'darwin':
 
 include(resource("slm.settings", "root.py"))
 
+INSTALLED_APPS = [
+    'django_extensions',
+    *INSTALLED_APPS
+]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.contrib.gis.db.backends.postgis",

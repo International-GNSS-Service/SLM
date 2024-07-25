@@ -1,5 +1,7 @@
 .. include:: refs.rst
 
+.. _overview:
+
 ========
 Overview
 ========
@@ -17,9 +19,9 @@ and formats before modern and more widely used technologies were available.
 
 The IGS_ has released this `Site Log Manager (SLM) software <https://github.com/International-GNSS-Service/SLM>`_
 under the permissive open source `MIT License <https://opensource.org/license/mit>`_ in the hopes
-that it will increase the fidelity of ground station meta data, ease the adoption of modern IT
+that it will increase the fidelity of ground station meta data, ease the adoption of modern
 technologies while supporting the three decades of legacy systems in current operation, and foster
-a community of collaborative development and shared resouces for ground station management.
+a community of collaborative development and shared resources for ground station management.
 
 
 Challenges
@@ -33,7 +35,7 @@ operators and machine automations. There are many challenges to these objectives
     * **Networks Are Managed By People**
 
         And people make mistakes. An SLM must be robust to the myriad kinds of mistakes people
-        make: typos, mistranscriptions, misunderstandings, forgetfullness and tardiness.
+        make: typos, mistranscriptions, misunderstandings, forgetfulness and tardiness.
 
 
     * **Multiple Sources of Truth**
@@ -45,9 +47,10 @@ operators and machine automations. There are many challenges to these objectives
 
     * **Evolving Technologies**
 
-        GNSS technologies are constantly evolving. So the pertinent information organizations and
-        researches are interested in does too. The data tracked for ground stations must be allowed
-        to evolve over time, while maintaining backwards compatibility with older data models.
+        GNSS technologies are constantly evolving. So the pertinent information that organizations
+        and researches are interested in does too. The data tracked for ground stations must be
+        allowed to evolve over time, while maintaining backwards compatibility with older
+        schemas/data models.
 
 
     * **Legacy Systems**
@@ -67,8 +70,8 @@ operators and machine automations. There are many challenges to these objectives
         Many networks have their own idiosyncratic qualities and institutional requirements that
         may produce conflicts in what is expected to be present in station meta information.
 
-Answers
-=======
+Solutions
+=========
 
 To answer these challenges we have made some architectural decisions about the basic functionality
 of the SLM.
@@ -98,14 +101,14 @@ To facilitate backwards compatibility most fields in the data model are nullable
 (meaning the database does not require them to exist).
 
 
-Serialized Time-based Site Log Index
+Time-based Serialized Site Log Index
 ------------------------------------
 
 The data model will change with time and the past is important. To facilitate backwards
-compatibility with legacy data that may even pre-date the standardization of the site log format,
+compatibility with legacy data that may even predate the standardization of the site log format,
 the SLM maintains a time based index of serialized site logs. This just means that the SLM stores
-site logs on the filesystem and keeps entries in database that associates these files with the time
-range during which they were valid. This ensures that the data model can change, and even lose
+site logs on the file system and keeps entries in database that associates these files with the
+time range during which they were valid. This ensures that the data model can change, and even lose
 fields in time, but SLM managed networks will never lose information and maintain 100% traceability
 into the past.
 
@@ -125,8 +128,8 @@ Moderation
 Some networks, including the IGS network, are maintained by many different organizations and
 personnel. The SLM provides a permission system that allows moderation before site log meta
 information is released to external systems. This allows operators to determine where trust
-lies in their network operations and empower it to control information while distributing
-labor as broadly as possible.
+lies in their network and empower it to control information while distributing labor as
+broadly as possible.
 
 
 Extensibility
@@ -147,5 +150,5 @@ APIs
 
 To facilitate machine consumers the SLM provides several
 `RESTful APIs <https://en.wikipedia.org/wiki/REST>`_ that provide well structured, queryable
-JSON datastructures containing site log meta information. These APIs sit between the consumer
+JSON data structures containing site log meta information. These APIs sit between the consumer
 and the data model and may evolve over time to accommodate new automated use cases.

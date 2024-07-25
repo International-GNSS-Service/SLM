@@ -12,74 +12,35 @@
 
 # ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) 
 Site Log Manager (SLM)
+The Site Log Manager (SLM) is a web framework for managing [GNSS](https://en.wikipedia.org/wiki/Satellite_navigation) ground station meta data. `SLM` is maintained by the [International GNSS Service](https://igs.org/) and is freely licensed for general use under the [MIT License](https://opensource.org/license/mit). The SLM is implemented in [Python](https://python.org) and JavaScript using the [Django web framework](https://djangoproject.com).
 
-The Site Log Manager (SLM) is a web platform that aims to provide:
+The SLM aims to provide:
 
-1. GNSS Site meta data (site log) management with a moderation workflow.
-2. Support for multiple organizations and networks to be managed in an access controlled way.
-3. Full legacy site log format support (both import and export).
-4. Full GeodesyML support (both import and export).
-5. JSON renderings of meta data.
-6. Point-and-click graphical editing of site log data.
-7. Public RESTful api for searching site log data.
-8. Authenticated RESTful api for updating site log data.
-9. Full access to the historical record.
-10. Visualizations of networks and site information.
-11. Configurable data validation that goes above and beyond schema validation.
-12. Image and file attachments to sites.    
-13. A no-fork extensible architecture that allows organizations to modify out-of-the box
-behavior with plugins.
+   * GNSS Site meta data (site log) management with a moderation workflow.
+   * Support for multiple organizations and networks to be managed in an access controlled way.
+   * Full legacy site log format support (both import and export).
+   * Full GeodesyML support (both import and export).
+   * JSON renderings of meta data.
+   * Point-and-click graphical editing of site log data.
+   * Public RESTful api for searching site log data.
+   * Authenticated RESTful api for updating site log data.
+   * Full access to the historical record.
+   * Visualizations of networks and site information.
+   * Configurable data validation that goes above and beyond schema validation.
+   * Image and file attachments to sites.
+   * A no-fork extensible architecture that allows organizations to modify out-of-the box behavior
+     with plugins.
 
-This code base has reached beta-maturity but is still undergoing rapid development. Check back soon 
-for new documentation and updates.
+Full documentation is available on [igs-slm.readthedocs.org](https://igs-slm.rtfd.org) and speaks to multiple audiences:
 
+   * **Developers** will want to refer to the [Installation](https://igs-slm.rtfd.org/en/latest/installation.html), [Architecture](https://igs-slm.rtfd.org/en/latest/architecture.html), [Commands](https://igs-slm.rtfd.org/en/latest/commands.html) and [Reference](https://igs-slm.rtfd.org/en/latest/reference.html) sections.
+   * **System administrators** may be interested in [operations](https://igs-slm.rtfd.org/en/latest/overview.html) and [Commands](https://igs-slm.rtfd.org/en/latest/operations.html).
+   * **Users** and **network coordinators** will be interested in the [User Manual](https://igs-slm.rtfd.org/en/latest/manual.html).
+   * **Developers** wishing to work with SLM managed data will be interested in the [APIs](https://igs-slm.rtfd.org/en/latest/APIs.html).
+   * **Everyone**, but particularly **program managers** will want to take a look at the
+     [Overview](https://igs-slm.rtfd.org/en/latest/overview.html).
 
-## Table of Contents
-1. [Design](#Design)
-   1. [Stack](#Stack)
-   2. [Organization](#Organization)
+> ## ⚠️ **Warning**
+> **The SLM has reached beta-maturity but is still undergoing rapid development. Check back soon for new documentation and updates. A version 1.0 stable release is expected in late September 2024.**
 
-## Design
-
-SLM is built in Python using the [Django website development framework.](https://www.djangoproject.com/)
-Django is well documented. A basic understanding of how it works is helpful to understand how SLM is
-put together. In addition to the [good intro tutorials](https://docs.djangoproject.com/en/stable/intro/tutorial01/), it's
-helpful to understand [how reusable Django apps work](https://docs.djangoproject.com/en/stable/intro/reusable-apps/), how
-[settings files work](https://docs.djangoproject.com/en/stable/topics/settings/) and how 
-[management commands work.](https://docs.djangoproject.com/en/stable/howto/custom-management-commands/)
-
-### Stack
- 
-Django can be served behind many http servers. A common production environment uses [Apache](https://httpd.apache.org/)
-managing Django as a [WSGI](https://modwsgi.readthedocs.io/en/develop/index.html) daemon, but
-another common setup involves proxying a [gunicorn](https://gunicorn.org/) instance behind [nginx](https://www.nginx.com).
-In addition to Django, other critical components of the software stack are listed in the table below. Not all Python
-dependencies are listed because many are incidental.
-
-| Dependency                                                                     | Description                                          |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| [PostgreSQL](https://www.postgresql.org/)                                      | Relation database management system                  |
-| [Django](https://djangoproject.com)                                            | Website development framework                        |
-| [jQuery](https://jquery.com/)                                                  | Javascript DOM navigation library                    |
-| [DataTables](https://datatables.net/)                                          | Javascript tables library                            |
-| [Bootstrap](https://getbootstrap.com/)                                         | CSS framework                                        |
-| [djangorestframework](https://www.django-rest-framework.org/)                  | RESTful API framework for Django                     |
-| [django-split-settings](https://github.com/sobolevn/django-split-settings)     | Composite settings files for Django                  |
-| [django_compressor](https://django-compressor.readthedocs.io/en/stable/)       | Static file compression and management               |
-| [memcached](https://memcached.org/)                                            | Memory object caching system                         |
-| [django-render-static](https://django-render-static.readthedocs.io/en/latest/) | Static file rendering, javascript urls               |
-| [django-debug-toolbar](https://django-debug-toolbar.readthedocs.io/en/latest/) | Debugging components for Django sites (test only)    |
-
-
-### Organization
-
-#### Environment & Setup
-
-1. [pyenv](https://github.com/pyenv/pyenv) is not strictly required, but it is highly recommended to help manage multiple
-   local Python installations and keep environments clean. Python 3.8+ is required.
-2. [Poetry](https://Python-poetry.org/) is used for dependency and package management.
-3. SLM requires PostgresSQL along with the PostGIS extension that enables geographic queries to be run directly by the database.
-   
-   | RDBMS                                        | Minimum Version   | Management Utilities                                        |
-   | ---------------------------------------------| ----------------- | ------------------------------------------------------------|
-   | [PostgreSQL](https://www.postgresql.org/)    | 12                | [PgAdmin](https://www.pgadmin.org/)                         |
+Please use the [discussions page](https://github.com/International-GNSS-Service/SLM/discussions/landing) for general inquiry and the [issues page](https://github.com/International-GNSS-Service/SLM/issues) to report bugs. Our road map is on the [projects page](https://github.com/International-GNSS-Service/SLM/projects).

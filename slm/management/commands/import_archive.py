@@ -3,7 +3,7 @@ When transitioning site log management into an SLM you will have to import all o
 existing data. There are two primary steps involved in doing this:
 
 1. Import the index of existing serialized point in time site logs.
-2. Populate the sitelog fields in the database from the most recent site logs for each
+2. Populate the site log fields in the database from the most recent site logs for each
    station.
 
 This command will perform #1 and optionally call :ref:`command_head_from_index` on the
@@ -451,7 +451,7 @@ class Command(TyperCommand):
                             if self.verbosity > 1:
                                 self.secho(
                                     _(
-                                        "Unable to interpret {filename} as a sitelog."
+                                        "Unable to interpret {filename} as a site log."
                                     ).format(filename=archive_name),
                                     fg="red",
                                 )
@@ -503,7 +503,7 @@ class Command(TyperCommand):
                         if self.verbosity > 1:
                             self.secho(
                                 _(
-                                    "Unable to interpret {filename} as a sitelog."
+                                    "Unable to interpret {filename} as a site log."
                                 ).format(filename=file.name),
                                 fg="red",
                             )
@@ -537,7 +537,7 @@ class Command(TyperCommand):
             if not file_meta:
                 raise CommandError(
                     _(
-                        "Unable to interpret {file} as either an tar archive or a sitelog."
+                        "Unable to interpret {file} as either an tar archive or a site log."
                     ).format(file=self.archive)
                 )
             file_meta.contents = self.archive.read_bytes()

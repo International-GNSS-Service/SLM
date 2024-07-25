@@ -122,9 +122,15 @@ pygount = "^1.4.0"
 ruff = "^0.4.1"
 poetry-plugin-export = "^1.8.0"
 sphinxcontrib-svg2pdfconverter = {extras = ["cairosvg"], version = "^1.2.2"}
-sphinxcontrib-spelling = "^8.0.0"
-pyenchant = "==3.3.0rc1"
+sphinxcontrib-spelling = [
+    { version = "^8.0.0", markers = "python_version > '3.10'" },
+    { version = "<8.0.0", markers = "python_version <= '3.10'" },
+]
 
+pyenchant = [
+    { version = "==3.3.0rc1", markers = "python_version > '3.10'" },
+    { version = "^3.2.0", markers = "python_version <= '3.10'" },
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

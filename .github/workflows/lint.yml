@@ -51,6 +51,7 @@ jobs:
           virtualenvs-in-project: true
       - name: Install External Libs
         run: |
+          sudo apt-get update
           sudo apt install gdal-bin python3-enchant
       - name: Install Dependencies
         run: |

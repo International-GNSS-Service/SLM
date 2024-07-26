@@ -78,6 +78,7 @@ jobs:
 
       - name: Install GIS Libs
         run: |
+          sudo apt-get update
           sudo apt install gdal-bin
       - name: Install Release Dependencies
         run: |

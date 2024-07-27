@@ -31,4 +31,4 @@ class Migration(migrations.Migration):
         ("slm", "0017_alter_logentry_unique_together_and_more"),
     ]
 
-    operations = [migrations.RunPython(migrate_deleted, migrations.RunPython.noop)]
+    operations = [migrations.RunPython(migrate_deleted, migrations.RunPython.noop, elidable=True)]

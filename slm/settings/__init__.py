@@ -48,6 +48,15 @@ def get_setting(var_name, default=_NotGiven):
         raise NameError(f"{var_name} setting variable is not defined.", name=var_name)
     return value
 
+def unset(var_name):
+    """
+    Unset the value of the given variable in the calling scope.
+
+    :param var_name: The name of the variable to unset in the calling scope.
+    """
+    scope = sys._getframe(1).f_globals
+    if var_name in scope:
+        del scope[var_name]
 
 def resource(package, file):
     profile2 = importlib_resources.files(package) / file

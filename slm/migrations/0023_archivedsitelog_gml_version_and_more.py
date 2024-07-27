@@ -51,5 +51,5 @@ class Migration(migrations.Migration):
                 null=True,
             ),
         ),
-        migrations.RunPython(populate_gml_versions),
+        migrations.RunPython(populate_gml_versions, elidable=True),
     ]

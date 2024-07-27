@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
             name="logentry",
             index_together={("timestamp", "type", "site", "section", "subsection")},
         ),
-        migrations.RunPython(clean_duplicate_logs, migrations.RunPython.noop),
+        migrations.RunPython(clean_duplicate_logs, migrations.RunPython.noop, elidable=True),
         migrations.AlterUniqueTogether(
             name="logentry",
             unique_together={("timestamp", "type", "site", "section", "subsection")},

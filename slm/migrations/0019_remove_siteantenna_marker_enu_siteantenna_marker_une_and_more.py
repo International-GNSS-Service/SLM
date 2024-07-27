@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 verbose_name="Marker->ARP UNE Ecc (m)",
             ),
         ),
-        migrations.RunPython(switch_enu_to_une, switch_une_to_enu),
+        migrations.RunPython(switch_enu_to_une, switch_une_to_enu, elidable=True),
         migrations.RemoveField(
             model_name="siteantenna",
             name="marker_enu",

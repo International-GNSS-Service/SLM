@@ -3,7 +3,7 @@
 from django import VERSION
 from django.db import migrations, models
 
-check_param = "check" if VERSION[0] < 5 else "condition"
+check_param = "check" if VERSION[0:2] < (5, 1) else "condition"
 
 
 class Migration(migrations.Migration):

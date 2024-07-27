@@ -157,5 +157,6 @@ doc/build
 slm/static/slm/js/urls.js
 poetry.lock
 slm/tests/tmp
+slm/tests/local.py
 slm/logs
 test.db

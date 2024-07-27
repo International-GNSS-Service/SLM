@@ -1,17 +1,14 @@
 from pathlib import Path
 import platform
-from split_settings.tools import include
+from split_settings.tools import include, optional
 import os
 
 from slm.settings import resource
 
 SITE_DIR = Path(__file__).resolve().parent / "tmp"
 
-if platform.system().lower() == 'darwin':
-    GDAL_LIBRARY_PATH = '/Applications/Postgres.app/Contents/Versions/latest/lib/libgdal.dylib'
-    GEOS_LIBRARY_PATH = '/Applications/Postgres.app/Contents/Versions/latest/lib/libgeos_c.dylib'
-
 include(resource("slm.settings", "root.py"))
+include(optional("./local.py"))
 
 INSTALLED_APPS = [
     'django_extensions',

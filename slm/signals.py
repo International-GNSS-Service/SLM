@@ -1,6 +1,6 @@
 """
 All SLM specific signals sent by the system are defined here. These signals
-mostly include events relating to the site log edit/moderate/publish lifecycle.
+mostly include events relating to the site log edit/moderate/publish life cycle.
 
 All signals contain a request object that holds the request that initiated the
 event. This object is provided mostly for logging purposes and is not
@@ -156,7 +156,7 @@ site_file_published = Signal()
 
 
 """
-Sent when a moderator unpublishes a site file upload - could be an attachment
+Sent when a moderator retracts a site file upload - could be an attachment
 or an image.
 
 :param sender: The sending object (unreliable).

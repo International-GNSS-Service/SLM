@@ -6,7 +6,7 @@
 Installation
 ============
 
-The `SLM` is both a Django_ app and a fully deployable website. Most users of the SLM
+The SLM is both a Django_ app and a fully deployable website. Most users of the SLM
 will want to customize certain aspects of it. To facilitate that we will use the
 :ref:`slm-startproject` bundled command to generate a scaffold to build off of
 (not unlike `Django's startproject <https://docs.djangoproject.com/en/stable/ref/django-admin/#django-admin-startproject>`_) .

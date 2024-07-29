@@ -155,6 +155,8 @@ you should see this:
     :prog: slm-starproject
     :theme: dark
     :width: 70
+    :preferred: svg
+    :convert-png: latex
 
 |
 

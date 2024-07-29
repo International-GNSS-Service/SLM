@@ -42,14 +42,15 @@ Here's an example of a typical SLM management script:
     # production you may want to just set this to "production" in your
     # administrative user's shell profile
     def main(
-        default_settings: str = f"sites.<site>.{os.environ.get('SLM_DEPLOYMENT', 'develop')}"
+        default_settings: str = \
+        f"sites.<site>.{os.environ.get('SLM_DEPLOYMENT', 'develop')}"
     ):
         """Run administrative tasks."""
 
-        # SLM configures loggers differently when running management commands so we can
-        # distinguish logs on the server that were from requests or admin tasks. This
-        # environment variable is used to signal that the SLM runtime is in management
-        # mode.
+        # SLM configures loggers differently when running management commands
+        # so we can distinguish logs on the server that were from requests or
+        # admin tasks. This environment variable is used to signal that the SLM
+        # runtime is in management mode.
         if len(sys.argv) > 1 and sys.argv[1] != "runserver":
             os.environ['SLM_MANAGEMENT_FLAG'] = 'ON'
 
@@ -158,6 +159,8 @@ build_index
 .. typer:: slm.management.commands.build_index.Command::typer_app
     :prog: <slm> build_index
     :theme: dark
+    :preferred: svg
+    :convert-png: latex
 
 |
 

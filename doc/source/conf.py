@@ -45,7 +45,6 @@ release = slm.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinxcontrib.typer',
@@ -77,7 +76,16 @@ exclude_patterns = ['build', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+#html_theme = 'sphinx_rtd_theme'
+html_theme = "furo"
+#html_logo = "_static/img/slm-logo.svg"
+
+html_theme_options = {
+    "source_repository": "https://github.com/International-GNSS-Service/SLM",
+    "source_branch": "master",
+    "source_directory": "doc/source",
+}
+html_title = f"IGS - Site Log Manager"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -88,6 +96,7 @@ html_static_path = [
 
 todo_include_todos = True
 
+latex_engine = "xelatex"
 
 def setup(app):
     # Register a sphinx.ext.autodoc.between listener to ignore everything

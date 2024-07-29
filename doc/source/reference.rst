@@ -11,14 +11,21 @@ Reference
     Auto-doc source code references.
 
 
-.. .. autosummary::
-..    :toctree: modules
+.. automodule:: slm
 
-..    slm
-..    slm.api
-..    slm.api.public
-..    slm.api.edit
-..    slm.defines
-..    slm.management.commands
-..    slm.models
-..    slm.settings
+.. _ref_settings:
+
+slm.settings
+------------
+
+.. automodule:: slm.settings
+    :members:
+
+
+.. _ref_signals:
+
+slm.signals
+-----------
+
+.. automodule:: slm.signals
+    :members:

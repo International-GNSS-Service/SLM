@@ -61,6 +61,19 @@ def unset(var_name):
 
 
 def resource(package, file):
+    """
+    Use a packaged resource file as a settings file include. If you are
+    including a settings file from another package you should pass this to
+    split_settings.tools.include:
+
+        .. code-block:: python
+
+            include(resource("slm.settings", "root.py"))
+
+    :param package: The string import path of the package containing the module
+    :param file: The name of the python settings module
+    :return: The full string path to the resource.
+    """
     profile2 = importlib_resources.files(package) / file
     with importlib_resources.as_file(profile2) as profile2_path:
         return str(profile2_path)

@@ -1,17 +1,18 @@
 from pathlib import Path
 import platform
-from split_settings.tools import include
+from split_settings.tools import include, optional
+from slm.settings import unset
 import os
 
 from slm.settings import resource
 
 SITE_DIR = Path(__file__).resolve().parent / "tmp"
+BASE_DIR = SITE_DIR
 
-if platform.system().lower() == 'darwin':
-    GDAL_LIBRARY_PATH = '/Applications/Postgres.app/Contents/Versions/latest/lib/libgdal.dylib'
-    GEOS_LIBRARY_PATH = '/Applications/Postgres.app/Contents/Versions/latest/lib/libgeos_c.dylib'
+ALLOWED_HOSTS = ["*"]
 
 include(resource("slm.settings", "root.py"))
+include(optional("./local.py"))
 
 INSTALLED_APPS = [
     'django_extensions',
@@ -32,3 +33,14 @@ DATABASES = {
 SLM_PRELOAD_SCHEMAS = False
 
 COMPRESS_ENABLED = False
+
+unset("SECURE_SSL_REDIRECT")
+unset("CSRF_COOKIE_SECURE")
+unset("SESSION_COOKIE_SECURE")
+unset("SECURE_REFERRER_POLICY")
+unset("X_FRAME_OPTIONS")
+MIDDLEWARE.remove("django.middleware.security.SecurityMiddleware")
+
+
+WSGI_APPLICATION = "slm.tests.wsgi.application"
+DEBUG = True

@@ -18,5 +18,5 @@ If we exempt the vulnerability the reason will be noted in the [policy file](htt
 
 ## Reporting a Vulnerability
 
-If you think you have found a vulnerability, and even if you are not sure, please email cb@igs.org
+If you think you have found a vulnerability, and even if you are not sure, please report it to us in private by going to Security -> Advisories -> New Draft Security Advisory or alternatively, email us at cb@igs.org
 We will review it and get back to you. Please refrain from public discussions of the issue.

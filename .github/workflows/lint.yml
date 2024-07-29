@@ -23,11 +23,14 @@ jobs:
         django-version:
           - '4.2' # LTS April 2026
           - '5.0' # April 2025
+          - '5.1rc1' # December 2025
         exclude:
           - python-version: '3.12'
             django-version: '4.2'
           - python-version: '3.9'
             django-version: '5.0'
+          - python-version: '3.9'
+            django-version: '5.1rc1'
 
     steps:
       - name: Setup tmate session
@@ -48,6 +51,7 @@ jobs:
           virtualenvs-in-project: true
       - name: Install External Libs
         run: |
+          sudo apt-get update
           sudo apt install gdal-bin python3-enchant
       - name: Install Dependencies
         run: |

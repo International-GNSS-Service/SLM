@@ -84,11 +84,9 @@ html_theme_options = {
     "source_repository": "https://github.com/International-GNSS-Service/SLM",
     "source_branch": "master",
     "source_directory": "doc/source",
-}
-html_title = f"IGS - Site Log Manager"
-html_theme_options = {
     "announcement": "The Site Log Manager is maintained by the <a href='https://igs.org'>International GNSS Service (IGS)</a>.",
 }
+html_title = f"IGS - Site Log Manager"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -22,6 +22,7 @@ class AntennaFeatures(IntegerChoices):
     PWC = 14, _("(PWC) Power Port")
     RTC = 15, _("(RTC) RTK Connector")
     UNK = 16, _("(UNK) Unknown")
+    OMM = 17, _("(OMM) Opposite of Man-Machine Interface")
 
     def __str__(self):
         return self.name

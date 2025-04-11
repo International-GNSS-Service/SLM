@@ -1,7 +1,7 @@
 {% load slm compress i18n %}
 
 <pre id="slm-parsed-legacy">{% for line in file|file_lines %}{% with idx=forloop.counter0 %}
-<span data-line-number={{ idx }} class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-custom-class="{{ findings|finding_class:idx }}" data-bs-html="true" data-bs-content="<pre>{{ findings|finding_content:idx }}</pre>"{% endif %}>{{ line }}</span>{% endwith %}{% endfor %}
+<span data-line-number={{ idx }}>{{ findings|clear_prefix:idx|get_part:line }}<span class="{{ findings|finding_class:idx }}" {% if findings|finding_content:idx %}data-bs-toggle="popover" title="{{ findings|finding_title:idx }}" data-bs-custom-class="{{ findings|finding_class:idx }}" data-bs-html="true" data-bs-content="<pre>{{ findings|finding_content:idx }}</pre>"{% endif %}>{{ findings|marked_part:idx|get_part:line }}</span>{{ findings|clear_postfix:idx|get_part:line }}</span>{% endwith %}{% endfor %}
 </pre>
 
 {% compress css inline %}

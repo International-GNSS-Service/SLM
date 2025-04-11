@@ -726,11 +726,12 @@ class SectionViewSet(type):
                         #   also needs to be DRYed w/ published_diff function
                         for field in ModelClass.site_log_fields():
                             if field in validated_data:
-                                is_many = isinstance(
-                                    instance._meta.get_field(field),
-                                    models.ManyToManyField,
-                                )
+                                mdl_field = instance._meta.get_field(field)
+                                is_many = isinstance(mdl_field, models.ManyToManyField)
                                 new_value = validated_data.get(field)
+                                if new_value is None and not mdl_field.null:
+                                    # convert Nones to empty strings if warranted
+                                    new_value = mdl_field.default
                                 old_value = getattr(instance, field)
                                 if (
                                     not is_many

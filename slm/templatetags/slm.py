@@ -300,6 +300,46 @@ def finding_title(findings, line_number):
     return ""
 
 
+# these filters support marking slices of lines with a finding given a column range
+# its messy - could use a refactor and also currently doesnt support more than one marking per line
+# if you do refactor be sure to support old findings contexts that are cached in the DB for previous
+# uploads!
+@register.filter(name="get_part")
+def get_part(slice, line):
+    return line[slice[0] : slice[1]]
+
+
+@register.filter(name="clear_prefix")
+def clear_prefix(findings, line_number):
+    if findings:
+        ret = findings.get(
+            str(line_number), findings.get(int(line_number), [None, "", None])
+        )
+        if len(ret) >= 3 and ret[2]:
+            return None, ret[2][0]
+    return 0, 0
+
+
+@register.filter(name="marked_part")
+def marked_part(findings, line_number):
+    if findings:
+        ret = findings.get(
+            str(line_number), findings.get(int(line_number), [None, "", None])
+        )
+        if len(ret) >= 3 and ret[2]:
+            return ret[2][0], ret[2][1]
+    return None, None
+
+
+@register.filter(name="clear_postfix")
+def clear_postfix(findings, line_number):
+    if findings:
+        ret = findings.get(str(line_number), findings.get(int(line_number), [None, ""]))
+        if len(ret) >= 3 and ret[2]:
+            return ret[2][1], None
+    return 0, 0
+
+
 @register.filter(name="split_rows")
 def split_rows(iterable, row_length):
     rows = []

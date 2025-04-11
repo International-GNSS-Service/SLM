@@ -1,4 +1,5 @@
 import re
+import typing as t
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from functools import partial
@@ -59,7 +60,8 @@ def remove_from_start(value: str, prefixes: List[str]):
 
 @dataclass
 class _Ignored:
-    msg: str
+    msg: str = ""
+    columns: t.Optional[t.Tuple[int, int]] = None
 
 
 @dataclass
@@ -86,10 +88,24 @@ class Finding:
     A base class for parser/binding findings.
     """
 
+    lineno: int
+    parser: "BaseParser"
+    message: str
+    section: t.Optional["BaseSection"]
+    parameter: t.Optional["BaseParameter"]
+    line: t.Optional[str]
     priority: int = 0
+    columns: t.Optional[t.Tuple[int, int]]
 
     def __init__(
-        self, lineno, parser, message, section=None, parameter=None, line=None
+        self,
+        lineno,
+        parser,
+        message,
+        section=None,
+        parameter=None,
+        line=None,
+        columns=None,
     ):
         self.lineno = lineno
         self.parser = parser
@@ -97,6 +113,7 @@ class Finding:
         self.section = section
         self.parameter = parameter
         self.line = line
+        self.columns = columns
 
     def __str__(self):
         return (
@@ -350,7 +367,7 @@ class BaseParser:
     @property
     def findings_context(self) -> Dict[int, Tuple[str, str]]:
         return {
-            int(line): (finding.level, finding.message)
+            int(line): (finding.level, finding.message, finding.columns)
             for line, finding in self.findings.items()
         }
 
@@ -665,7 +682,7 @@ def to_decimal_degrees(value):
     flt = to_float(value)
     if isinstance(flt, _Warning):
         return _Warning(msg=flt.msg, value=dddmmssss_to_decimal(flt.value))
-    if flt is _Ignored or isinstance(flt, _Ignored):
+    if isinstance(flt, _Ignored):
         return flt
     return dddmmssss_to_decimal(to_float(value))
 
@@ -718,7 +735,7 @@ def to_pressure(value):
 def _to_date(value):
     if value.strip():
         if "CCYY-MM-DD" in value.upper():
-            return _Ignored
+            return _Ignored(msg=f"{value} is a placeholder.")
         try:
             return parse_date(value, tzinfos=TZ_INFOS).date()
         except Exception as exc:
@@ -731,7 +748,7 @@ def _to_date(value):
 def _to_datetime(value):
     if value.strip():
         if "CCYY-MM-DD" in value.upper():
-            return _Ignored
+            return _Ignored(msg=f"{value} is a placeholder.")
         try:
             # UT and UTUT has been seen as a timezone specifier in the wild
             dt = parse_date(value, tzinfos=TZ_INFOS)

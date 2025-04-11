@@ -31,11 +31,9 @@ import slm
 
 # -- Project information -----------------------------------------------------
 
-project = 'IGS Site Log Manager'
-copyright = f'2022-{datetime.now().year}, NASA/Jet Propulsion Laboratory'
-author = ", ".join(['Ashley Santiago', 'Rachel Pham', 'Brian Kohan'])
-
-# The full version, including alpha/beta/rc tags
+project = slm.__title__
+copyright = slm.__copyright__
+author = slm.__author__
 release = slm.__version__
 
 

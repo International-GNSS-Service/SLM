@@ -71,7 +71,7 @@ def reg(name, header_index, bindings):
 def ignored(_, msg=""):
     if msg:
         return _Ignored(msg)
-    return _Ignored
+    return _Ignored()
 
 
 def to_temp_stab(value):
@@ -129,40 +129,33 @@ def to_temp_stab(value):
     return stabilized, nominal, deviation
 
 
-def effective_start(value):
+def effective_date(value: str, part: int, label: str):
     try:
-        start_str = ""
-        if value.strip():
-            sep = "/" if "/" in value else " - "
-            start_str = value.split(sep)[0]
-            return to_date(start_str)
-        return None
-    except ValueError as ve:
-        if start_str.upper() in DATE_PLACEHOLDERS:
-            return None
-        raise ValueError(
-            f"Unable to parse {value} into an expected start date. Expected "
-            f"format: CCYY-MM-DD/CCYY-MM-DD"
-        ) from ve
-
-
-def effective_end(value):
-    try:
-        end_str = ""
+        dt_str = ""
         if value.strip():
             sep = "/" if "/" in value else " - "
             splt = value.split(sep)
-            if len(splt) > 1:
-                end_str = value.split(sep)[1]
-                return to_date(end_str)
+            if len(splt) > part:
+                dt_str = splt[part]
+                if dt_str.strip():
+                    ret = to_date(dt_str.strip())
+                    if isinstance(ret, _Ignored):
+                        start = value.index(dt_str)
+                        end = start + len(dt_str)
+                        ret.columns = (start, end)
+                    return ret
         return None
     except ValueError as ve:
-        if end_str.upper() in DATE_PLACEHOLDERS:
+        if dt_str.upper() in DATE_PLACEHOLDERS:
             return None
         raise ValueError(
-            f"Unable to parse {value} into an expected end date. Expected "
+            f"Unable to parse {value} into an expected {label} date. Expected "
             f"format: CCYY-MM-DD/CCYY-MM-DD"
         ) from ve
+
+
+effective_start = partial(effective_date, part=0, label="start")
+effective_end = partial(effective_date, part=1, label="end")
 
 
 def no_sat_warning(line_no, parser, satellites):
@@ -462,12 +455,12 @@ class SiteLogBinder(BaseBinder):
                     ("Tied Marker Usage", ("usage", to_str)),
                     ("Tied Marker CDP Number", ("cdp_number", to_str)),
                     ("Tied Marker DOMES Number", ("domes_number", to_str)),
-                    ("dx", ("dx", to_float)),
-                    ("dy", ("dy", to_float)),
-                    ("dz", ("dz", to_float)),
-                    ("dx (m)", ("dx", to_float)),
-                    ("dy (m)", ("dy", to_float)),
-                    ("dz (m)", ("dz", to_float)),
+                    ("dx", ("dx", partial(to_float, units=["m"]))),
+                    ("dy", ("dy", partial(to_float, units=["m"]))),
+                    ("dz", ("dz", partial(to_float, units=["m"]))),
+                    ("dx (m)", ("dx", partial(to_float, units=["m"]))),
+                    ("dy (m)", ("dy", partial(to_float, units=["m"]))),
+                    ("dz (m)", ("dz", partial(to_float, units=["m"]))),
                     (
                         "Accuracy",
                         (
@@ -738,16 +731,24 @@ class SiteLogBinder(BaseBinder):
                         if parameter.is_placeholder
                         else parse(parameter.value)
                     )
-                    if value == _Ignored or isinstance(value, _Ignored):
+                    if isinstance(value, _Ignored):
+                        cols = None
+                        if cols := getattr(value, "columns", None):
+                            val_start = self.lines[parameter.line_no].index(
+                                parameter.value
+                            )
+                            cols = (cols[0] + val_start, cols[1] + val_start)
                         self.parsed.add_finding(
                             Ignored(
                                 parameter.line_no,
                                 self.parsed,
                                 getattr(value, "msg", _("Parameter is ignored")),
                                 section=section,
+                                columns=cols,
                             )
                         )
                         ignored.add(param)
+                        parameter.bind(param, None)
                     elif isinstance(value, _Warning):
                         self.parsed.add_finding(
                             Warn(

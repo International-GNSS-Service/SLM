@@ -14,7 +14,9 @@ import warnings
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'slm.tests.settings')
+sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+sys.path.append(str(Path(__file__).parent.parent.parent))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')
 django.setup()
 
 # -- Path setup --------------------------------------------------------------
@@ -26,11 +28,7 @@ django.setup()
 # sys.path.append(str(Path(__file__).parent / 'slm' / 'examples'))
 # sys.path.append(str(Path(__file__).parent / 'slm' / 'tests'))
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
 import slm
-
-# -- Project information -----------------------------------------------------
-
 project = slm.__title__
 copyright = slm.__copyright__
 author = slm.__author__
@@ -59,6 +57,8 @@ except ImportError as err:
 spelling_show_suggestions = True
 spelling_lang = 'en_US'
 spelling_word_list_filename = ['ignored_spellings.txt']
+spelling_show_whole_line = False
+spelling_verbose = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

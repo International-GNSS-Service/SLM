@@ -1,6 +1,10 @@
 # Security Policy
 
-[![Security Status](https://github.com/International-GNSS-Service/SLM/workflows/security/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/security.yml)
+[![CodeQL](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql?query=branch:main)
+[![Safety](https://github.com/International-GNSS-Service/SLM/workflows/safety/badge.svg)](https://docs.safetycli.com/safety-docs)
+[![Zizmor](https://github.com/International-GNSS-Service/SLM/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://woodruffw.github.io/zizmor)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/International-GNSS-Service/SLM/badge)](https://securityscorecards.dev/viewer/?uri=github.com/International-GNSS-Service/SLM)
+
 
 Only the latest version of the SLM [![PyPI version](https://badge.fury.io/py/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm/) is supported on the versions of Python [![PyPI pyversions](https://img.shields.io/pypi/pyversions/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm/) and Django 
 [![PyPI djversions](https://img.shields.io/pypi/djversions/igs-slm.svg)](https://pypi.org/project/igs-slm/) our continuous integrations are currently running on.

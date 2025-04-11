@@ -154,9 +154,9 @@ sites/**/local.py
 slm/network_map
 sites/test/static
 doc/build
-slm/static/slm/js/urls.js
+src/slm/static/slm/js/urls.js
 poetry.lock
-slm/tests/tmp
-slm/tests/local.py
+tests/tmp
+tests/local.py
 slm/logs
 test.db

@@ -811,13 +811,14 @@ wheels = [
 
 [[package]]
 name = "django-allauth"
-version = "0.63.6"
+version = "65.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "asgiref" },
     { name = "django", version = "4.2.20", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "django", version = "5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/6f/3ccc016b901d7e5a1178e78671048f889d967091586cdce2cd9d590da407/django_allauth-0.63.6.tar.gz", hash = "sha256:f15f49defb09e0604dad5214e53a69a1f723cb03176bb115c8930bcd19b91749", size = 1082450 }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/08/8557880768ba4d5966195ee5e57c69d8b9425c62ffb80293e2ad36dffb83/django_allauth-65.7.0.tar.gz", hash = "sha256:eb060692150f39e1529893c2de5f9b46e1dab51153ff6cca7ad72c7c125259ea", size = 1640126 }
 
 [[package]]
 name = "django-appconf"
@@ -1512,7 +1513,7 @@ requires-dist = [
     { name = "chardet", specifier = ">=5.1.0,<6.0.0" },
     { name = "crispy-bootstrap5", specifier = ">=2024.2,<2025.0" },
     { name = "django", specifier = ">=4.2,<6.0" },
-    { name = "django-allauth", specifier = ">=0.63.3,<1.0.0" },
+    { name = "django-allauth", specifier = ">=0.65" },
     { name = "django-ckeditor", specifier = ">=6.5.1,<7.0.0" },
     { name = "django-compressor", specifier = ">=4.0,<5.0.0" },
     { name = "django-crispy-forms", specifier = ">=2.0,<3.0.0" },

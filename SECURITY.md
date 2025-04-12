@@ -1,7 +1,7 @@
 # Security Policy
 
 [![CodeQL](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql?query=branch:master)
-[![Safety](https://github.com/International-GNSS-Service/SLM/workflows/safety/badge.svg)](https://docs.safetycli.com/safety-docs)
+[![Safety](https://github.com/International-GNSS-Service/SLM/actions/workflows/safety.yml/badge.svg?branch=master)](https://docs.safetycli.com/safety-docs)
 [![Zizmor](https://github.com/International-GNSS-Service/SLM/actions/workflows/zizmor.yml/badge.svg?branch=master)](https://woodruffw.github.io/zizmor)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/International-GNSS-Service/SLM/badge)](https://securityscorecards.dev/viewer/?uri=github.com/International-GNSS-Service/SLM)
 

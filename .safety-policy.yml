@@ -3,7 +3,8 @@ version: '3.0'
 scanning-settings:
   max-depth: 6
   exclude: [
-    "poetry.lock"  # exclude this because if it exists it will contain dev deps
+    "uv.lock",  # exclude this because if it exists it will contain dev deps
+    "src/slm/bin/templates/{{ project_dir }}/pyproject.toml",  # exclude this because it is a template
   ]
   include-files:
     - path: ./requirements.txt

@@ -9,7 +9,7 @@
 [![Lint Status](https://github.com/International-GNSS-Service/SLM/workflows/lint/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-# ![](https://github.com/International-GNSS-Service/SLM/blob/master/slm/static/slm/img/slm-logo.svg?raw=true) 
+# ![](https://github.com/International-GNSS-Service/SLM/blob/master/src/slm/static/slm/img/slm-logo.svg?raw=true) 
 Site Log Manager (SLM)
 The Site Log Manager (SLM) is a web framework for managing [GNSS](https://en.wikipedia.org/wiki/Satellite_navigation) ground station meta data. `SLM` is maintained by the [International GNSS Service](https://igs.org/) and is freely licensed for general use under the [MIT License](https://opensource.org/license/mit). The SLM is implemented in [Python](https://python.org) and JavaScript using the [Django web framework](https://djangoproject.com).
 

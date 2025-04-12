@@ -8,6 +8,7 @@ export PYTHONPATH := source_directory()
 default:
     @just --list --list-submodules
 
+# run Django's manage
 [script]
 manage *COMMAND:
     import os
@@ -29,7 +30,7 @@ install-uv:
 install-uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# setup the venv and pre-commit hooks
+# setup the venv and pre-commit hooks, optionally specify python version
 setup python="python":
     uv venv -p {{ python }}
     @just run pre-commit install

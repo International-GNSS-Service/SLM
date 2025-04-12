@@ -6,7 +6,7 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/International-GNSS-Service/SLM/badge)](https://securityscorecards.dev/viewer/?uri=github.com/International-GNSS-Service/SLM)
 
 
-Only the latest version of the SLM is supported on the versions of Python and Django that our continuous integrations are currently running on.
+Only the latest version of the SLM is supported on the versions of Python and Django that our continuous integrations are currently running on:
 
 - [![SLM](https://badge.fury.io/py/igs-slm.svg)](https://pypi.org/project/igs-slm/)
 - [![Python](https://img.shields.io/pypi/pyversions/igs-slm.svg)](https://pypi.org/project/igs-slm/)

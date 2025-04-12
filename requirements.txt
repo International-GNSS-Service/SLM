@@ -54,7 +54,7 @@ psycopg-binary==3.2.6 ; implementation_name != 'pypy'
 pygments==2.19.1
 python-dateutil==2.9.0.post0
 python-ipware==3.0.0
-rcssmin==1.1.2
+rcssmin==1.2.1
 requests==2.32.3
 rich==13.9.4
 rjsmin==1.2.2

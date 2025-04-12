@@ -1,20 +1,15 @@
-# scanning-settings:
-#   max-depth: 6
-#   exclude: [
-#     "uv.lock",  # exclude this because if it exists it will contain dev deps
-#     "src/slm/bin/templates/{{ project_dir }}/pyproject.toml",  # exclude this because it is a template
-#   ]
-#   include-files:
-#     - path: ./requirements.txt
-#       file-type: requirements.txt
+version: '3.0'
 
-version: 3.0
-project:
-  name: slm
-  environments:
-    - name: production
-      requirements_files:
-        - requirements.txt
+scanning-settings:
+  max-depth: 6
+  exclude: [
+    "uv.lock",  # exclude this because if it exists it will contain dev deps
+    "pyproject.toml",  # exclude because it includes dev deps
+    "**/pyproject.toml",  # exclude this because it is a template
+  ]
+  include-files:
+    - path: ./requirements.txt
+      file-type: requirements.txt
 
 report:
   dependency-vulnerabilities:

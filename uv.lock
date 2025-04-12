@@ -1513,7 +1513,7 @@ requires-dist = [
     { name = "chardet", specifier = ">=5.1.0,<6.0.0" },
     { name = "crispy-bootstrap5", specifier = ">=2024.2,<2025.0" },
     { name = "django", specifier = ">=4.2,<6.0" },
-    { name = "django-allauth", specifier = ">=0.65" },
+    { name = "django-allauth", specifier = ">=65" },
     { name = "django-ckeditor", specifier = ">=6.5.1,<7.0.0" },
     { name = "django-compressor", specifier = ">=4.0,<5.0.0" },
     { name = "django-crispy-forms", specifier = ">=2.0,<3.0.0" },

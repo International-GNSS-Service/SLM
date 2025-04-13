@@ -2,9 +2,9 @@ name: Zizmor
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     # Run weekly
     - cron: '0 0 * * 0'

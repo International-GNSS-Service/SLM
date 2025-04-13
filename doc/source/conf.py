@@ -3,7 +3,7 @@ Configuration file for the Sphinx documentation builder.
 
 This file only contains a selection of the most common options. For a full
 list see the documentation:
-https://www.sphinx-doc.org/en/master/usage/configuration.html
+https://www.sphinx-doc.org/en/stable/usage/configuration.html
 """
 
 from datetime import datetime
@@ -80,7 +80,7 @@ html_theme = "furo"
 
 html_theme_options = {
     "source_repository": "https://github.com/International-GNSS-Service/SLM",
-    "source_branch": "master",
+    "source_branch": "main",
     "source_directory": "doc/source",
     "announcement": "The Site Log Manager is maintained by the <a href='https://igs.org'>International GNSS Service (IGS)</a>.",
 }

@@ -142,7 +142,7 @@ HTML templates and even the data model itself. This means it is not a good idea 
 your own extensions on top of it. If your team is considering forking the SLM, please reach
 out to us or `open an issue <https://github.com/International-GNSS-Service/SLM/issues>`_
 explaining what extension points you need to avoid a fork or better yet,
-`open a PR <https://github.com/International-GNSS-Service/SLM/blob/master/CONTRIBUTING.md>`_.
+`open a PR <https://github.com/International-GNSS-Service/SLM/blob/main/CONTRIBUTING.md>`_.
 
 
 APIs

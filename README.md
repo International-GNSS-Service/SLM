@@ -5,11 +5,11 @@
 [![PyPI status](https://img.shields.io/pypi/status/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm)
 [![Documentation Status](https://readthedocs.org/projects/igs-slm/badge/?version=latest)](http://igs-slm.readthedocs.io/?badge=latest/)
 [![codecov](https://codecov.io/github/International-GNSS-Service/SLM/graph/badge.svg?token=PQVWN1LNM3)](https://codecov.io/github/International-GNSS-Service/SLM)
-[![Test Status](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml?branch=master)
+[![Test Status](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml?branch=main)
 [![Lint Status](https://github.com/International-GNSS-Service/SLM/workflows/lint/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-# ![](https://github.com/International-GNSS-Service/SLM/blob/master/src/slm/static/slm/img/slm-logo.svg?raw=true) 
+# ![](https://github.com/International-GNSS-Service/SLM/blob/main/src/slm/static/slm/img/slm-logo.svg?raw=true) 
 Site Log Manager (SLM)
 The Site Log Manager (SLM) is a web framework for managing [GNSS](https://en.wikipedia.org/wiki/Satellite_navigation) ground station meta data. `SLM` is maintained by the [International GNSS Service](https://igs.org/) and is freely licensed for general use under the [MIT License](https://opensource.org/license/mit). The SLM is implemented in [Python](https://python.org) and JavaScript using the [Django web framework](https://djangoproject.com).
 

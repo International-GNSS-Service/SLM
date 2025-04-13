@@ -31,7 +31,7 @@
 .. _shellcompletion: https://django-typer.readthedocs.io/en/latest/reference.html#shellcompletion
 .. _SINEX: https://www.iers.org/IERS/EN/Organization/AnalysisCoordinator/SinexFormat/sinex.html
 .. _rcvr_ant.tab: https://files.igs.org/pub/station/general/rcvr_ant.tab
-.. _contributions: https://github.com/International-GNSS-Service/SLM/blob/master/CONTRIBUTING.md
+.. _contributions: https://github.com/International-GNSS-Service/SLM/blob/main/CONTRIBUTING.md
 .. _RDBMS: https://en.wikipedia.org/wiki/Relational_database
 .. _discussions: https://github.com/International-GNSS-Service/SLM/discussions
 .. _projects: https://github.com/International-GNSS-Service/SLM/projects

@@ -6,7 +6,7 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 permissions: read-all
 

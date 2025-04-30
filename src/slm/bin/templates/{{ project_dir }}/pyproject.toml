@@ -1,35 +1,44 @@
-[tool.poetry]
+[project]
 name = "{{ package_name }}"
 version = "0.1.0"
 description = ""
+requires-python = ">=3.8,<4.0"
 authors = []
-
-packages = [
-    { include = "{{ extension_app }}" },
-    { include = "sites" },
+dependencies = [
+    "igs-slm>={{ slm_version }},<{{ slm_version_next_major }}",
 ]
 
-exclude = ["**/test"]
+[tool.uv]
+package = true
 
-[tool.poetry.scripts]
-{{ site }} = "sites.{{ site }}.manage:main"
-
-[tool.poetry.dependencies]
-python = "^3.8"
 {% if local_slm %}
-igs-slm = { path = "{{ local_slm }}", develop = true }
-#igs-slm = "^{{ slm_version }}"
-{% else %}
-igs-slm = "^{{ slm_version }}"
+[tool.uv.sources]
+igs-slm = { path = "{{ local_slm }}", editable = true }
 {% endif %}
 
-[tool.poetry.group.dev.dependencies]
-django-extensions = "^3.1.5"
-ipython = "^8.12.2"
-ipdb = "^0.12"
-django-debug-toolbar = "^4.0.0"
 
+[project.scripts]
+{{ site }} = "sites.{{ site }}.manage:main"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/sites",
+    "src/{{ extension_app }}"
+]
+{% if local_slm %}
+[tool.hatch.metadata]
+allow-direct-references = true
+{% endif %}
+
+[dependency-groups]
+dev = [
+    "django-extensions>=3.0,<5.0",
+    "django-debug-toolbar>=4.4.6",
+    "ipython==8.12.3",
+    "ipdb>=0.13.13,<1.0.0",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+

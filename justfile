@@ -3,6 +3,7 @@ set unstable := true
 set script-interpreter := ['uv', 'run', '--script']
 
 export PYTHONPATH := source_directory()
+export DJANGO_SETTINGS_MODULE := "tests.settings"
 
 [private]
 default:
@@ -16,7 +17,6 @@ manage *COMMAND:
     import shlex
     from pathlib import Path
     from django.core import management
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "slm.tests.settings")
     management.execute_from_command_line(["just manage", *shlex.split("{{ COMMAND }}")])
 
 # install the uv package manager

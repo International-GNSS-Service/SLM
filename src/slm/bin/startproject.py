@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import django
 from django.conf import settings
 from django_typer.completers import complete_path
+from packaging.version import Version
 from render_static.engine import StaticTemplateEngine
 from rich.console import Console
 from rich.markdown import Markdown
@@ -38,14 +39,14 @@ REPORT_MARKDOWN = """
 
 1. Create a database called `{site}`.
 
-2. Use `poetry` to install your project's virtual environment:
+2. Use `uv` to install your project's virtual environment:
 
-    {install_poetry}
+    {install_uv}
 
     Install dependencies:
 
     ```bash
-    poetry install
+    uv sync --all-extras
     ```
 
 3. To install your database and import existing sitelogs, run:
@@ -57,12 +58,12 @@ REPORT_MARKDOWN = """
 4. To run the development server, run:
     
     ```bash
-    network runserver
+    {site} runserver
     ```
 """
 
-INSTALL_POETRY = """
-    **You do not have `poetry` installed, see**: https://python-poetry.org/docs/#installing-with-the-official-installer
+INSTALL_UV = """
+    **You do not have `uv` installed, see**: https://docs.astral.sh/uv/getting-started/installation/
 """
 
 
@@ -84,7 +85,7 @@ def main(
             prompt="What is the name of your organization?",
             help="What is the name of your organization?",
         ),
-    ] = "",
+    ] = "{domain}",
     project_dir: Annotated[
         str,
         Option(
@@ -186,7 +187,7 @@ def main(
             ]
         }
     )
-    if not organization:
+    if not organization or organization == "{domain}":
         organization = domain.title()
     org = organization.replace(" ", "_").lower()
     extension_app = extension_app.format(org=(org or "slm"))
@@ -207,7 +208,8 @@ def main(
                     )
                 ):
                     local_slm = os.path.relpath(
-                        slm_pth.parent, directory.absolute().resolve() / project_dir
+                        slm_pth.parent.parent,
+                        directory.absolute().resolve() / project_dir,
                     )
                 break
 
@@ -220,6 +222,7 @@ def main(
         "site": site,
         "production_dir": production_dir.format(site=site),
         "slm_version": slm.__version__,
+        "slm_version_next_major": f"{Version(slm.__version__).major + 1}.0",
         "extension_app_class": extension_app.title().replace(" ", "").replace("_", ""),
         "extension_app": extension_app.replace(" ", "_").lower(),
         "include_map": include_map,
@@ -231,10 +234,10 @@ def main(
         "{{ project_dir }}/**",
         context=ctx,
         dest=directory,
-        exclude=[template_dir / "{{ project_dir }}/{{ extension_app }}/templates"],
+        exclude=[template_dir / "{{ project_dir }}/src/{{ extension_app }}/templates"],
     )
     engine.render_to_disk(
-        "{{ project_dir }}/{{ extension_app }}/templates/**",
+        "{{ project_dir }}/src/{{ extension_app }}/templates/**",
         context=ctx,
         dest=directory,
         render_contents=False,
@@ -254,7 +257,7 @@ def main(
                     output / "sites" / site / "production/__init__.py"
                 ).relative_to(output),
                 site=site,
-                install_poetry=INSTALL_POETRY if not shutil.which("poetry") else "",
+                install_uv=INSTALL_UV if not shutil.which("uv") else "",
                 pyproject=(output / "pyproject.toml").relative_to(output),
             )
         )

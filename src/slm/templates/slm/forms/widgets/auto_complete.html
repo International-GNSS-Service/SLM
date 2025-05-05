@@ -6,16 +6,17 @@
     <label for="{{ widget.attrs.id }}-input" style="display: none">{{ label }}</label>
     <input id="{{ widget.attrs.id }}-input" name="{{ widget.name }}" {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %} type="text" style="display: none">
 
-    <script type="module">
-        import { AutoComplete } from "{% static 'slm/js/autocomplete.js' %}";
-        let widget = new AutoComplete({container: $('fieldset#{{ widget.attrs.id }}-container')});
-        let ipt = $('fieldset#{{ widget.attrs.id }}-container input');
-        ipt.data('widget', widget);
-        if (ipt.val() && !widget.textInput.html()) {
-            widget.add(widget.getSuggestion(ipt.val()));
-        }
-        {% for value in widget|autocomplete_values %}
-        widget.add(widget.makeSuggestion(JSON.parse('{{ value|safe }}')));
-        {% endfor %}
+    <script>
+        (() => {
+            let widget = new slm.AutoComplete({container: $('fieldset#{{ widget.attrs.id }}-container')});
+            let ipt = $('fieldset#{{ widget.attrs.id }}-container input');
+            ipt.data('widget', widget);
+            if (ipt.val() && !widget.textInput.html()) {
+                widget.add(widget.getSuggestion(ipt.val()));
+            }
+            {% for value in widget|autocomplete_values %}
+            widget.add(widget.makeSuggestion(JSON.parse('{{ value|safe }}')));
+            {% endfor %}
+        })();
     </script>
 </fieldset>

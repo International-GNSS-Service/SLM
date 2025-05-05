@@ -133,7 +133,6 @@
                 </table>
             </div>
         </div>
-    {% compress js %}
     <script>
         const agencySelect = $('#slm-agency-select');
         const networkSelect = $('#slm-network-select');
@@ -366,7 +365,6 @@
         });
         //slm.addColumnFiltering( stationTable );
     </script>
-    {% endcompress %}
     {% else %}
     {% trans "To enable maps, create a MapBox account and configure the api key in the admin:" %} <a href="https://mapbox.com">mapbox.com</a>
     {% endif %}

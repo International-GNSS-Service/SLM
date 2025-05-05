@@ -1,6 +1,8 @@
 from django.utils.translation import gettext_lazy as _
 from django_routines import command, routine
 
+from slm.settings import get_setting
+
 routine(
     "deploy",
     _(
@@ -29,7 +31,9 @@ command("deploy", "shellcompletion", "install", switches=["initial"])
 command("deploy", "migrate", priority=11)
 command("deploy", "renderstatic", priority=20)
 command("deploy", "collectstatic", "--no-input", priority=21)
-command("deploy", "set_site", priority=22)
+if get_setting("COMPRESS_OFFLINE", False) and get_setting("COMPRESS_ENABLED", False):
+    command("deploy", "compress", priority=22)
+command("deploy", "set_site", priority=23)
 command("deploy", "validate_db", "--schema", priority=30, switches=["re-validate"])
 command("deploy", "synchronize", priority=32, switches=["re-validate"])
 

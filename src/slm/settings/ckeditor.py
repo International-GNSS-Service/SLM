@@ -8,7 +8,10 @@ CKEDITOR_CONFIGS = {
     "richtextinput": {
         "width": "100%",
     },
-    "default": {},
+    "default": {
+        # exportpdf is not included but still getting the api key warning in js console??
+        "removePlugins": "exportpdf",
+    },
 }
 
 set_default("SILENCED_SYSTEM_CHECKS", []).append("ckeditor.W001")

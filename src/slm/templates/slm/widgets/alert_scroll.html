@@ -1,4 +1,4 @@
-{% load compress i18n %}
+{% load i18n %}
 
 <div class="slm-scroll-container">
     <div
@@ -13,7 +13,6 @@
     </div>
 </div>
 
-{% compress js inline %}
 <script>
     const deleteAlert = function(alertId) {
         this.event.stopPropagation();
@@ -125,11 +124,8 @@
         /* this is a little clunky - avoid double init when station
          * filter is present on the page
          */
-        if ($('#filter-stations').length === 0) {
-            init();
-        } else {
-            slm.stationFilterCallbacks.push(stationsFiltered);
-        }
+        init();
+        slm.stationFilterCallbacks.push(stationsFiltered);
     });
 </script>
-{% endcompress %}
+

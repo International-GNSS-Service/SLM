@@ -1,5 +1,3 @@
-{% load compress %}
-
 <div class="slm-scroll-container">
     <div
         id='slm-log-scroll'
@@ -13,14 +11,12 @@
     </div>
 </div>
 
-{% compress js inline %}
 <script>
     $(document).ready(function() {
         let reinitialize = true;
         const scrollDiv = $("#slm-log-scroll");
         const drawLogs = function(position, data) {
             if (reinitialize) {
-                console.log(reinitialize);
                 scrollDiv.find('.slm-log-item').remove();
                 scrollDiv.find('h3').remove();
             }
@@ -75,14 +71,7 @@
             scrollDiv.data('slmQuery', queryParams);
             init();
         }
-        /* this is a little clunky - avoid double init when station
-         * filter is present on the page
-         */
-        if ($('#filter-stations').length === 0) {
-            init();
-        } else {
-            slm.stationFilterCallbacks.push(stationsFiltered);
-        }
+        init();
+        slm.stationFilterCallbacks.push(stationsFiltered);
     });
 </script>
-{% endcompress %}

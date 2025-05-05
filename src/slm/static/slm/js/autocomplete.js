@@ -1,6 +1,4 @@
-import { FormWidget } from "./formWidget.js";
-
-export class AutoComplete extends FormWidget {
+class AutoComplete extends slm.FormWidget {
     /**
      * https://api.jqueryui.com/autocomplete/
      *
@@ -264,7 +262,7 @@ export class AutoComplete extends FormWidget {
     changed() {}
 }
 
-export class AutoCompleteMultiple extends AutoComplete {
+class AutoCompleteMultiple extends AutoComplete {
     /**
      * https://github.com/devbridge/jQuery-Autocomplete
      *
@@ -339,3 +337,7 @@ export class AutoCompleteMultiple extends AutoComplete {
          */
     }
 }
+
+
+slm.AutoComplete = AutoComplete;
+slm.AutoCompleteMultiple = AutoCompleteMultiple;

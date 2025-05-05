@@ -122,10 +122,6 @@ set_default("SITE_ID", 1)
 
 STATIC_ROOT = get_setting("STATIC_ROOT", SITE_DIR / "static")
 
-COMPRESS_OFFLINE = True
-COMPRESS_ROOT = STATIC_ROOT
-COMPRESS_URL = STATIC_URL
-
 
 include("internationalization.py")
 include("slm.py")
@@ -133,7 +129,6 @@ include("secrets.py")
 include("logging.py")
 include("templates.py")
 include("static_templates.py")
-include("routines.py")
 include("auth.py")
 include("rest.py")
 include("debug.py")
@@ -141,6 +136,8 @@ include("uploads.py")
 include("ckeditor.py")
 include("security.py")
 include("validation.py")
+include("assets.py")
+include("routines.py")
 
 # will either be darwin, windows or linux
 include(optional(f"./platform/{platform.system().lower()}.py"))

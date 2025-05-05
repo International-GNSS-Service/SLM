@@ -1,3 +1,4 @@
+import shutil
 import sys
 from pprint import pformat
 
@@ -18,6 +19,30 @@ from django.utils.translation import gettext as _
 from slm.defines import GeodesyMLVersion
 from slm.signals import signal_name
 from slm.utils import clear_caches
+
+
+@register("slm", Tags.staticfiles)
+def check_node_available(**kwargs):
+    if (
+        any(
+            (
+                cmd.startswith("npx")
+                for _, cmd in getattr(settings, "COMPRESS_PRECOMPILERS", [])
+            )
+        )
+        and shutil.which("npx") is None
+    ):
+        return [
+            Warning(
+                "nodejs is not available.",
+                hint=(
+                    "Make sure nodejs is installed so esbuild can be used to bundle "
+                    "static assets. (https://nodejs.org/en/download)"
+                ),
+                id="slm.W002",
+            )
+        ]
+    return []
 
 
 @register("slm", Tags.security)

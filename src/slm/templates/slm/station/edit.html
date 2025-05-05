@@ -8,7 +8,7 @@ Add new section capability is not functional.
 -->
 
 {% extends "slm/station/base.html" %}
-{% load widget_tweaks slm i18n compress %}
+{% load widget_tweaks slm i18n %}
 
 {% block action_content %}
 <!-- Station Metadata Forms -->
@@ -108,13 +108,9 @@ Add new section capability is not functional.
                           <div class="accordion-body">
                             {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
                             {{ form.instance.flags }}
-                            {% compress css inline %}
-                                {{ form.media.css }}
-                            {% endcompress %}
-                            {% compress js inline %}
-                                {{ form.media.js }}
-                                {{ form.flags|json_script:flag_id }}
-                            {% endcompress %}
+                            {{ form.media.css }}
+                            {{ form.media.js }}
+                            {{ form.flags|json_script:flag_id }}
                             {% include 'slm/station/form.html' with form=form form_id=form_inst_id flag_id=flag_id %}
                             {% endwith %}
                           </div>
@@ -181,7 +177,7 @@ Add new section capability is not functional.
                 const newForm = $('#new-form').children().first().clone();
                 newForm.find('script').each(function() {
                     const newScript = document.createElement('script');
-                    newScript.type = 'module';
+                    //newScript.type = 'module';
                     $(newScript).html($(this).html().replaceAll('new_form_id', formId));
                     $(this).replaceWith(newScript);
                 });
@@ -208,13 +204,9 @@ Add new section capability is not functional.
         {% elif forms %}
             {% with form=forms|first %}
               {% with flag_id=section_id|to_id:form.instance.id|to_id:"flags" %}
-              {% compress css inline %}
-                {{ form.media.css }}
-              {% endcompress %}
-              {% compress js inline %}
-                {{ form.media.js }}
-                {{ form.flags|json_script:flag_id }}
-              {% endcompress %}
+              {{ form.media.css }}
+              {{ form.media.js }}
+              {{ form.flags|json_script:flag_id }}
               {% include 'slm/station/form.html' with form=form form_id=section_id flag_id=flag_id %}
               {% endwith %}
             </div>
@@ -236,7 +228,7 @@ Add new section capability is not functional.
         {% block station_images %}
         {% if station_images %}
 
-        {% load slm static compress i18n %}
+        {% load slm static i18n %}
 
         <div class="col-12">
             <h2>{% trans "Images" %}</h2>

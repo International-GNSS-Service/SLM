@@ -160,3 +160,6 @@ tests/tmp
 tests/local.py
 slm/logs
 test.db
+node_modules
+package-lock.json
+package.json

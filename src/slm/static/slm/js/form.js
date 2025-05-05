@@ -1,6 +1,4 @@
-import { Persistable } from "./persistable.js";
-
-export class Form extends Persistable {
+class Form extends slm.Persistable {
     /**
      * This class encapsulates reading and writing json data to/from html forms.
      * This is less trivial than you might assume and there are some special case
@@ -402,3 +400,5 @@ export class Form extends Persistable {
         this.#changeCallbacks.push(callback);
     }
 }
+
+slm.Form = Form;

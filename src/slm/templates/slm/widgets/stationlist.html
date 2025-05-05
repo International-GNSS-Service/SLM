@@ -71,14 +71,9 @@
     </div>
 </div>
 
-{% load compress %}
+<script>
 
-{% compress js inline %}
-
-<script type="module">
-
-    import { Form } from '{% static "slm/js/form.js" %}';
-    const filterForm = new Form($('div#filter form'));
+    const filterForm = new slm.Form($('div#filter form'));
 
     let keyupTimeoutID = 0;
     const stationFilter = $('#slm-station-filter');
@@ -230,4 +225,3 @@
     });
 
 </script>
-{% endcompress %}

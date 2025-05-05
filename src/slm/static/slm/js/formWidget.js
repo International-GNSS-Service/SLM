@@ -1,6 +1,4 @@
-import { Persistable } from './persistable.js'
-
-export class FormWidget extends Persistable {
+class FormWidget extends slm.Persistable {
 
     #container;
 
@@ -21,3 +19,5 @@ export class FormWidget extends Persistable {
     }
 
 }
+
+slm.FormWidget = FormWidget;

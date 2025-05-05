@@ -5,11 +5,15 @@ Template for View/Diff page.
 -->
 
 {% extends "slm/station/base.html" %}
-{% load compress slm i18n static %}
+{% load slm i18n static %}
 
 {% block head %}
     {{ block.super }}
 
+    {% comment %}there is a bug in diff-match-patch where nodejs snippet at the end throws an error - this code allows that to proceed silently{% endcomment %}
+    <script>
+        var module = {exports: {}}
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/1.0.5/index.min.js" integrity="sha512-s/r2YIRA8VD7KT0c9uJqKrZFrNFgKlOPeLyVXp7noa6+F8vw5LMvR+hxteawjCpp6+5A4nTYoWtwLcXEJW1YzA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 {% endblock head %}
@@ -92,7 +96,6 @@ Template for View/Diff page.
 
 {{ review_stack|json_script:"slm-review-stack" }}
 
-{% compress js inline %}
 <script>
     const reviewActions = $('#review-actions');
     const submitBtn = reviewActions.find('button[name="submit"]');
@@ -457,5 +460,4 @@ Template for View/Diff page.
 
     setDiff(1, 0);
 </script>
-{% endcompress %}
 {% endblock %}

@@ -1,4 +1,6 @@
-export class Persistable {
+if (typeof slm === 'undefined' || slm == null) { var slm = {}; }
+
+class Persistable {
     /**
      * A simple interface defining a persistable component. Data is persisted
      * in session memory.
@@ -31,3 +33,5 @@ export class Persistable {
          */
     }
 }
+
+slm.Persistable = Persistable;

@@ -30,6 +30,28 @@ install-uv:
 install-uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
+[linux]
+[macos]
+install-nvm:
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+[linux]
+[macos]
+install-node: install-nvm
+    source ~/.nvm/nvm.sh && nvm install 22
+
+# install the uv package manager
+[windows]
+install-nvm:
+    winget install Schniz.fnm
+
+[windows]
+install-node: install-nvm
+    fnm install 22
+
+install-esbuild: install-node
+    npm install esbuild
+
 # setup the venv and pre-commit hooks, optionally specify python version
 setup python="python":
     uv venv -p {{ python }}

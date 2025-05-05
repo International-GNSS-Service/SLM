@@ -13,30 +13,13 @@ class SiteFileUploadStatus(IntegerChoices, p("help")):
 
     _symmetric_builtins_ = [s("name", case_fold=True)]
 
-    UNPUBLISHED = (
-        1,
-        _("Unpublished File"),
-        _("The file is pending moderation before it will be made public."),
-    )
-
-    PUBLISHED = (
-        2,
-        _("Published File"),
-        _(
-            "The file is published and is publicly available as an attachment "
-            "to the site."
-        ),
-    )
-
-    INVALID = (3, _("Invalid Site Log"), _("The file did not pass validation."))
-
-    WARNINGS = (
-        4,
-        _("Warnings Site Log"),
-        _("The file is valid but has some warnings."),
-    )
-
-    VALID = (5, _("Valid Site Log"), _("The file is valid."))
+    # fmt: off
+    UNPUBLISHED = 1, _("Unpublished File"),  _("The file is pending moderation before it will be made public.")
+    PUBLISHED   = 2, _("Published File"),    _("The file is published and is publicly available as an attachment to the site.")
+    INVALID     = 3, _("Invalid Site Log"),  _("The file did not pass validation.")
+    WARNINGS    = 4, _("Warnings Site Log"), _("The file is valid but has some warnings.")
+    VALID       = 5, _("Valid Site Log"),    _("The file is valid.")
+    # fmt: on
 
     @classmethod
     def status_by_filetype(cls, filetype):

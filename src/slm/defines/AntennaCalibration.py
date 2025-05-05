@@ -5,11 +5,13 @@ from enum_properties import s
 class AntennaCalibrationMethod(IntegerChoices):
     _symmetric_builtins_ = [s("name", case_fold=True)]
 
+    # fmt: off
     CONVERTED = 0, "CONVERTED"
-    ROBOT = 1, "ROBOT"
-    FIELD = 2, "FIELD"
-    CHAMBER = 3, "CHAMBER"
-    COPIED = 4, "COPIED"
+    ROBOT     = 1, "ROBOT"
+    FIELD     = 2, "FIELD"
+    CHAMBER   = 3, "CHAMBER"
+    COPIED    = 4, "COPIED"
+    # fmt: on
 
     #  todo real?
     # ONE = 1, 'ONE',

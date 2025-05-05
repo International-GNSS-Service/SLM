@@ -6,33 +6,14 @@ from enum_properties import p, s
 class SiteLogStatus(IntegerChoices, p("help")):
     _symmetric_builtins_ = [s("name", case_fold=True)]
 
-    FORMER = (
-        1,
-        _("Former"),
-        _("Site is no longer maintained and logs are not published."),
-    )
-
-    PROPOSED = (
-        2,
-        _("Proposed"),
-        _("This is a new Site that has never been published."),
-    )
-
-    UPDATED = (3, _("Updated"), _("Site log or section has unpublished updates."))
-
-    PUBLISHED = (
-        4,
-        _("Published"),
-        _("Site log or section is published with no unpublished changes."),
-    )
-
-    EMPTY = (5, _("Empty"), _("Site log section is empty or deleted."))
-
-    SUSPENDED = (
-        6,
-        _("Suspended"),
-        _("Site has been temporarily suspended and does not appear in public data."),
-    )
+    # fmt: off
+    FORMER    = 1, _("Former"),    _("Site is no longer maintained and logs are not published.")
+    PROPOSED  = 2, _("Proposed"),  _("This is a new Site that has never been published.")
+    UPDATED   = 3, _("Updated"),   _("Site log or section has unpublished updates.")
+    PUBLISHED = 4, _("Published"), _("Site log or section is published with no unpublished changes.")
+    EMPTY     = 5, _("Empty"),     _("Site log section is empty or deleted.")
+    SUSPENDED = 6, _("Suspended"), _("Site has been temporarily suspended and does not appear in public data.")
+    # fmt: on
 
     @property
     def css(self):

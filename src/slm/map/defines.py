@@ -10,15 +10,17 @@ class MapBoxStyle(IntegerChoices, s("slug", case_fold=True), p("version")):
 
     _symmetric_builtins_ = ["name", s("label", case_fold=True), "uri"]
 
+    # fmt: off
     # name             value    label                slug           version
-    STREETS = 1, _("Streets"), "streets", 12
-    OUTDOORS = 2, _("Outdoors"), "outdoors", 12
-    LIGHT = 3, _("Light"), "light", 11
-    DARK = 4, _("Dark"), "dark", 11
-    SATELLITE = 5, _("Satellite"), "satellite", 9
+    STREETS           = 1, _("Streets"),           "streets",           12
+    OUTDOORS          = 2, _("Outdoors"),          "outdoors",          12
+    LIGHT             = 3, _("Light"),             "light",             11
+    DARK              = 4, _("Dark"),              "dark",              11
+    SATELLITE         = 5, _("Satellite"),         "satellite",          9
     SATELLITE_STREETS = 6, _("Satellite Streets"), "satellite-streets", 12
-    NAVIGATION_DAY = 7, _("Navigation Day"), "navigation-day", 1
-    NAVIGATION_NIGHT = 8, _("Navigation Night"), "navigation-night", 1
+    NAVIGATION_DAY    = 7, _("Navigation Day"),    "navigation-day",     1
+    NAVIGATION_NIGHT  = 8, _("Navigation Night"),  "navigation-night",   1
+    # fmt: on
 
     @property
     def uri(self):
@@ -39,15 +41,17 @@ class MapBoxProjection(IntegerChoices, s("slug", case_fold=True)):
 
     _symmetric_builtins_ = ["name", "label"]
 
+    # fmt: off
     # name                  value   label                        slug
-    ALBERS = 0, _("Albers"), "albers"
-    EQUAL_EARTH = 1, _("Equal Earth"), "equalEarth"
-    EQUI_RECTANGULAR = 2, _("Equi-Rectangular"), "equirectangular"
+    ALBERS                  = 0, _("Albers"),                  "albers"
+    EQUAL_EARTH             = 1, _("Equal Earth"),             "equalEarth"
+    EQUI_RECTANGULAR        = 2, _("Equi-Rectangular"),        "equirectangular"
     LAMBERT_CONFORMAL_CONIC = 3, _("Lambert Conformal Conic"), "lambertConformalConic"
-    MERCATOR = 4, _("Mercator"), "mercator"
-    NATURAL_EARTH = 5, _("Natural Earth"), "naturalEarth"
-    WINKEL_TRIPEL = 6, _("Winkel Tripel"), "winkelTripel"
-    GLOBE = 7, _("Globe"), "globe"
+    MERCATOR                = 4, _("Mercator"),                "mercator"
+    NATURAL_EARTH           = 5, _("Natural Earth"),           "naturalEarth"
+    WINKEL_TRIPEL           = 6, _("Winkel Tripel"),           "winkelTripel"
+    GLOBE                   = 7, _("Globe"),                   "globe"
+    # fmt: on
 
     def __str__(self):
         return self.slug

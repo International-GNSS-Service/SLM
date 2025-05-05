@@ -6,9 +6,11 @@ from enum_properties import s
 class AlertLevel(IntegerChoices):
     _symmetric_builtins_ = [s("name", case_fold=True)]
 
-    NOTICE = 1, _("NOTICE")
+    # fmt: off
+    NOTICE  = 1, _("NOTICE")
     WARNING = 2, _("WARNING")
-    ERROR = 3, _("ERROR")
+    ERROR   = 3, _("ERROR")
+    # fmt: on
 
     def __str__(self):
         return str(self.label)

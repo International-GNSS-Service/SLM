@@ -147,7 +147,7 @@ rcssmin==1.1.2
     # via django-compressor
 requests==2.32.3
     # via igs-slm
-rich==13.9.4
+rich==14.0.0
     # via igs-slm
 rjsmin==1.2.2
     # via django-compressor

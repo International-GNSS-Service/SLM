@@ -3,9 +3,9 @@
 
 {% block stylesheets %}
     {{ block.super }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/3.9.3/mapbox-gl.min.css" integrity="sha512-9RAPfS3YMZi1yEe+yT65HNwrqhOw++yaDYFxElkl141OBieVWznObzeAYNijFmvVe97u9Oh5oNXyTZTZD04iGQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href='https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css' rel='stylesheet' />
     {% compress css %}
-        <link href='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css' rel='stylesheet' />
-        <link href='https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css' rel='stylesheet' />
         <link rel='stylesheet' type='text/css' media='screen' href='{% static "slm/css/map.css" %}'>
     {% endcompress %}
 {% endblock %}
@@ -14,9 +14,9 @@
     {{ block.super }}
     {% compress js %}
         <script src="{% static 'slm/js/map.js' %}"></script>
-        <script src='https://api.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js'></script>
-        <script src='https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js'></script>
     {% endcompress %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-gl/3.9.3/mapbox-gl.js" integrity="sha512-tJBCVRTEYq4MVF7pQQNJ0vWc+ij9oTnNq10/txpa2ISQ/cIUzwb9VEwHKSQVe2l4Ni5EyrwjB2/R+4WIRJSVXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src='https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js'></script>
 {% endblock %}
 
 {% block page_content %}

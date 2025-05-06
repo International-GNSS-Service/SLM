@@ -143,7 +143,7 @@ python-dateutil==2.9.0.post0
     # via igs-slm
 python-ipware==3.0.0
     # via django-ipware
-rcssmin==1.1.2
+rcssmin==1.2.1
     # via django-compressor
 requests==2.32.3
     # via igs-slm

@@ -214,8 +214,10 @@ class Command(TyperCommand):
         self.failed_imports = []
 
         self.indexes = (
-            ArchiveIndex.objects.filter(site__in=self.sites, end__isnull=True)
-            .order_by("site", "-begin")
+            ArchiveIndex.objects.filter(
+                site__in=self.sites, valid_range__lower__isnull=True
+            )
+            .order_by("site", "-valid_range__lower")
             .distinct("site")
         )
 
@@ -465,9 +467,9 @@ class Command(TyperCommand):
                             setattr(form, field, value)
                         form.previous = (
                             ArchiveIndex.objects.filter(
-                                site=index.site, end__lte=index.begin
+                                site=index.site, valid_range__lower__lte=index.begin
                             )
-                            .order_by("-end")
+                            .order_by("-valid_range__lower")
                             .first()
                         )
                         form.save(skip_update=True, set_previous=False)

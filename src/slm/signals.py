@@ -51,6 +51,7 @@ The published timestamp will have increased.
 :param site: The Site object.
 :param previous_status: The previous status
 :param new_status: The new status
+:param reverted: If true this status change was the result of a reversion
 :param kwargs: Misc other key word arguments
 """
 site_status_changed = Signal()

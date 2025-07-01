@@ -283,6 +283,7 @@ def site_save(sender, instance, created, raw, using, update_fields, **kwargs):
             site=instance,
             previous_status=instance._slm_pre_status,
             new_status=instance.status,
+            reverted=getattr(instance, "_reverted", False),
         )
 
 

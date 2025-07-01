@@ -116,7 +116,7 @@ class SiteQuerySet(models.QuerySet):
 
         latest_archive = ArchivedSiteLog.objects.filter(
             Q(site=OuterRef("pk")) & Q(log_format=log_format)
-        ).order_by("-index__begin")
+        ).order_by("-index__valid_range")
         size_field = f"{log_format.ext if prefix is None else prefix}_size"
         file_field = f"{log_format.ext if prefix is None else prefix}_file"
         return self.annotate(
@@ -777,6 +777,7 @@ class Site(models.Model):
             (default False)
         :return: The filename including extension.
         """
+        # TODO - make this pluggable
         if epoch is None:
             epoch = self.last_publish or self.last_update or self.created
         if name_len is None and log_format is SiteLogFormat.LEGACY:
@@ -888,15 +889,19 @@ class Site(models.Model):
             return user.agencies.filter(pk__in=self.agencies.all()).count() > 0
         return False
 
-    def update_status(self, save=True, user=None, timestamp=None, first_publish=False):
+    def update_status(
+        self, save=True, user=None, timestamp=None, first_publish=False, reverted=False
+    ):
         """
         Update the denormalized data that is too expensive to query on the
         fly. This includes flag count, moderation status and DateTimes. Also
         check for and delete any review requests if a publish was done.
 
-        :param save:
+        :param save: If true the site row will be saved to the database.
         :param user: The user responsible for a status update check
         :param timestamp: The time at which the status update is triggered
+        :param first_publish: True if this is the first time the site log is being published.
+        :param reverted: A boolean indicating if this update was triggered by a reversion or not.
         :return:
         """
         if not timestamp:
@@ -924,6 +929,9 @@ class Site(models.Model):
                 self.review_request.delete()
 
         if save:
+            setattr(  # ugly but we need to pass info to the post_save signal handler somehow
+                self, "_reverted", reverted
+            )
             self.save()
 
     def revert(self):
@@ -931,7 +939,7 @@ class Site(models.Model):
         for section in self.sections():
             reverted |= getattr(self, section.accessor).revert()
         if reverted:
-            self.update_status()
+            self.update_status(reverted=reverted)
         return reverted
 
     def published(self, epoch=None):
@@ -1192,6 +1200,9 @@ class SiteSectionQueryset(gis_models.QuerySet):
     def sort(self, reverse=False):
         return self
 
+    class Meta:
+        order_by = ("name",)
+
 
 class SiteLocationManager(SiteSectionManager):
     pass
@@ -1258,7 +1269,7 @@ class SiteSection(gis_models.Model):
             ).delete()[0]
         )
         if reverted:
-            self.site.update_status()
+            self.site.update_status(reverted=reverted)
         return reverted
 
     @property
@@ -1692,7 +1703,7 @@ class SiteSubSection(SiteSection):
             & Q(subsection=self.subsection)
         ).update(is_deleted=False)
         if reverted:
-            self.site.update_status()
+            self.site.update_status(reverted=reverted)
         return reverted
 
     @cached_property

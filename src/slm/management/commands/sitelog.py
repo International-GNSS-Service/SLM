@@ -118,9 +118,7 @@ class Command(TyperCommand):
         if self.archive:
             index = ArchiveIndex.objects.filter(site=self.site).first()
             qry = Q(log_format=SiteLogFormat.GEODESY_ML)
-            qry &= Q(index__begin__lte=self.archive) & (
-                Q(index__end__gt=self.archive) | Q(index__end__isnull=True)
-            )
+            qry &= Q(index__valid_range__contains=self.archive)
             if gml_version:
                 qry &= Q(gml_version=gml_version)
             log_file = index.files.filter(qry).first()

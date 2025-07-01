@@ -494,3 +494,27 @@ def set_global(context, name, val):
 @register.simple_tag(takes_context=True)
 def get_global(context, name):
     return context.render_context.get(name, None)
+
+
+@register.filter(name="chop_time")
+def chop_time(filename):
+    """
+    Chop the time ext off of a sitelog filename.
+
+    e.g. SITE_YYYYMMDD_HHMMSS.log -> SITE_YYYYMMDD_HHMMSS.log
+    """
+    if filename.count("_") == 2:
+        return f"{filename[: filename.rindex('_')]}{filename[filename.rindex('.') :]}"
+    return filename
+
+
+@register.filter(name="chop_datetime")
+def chop_datetime(filename):
+    """
+    Chop the date and time ext off of a sitelog filename.
+
+    e.g. SITE_YYYYMMDD_HHMMSS.log -> SITE.log
+    """
+    if "_" in filename:
+        return f"{filename[: filename.index('_')]}{filename[filename.rindex('.') :]}"
+    return filename

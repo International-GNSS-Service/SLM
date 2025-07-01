@@ -269,7 +269,10 @@ Template for Download page.
                 error: function(file, message, xhr) {
                     console.log(xhr);
                     completedFiles += 1;
-                    if (numFiles === 1) {
+                    if (xhr.status === 500) {
+                        document.write(`<pre>${message}</pre>`);
+                    }
+                    if (numFiles === 1 && message.file) {
                         window.location = slm.urls.reverse(
                             'slm:upload', {
                                 kwargs: {

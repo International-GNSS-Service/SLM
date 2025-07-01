@@ -579,11 +579,11 @@ class StationReviewView(StationContextView):
                 fmt_q |= Q(log_format=SiteLogFormat.LEGACY)
             for archive in (
                 ArchivedSiteLog.objects.filter(Q(site=self.site) & fmt_q)
-                .order_by("-index__begin", "-log_format")
-                .values_list("index__begin", "id")
-                .distinct("index__begin")
+                .order_by("-index__valid_range", "-log_format")
+                .values_list("index__valid_range", "id")
+                .distinct("index__valid_range")
             ):
-                review_stack[fmt].append((archive[0], archive[1]))
+                review_stack[fmt].append((archive[0].lower, archive[1]))
         ctx = {
             **ctx,
             "richtextform": RichTextForm(),

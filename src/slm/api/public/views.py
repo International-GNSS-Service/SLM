@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 import django_filters
 from crispy_forms.helper import FormHelper
@@ -565,6 +565,8 @@ class ArchiveViewSet(
     permission_classes = []
 
     class ArchiveFilter(CrispyFormCompat, FilterSet):
+        NULL_EPOCH = datetime.max.replace(tzinfo=timezone.utc)
+
         site = django_filters.CharFilter(
             field_name="site__name",
             help_text=_("The site of the archived log to download."),
@@ -577,17 +579,17 @@ class ArchiveViewSet(
 
         epoch = SLMDateTimeFilter(
             method="at_epoch",
-            initial=lambda: datetime.now(),
+            initial=NULL_EPOCH,
             help_text=_(
                 "Get the archive that was active at this given date or datetime."
             ),
         )
 
         def at_epoch(self, queryset, name, value):
-            return queryset.filter(
-                Q(index__begin__lte=value)
-                & (Q(index__end__isnull=True) | Q(index__end__gt=value))
-            )
+            if value == self.NULL_EPOCH:
+                return queryset.order_by("-valid_range")[:1]
+            else:
+                return queryset.filter(valid_range__contains=value)
 
         class Meta:
             model = ArchivedSiteLog

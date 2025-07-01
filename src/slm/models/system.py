@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone
 from io import BytesIO
 from logging import getLogger
+from pathlib import Path
 
 from dateutil import parser
 from django.conf import settings
@@ -28,6 +29,42 @@ from slm.defines import (
 )
 from slm.models.sitelog import DefaultToStrEncoder
 from slm.utils import get_exif_tags
+
+
+def site_upload_path(instance: "SiteFile", filename: str) -> str:
+    """
+    file will be saved to:
+        MEDIA_ROOT/uploads/<site name>/filename
+
+    :param filename: The name of the file
+    :return: The path where the site file should reside.
+    """
+    from .index import ArchivedSiteLog
+
+    prefix = Path()
+    if instance.SUB_DIRECTORY:
+        prefix = Path(instance.SUB_DIRECTORY)
+    dest = prefix / instance.site.name / filename
+    timestamp = (
+        instance.index.begin
+        if isinstance(instance, ArchivedSiteLog)
+        else instance.timestamp
+    )
+    if (Path(settings.MEDIA_ROOT) / dest).exists():
+        stem, suffix = dest.stem, dest.suffix
+        dest = dest.with_name(f"{stem}_{timestamp.strftime('%H%M%S')}{suffix}")
+    return dest.as_posix()
+
+
+def site_thumbnail_path(instance: "SiteFile", filename: str) -> str:
+    """
+    Return the path for the thumbnail image for the given filename.
+
+    :param filename: The name of the file
+    :return: The path where the thumbnail image should reside.
+    """
+    path = Path(instance.upload_path(filename))
+    return (path.parent / "thumbnails" / path.name).as_posix()
 
 
 class AgencyManager(models.Manager):
@@ -144,33 +181,6 @@ class Network(models.Model):
         return self.name
 
 
-def site_upload_path(instance, filename):
-    """
-     file will be saved to:
-        MEDIA_ROOT/uploads/<site name>/filename
-
-    :param instance: The SiteFile instance
-    :param filename: The name of the file
-    :return: The path where the site file should reside.
-    """
-    prefix = ""
-    if instance.SUB_DIRECTORY:
-        prefix = f"{instance.SUB_DIRECTORY}/"
-    return f"{prefix}{instance.site.name}/{filename}"
-
-
-def site_thumbnail_path(instance, filename):
-    """
-    Return the path for the thumbnail image for the given filename.
-
-    :param instance: The SiteFile instance
-    :param filename: The name of the file
-    :return: The path where the thumbnail image should reside.
-    """
-    parts = str(site_upload_path(instance, filename)).split("/")
-    return "/".join([*parts[0:-1], "thumbnails", parts[-1]])
-
-
 class SiteFile(models.Model):
     SUB_DIRECTORY = "misc"
 
@@ -185,7 +195,9 @@ class SiteFile(models.Model):
     )
 
     timestamp = models.DateTimeField(
-        auto_now_add=True, db_index=True, help_text=_("When the file was uploaded.")
+        auto_now_add=True,
+        db_index=True,
+        help_text=_("When the file was created or uploaded."),
     )
 
     file = models.FileField(
@@ -193,6 +205,7 @@ class SiteFile(models.Model):
         null=False,
         max_length=255,
         help_text=_("A pointer to the uploaded file on disk."),
+        unique=True,
     )
 
     size = models.PositiveIntegerField(null=True, default=None, blank=True)

@@ -27,6 +27,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.db.models import BooleanField, Count, Q
 from django.db.models.expressions import ExpressionWrapper
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from polymorphic.admin import (
@@ -281,6 +282,11 @@ class NetworkAdmin(admin.ModelAdmin):
     ordering = ("name",)
     list_filter = ("public",)
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "sites":
+            kwargs["queryset"] = Site.objects.order_by("name")
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
 
 class AgencyUserInline(admin.TabularInline):
     model = Agency.users.through
@@ -459,28 +465,49 @@ class ArchiveFileInline(admin.TabularInline):
         field.name if field.name != "file" else "path"
         for field in ArchivedSiteLog._meta.get_fields()
         if field.name not in ["id", "site", "thumbnail", "name", "timestamp"]
-    ]
+    ] + ["view_file"]
     can_delete = False
     exclude = ["site", "file", "thumbnail", "name", "timestamp"]
 
     def path(self, obj):
-        return obj.file.path
+        return format_html('<a href="{}" download>{}</a>', obj.link, obj.file.name)
 
     def has_add_permission(self, request, obj):
         return False
+
+    def view_file(self, obj):
+        if obj.pk:
+            return format_html(
+                '<button type="button" class="button view-file" data-url="{}">{}</button>',
+                obj.link,
+                _("View"),
+            )
+        return ""
+
+    view_file.short_description = _("View")
 
 
 class ArchiveIndexAdmin(admin.ModelAdmin):
     search_fields = ["site__name"]
     list_display = ("site", "begin", "end")
 
-    ordering = ("-begin",)
-
     inlines = [ArchiveFileInline]
-    readonly_fields = ["site", "begin", "end"]
+    readonly_fields = ["site"]
+
+    def begin(self, obj):
+        return obj.begin
+
+    def end(self, obj):
+        return obj.end
 
     def get_queryset(self, request):
         return self.model.objects.select_related("site").prefetch_related("files")
+
+    class Media:
+        js = (
+            "admin/js/jquery.init.js",
+            "slm/js/file_modal.js",
+        )
 
 
 """

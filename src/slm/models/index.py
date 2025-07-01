@@ -1,8 +1,24 @@
 import os
+import typing as t
+from datetime import datetime
 
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField
+from django.contrib.postgres.fields.ranges import DateTimeTZRange, RangeOperators
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
-from django.db.models import F, OuterRef, Q, Subquery, Value
+from django.db.models import (
+    CharField,
+    DateTimeField,
+    Deferrable,
+    F,
+    Func,
+    OuterRef,
+    Q,
+    Subquery,
+    Value,
+)
 from django.db.models.functions import (
     Cast,
     Concat,
@@ -14,6 +30,7 @@ from django.db.models.functions import (
     Now,
     Substr,
 )
+from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -33,6 +50,22 @@ from slm.parsing import xsd as xsd_parsing
 
 
 class ArchiveIndexManager(models.Manager):
+    def get_queryset(self):
+        """
+        All querysets will be ordered most recent entries first. We also annotated begin/end
+        datetimes onto the queryset. These annotations are also pre-indexed.
+        """
+        return (
+            ArchiveIndexQuerySet(self.model, using=self._db)
+            .annotate(
+                begin=Func(
+                    "valid_range", function="lower", output_field=DateTimeField()
+                ),
+                end=Func("valid_range", function="upper", output_field=DateTimeField()),
+            )
+            .most_recent_first()
+        )
+
     def regenerate(self, site, log_format):
         """
         Regenerate the index file for this index. This will only be done for
@@ -42,7 +75,7 @@ class ArchiveIndexManager(models.Manager):
         :param log_format: The log format to regenerate.
         """
         new_file = ArchivedSiteLog.objects.from_index(
-            index=self.get_queryset().filter(site=site).order_by("-begin").first(),
+            index=self.get_queryset().filter(site=site).first(),
             log_format=log_format,
             regenerate=True,
         )
@@ -50,7 +83,9 @@ class ArchiveIndexManager(models.Manager):
 
     def add_index(self, site, formats=list(SiteLogFormat)):
         assert site.last_publish, "last_publish must be set before calling add_index"
-        existing = self.filter(site=site, begin=site.last_publish).first()
+        existing = self.filter(
+            site=site, valid_range__startswith=site.last_publish
+        ).first()
         if existing:
             return existing
 
@@ -69,14 +104,11 @@ class ArchiveIndexManager(models.Manager):
         if site.last_publish:
             last = (
                 self.filter(site=site)
-                .filter(
-                    Q(begin__lte=site.last_publish) & Q(end__isnull=True)
-                    | Q(end__gt=site.last_publish)
-                )
+                .filter(valid_range__contains=site.last_publish)
                 .first()
             )
             if last:
-                last.end = site.last_publish
+                last.valid_range = DateTimeTZRange(last.begin, site.last_publish)
                 last.save()
 
     def create(self, **kwargs):
@@ -90,34 +122,64 @@ class ArchiveIndexManager(models.Manager):
         Insert a new index into an existing index deck (i.e. between existing
         indexes).
         """
-        existing = self.get_queryset().filter(site=site, begin=begin).first()
+        existing = (
+            self.get_queryset().filter(site=site, valid_range__startswith=begin).first()
+        )
         if existing:
             return existing
         next_index = (
             self.get_queryset()
-            .filter(site=site, begin__gt=begin)
-            .order_by("begin")
+            .filter(site=site, valid_range__startswith__gt=begin)
+            .oldest_first()
             .first()
         )
         prev_index = (
             self.get_queryset()
-            .filter(site=site, begin__lt=begin)
-            .order_by("-begin")
+            .filter(site=site, valid_range__startswith__lt=begin)
+            .most_recent_first()
             .first()
         )
-        kwargs.setdefault("end", next_index.begin if next_index else None)
+
+        # Determine new index end (open-ended if no next)
+        kwargs.setdefault(
+            "valid_range",
+            DateTimeTZRange(begin, next_index.begin if next_index else None),
+        )
+
         if prev_index:
-            prev_index.end = begin
+            prev_index.valid_range = DateTimeTZRange(prev_index.begin, begin)
             prev_index.save()
         return super().create(begin=begin, site=site, **kwargs)
 
 
 class ArchiveIndexQuerySet(models.QuerySet):
+    def most_recent_first(self, *fields: str):
+        """
+        Order rows decending in time and by any other given fields.
+
+        :param: fields - other columns to order by in order of priority
+        """
+        return self.order_by(Func("valid_range", function="lower").desc(), *fields)
+
+    def oldest_first(self, *fields: str):
+        """
+        Order rows ascending in time and by any other given fields.
+
+        :param: fields - other columns to order by in order of priority
+        """
+        return self.order_by(Func("valid_range", function="lower"), *fields)
+
     def delete(self):
         """
         We can't just delete an archive to remove it - we also have to
         update the end time of the previous archive in the index if there
         is one to reflect the end time of the deleted log
+
+        .. note::
+
+            The logic in this delete will only stich together immediately adjacent
+            index entries - that is entries that have no time gaps between their
+            ranges.
         """
         from slm.models import Site, SiteForm
 
@@ -127,6 +189,8 @@ class ArchiveIndexQuerySet(models.QuerySet):
             # updated
             # we trigger unpublished state by updating the SiteForm
             # prepared date and synchronizing
+            # import ipdb
+            # ipdb.set_trace()
             published_sites = Site.objects.filter(
                 Q(indexes__in=self.filter(end__isnull=True))
                 & Q(status=SiteLogStatus.PUBLISHED)
@@ -143,17 +207,26 @@ class ArchiveIndexQuerySet(models.QuerySet):
                 .filter(
                     Q(site=OuterRef("site"))
                     & Q(begin__gte=OuterRef("end"))
-                    & ~Q(pk__in=self)
+                    & ~Q(pk__in=self.values("pk"))
                     & Q(before__isnull=False)
                 )
-                .order_by("end")
+                .oldest_first()
             )
             adjacent_indexes = ArchiveIndex.objects.annotate(
                 adjacent=Subquery(after.values("pk")[:1]),
-                new_end=Subquery(new_bookends.values("begin")[:1]),
-            ).filter(Q(adjacent__isnull=False) & ~Q(pk__in=self))
+                new_valid_range=Func(
+                    Func(
+                        F("valid_range"), function="lower", output_field=DateTimeField()
+                    ),
+                    Subquery(new_bookends.values("begin")[:1]),
+                    function="tstzrange",
+                    output_field=DateTimeRangeField(),
+                ),
+            ).filter(Q(adjacent__isnull=False) & ~Q(pk__in=self.values("pk")))
 
             # we use the new last indexes' old last end date
+            # TODO - to really do this right would have to set published state to unpublished
+            # where appropri
             forms = []
             for form in SiteForm.objects.filter(site__in=published_sites):
                 form.pk = None
@@ -164,7 +237,7 @@ class ArchiveIndexQuerySet(models.QuerySet):
             SiteForm.objects.bulk_create(forms)
             published_sites.synchronize_denormalized_state()
 
-            adjacent_indexes.update(end=F("new_end"))
+            adjacent_indexes.update(valid_range=F("new_valid_range"))
             deleted = super().delete()
             return deleted
 
@@ -172,7 +245,7 @@ class ArchiveIndexQuerySet(models.QuerySet):
     def epoch_q(epoch=None):
         if epoch is None:
             epoch = now()
-        return Q(begin__lte=epoch) & (Q(end__gt=epoch) | Q(end__isnull=True))
+        return Q(valid_range__contains=epoch)
 
     def at_epoch(self, epoch=None):
         return self.filter(self.epoch_q(epoch))
@@ -199,7 +272,11 @@ class ArchiveIndexQuerySet(models.QuerySet):
         )
 
     def annotate_filenames(
-        self, name_len=None, field_name="filename", lower_case=False, log_format=None
+        self,
+        name_len: t.Optional[int] = None,
+        field_name: str = "filename",
+        lower_case: bool = False,
+        log_format: bool = None,
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -221,43 +298,77 @@ class ArchiveIndexQuerySet(models.QuerySet):
         if lower_case:
             name_str = Lower(name_str)
 
+        begin = Func("valid_range", function="lower", output_field=DateTimeField())
+
         parts = [
             name_str,
             Value("_"),
-            Cast(ExtractYear("begin"), models.CharField()),
+            Cast(ExtractYear(begin), models.CharField()),
             LPad(
-                Cast(ExtractMonth("begin"), models.CharField()), 2, fill_text=Value("0")
+                Cast(ExtractMonth(begin), models.CharField()), 2, fill_text=Value("0")
             ),
-            LPad(
-                Cast(ExtractDay("begin"), models.CharField()), 2, fill_text=Value("0")
-            ),
+            LPad(Cast(ExtractDay(begin), models.CharField()), 2, fill_text=Value("0")),
         ]
         if log_format:
             parts.append(Value(f".{log_format.ext}"))
 
-        return self.annotate(**{field_name: Concat(*parts)})
+        return self.annotate(**{field_name: Concat(*parts, output_field=CharField())})
 
 
 class ArchiveIndex(models.Model):
+    """
+    The ArchiveIndex table stores references to serialized site log files indexed by the time
+    range in which they were current. The primary purpose of this table is to allow serialized
+    site log formats to change over time while maintaining a full historical record.
+    """
+
     site = models.ForeignKey(
         "slm.Site", on_delete=models.CASCADE, null=False, related_name="indexes"
     )
 
-    # the point in time at which this record begins being valid
-    begin = models.DateTimeField(
-        null=False,
-        db_index=True,
-        help_text=_("The point in time at which this archive became valid."),
+    # bounds are inclusive/exclusive
+    valid_range = DateTimeRangeField(
+        null=True, blank=True, default_bounds="[)", db_index=True
     )
 
-    # the point in time at which this record stops being valid
-    end = models.DateTimeField(
-        null=True,
-        db_index=True,
-        help_text=_("The point in time at which this archive stopped being valid."),
-    )
+    @property
+    def begin(self) -> datetime:
+        return getattr(self, "_begin", self.valid_range.lower)
+
+    @begin.setter
+    def begin(self, begin: datetime):
+        self._begin = begin
+
+    @property
+    def end(self) -> t.Optional[datetime]:
+        return getattr(self, "_end", self.valid_range.upper)
+
+    @end.setter
+    def end(self, end: datetime):
+        self._end = end
 
     objects = ArchiveIndexManager.from_queryset(ArchiveIndexQuerySet)()
+
+    def clean(self):
+        super().clean()
+
+        # Skip validation if range is missing
+        if not self.valid_range or not self.site_id:
+            return
+
+        # Exclude self if updating
+        overlaps = ArchiveIndex.objects.filter(
+            site=self.site, valid_range__overlap=self.valid_range
+        )
+        if self.pk:
+            overlaps = overlaps.exclude(pk=self.pk)
+
+        if overlaps.exists():
+            overlapping_ranges = [f"[{o.begin}, {o.end or '∞'})" for o in overlaps]
+            message = _(
+                "This time range overlaps with an existing archive index for this site:\n"
+            ) + "\n".join(overlapping_ranges)
+            raise ValidationError({"valid_range": message})
 
     def __str__(self):
         return (
@@ -273,12 +384,20 @@ class ArchiveIndex(models.Model):
         return ArchiveIndex.objects.filter(pk=self.pk).delete()
 
     class Meta:
-        ordering = ("-begin",)
+        ordering = ("-valid_range",)
         indexes = [
-            models.Index(fields=("begin", "end")),
-            models.Index(fields=("site", "begin", "end")),
+            models.Index(fields=("site", "valid_range")),
         ]
-        unique_together = (("site", "begin"),)
+        constraints = [
+            ExclusionConstraint(
+                name="no_overlapping_ranges_per_site",
+                expressions=[
+                    ("site", RangeOperators.EQUAL),
+                    ("valid_range", RangeOperators.OVERLAPS),
+                ],
+                deferrable=Deferrable.DEFERRED,
+            )
+        ]
         verbose_name = "Archive Index"
         verbose_name_plural = "Archive Index"
 
@@ -300,6 +419,9 @@ class ArchivedSiteLogManager(models.Manager):
                 return file
             elif file:
                 file.delete()
+            filename = index.site.get_filename(
+                log_format=log_format, epoch=index.begin, lower_case=True
+            )
             return self.model.objects.create(
                 site=index.site,
                 log_format=log_format,
@@ -307,14 +429,12 @@ class ArchivedSiteLogManager(models.Manager):
                 timestamp=index.begin,
                 mimetype=log_format.mimetype,
                 file_type=SLMFileType.SITE_LOG,
-                name=index.site.get_filename(log_format=log_format, epoch=index.begin),
+                name=filename,
                 file=ContentFile(
                     SiteLogSerializer(instance=index.site)
                     .format(log_format)
                     .encode("utf-8"),
-                    name=index.site.get_filename(
-                        log_format=log_format, epoch=index.begin
-                    ),
+                    name=filename,
                 ),
                 gml_version=(
                     GeodesyMLVersion.latest()
@@ -333,7 +453,11 @@ class ArchivedSiteLogManager(models.Manager):
 
 class ArchivedSiteLogQuerySet(models.QuerySet):
     def annotate_filenames(
-        self, name_len=None, field_name="filename", lower_case=False, log_format=None
+        self,
+        name_len: t.Optional[int] = None,
+        field_name: str = "filename",
+        lower_case: bool = False,
+        log_format: t.Optional[SiteLogFormat] = None,
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -355,17 +479,21 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
         if lower_case:
             name_str = Lower(name_str)
 
+        index_begin = Func(
+            F("index__valid_range"), function="lower", output_field=DateTimeField()
+        )
+
         parts = [
             name_str,
             Value("_"),
-            Cast(ExtractYear("index__begin"), models.CharField()),
+            Cast(ExtractYear(index_begin), models.CharField()),
             LPad(
-                Cast(ExtractMonth("index__begin"), models.CharField()),
+                Cast(ExtractMonth(index_begin), models.CharField()),
                 2,
                 fill_text=Value("0"),
             ),
             LPad(
-                Cast(ExtractDay("index__begin"), models.CharField()),
+                Cast(ExtractDay(index_begin), models.CharField()),
                 2,
                 fill_text=Value("0"),
             ),
@@ -382,7 +510,7 @@ class ArchivedSiteLog(SiteFile):
         ArchiveIndex, on_delete=models.CASCADE, related_name="files"
     )
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, db_index=True)
 
     objects = ArchivedSiteLogManager.from_queryset(ArchivedSiteLogQuerySet)()
 
@@ -390,6 +518,10 @@ class ArchivedSiteLog(SiteFile):
         if self.name:
             return f"[{self.index}] {self.name}"
         return f"[{self.index}] {os.path.basename(self.file.path)}"
+
+    @cached_property
+    def link(self):
+        return reverse("slm_public_api:archive-detail", kwargs={"pk": self.pk})
 
     def parse(self) -> BaseBinder:
         if self.log_format is SiteLogFormat.GEODESY_ML:

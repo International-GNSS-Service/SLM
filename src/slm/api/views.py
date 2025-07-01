@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from django.db.models import Q
 from django.http import FileResponse
 from django.utils.translation import gettext as _
 from django_filters import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, renderers, viewsets
+from rest_framework.generics import get_object_or_404
 
 from slm.api.filter import InitialValueFilterSet, SLMDateTimeFilter
 from slm.defines import SiteLogFormat
@@ -71,9 +71,11 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
     queryset = ArchiveIndex.objects.all()
 
     class ArchiveIndexFilter(InitialValueFilterSet):
+        NULL_EPOCH = datetime.max.replace(tzinfo=timezone.utc)
+
         epoch = SLMDateTimeFilter(
             method="at_epoch",
-            initial=lambda: datetime.now(),
+            initial=NULL_EPOCH,
             help_text=_("Get the log that was active at this given date or datetime."),
         )
 
@@ -90,9 +92,17 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
         )
 
         def at_epoch(self, queryset, name, value):
-            return queryset.filter(
-                Q(begin__lte=value) & (Q(end__isnull=True) | Q(end__gt=value))
-            )
+            if value == self.NULL_EPOCH:
+                # # this does not work because it pulls the most recent site log *first* - would need to
+                # # do this after the site log filter!
+                # last_index =  Subquery(
+                #     queryset.order_by(Func('valid_range', function='lower').desc())
+                #             .values('valid_range')[:1]
+                # )
+                # return queryset.filter(valid_range=last_index)
+                return queryset.order_by("-valid_range")[:1]
+            else:
+                return queryset.filter(valid_range__contains=value)
 
         def noop(self, queryset, _1, _2):
             return queryset
@@ -103,6 +113,35 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
 
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ArchiveIndexFilter
+
+    def get_object(self):
+        """
+        We override get_object so we can apply the station lookup first to the queryset.
+
+        This is necessary because the at_epoch query uses a subquery.
+        """
+        # Perform the lookup filtering.
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        assert lookup_url_kwarg in self.kwargs, (
+            "Expected view %s to be called with a URL keyword argument "
+            'named "%s". Fix your URL conf, or set the `.lookup_field` '
+            "attribute on the view correctly."
+            % (self.__class__.__name__, lookup_url_kwarg)
+        )
+
+        obj = get_object_or_404(
+            self.filter_queryset(
+                self.get_queryset().filter(
+                    **{self.lookup_field: self.kwargs[lookup_url_kwarg]}
+                )
+            )
+        )
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
 
     def get_format_suffix(self, **kwargs):
         requested_format = super().get_format_suffix(**kwargs)

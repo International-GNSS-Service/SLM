@@ -5,7 +5,7 @@ from slm.defines import SiteLogStatus
 
 
 @receiver(slm_signals.site_status_changed)
-def index_site(sender, site, previous_status, new_status, **kwargs):
+def index_site(sender, site, previous_status, new_status, reverted=False, **kwargs):
     from slm.models import ArchiveIndex
 
     if site.last_publish and (
@@ -18,6 +18,7 @@ def index_site(sender, site, previous_status, new_status, **kwargs):
         and previous_status in SiteLogStatus.active_states()
         and previous_status is not SiteLogStatus.PUBLISHED
         and new_status is SiteLogStatus.PUBLISHED
+        and not reverted
     ):
         # catch an edge case where a section publish triggers a whole log publish
         # these signals/edit state diagram needs to be cleaned up. this code is

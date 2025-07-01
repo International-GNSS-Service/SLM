@@ -582,7 +582,9 @@ class Command(TyperCommand):
                         _("Updating {site} state.").format(site=site.name), fg="blue"
                     )
                 save = False
-                recent_first = ArchiveIndex.objects.filter(site=site).order_by("-begin")
+                recent_first = ArchiveIndex.objects.filter(site=site).order_by(
+                    "-valid_range__lower"
+                )
                 latest = recent_first.first()
                 oldest = recent_first.last()
                 if site.last_publish is None or site.last_publish < latest.begin:

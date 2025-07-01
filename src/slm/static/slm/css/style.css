@@ -666,9 +666,9 @@ button.slm-subsection {
 /* Button Status CSS */
 button.slm-status-updated,
 button.nav-link.slm-status-updated {
-    border-left: 10px solid #0079AD;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #0079AD !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-updated.slm-section-deleted {
     border-left: 10px solid #d3d3d3;
@@ -682,19 +682,20 @@ button.slm-status-updated span.section-number {
 }
 button.slm-status-published,
 button.nav-link.slm-status-published {
-    border-left: 10px solid #0D820D;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #0D820D !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-published span.section-number {
     background-color: #0D820D;
     color: whitesmoke;
 }
+
 button.slm-status-in-review,
 button.nav-link.slm-status-in-review {
-    border-left: 10px solid #0079AD;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #0079AD !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-in-review span.section-number {
     background-color: #0079AD;
@@ -702,9 +703,9 @@ button.slm-status-in-review span.section-number {
 }
 button.slm-status-proposed,
 button.nav-link.slm-status-proposed {
-    border-left: 10px solid #913D88;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #913D88 !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-proposed span.section-number {
     background-color: #913D88;
@@ -712,9 +713,9 @@ button.slm-status-proposed span.section-number {
 }
 button.slm-status-former,
 button.nav-link.slm-status-former  {
-    border-left: 10px solid #3D4543;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #3D4543 !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-former span.section-number {
     background-color: #3D4543;
@@ -722,9 +723,9 @@ button.slm-status-former span.section-number {
 }
 button.slm-status-suspended,
 button.nav-link.slm-status-suspended  {
-    border-left: 10px solid #E0041A;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #E0041A !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-suspended span.section-number {
     background-color: #E0041A;
@@ -732,9 +733,9 @@ button.slm-status-suspended span.section-number {
 }
 button.slm-status-empty,
 button.nav-link.slm-status-empty  {
-    border-left: 10px solid #d3d3d3;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #d3d3d3 !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-status-empty span.section-number {
     background-color: #d3d3d3;
@@ -743,33 +744,33 @@ button.slm-status-empty span.section-number {
 /* Upload Buttons CSS */
 button.slm-upload-unpublished,
 button.nav-link.slm-upload-unpublished {
-    border-left: 10px solid #0079AD;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #0079AD !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-upload-published,
 button.nav-link.slm-upload-published {
-    border-left: 10px solid #0D820D;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #0D820D !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-upload-invalid,
 button.nav-link.slm-upload-invalid {
-    border-left: 10px solid #8b0000;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #8b0000 !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-upload-warnings,
 button.nav-link.slm-upload-warnings  {
-    border-left: 10px solid darkorange;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid darkorange !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 button.slm-upload-valid,
 button.nav-link.slm-upload-valid  {
-    border-left: 10px solid #0D820D;
-    border-bottom-left-radius: 10px;
-    border-top-left-radius: 10px;
+    border-left: 10px solid #0D820D !important;
+    border-bottom-left-radius: 10px !important;
+    border-top-left-radius: 10px !important;
 }
 /* Accordion CSS */
 .accordion,

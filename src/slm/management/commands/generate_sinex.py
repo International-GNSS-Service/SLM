@@ -22,7 +22,7 @@ from typing_extensions import Annotated
 
 from slm.defines import ISOCountry
 from slm.models import Network, Site, SiteAntenna, SiteReceiver
-from slm.utils import dddmmss_ss_parts, xyz2llh
+from slm.utils import dddmmss_ss_parts, transliterate, xyz2llh
 
 DEFAULT_ANTEX = "https://files.igs.org/pub/station/general/igs20.atx.gz"
 
@@ -78,6 +78,7 @@ class Command(TyperCommand):
     siteAnt: dict
     atx: dict
     sat_phase_center: dict
+    utf8: bool = False
 
     suppressed_base_arguments = {
         *TyperCommand.suppressed_base_arguments,
@@ -117,11 +118,18 @@ class Command(TyperCommand):
             bool,
             Option("--include-former", help=_("Include former sites in the list.")),
         ] = False,
+        utf8: Annotated[
+            bool,
+            Option(
+                "--utf8", help=_("Allow multi-byte UTF-8 characters in the output.")
+            ),
+        ] = False,
     ):
         self.sinex_code = ""
         self.siteAnt = rec_dd()
         self.atx = rec_dd()
         self.sat_phase_center = rec_dd()
+        self.utf8 = utf8
 
         sites = Site.objects.all().order_by("name")
         sites = sites.public() if include_former else sites.active()
@@ -144,52 +152,65 @@ class Command(TyperCommand):
 
         output = self.stdout
         if destination:
-            output = open(destination, "w")
+            output = open(
+                destination, "wt", encoding="ascii" if not self.utf8 else "utf8"
+            )
 
         # write header
-        for line in self.header(antex_file):
+        for line in self.transliterate(self.header(antex_file)):
             output.write(f"{line}\n")
 
         # write SITE/ID section
-        for line in self.site_ids(sites):
+        for line in self.transliterate(self.site_ids(sites)):
             output.write(f"{line}\n")
 
         # write SITE/RECEIVER section
-        for line in self.site_receivers(sites):
+        for line in self.transliterate(self.site_receivers(sites)):
             output.write(f"{line}\n")
 
         # write SITE/ANTENNA section
-        for line in self.site_antennas(sites):
+        for line in self.transliterate(self.site_antennas(sites)):
             output.write(f"{line}\n")
 
         # write GPS/PHASECENTER section
-        for line in self.gps_phase_center():
+        for line in self.transliterate(self.gps_phase_center()):
             output.write(f"{line}\n")
 
         # write GAL/PHASECENTER section
-        for line in self.gal_phase_center():
+        for line in self.transliterate(self.gal_phase_center()):
             output.write(f"{line}\n")
 
         # write SITE/ECCENTRICITY
-        for line in self.site_eccentricity(sites):
+        for line in self.transliterate(self.site_eccentricity(sites)):
             output.write(f"{line}\n")
 
         # write SATELLITE/ID
-        for line in self.satellite_ids():
+        for line in self.transliterate(self.satellite_ids()):
             output.write(f"{line}\n")
 
         # write +SATELLITE/PHASE_CENTER
-        for line in self.satellite_phase_centers():
+        for line in self.transliterate(self.satellite_phase_centers()):
             output.write(f"{line}\n")
 
         # close out the file
-        for line in self.footer():
+        for line in self.transliterate(self.footer()):
             output.write(f"{line}\n")
 
         if destination:
             output.close()
 
-    def header(self, antex_file):
+    def transliterate(
+        self, utf8_str: t.Generator[str, None, None]
+    ) -> t.Generator[str, None, None]:
+        """
+        Transliterate utf8 -> ascii if we were told to.
+        """
+        if self.utf8:
+            yield from utf8_str
+        for ustr in utf8_str:
+            yield transliterate(ustr)
+
+    def header(self, antex_file) -> t.Generator[str, None, None]:
         now = datetime.now()
         now_date = "%04d-%02d-%02dT%02d:%02d:%02d" % (
             now.year,
@@ -225,10 +246,10 @@ class Command(TyperCommand):
         yield " IGS International GNSS Service"
         yield "-INPUT/ACKNOWLEDGMENTS"
 
-    def footer(self):
+    def footer(self) -> t.Generator[str, None, None]:
         yield "%ENDSNX"
 
-    def site_ids(self, sites):
+    def site_ids(self, sites) -> t.Generator[str, None, None]:
         sites = sites.with_location_fields().with_identification_fields()
         yield "+SITE/ID"
         yield (
@@ -267,7 +288,7 @@ class Command(TyperCommand):
             )
         yield "-SITE/ID"
 
-    def site_receivers(self, sites):
+    def site_receivers(self, sites) -> t.Generator[str, None, None]:
         yield "+SITE/RECEIVER"
         yield (
             "*CODE PT SOLN T _DATA START_ __DATA_END__ ___RECEIVER_TYPE____ "
@@ -292,7 +313,7 @@ class Command(TyperCommand):
                 )
         yield "-SITE/RECEIVER"
 
-    def site_antennas(self, sites):
+    def site_antennas(self, sites) -> t.Generator[str, None, None]:
         yield "+SITE/ANTENNA"
         yield (
             "*CODE PT SOLN T _DATA START_ __DATA_END__ ____ANTENNA_TYPE____ _S/N_ _DAZ"
@@ -319,7 +340,7 @@ class Command(TyperCommand):
                 #  seems wrong
         yield "-SITE/ANTENNA"
 
-    def gps_phase_center(self):
+    def gps_phase_center(self) -> t.Generator[str, None, None]:
         yield "+SITE/GPS_PHASE_CENTER"
         yield (
             "*ANTENNA_NAME____DOME S_NO_ __UP__ NORTH_ _EAST_ __UP__ NORTH_ "
@@ -344,7 +365,7 @@ class Command(TyperCommand):
                 )
         yield "-SITE/GPS_PHASE_CENTER"
 
-    def gal_phase_center(self):
+    def gal_phase_center(self) -> t.Generator[str, None, None]:
         yield "+SITE/GAL_PHASE_CENTER"
         yield (
             "*ANTENNA_NAME____DOME S_NO_ __UP__ NORTH_ _EAST_ __UP__ NORTH_ "
@@ -399,7 +420,7 @@ class Command(TyperCommand):
             yield f" {ant} ----  {_e08} ------ ------ ------ {self.sinex_code:10s}"
         yield "-SITE/GAL_PHASE_CENTER"
 
-    def site_eccentricity(self, sites):
+    def site_eccentricity(self, sites) -> t.Generator[str, None, None]:
         yield "+SITE/ECCENTRICITY"
         yield (
             "*CODE PT SOLN T _DATA START_ __DATA_END__ REF __DX_U__ __DX_N__ __DX_E__"
@@ -421,7 +442,7 @@ class Command(TyperCommand):
                 )
         yield "-SITE/ECCENTRICITY"
 
-    def satellite_ids(self):
+    def satellite_ids(self) -> t.Generator[str, None, None]:
         yield "+SATELLITE/ID"
         yield ("*CNNN PN COSPARID_ T _START_DATE_ __END_DATE__ ____ANTENNA_TYPE____")
         for sat in sorted(self.atx):
@@ -434,7 +455,7 @@ class Command(TyperCommand):
                 )
         yield "-SATELLITE/ID"
 
-    def satellite_phase_centers(self):
+    def satellite_phase_centers(self) -> t.Generator[str, None, None]:
         yield "+SATELLITE/PHASE_CENTER"
         yield ("*CNNN F __UP__ NORTH_ _EAST_ F __UP__ NORTH_ _EAST_ SINEXCODE_ V M")
         for sat in sorted(self.sat_phase_center):
@@ -498,7 +519,7 @@ class Command(TyperCommand):
                 )
         yield "-SATELLITE/PHASE_CENTER"
 
-    def build_antex_index(self, antex_file):
+    def build_antex_index(self, antex_file: str):
         """
         Streams the antex file from files.igs.org and builds an index off of
         it.

@@ -297,3 +297,13 @@ def convert_4to9(text: str, name: str) -> str:
         return name
 
     return re.compile(re.escape(name[0:4]), re.IGNORECASE).sub(match_case, text)
+
+
+def transliterate(unicode_str: str) -> str:
+    """
+    Transliterate a string that potentially contains multi-byte ASCII characters to its closest
+    ASCII equivalent if one exists.
+    """
+    import unicodedata
+
+    return unicodedata.normalize("NFKD", unicode_str).encode("ascii", "ignore").decode()

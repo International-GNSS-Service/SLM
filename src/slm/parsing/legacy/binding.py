@@ -649,13 +649,43 @@ class SiteLogBinder(BaseBinder):
         },
     }
 
+    MULTIPLE_ENTRIES = {
+        3,
+        4,
+        5,
+        6,
+        7,
+        (8, 1),
+        (8, 2),
+        (8, 3),
+        (8, 4),
+        (8, 5),
+        (9, 1),
+        (9, 2),
+        (9, 3),
+        10,
+    }
+
     def __init__(self, parsed: SiteLogParser):
         super().__init__(parsed)
-        for _1, section in self.parsed.sections.items():
-            if section.example or not section.contains_values:
+        for section in self.parsed.sections.values():
+            if section.example:
+                continue
+            section_depth = sum(1 for item in section.index_tuple if item is not None)
+            heading_depth = (
+                1
+                if not isinstance(section.heading_index, tuple)
+                else len(section.heading_index)
+            )
+            is_header = (
+                section.heading_index in self.MULTIPLE_ENTRIES
+                and section_depth == heading_depth
+            )
+            if is_header and not section.contains_values:
+                # skip empty headers
                 continue
             if section.heading_index not in self.TRANSLATION_TABLE:
-                for line_no in range(section.line_no, section.line_end):
+                for _ in range(section.line_no, section.line_end):
                     self.parsed.add_finding(
                         Warn(
                             section.line_no,

@@ -182,13 +182,6 @@ SLM_DATA_VALIDATORS = {
         "primary_phone1": [FieldRequired(desired=True)],
         "primary_email": [FieldRequired(allow_legacy_nulls=True)],
     },
-    "slm.SiteResponsibleAgency": {
-        "agency": [FieldRequired()],
-        "preferred_abbreviation": [FieldRequired()],
-        "primary_name": [FieldRequired()],
-        "primary_phone1": [FieldRequired(desired=True)],
-        "primary_email": [FieldRequired(allow_legacy_nulls=True)],
-    },
     "slm.SiteMoreInformation": {
         "primary": [FieldRequired()],
         "secondary": [FieldRequired()],

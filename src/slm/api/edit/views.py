@@ -1484,12 +1484,24 @@ class SiteFileUploadViewSet(
             # ensure that the prepared by field will be set to what was given
             # in the upload log
             for index, section in reversed(parsed.sections.items()):
-                if section.example or not section.contains_values:
+                if section.example:
                     continue
-
                 section_view = self.SECTION_VIEWS.get(section.heading_index, None)
+                # this is a complicated conditional to determine if the section is a subsection
+                # header with no bindable values - think about encapsulating this logic onto
+                # the binder
+                if (
+                    section_view
+                    and issubclass(
+                        section_view.serializer_class.Meta.model, SiteSubSection
+                    )
+                    and not isinstance(section.order, int)
+                    and not section.contains_values
+                ):
+                    # skip subsection headers
+                    continue
                 if section_view:
-                    data = {**section.binding, "site": self.site.id}
+                    data = {**(section.binding or {}), "site": self.site.id}
                     subsection_number = self.get_subsection_id(section)
                     if subsection_number is not None:
                         # we have to find the right subsection identifiers

@@ -282,7 +282,7 @@ class BaseSection:
         section_str = f"{self.index_string} {self.header}\n"
         if self.example:
             section_str = f"{self.index_string} {self.header} (EXAMPLE)\n"
-        for name, param in self.parameters.items():
+        for param in self.parameters.values():
             section_str += f"\t{param}\n"
         return section_str
 
@@ -292,7 +292,7 @@ class BaseSection:
         True if any parameter in this section contains a real value that is
         not a placeholder.
         """
-        for name, param in self.parameters.items():
+        for param in self.parameters.values():
             if not (param.is_empty or param.is_placeholder):
                 return True
         return False

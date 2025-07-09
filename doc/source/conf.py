@@ -45,7 +45,10 @@ extensions = [
     'sphinx.ext.todo',
     'sphinxcontrib.typer',
     'sphinx_tabs.tabs',
-    'sphinxcontrib.cairosvgconverter'
+    'sphinxcontrib.cairosvgconverter',
+    'sphinxcontrib_django',
+    "sphinx.ext.viewcode",
+    'sphinx.ext.intersphinx'
 ]
 
 try:
@@ -96,6 +99,23 @@ html_static_path = [
 todo_include_todos = True
 
 latex_engine = "xelatex"
+
+
+intersphinx_mapping = {
+    "django": (
+        "https://docs.djangoproject.com/en/stable",
+        "https://docs.djangoproject.com/en/stable/_objects/",
+    ),
+    "click": ("https://click.palletsprojects.com/en/stable", None),
+    "rich": ("https://rich.readthedocs.io/en/stable", None),
+    "django-typer": ("https://django-typer.readthedocs.io/en/stable/", None),
+    "django-render-static": ("https://django-render-static.readthedocs.io/en/stable/", None),
+    "django-split-settings": ("https://django-split-settings.readthedocs.io/en/stable/", None),
+    "django-routines": ("https://django-routines.readthedocs.io/en/stable/", None),
+    "django-enum": ("https://django-enum.readthedocs.io/en/stable/", None),
+    "django-filter": ("https://django-filter.readthedocs.io/en/stable/", None),
+    "python": ('https://docs.python.org/3', None)
+}
 
 def setup(app):
     # Register a sphinx.ext.autodoc.between listener to ignore everything

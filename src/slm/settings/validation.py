@@ -22,6 +22,14 @@ from slm.validators import (
     VerifiedEquipmentValidator,
 )
 
+# SLM_STATION_NAME_REGEX = r"[\w]{4}[\d]{2}[\w]{3}"
+# SLM_STATION_NAME_HELP = _(
+#     "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
+#     "filenames Format: (XXXX - existing four character IGS station "
+#     "name, M - Monument or marker number (0-9), R - Receiver number "
+#     "(0-9), CCC - Three digit ISO 3166-1 country code)"
+# )
+
 # toggling this off will prevent any validation configured to block edit saves
 # from doing so - instead flags will be issued.
 SLM_VALIDATION_BYPASS_BLOCK = False

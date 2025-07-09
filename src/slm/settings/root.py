@@ -24,15 +24,12 @@ SITE_DIR = get_setting("SITE_DIR", BASE_DIR)
 DJANGO_DEBUG_TOOLBAR = get_setting("DJANGO_DEBUG_TOOLBAR", False)
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
 
 ALLOWED_HOSTS = get_setting("ALLOWED_HOSTS", [])
 if ALLOWED_HOSTS:
     set_default("SERVER_EMAIL", f"noreply@{ALLOWED_HOSTS[0]}")
 
-# Application definition
-
-# django.contrib.___ gives us useful tools for authentication, etc.
 INSTALLED_APPS = [
     # "slm.map",
     "slm",
@@ -89,7 +86,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = "slm.settings.urls"
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/stable/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -108,13 +105,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
+# https://docs.djangoproject.com/en/stable/howto/static-files/
 
 # Following two statements added to assist with handling of static files
 STATIC_URL = "/static/"
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/stable/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -141,7 +138,6 @@ include("routines.py")
 
 # will either be darwin, windows or linux
 include(optional(f"./platform/{platform.system().lower()}.py"))
-
 
 # Path(STATIC_ROOT).mkdir(parents=True, exist_ok=True)
 # Path(MEDIA_ROOT).mkdir(parents=True, exist_ok=True)

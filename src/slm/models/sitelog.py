@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.gis.db import models as gis_models
 from django.core.exceptions import FieldDoesNotExist, ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import (
     CheckConstraint,
@@ -53,6 +53,7 @@ from slm.defines import (
     SiteLogStatus,
     TectonicPlates,
 )
+from slm.models.fields import StationNameField
 from slm.utils import date_to_str
 from slm.validators import get_validators
 
@@ -649,17 +650,11 @@ class Site(models.Model):
 
     objects = SiteManager.from_queryset(SiteQuerySet)()
 
-    name = models.CharField(
-        max_length=9,
+    name = StationNameField(
+        max_length=50,
         unique=True,
-        help_text=_(
-            "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
-            "filenames Format: (XXXX - existing four character IGS station "
-            "name, M - Monument or marker number (0-9), R - Receiver number "
-            "(0-9), CCC - Three digit ISO 3166-1 country code)"
-        ),
+        help_text=_("The name of the station."),
         db_index=True,
-        validators=[RegexValidator(r"[\w]{4}[\d]{2}[\w]{3}")],
     )
 
     # todo can site exist without agency?

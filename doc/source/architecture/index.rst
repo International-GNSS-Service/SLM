@@ -10,7 +10,6 @@ Architecture
    :maxdepth: 2
    :hidden:
 
-   configuration
    data_model
    extensions
    signals

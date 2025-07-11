@@ -253,8 +253,9 @@ the first question you can just hit enter to accept the defaults:
 -----------------------------------
 
 The SLM ships with a number of :ref:`pre-defined routines <routines>`. If you do not have any
-existing logs to import you'll probably just want to run :ref:`routine_deploy`. Otherwise gather
-your logs into a single directory or tar file and run the :ref:`routine_install` routine:
+existing logs to import you'll probably just want to run :django-admin:`routine deploy`.
+Otherwise gather your logs into a single directory or tar file and run the
+:django-admin:`routine install` routine:
 
   .. code-block:: bash
 

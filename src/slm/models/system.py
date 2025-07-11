@@ -1,4 +1,5 @@
 import os
+import typing as t
 from datetime import datetime, timezone
 from io import BytesIO
 from logging import getLogger
@@ -15,6 +16,8 @@ from django.urls import reverse
 from django.utils.timezone import is_naive, make_aware, now
 from django.utils.translation import gettext as _
 from django_enum import EnumField
+from packaging.version import Version
+from packaging.version import parse as parse_version
 from PIL import Image
 from polymorphic.managers import PolymorphicManager, PolymorphicQuerySet
 from polymorphic.models import PolymorphicModel
@@ -28,6 +31,7 @@ from slm.defines import (
     SLMFileType,
 )
 from slm.models.sitelog import DefaultToStrEncoder
+from slm.singleton import SingletonModel
 from slm.utils import get_exif_tags
 
 
@@ -734,3 +738,27 @@ class SiteTideGauge(models.Model):
 
     class Meta:
         ordering = ("site", "distance")
+
+
+class SLMVersion(SingletonModel):
+    """
+    We store the SLM code version in the database to enable safe upgrades.
+    """
+
+    version_str = models.CharField(default="", blank=True)
+
+    @classmethod
+    def update(cls, version: t.Optional[Version] = None):
+        if not version:
+            from slm import __version__ as slm_version
+
+            version = parse_version(slm_version)
+        instance = cls.load()
+        instance.version_str = str(version)
+        instance.save()
+
+    @property
+    def version(self) -> t.Optional[Version]:
+        if self.version_str:
+            return parse_version(self.version_str)
+        return None

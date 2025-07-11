@@ -1,6 +1,6 @@
 """
 If your site log file index is more current than the database state
-(i.e. you've run :ref:`command_import_archive`), you may run this command to pull data
+(i.e. you've run :django-admin:`import_archive`), you may run this command to pull data
 from the most recent indexed files into the database.
 
 .. tip::

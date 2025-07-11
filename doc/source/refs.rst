@@ -22,10 +22,6 @@
 .. _homebrew: https://brew.sh
 .. _z-shell: https://www.zsh.org/
 .. _psql: https://www.postgresql.org/docs/current/app-psql.html
-.. _makemigrations: https://docs.djangoproject.com/en/stable/ref/django-admin/#makemigrations
-.. _migrate: https://docs.djangoproject.com/en/stable/ref/django-admin/#migrate
-.. _collectstatic: https://docs.djangoproject.com/en/stable/ref/django-admin/#collectstatic
-.. _shell: https://docs.djangoproject.com/en/stable/ref/django-admin/#shell
 .. _STATIC_ROOT: https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-STATIC_ROOT
 .. _renderstatic: https://django-render-static.readthedocs.io/en/latest/commands.html#renderstatic
 .. _shellcompletion: https://django-typer.readthedocs.io/en/latest/reference.html#shellcompletion

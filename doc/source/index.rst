@@ -52,6 +52,7 @@ Contributions_ from the community are encouraged!
 
    overview
    installation
+   upgrading
    configuration
    architecture/index
    manual/index

@@ -11,7 +11,7 @@ provides additional directives referenced here to customize its behavior and ope
 configuration.
 
 Django_ configuration directives are defined in a settings file. You should first familiarize
-youself with how :doc:`Django configuration works <django:topics/settings>`. A Django configuration
+yourself with how :doc:`Django configuration works <django:topics/settings>`. A Django configuration
 file is simply a python file where configuration directives are python variables of any type
 defined in all caps. The python import path to this configuration file must appear in the
 ``DJANGO_SETTINGS_MODULE`` environment variable. After Django_ is bootstrapped you can access a
@@ -59,7 +59,7 @@ look like this:
         # to this list
     ]
 
-    # https://docs.djangoproject.com/en/stable/ref/settings/#media-root 
+    # https://docs.djangoproject.com/en/stable/ref/settings/#media-root
     MEDIA_ROOT = SITE_DIR / 'media'
 
     # https://docs.djangoproject.com/en/stable/ref/settings/#static-root
@@ -69,7 +69,7 @@ look like this:
     # deployment. We recommend running a database locally and using postgres user
     # authentication and disallowing any non-local connections. This means your database
     # is as secure as the system user running your SLM deployment.
-    # 
+    #
     # You may of course, use any number of database settings or have multiple databases:
     # https://docs.djangoproject.com/en/stable/ref/databases/
     #
@@ -129,28 +129,28 @@ Settings
 ``SLM_SITE_NAME``
 ------------------
 
-    The domain name of your site without the scheme. e.g. "slm.igs.org"
+The domain name of your site without the scheme. e.g. "slm.igs.org"
 
 
 .. setting:: SLM_STATION_NAME_REGEX
 
 ``SLM_STATION_NAME_REGEX``
-------------------------
+--------------------------
 
 Provide a regular expression to validate new station names against. By
 default no validation occurs and station names may be any string up to
 50 characters in length.
 
-For example the IGS station name standard uses this regular expression: 
+For example the IGS station name standard uses this regular expression:
 
 .. code-block:: python
-    
+
     SLM_STATION_NAME_REGEX = r"[\w]{4}[\d]{2}[\w]{3}"
 
 
 .. setting:: SLM_STATION_NAME_HELP
 
 ``SLM_STATION_NAME_HELP``
-------------------------
+-------------------------
 
 Override the help text used for station name field.

@@ -1,5 +1,7 @@
 .. include:: refs.rst
 
+.. _changelog:
+
 ==========
 Change Log
 ==========

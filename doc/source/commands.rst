@@ -6,26 +6,25 @@
 Commands
 ========
 
-The SLM provides some
-`Django management commands <https://docs.djangoproject.com/en/stable/ref/django-admin/>`_
-out of the box. Management commands are a standard way to implement routine tasks that are
-installable with your site and may interface with the database using a fully bootstrapped Django
-stack configured for your site.
+The SLM provides some :doc:`Django management commands <django:ref/django-admin>` out of the box.
+Management commands are a standard way to implement routine tasks that are installable with your
+site and may interface with the database using a fully bootstrapped Django stack configured for
+your site.
 
-The SLM management commands are implemented using django-typer_ which extends Django's base command
-to work with the Typer_ CLI library. This also gives us some convenient extra features like
-`shell tab completions <https://django-typer.readthedocs.io/en/latest/shell_completion.html>`_.
+The SLM management commands are implemented using :doc:`django-typer:index` which extends
+Django's base command to work with the Typer_ CLI library. This also gives us some convenient
+extra features like :doc:`shell tab completions <django-typer:shell_completion>`.
 
 Most of our SLM management commands manipulate data in ways that would be difficult or too time
 consuming through the web interface. We also provide some commands that perform backup and restore
 operations.
 
-We use django-routines_ to provide a few named routines to execute batched groups of commands
-for typical work flows like are required during installation and update deployment.
+We use :doc:`django-routines:index` to provide a few named routines to execute batched groups of
+commands for typical work flows that are required during installation and update deployment.
 
-Management commands are invoked using a Django manage script. If using
-``django-admin startproject`` this script will be called ``manage.py``. If using our
-``slm-startproject`` the manage script will be named after your site and indicated in the output
+Management commands are invoked using a Django :doc:`manage script <django:ref/django-admin>`. If
+using :django-admin:`startproject` this script will be called ``manage.py``. If using our
+:ref:`slm-startproject` the manage script will be named after your site and indicated in the output
 report. Manage scripts are typically simple and can be thought of as the main of Django. They
 bootstrap the Django stack configured for your site and then run the command indicated by the CLI
 arguments.
@@ -82,23 +81,25 @@ Here's an example of a typical SLM management script:
 
    * - Command
      - Short Description
-   * - :ref:`command_build_index`
+   * - :django-admin:`check_upgrade`
+     - Check that the upgrade that is about to be run is safe.
+   * - :django-admin:`build_index`
      - Re-build the head of the file index from the current published database state.
-   * - :ref:`command_generate_sinex`
+   * - :django-admin:`generate_sinex`
      - Generate a SINEX file from the published database state.
-   * - :ref:`command_head_from_index`
+   * - :django-admin:`head_from_index`
      - Import data into the database from the latest site log(s) from the file index.
-   * - :ref:`command_import_archive`
+   * - :django-admin:`import_archive`
      - Add site log files to the file index.
-   * - :ref:`command_import_equipment`
+   * - :django-admin:`import_equipment`
      - Import equipment codes for antennas, receivers and radomes from another SLM.
-   * - :ref:`command_set_site`
+   * - :django-admin:`set_site`
      - Set Django Site model fields based on your settings file.
-   * - :ref:`command_sitelog`
+   * - :django-admin:`sitelog`
      - Generate a serialized site log in a given format from the current database state.
-   * - :ref:`command_synchronize`
+   * - :django-admin:`synchronize`
      - Synchronize any denormalized state in the database.
-   * - :ref:`command_validate_db`
+   * - :django-admin:`validate_db`
      - Re-run all site log validation routines on the given (or all) stations.
 
 .. list-table:: SLM Management Routines
@@ -106,14 +107,14 @@ Here's an example of a typical SLM management script:
 
    * - Routine
      - Short Description
-   * - :ref:`routine_deploy`
+   * - :django-admin:`routine deploy`
      - Run a collection of commands commonly required when updating SLM code in production.
-   * - :ref:`routine_import`
+   * - :django-admin:`routine import`
      - Run a collection of commands commonly required when importing an external archive of site
        log data.
-   * - :ref:`routine_install`
+   * - :django-admin:`routine install`
      - Run a collection of commands commonly required when installing to a fresh database. This
-       runs both the :ref:`routine_deploy` and :ref:`routine_import` subroutines.
+       runs both the :django-admin:`routine deploy` and :django-admin:`routine import` subroutines.
 
 In addition to the SLM specific commands, the common Django commands you will need to use are:
 
@@ -122,14 +123,14 @@ In addition to the SLM specific commands, the common Django commands you will ne
 
    * - Command
      - Short Description
-   * - makemigrations_
+   * - :django-admin:`makemigrations`
      - Generate migration files from your models that will update the database structure to
        reflect your code base.
-   * - migrate_
+   * - :django-admin:`migrate`
      - Run any unapplied migration scripts on the database.
-   * - collectstatic_
+   * - :django-admin:`collectstatic`
      - Gather all static artifacts from Django apps and move them into STATIC_ROOT_.
-   * - shell_
+   * - :django-admin:`shell`
      - Launch an interactive shell with your site bootstrapped and a live connection to the
        database.
 
@@ -142,17 +143,31 @@ Commands installed by third party apps that may also be useful or necessary:
      - Short Description
    * - renderstatic_
      - Generate static artifacts from your code/configuration. This mostly includes JavaScript
-       artifacts. See :ref:`routine_deploy`
+       artifacts. See :django-admin:`routine deploy`
    * - shellcompletion_
      - Install/test shell tab completion for all management commands.
 
 |
 
+check_upgrade
+-------------
 
-.. _command_build_index:
+.. django-admin:: check_upgrade
+
+.. automodule:: slm.management.commands.check_upgrade
+
+.. typer:: slm.management.commands.check_upgrade.Command::typer_app
+    :prog: <slm> check_upgrade
+    :theme: dark
+    :preferred: svg
+    :convert-png: latex
+
+|
 
 build_index
 -----------
+
+.. django-admin:: build_index
 
 .. automodule:: slm.management.commands.build_index
 
@@ -164,10 +179,10 @@ build_index
 
 |
 
-.. _command_generate_sinex:
-
 generate_sinex
 --------------
+
+.. django-admin:: generate_sinex
 
 .. automodule:: slm.management.commands.generate_sinex
 
@@ -177,10 +192,10 @@ generate_sinex
 
 |
 
-.. _command_head_from_index:
-
 head_from_index
 ---------------
+
+.. django-admin:: head_from_index
 
 .. automodule:: slm.management.commands.head_from_index
 
@@ -190,10 +205,10 @@ head_from_index
 
 |
 
-.. _command_import_archive:
-
 import_archive
 --------------
+
+.. django-admin:: import_archive
 
 .. automodule:: slm.management.commands.import_archive
 
@@ -203,10 +218,10 @@ import_archive
 
 |
 
-.. _command_import_equipment:
-
 import_equipment
 ----------------
+
+.. django-admin:: import_equipment
 
 .. automodule:: slm.management.commands.import_equipment
 
@@ -218,6 +233,8 @@ import_equipment
 manufacturers
 ~~~~~~~~~~~~~
 
+.. django-admin:: import_equipment manufacturers
+
 .. typer:: slm.management.commands.import_equipment.Command::typer_app:manufacturers
     :prog: <slm> import_equipment manufacturers
     :theme: dark
@@ -225,6 +242,8 @@ manufacturers
 
 antennas
 ~~~~~~~~
+
+.. django-admin:: import_equipment antennas
 
 .. typer:: slm.management.commands.import_equipment.Command::typer_app:antennas
     :prog: <slm> import_equipment antennas
@@ -234,6 +253,8 @@ antennas
 receivers
 ~~~~~~~~~
 
+.. django-admin:: import_equipment receivers
+
 .. typer:: slm.management.commands.import_equipment.Command::typer_app:receivers
     :prog: <slm> import_equipment receivers
     :theme: dark
@@ -241,17 +262,18 @@ receivers
 radomes
 ~~~~~~~
 
+.. django-admin:: import_equipment radomes
+
 .. typer:: slm.management.commands.import_equipment.Command::typer_app:radomes
     :prog: <slm> import_equipment radomes
     :theme: dark
 
 |
 
-
-.. _command_set_site:
-
 set_site
 --------
+
+.. django-admin:: set_site
 
 .. automodule:: slm.management.commands.set_site
 
@@ -261,11 +283,10 @@ set_site
 
 |
 
-
-.. _command_sitelog:
-
 sitelog
 -------
+
+.. django-admin:: sitelog
 
 .. automodule:: slm.management.commands.sitelog
 
@@ -276,6 +297,8 @@ sitelog
 legacy
 ~~~~~~~~~~~~~
 
+.. django-admin:: sitelog legacy
+
 .. typer:: slm.management.commands.sitelog.Command::typer_app:legacy
     :prog: <slm> sitelog legacy
     :theme: dark
@@ -284,16 +307,18 @@ legacy
 xml
 ~~~
 
+.. django-admin:: sitelog xml
+
 .. typer:: slm.management.commands.sitelog.Command::typer_app:xml
     :prog: <slm> sitelog xml
     :theme: dark
 
 |
 
-.. _command_synchronize:
-
 synchronize
 -----------
+
+.. django-admin:: synchronize
 
 .. automodule:: slm.management.commands.synchronize
 
@@ -303,10 +328,10 @@ synchronize
 
 |
 
-.. _command_validate_db:
-
 validate_db
 -----------
+
+.. django-admin:: validate_db
 
 .. automodule:: slm.management.commands.validate_db
 
@@ -327,10 +352,10 @@ They are defined using the app django-routines_. The commands that are run as pa
 can be added to or subtracted from in customized deployments of the SLM. Out of the box the
 SLM provides the following routines:
 
-.. _routine_deploy:
-
 deploy
 ~~~~~~
+
+.. django-admin:: routine deploy
 
 The deploy routine includes a collection of commands that should be run each time an updated
 version of the SLM code base is deployed on a system. These commands will do things
@@ -339,13 +364,13 @@ artifacts and copy those artifacts to where the web server expects.
 
 .. warning::
 
-  **deploy** does not run makemigrations_ because these files should be checked into version
+  **deploy** does not run :django-admin:`makemigrations` because these files should be checked into version
   control and we do not want to accidentally generate files and apply them to the database in
   production. This would likely cause conflicting migration files to be generated in development
   and production.
 
-  migrate_ will warn if the code is out of sync with the database structure. And you should
-  always run makemigrations_ before packaging a new version of your software for deployment.
+  :django-admin:`migrate` will warn if the code is out of sync with the database structure. And you should
+  always run :django-admin:`makemigrations` before packaging a new version of your software for deployment.
 
 If the SLM validation configuration has changed you will likely want to run deploy with the
 ``--re-validate`` flag to run the updated routines:
@@ -363,10 +388,10 @@ be run each time a stations data is updated.
 
 |
 
-.. _routine_import:
-
 import
 ~~~~~~~
+
+.. django-admin:: routine import
 
 The import routine runs a collection of data import commands you will likely need to run when
 importing an archive of old site logs.
@@ -388,13 +413,13 @@ logs and store them in the database.
 
 |
 
-.. _routine_install:
-
 install
 ~~~~~~~
 
-The install routine runs the initial :ref:`routine_deploy` routine as well as the
-:ref:`routine_import` routine. In addition it asks you to create a superuser account.
+.. django-admin:: routine install
+
+The install routine runs the initial :django-admin:`routine deploy` routine as well as the
+:django-admin:`routine import` routine. In addition it asks you to create a superuser account.
 
 Run this routine on a fresh database if you have a bunch of site logs to import.
 

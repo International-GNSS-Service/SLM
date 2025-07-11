@@ -100,6 +100,11 @@ todo_include_todos = True
 
 latex_engine = "xelatex"
 
+# Include the database table names of Django models
+django_show_db_tables = True                # Boolean, default: False
+# Add abstract database tables names (only takes effect if django_show_db_tables is True)
+django_show_db_tables_abstract = True       # Boolean, default: False
+
 
 intersphinx_mapping = {
     "django": (
@@ -117,6 +122,10 @@ intersphinx_mapping = {
     "python": ('https://docs.python.org/3', None)
 }
 
+# extlinks = {
+#     'djadmin': ('https://docs.djangoproject.com/en/stable/ref/django-admin/#%s', ''),
+# }
+
 def setup(app):
     # Register a sphinx.ext.autodoc.between listener to ignore everything
     # between lines that contain the word IGNORE
@@ -125,4 +134,8 @@ def setup(app):
         between('^.*[*]{79}.*$', exclude=True)
     )
     app.add_css_file('style.css')
+
+    # todo remove when this PR is merged upstream:
+    # https://github.com/sphinx-doc/sphinxcontrib-django/pull/75
+    app.add_crossref_type(directivename="django-admin", rolename="django-admin")
     return app

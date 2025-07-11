@@ -32,3 +32,6 @@ iterable
 antex
 sitelog
 ve
+waypoint
+waypoints
+semver

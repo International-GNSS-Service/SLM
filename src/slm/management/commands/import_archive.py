@@ -6,7 +6,7 @@ existing data. There are two primary steps involved in doing this:
 2. Populate the site log fields in the database from the most recent site logs for each
    station.
 
-This command will perform #1 and optionally call :ref:`command_head_from_index` on the
+This command will perform #1 and optionally call :django-admin:`head_from_index` on the
 imported stations to also perform #2.
 
 .. tip::

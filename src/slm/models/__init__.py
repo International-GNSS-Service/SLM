@@ -55,6 +55,7 @@ from slm.models.system import (
     SiteFile,
     SiteFileUpload,
     SiteTideGauge,
+    SLMVersion,
     TideGauge,
 )
 from slm.models.user import User, UserProfile
@@ -115,4 +116,5 @@ __all__ = [
     "UserProfile",
     "About",
     "Help",
+    "SLMVersion",
 ]

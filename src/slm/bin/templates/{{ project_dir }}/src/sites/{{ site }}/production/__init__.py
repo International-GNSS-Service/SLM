@@ -5,8 +5,7 @@ import getpass
 WSGI_APPLICATION = "sites.{{ site }}.production.wsgi.application"
 
 DEBUG = False
-SITE_DIR = Path("{{ production_dir }}")
-BASE_DIR = SITE_DIR
+BASE_DIR = Path("{{ production_dir }}")
 
 ALLOWED_HOSTS = [
     '{{ netloc }}',
@@ -16,8 +15,8 @@ ALLOWED_HOSTS = [
 SLM_SITE_NAME = '{{ netloc }}'
 
 
-MEDIA_ROOT = SITE_DIR / 'media'
-STATIC_ROOT = SITE_DIR / 'static'
+MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_ROOT = BASE_DIR / 'static'
 
 
 # This section deals with database connection. Alterations may need to be made for
@@ -44,7 +43,7 @@ DATABASES = {
 # GEOS_LIBRARY_PATH = '/path/to/libgeos_c.so.1'
 
 # Make sure debug toolbar is not run in production - it can expose secrets!
-DJANGO_DEBUG_TOOLBAR = False
+SLM_DEBUG_TOOLBAR = False
 
 include('../base.py')
 

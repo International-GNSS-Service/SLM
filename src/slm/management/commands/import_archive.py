@@ -13,7 +13,7 @@ imported stations to also perform #2.
 
     Rich HTML logs of the import process will be written to:
 
-        ``settings.LOG_DIR / import_archive.TIMESTAMP``
+        ``settings.SLM_LOG_DIR / import_archive.TIMESTAMP``
 
 Logs will be parsed and errors reported, but parsing errors will not prevent logs from
 being indexed.
@@ -185,7 +185,7 @@ class Command(TyperCommand):
     agencies: t.List[Agency] = []
     owner: t.Optional[User] = None
 
-    logs: Path = Path("{LOG_DIR}") / "import_archive.{TIMESTAMP}"
+    logs: Path = Path("{SLM_LOG_DIR}") / "import_archive.{TIMESTAMP}"
     verbosity: int = 1
     traceback: bool = False
 
@@ -394,7 +394,7 @@ class Command(TyperCommand):
         self.owner = owner
         self.logs = Path(
             str(logs).format(
-                LOG_DIR=getattr(settings, "LOG_DIR", "./"),
+                SLM_LOG_DIR=getattr(settings, "SLM_LOG_DIR", "./"),
                 TIMESTAMP=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
             )
         )

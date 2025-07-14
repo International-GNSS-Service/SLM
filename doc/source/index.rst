@@ -46,6 +46,10 @@ map is on the projects_ page.
 
 Contributions_ from the community are encouraged!
 
+.. APIs
+.. manual/index
+.. operations/index
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -55,9 +59,8 @@ Contributions_ from the community are encouraged!
    upgrading
    configuration
    architecture/index
-   manual/index
-   operations/index
    commands
-   APIs
-   reference
+   dependencies
+   reference/index
    changelog
+

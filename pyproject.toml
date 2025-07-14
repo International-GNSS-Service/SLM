@@ -71,8 +71,6 @@ dependencies = [
     "django-crispy-forms>=2.0,<3.0.0",
     "crispy-bootstrap5>=2024.2,<2025.0",
     "djangorestframework-gis>=1.0,<2.0.0",
-    "numpy>=1.26; python_version > '3.8'",
-    "numpy<=1.24; python_version <= '3.8'",
     "chardet>=5.1.0,<6.0.0",
     "psycopg>=3.1",
     "django-typer>=2.1.2,<3.0.0",
@@ -81,6 +79,7 @@ dependencies = [
     "requests>=2.32.3,<3.0.0",
     "packaging>=24.2",
     "django-compressor>=4.5.1",
+    "django-environ>=0.11.2",
 ]
 
 [build-system]

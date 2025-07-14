@@ -13,6 +13,7 @@ from sphinx.ext.autodoc import between
 import warnings
 import os
 import django
+import re
 
 sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -105,11 +106,13 @@ django_show_db_tables = True                # Boolean, default: False
 # Add abstract database tables names (only takes effect if django_show_db_tables is True)
 django_show_db_tables_abstract = True       # Boolean, default: False
 
+autodoc_member_order = 'bysource'
 
+# TODO - ALWAYS POINT THE DJANGO DOCS AT OUR CURRENT DJANGO VERSION, NOT STABLE
 intersphinx_mapping = {
     "django": (
-        "https://docs.djangoproject.com/en/stable",
-        "https://docs.djangoproject.com/en/stable/_objects/",
+        "https://docs.djangoproject.com/en/4.2",
+        "https://docs.djangoproject.com/en/4.2/_objects/",
     ),
     "click": ("https://click.palletsprojects.com/en/stable", None),
     "rich": ("https://rich.readthedocs.io/en/stable", None),
@@ -119,23 +122,66 @@ intersphinx_mapping = {
     "django-routines": ("https://django-routines.readthedocs.io/en/stable/", None),
     "django-enum": ("https://django-enum.readthedocs.io/en/stable/", None),
     "django-filter": ("https://django-filter.readthedocs.io/en/stable/", None),
+    "django-environ": ("https://django-environ.readthedocs.io/en/stable/", None),
     "python": ('https://docs.python.org/3', None)
 }
 
-# extlinks = {
-#     'djadmin': ('https://docs.djangoproject.com/en/stable/ref/django-admin/#%s', ''),
-# }
+
+def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    from docutils import nodes
+    url = f"https://pypi.org/project/{text}/"
+    node = nodes.reference(rawtext, text, refuri=url, **options)
+    return [node], []
+
+
+html_css_files = [
+    'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css',
+]
+
+def color_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    """Role that creates a color box with the hex color."""
+    from docutils import nodes
+    # Validate hex color
+    hex_pattern = re.compile(r'^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$')
+    if not hex_pattern.match(text):
+        msg = inliner.reporter.error(
+            f'Invalid hex color: {text}', line=lineno)
+        prb = inliner.problematic(rawtext, rawtext, msg)
+        return [prb], [msg]
+    
+    # Create the HTML
+    html = f'<span style="background-color: {text}; display: inline-block; width: 1em; height: 1em; margin-right: 0.3em; border: 1px solid #ccc; vertical-align: middle; border-radius: 2px;"></span><code>{text}</code>'
+    
+    node = nodes.raw('', html, format='html')
+    return [node], []
+
+def css_icon(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    """Role that creates a color box with the hex color."""
+    from docutils import nodes
+    parts = text.split(":")
+    icon = parts[0]
+    size = 32
+    if len(parts) > 1:
+        size = parts[1]
+    html = f'<i class="{icon}" style="font-size:{size}px;"></i>'
+    node = nodes.raw('', html, format='html')
+    return [node], []
 
 def setup(app):
     # Register a sphinx.ext.autodoc.between listener to ignore everything
     # between lines that contain the word IGNORE
+    from docutils.parsers.rst import roles
     app.connect(
         'autodoc-process-docstring',
         between('^.*[*]{79}.*$', exclude=True)
     )
     app.add_css_file('style.css')
 
+    app.add_role('color-swatch', color_role)
+    app.add_role('css-icon', css_icon)
+
     # todo remove when this PR is merged upstream:
     # https://github.com/sphinx-doc/sphinxcontrib-django/pull/75
     app.add_crossref_type(directivename="django-admin", rolename="django-admin")
+    roles.register_local_role('pypi', pypi_role)
     return app

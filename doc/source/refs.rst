@@ -32,3 +32,7 @@
 .. _discussions: https://github.com/International-GNSS-Service/SLM/discussions
 .. _projects: https://github.com/International-GNSS-Service/SLM/projects
 .. _issues: https://github.com/International-GNSS-Service/SLM/issues
+.. _GeoJSON: https://geojson.org/
+.. _GeodesyML: https://github.com/International-GNSS-Service/GeodesyML
+.. _MapBox: https://mapbox.com
+

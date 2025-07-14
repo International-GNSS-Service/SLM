@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models import Model
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from slm.defines import EquipmentState, FlagSeverity
 
@@ -19,16 +19,16 @@ Flag = namedtuple("Flag", "message manual severity")
 
 
 def get_validators(model, field):
-    from django.conf import settings
-
     """
-    Get the validator list for a given model and field from validation 
+    Get the validator list for a given model and field from validation
     settings.
-    
+
     :param model: The Django model name <app_name>.<ModelClass>
-    :param field: The field name 
+    :param field: The field name
     :return:
     """
+    from django.conf import settings
+
     if isinstance(model, Model) or (
         isinstance(model, type) and issubclass(model, Model)
     ):

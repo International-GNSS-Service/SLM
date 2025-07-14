@@ -1,4 +1,4 @@
-from slm.settings import get_setting
+from slm.settings import get_setting, set_default
 
 
 def get_enum_context():
@@ -43,11 +43,14 @@ def get_icon_context():
     }
 
 
-STATIC_TEMPLATES = {
-    "templates": [
-        ("slm/js/urls.js", {"dest": get_setting("STATIC_ROOT") / "urls.js"}),
-        ("slm/js/enums.js", {"context": get_enum_context}),
-        ("slm/js/fileIcons.js", {"context": get_icon_context}),
-        ("slm/css/defines.css", {"context": get_defines_context}),
-    ]
-}
+set_default(
+    "STATIC_TEMPLATES",
+    {
+        "templates": [
+            ("slm/js/urls.js", {"dest": get_setting("STATIC_ROOT") / "urls.js"}),
+            ("slm/js/enums.js", {"context": get_enum_context}),
+            ("slm/js/fileIcons.js", {"context": get_icon_context}),
+            ("slm/css/defines.css", {"context": get_defines_context}),
+        ]
+    },
+)

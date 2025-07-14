@@ -1,8 +1,8 @@
 """
-SLM Specific Configuration parameters go here.
+SLM Specific Configuration parameters go here. what
 """
 
-import os
+from django.utils.translation import gettext_lazy as _
 
 from slm.defines import (
     AlertLevel,
@@ -10,11 +10,12 @@ from slm.defines import (
     SiteFileUploadStatus,
     SiteLogStatus,
 )
+from slm.settings import env as settings_environment
 from slm.settings import get_setting, set_default
 
-# manage.py will set this to true if django has been loaded to run a
-# management command
-SLM_MANAGEMENT_MODE = os.environ.get("SLM_MANAGEMENT_FLAG", False) == "ON"
+env = settings_environment()
+
+DEBUG = get_setting("DEBUG")
 
 set_default(
     "SLM_ALERT_COLORS",
@@ -50,10 +51,14 @@ set_default(
 
 # if True, for subsections and missing sections, placeholder structures will
 # be added to the logs
-set_default("SLM_LEGACY_PLACEHOLDERS", True)
+SLM_LEGACY_PLACEHOLDERS = env(
+    "SLM_LEGACY_PLACEHOLDERS", default=get_setting("SLM_LEGACY_PLACEHOLDERS", True)
+)
 
 # the maximum file upload size in Mega Bytes
-set_default("SLM_MAX_UPLOAD_SIZE_MB", 100)
+SLM_MAX_UPLOAD_SIZE_MB = env(
+    "SLM_MAX_UPLOAD_SIZE_MB", default=get_setting("SLM_MAX_UPLOAD_SIZE_MB", 100)
+)
 
 # a map of file icons (css) from mimetype subtypes
 set_default(
@@ -79,17 +84,13 @@ set_default(
 
 # generated image thumbnail size in pixels - this is a tuple of maximum width
 # and height - the aspect ratio will be preserved
-set_default("SLM_THUMBNAIL_SIZE", 250)
-
-# during deploy the current Site will be set to SLM_SITE_NAME, SLM_ORG_NAME
-# The name of the organization used in communications
-set_default("SLM_ORG_NAME", "SLM")
-
-set_default("SLM_SITE_NAME", (get_setting("ALLOWED_HOSTS", []) or ["localhost"])[0])
+SLM_THUMBNAIL_SIZE = env(
+    "SLM_THUMBNAIL_SIZE", int, default=get_setting("SLM_THUMBNAIL_SIZE", 250)
+)
 
 # set this to either http or https, this will be used to determine the protocol
 # of absolute uri links where a request object is not present
-set_default("SLM_HTTP_PROTOCOL", None)
+set_default("SLM_HTTP_PROTOCOL", "http" if DEBUG else "https")
 
 # this should point to a cached property that holds the set of Django
 # permissions relevant to the SLM - if you extend the permission set override
@@ -107,7 +108,12 @@ set_default(
 # will prolong the request. It can be useful to disable this during testing to
 # reduce load times. It is recommended to leave this set to the default setting
 # in production
-set_default("SLM_PRELOAD_SCHEMAS", [geo for geo in GeodesyMLVersion])
+set_default(
+    "SLM_PRELOAD_SCHEMAS",
+    []
+    if DEBUG or get_setting("SLM_MANAGEMENT_MODE", False)
+    else [geo for geo in GeodesyMLVersion],
+)
 
 # By default the SLM will not send moderation related emails to user accounts
 # who have never logged in, set this to False to disable this behavior
@@ -186,3 +192,16 @@ SLM_URL_MOUNTS = []
 # do not need to set this field unless you are serving files off a different
 # instance than the instance that generates serialized artifacts
 SLM_FILE_DOMAIN = None
+
+
+set_default("SLM_STATION_NAME_REGEX", None)
+set_default("SLM_STATION_NAME_HELP", _("The name of the station."))
+
+# IGS Settings:
+# SLM_STATION_NAME_REGEX = r"[\w]{4}[\d]{2}[\w]{3}"
+# SLM_STATION_NAME_HELP = _(
+#     "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
+#     "filenames Format: (XXXX - existing four character IGS station "
+#     "name, M - Monument or marker number (0-9), R - Receiver number "
+#     "(0-9), CCC - Three digit ISO 3166-1 country code)"
+# )

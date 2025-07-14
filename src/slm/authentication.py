@@ -15,7 +15,9 @@ from allauth.account.utils import user_pk_to_url_str, user_username
 from allauth.utils import build_absolute_uri
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.contrib.sites.shortcuts import get_current_site
+from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils.module_loading import import_string
 from rest_framework import authentication, exceptions
@@ -187,9 +189,8 @@ def permissions():
         return Permission.objects.all()
 
 
-def default_permissions():
+def default_permissions() -> QuerySet[Permission]:
     from django.contrib.auth import get_user_model
-    from django.contrib.auth.models import Permission
     from django.contrib.contenttypes.models import ContentType
 
     return Permission.objects.filter(

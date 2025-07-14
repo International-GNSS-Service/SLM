@@ -4,7 +4,7 @@ from enum_properties import p, s
 
 
 class EquipmentState(IntegerChoices, p("help_text")):
-    _symmetric_builtins_ = [s("name", case_fold=True), s("label", case_fold=True)]
+    _symmetric_builtins_ = [s("name", case_fold=True)]
 
     # fmt: off
     ACTIVE     = 100, _("In Use"),     _("This coding is in active use.")

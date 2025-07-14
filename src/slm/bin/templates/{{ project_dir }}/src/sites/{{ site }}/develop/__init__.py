@@ -10,13 +10,12 @@ from split_settings.tools import (
 from slm.settings import set_default
 from pathlib import Path
 
-SITE_DIR = Path(__file__).resolve().parent
-BASE_DIR = SITE_DIR
+BASE_DIR = Path(__file__).resolve().parent
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 DEBUG = True
-DJANGO_DEBUG_TOOLBAR = True
+SLM_DEBUG_TOOLBAR = True
 
 include('../base.py')
 

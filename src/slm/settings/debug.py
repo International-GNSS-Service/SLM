@@ -4,10 +4,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 from slm.settings import get_setting, set_default
 
-if get_setting("DJANGO_DEBUG_TOOLBAR", None):
+if get_setting("SLM_DEBUG_TOOLBAR", False):
     if not find_spec("debug_toolbar"):
         raise ImproperlyConfigured(
-            "DJANGO_DEBUG_TOOLBAR is True, but django-debug-toolbar is notinstalled."
+            "SLM_DEBUG_TOOLBAR is True, but django-debug-toolbar is notinstalled."
         )
 
     # list any middlewares that might be encountered on the stack that must

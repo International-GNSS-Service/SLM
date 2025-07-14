@@ -7,7 +7,7 @@ from the most recent indexed files into the database.
 
     By default, rich HTML logs of the import process will be written to:
 
-        ``settings.LOG_DIR / head_from_index.TIMESTAMP``
+        ``settings.SLM_LOG_DIR / head_from_index.TIMESTAMP``
 
     ImportAlerts will also be issued for any errors flagged during import. When,
     appropriate validation flags will be attached to site log fields. This allows you
@@ -85,7 +85,7 @@ class Command(TyperCommand):
     sites: t.Sequence[Site]
     clean: bool = True
     prompt: bool = True
-    logs: Path = Path("{LOG_DIR}") / "head_from_index.{TIMESTAMP}"
+    logs: Path = Path("{SLM_LOG_DIR}") / "head_from_index.{TIMESTAMP}"
     verbosity = 1
 
     indexes: t.Sequence[ArchiveIndex]
@@ -184,7 +184,7 @@ class Command(TyperCommand):
 
         self.logs = Path(
             str(logs).format(
-                LOG_DIR=getattr(settings, "LOG_DIR", "./"),
+                SLM_LOG_DIR=getattr(settings, "SLM_LOG_DIR", "./"),
                 TIMESTAMP=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
             )
         )

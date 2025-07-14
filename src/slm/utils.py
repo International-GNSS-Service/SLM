@@ -3,7 +3,6 @@ import re
 from datetime import date, datetime, timedelta
 from math import atan2, cos, sin, sqrt
 
-import numpy as np
 from dateutil import parser as date_parser
 from django.conf import settings
 from django.contrib.gis.geos import Point
@@ -255,7 +254,7 @@ def xyz2llh(xyz):
     f_e = 1 / 298.25642  # IERS2000 standards
     radians2degree = 45 / atan2(1, 1)
 
-    xyz_array = np.array(xyz) / a_e
+    xyz_array = [v / a_e for v in xyz]
     (x, y, z) = (xyz_array[0], xyz_array[1], xyz_array[2])
     e2 = f_e * (2 - f_e)
     z2 = z**2

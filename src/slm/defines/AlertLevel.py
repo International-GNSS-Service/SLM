@@ -17,10 +17,16 @@ class AlertLevel(IntegerChoices):
 
     @property
     def css(self):
+        """
+        The clss class to use for this level.
+        """
         return f"slm-alert-{self.name.lower()}"
 
     @property
     def color(self):
+        """
+        The hex code of the color to use for this level.
+        """
         from django.conf import settings
 
         return getattr(settings, "SLM_ALERT_COLORS", {}).get(self, None)

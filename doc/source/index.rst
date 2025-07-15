@@ -38,7 +38,7 @@ This documentation speaks to multiple audiences:
 
 .. warning::
 
-   The SLM has reached beta-maturity but is still undergoing signficant organizational changes.
+   The SLM has reached beta-maturity but is still undergoing significant organizational changes.
    Check back soon for new documentation and updates. A version 1.0 stable release is expected
    in 2026.
 

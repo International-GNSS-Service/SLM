@@ -41,7 +41,7 @@ semantic flavors of configuration directive:
 The amount of customization you need to do to the SLM will inform how you configure and deploy your
 instance. For simple installations that make no behavioral customizations and that
 do not install any additional packages you most likely will not have to write any settings files
-and configuring the SLM via :ref:`environment variables <environment_settings>` will be sufficent.
+and configuring the SLM via :ref:`environment variables <environment_settings>` will be sufficient.
 Otherwise you will need to familiarize yourself with how the
 :ref:`SLM builds its settings file <building_settings>`.
 
@@ -95,7 +95,7 @@ We use two third party extensions:
 If you need to customize SLM behavior and build more complex settings directives, we highly
 recommend using :ref:`slm-startproject <slm-startproject>` to scaffold out your project
 and its settings files. Even if you do not ultimately use our recommended configuration, seeing how
-we lay out an SLM project may be of some help. 
+we lay out an SLM project may be of some help.
 
 We use :func:`split_settings.tools.include` instead of
 :doc:`the import system <python:reference/import>` to combine settings files. There are additional
@@ -122,7 +122,7 @@ will need to import the SLM's root settings file. A notional settings file might
     # will take precedence over the defaults defined by the SLM
     include(resource("slm.settings", "root.py"))
 
-    # Settings defined here or later have the highest precedence    
+    # Settings defined here or later have the highest precedence
 
     # After root is included you may read or override defaults, or
     # make adjustments, like adding to or removing parts of complex settings
@@ -141,7 +141,7 @@ will need to import the SLM's root settings file. A notional settings file might
 Override Precedence
 -------------------
 
-Setting definitions will have the following override precdence:
+Setting definitions will have the following override precedence:
 
 1. Defined in settings files after inclusion of ``slm.settings.root``.
 2. Defined in the process environment (for :ref:`environment_settings`).
@@ -324,7 +324,7 @@ Default: ``Not Defined``
 
 **This setting is required and must be an absolute path.** It is not an official Django setting,
 but appears in the docs examples and is very common by convention. Think of it as the working
-directory of your running SLM. Directories such as :setting:`SLM_LOG_DIR` will default to subpaths
+directory of your running SLM. Directories such as :setting:`SLM_LOG_DIR` will default to sub paths
 of this directory.
 
 
@@ -336,7 +336,7 @@ of this directory.
 Default: ``Not Defined``
 
 The path to an optional environment file that will be loaded by the root settings. You
-may specifiy this setting as an environment variable or as a file setting before you include
+may specify this setting as an environment variable or as a file setting before you include
 ``slm.settings.root``.
 
 ``SLM_DATABASE`` ⚙️
@@ -359,9 +359,9 @@ not :ref:`routed to other databases <django:topics-db-multi-db-routing>`.
 
 This setting is optional, by default, the SLM will look for a database called ``slm``, and it
 will use the username of the running process to connect to that database without a password over a
-socket. This will work if postgres is configured for `peer authentication 
+socket. This will work if postgres is configured for `peer authentication
 <https://www.postgresql.org/docs/current/auth-peer.html>`_ and the running user has the correct
-priviledges.
+privileges.
 
 
 ``SLM_CACHE`` ⚙️
@@ -524,7 +524,7 @@ We set a default for :setting:`django:WSGI_APPLICATION` that works if *either*:
 
 1. The :envvar:`DJANGO_SETTINGS_MODULE` is ``slm.settings.root``
 2. The :envvar:`DJANGO_SETTINGS_MODULE` is set in the environment of the process that loads Django
-   for webserving.
+   for web serving.
 3. You are not using WSGI - e.g. in a local development or debug context using
    :django-admin:`runserver`.
 
@@ -602,7 +602,7 @@ Set the default log level for loggers. This may be any of the
 ------------------
 .. setting:: SLM_LOG_DIR
 
-The directory where file logs will be stored. If this directory does not exist but is a subpath
+The directory where file logs will be stored. If this directory does not exist but is a sub path
 of :setting:`BASE_DIR` it will be created.
 
 ``LOGGING``
@@ -615,7 +615,7 @@ documentation also :doc:`covers logging <django:howto/logging>`. See also Django
 
 Our default configuration has the following qualities:
 
-* Most loggers will be set to the :setting:`SLM_LOG_LEVEL` level. Some particularly noisey or
+* Most loggers will be set to the :setting:`SLM_LOG_LEVEL` level. Some particularly noisy or
   unnecessary loggers will be set to higher levels.
 * A :class:`~logging.handlers.TimedRotatingFileHandler` file handler will be created that rotates
   files every night at midnight and keeps 14 days worth of logs. The logs will be stored at
@@ -776,7 +776,7 @@ Default:
         :header-rows: 1
         :widths: 40 40
 
-        * - Mimetype Subtype
+        * - Mime type
           - Icon
         * - ``zip``
           - :css-icon:`bi bi-file-zip:24`
@@ -888,9 +888,9 @@ This setting tells the SLM which permissions are pertinent to its functionality.
 We use Django_'s :ref:`permission framework <topics/auth/default:permissions and authorization>`
 to control user access to certain functionality. If you wish to add your own permissions you may
 set this directive to the import path of a function that returns a
-:class:`~django.contrib.auth.models.Permission` :class:`~django.db.models.query.QuerySet`. The SLM will
-use this in the admin as the set of user permissions that should be offered on the user change
-forms. Superflous permissions will be hidden.
+:class:`~django.contrib.auth.models.Permission` :class:`~django.db.models.query.QuerySet`. The SLM
+will use this in the admin as the set of user permissions that should be offered on the user change
+forms. Superfluous permissions will be hidden.
 
 ``SLM_DEFAULT_PERMISSION_GROUPS``
 ---------------------------------
@@ -961,7 +961,7 @@ that generates serialized artifacts.
 Use this setting to control when automated email alert system.
 
 .. TODO::
-  
+
   Describe this setting.
 
 ``SLM_VALIDATION_BYPASS_BLOCK``
@@ -1002,5 +1002,5 @@ Use this setting to control how site log sections are validated. Also see
 :setting:`SLM_IGS_VALIDATION`.
 
 .. TODO::
-  
+
   Describe this setting.

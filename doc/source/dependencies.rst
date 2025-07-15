@@ -9,7 +9,7 @@ Dependencies
 
 The SLM relies on the following third party packages. We carefully review each third party
 dependency for inclusion based on maturity, maintenance activity, security posture and
-license compatiblity. We also `monitor security vulnerability reports 
+license compatibility. We also `monitor security vulnerability reports
 <https://github.com/International-GNSS-Service/SLM?tab=security-ov-file>`_
 
 
@@ -18,10 +18,10 @@ Versions
 
 When possible we specify wide version ranges on our dependencies. We recognize that downstream users
 of the SLM may extend it significantly and we maintain these wide ranges to minimize dependency
-version conflicts. We test using both minimum and maximum depedency version resolution.
+version conflicts. We test using both minimum and maximum dependency version resolution.
 
 .. note::
-    
+
     The SLM will always track :term:`Django LTS releases <Long-term support release>`.
     These are the x.2.x series. This means the SLM will not support more than one Django_
     feature release and that release will always be a x.2.x series.
@@ -151,5 +151,3 @@ Documentation Dependencies
 .. todo::
 
     Doc dependencies
-
-    

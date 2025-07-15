@@ -80,9 +80,13 @@ dependencies = [
     "requests>=2.32.3,<3.0.0",
     "packaging>=24.2",
     "django-compressor>=4.5.1",
-    "django-environ>=0.11.2",
-    "ipdb"
+    "django-environ>=0.11.2"
 ]
+
+[project.optional-dependencies]
+gunicorn = ["gunicorn>=22.0.0"]
+mod-wsgi = ["mod-wsgi>=5.0"]
+
 
 [build-system]
 requires = ["hatchling"]
@@ -109,6 +113,7 @@ packages = [
 
 [project.scripts]
 slm-startproject = 'slm.bin.startproject:app'
+slm = "slm.manage:main"
 
 [dependency-groups]
 dev = [
@@ -146,7 +151,6 @@ docs = [
     "sphinx-autobuild>=2021.3.14",
     "sphinxcontrib-django>=2.5",
 ]
-
 
 # todo doc8 configuration here is not being picked up and doesnt seem to be working
 # as expected - for now pass these parameters manually

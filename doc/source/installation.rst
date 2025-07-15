@@ -144,13 +144,13 @@ itself yet though.
 .. tabs::
 
   .. tab:: uvx
-        
+
     uvx_ should be able to find our ``slm-startproject`` command. You can test this by running:
 
     .. code:: bash
 
       ?> uvx slm-startproject --help
-  
+
   .. tab:: pip
 
     You can install the :pypi:`igs-slm` package into your local environment and run the command directly.
@@ -310,12 +310,237 @@ their permissions through the admin.
 
   Refer to :ref:`operations` for advice on production deployments.
 
+Deploy
+######
+
+.. warning::
+
+  We offer a notional deployment strategy here. There are myriad operational concerns that will vary
+  based on your organization's so the following examples are merely suggestions.
+
+The scaffold we generated should be checked into version control. You can manage it just like you
+would a normal python package. It can be built and installed using uv_ or pip_ or any other python
+package management tooling that supports wheels. When you install it it will pull in all of its
+required python dependencies.
+
+First you need to make sure your host server has all the dependencies installed, PostGIS_, etc.
+Then you should use ``psql`` to create the database. It is usually sufficient to configure PostGIS_
+for `peer authentication <https://www.postgresql.org/docs/current/auth-peer.html>`_ and give your
+web server user all the appropriate permissions to the database.
+
+User Permissions
+----------------
+
+You will likely want a dedicated non-login user to run the web server. Most package managers will
+install your web server using this scheme. This user should share a group with the DevOps user -
+which usually means adding your DevOps user to the www-data group or something similar. The SLM will
+create directories with default 0o770 permissions and files with 0o660 permissions, so this should
+work. Many other user/group combinations will also work. If you have this split scheme and are using
+peer authentication, you will need to create another postgres user for your DevOps account with the
+same privileges as your web server user.
+
+.. tip::
+
+  It is also a good idea to make sure the web server user cannot write to files in your python
+  virtual environment.
+
+Setup Node & esbuild
+--------------------
+
+Production deployments of the SLM require esbuild_ to bundle static javascript and css files. To
+install esbuild_, your DevOps account will need an install of node_. You may want to use nvm_ to
+do this:
+
+.. code-block:: bash
+
+  ?> curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  ?> source ~/.nvm/nvm.sh
+  ?> nvm install --lts
+  ?> npm install -g esbuild
+  ?> esbuild --version
+
+
+Setup Python
+------------
+
+Check that your system Python meets the :pypi:`igs-slm` minimum requirement, then create a virtual
+environment somewhere you think is appropriate. For example:
+
+.. code-block:: bash
+
+  ?> python3 -m venv /opt/slm_venv
+
+Build and Install
+-----------------
+
+.. code-block:: bash
+
+  # in your git repository holding your slm-startproject
+  ?> uv build
+  # get the wheel to your server somehow
+  ?> scp dist/network-x.x.x-py3-none-any.whl yourserver:./
+  ?> ssh yourserver
+  ?> source /opt/slm_venv/bin/activate
+  # install with gunicorn if using nginx or mod_wsgi if using Apache
+  (slm_venv) ?> pip install network-x.x.x-py3-none-any.whl
+  # if using nginx:
+  (slm_venv) ?> pip install gunicorn
+  # if using apache:
+  (slm_venv) ?> pip install mod_wsgi
+
+Filesystem
+----------
+
+We recommend setting up your site's working directory somewhere under /var/www:
+
+.. code-block:: bash
+
+  ?> mkdir -p /var/www/network.example.com/production
+  ?> cd /var/www/network.example.com/production
+  ?> mkdir static media logs secrets
+
+web servers
+----------
+
+.. tabs::
+
+  .. tab:: Nginx
+
+    The recommended way to serve the SLM with Nginx_ is to proxy requests to a gunicorn_ instance
+    running the SLM. Here's a notional Nginx_ configuration that will serve your SLM instance:
+
+    .. code-block:: nginx
+
+      # Redirect HTTP to HTTPS
+      server {
+          listen 80;
+          server_name network.example.com;
+
+          return 301 https://$host$request_uri;
+      }
+
+      # HTTPS server block
+      server {
+          listen 443 ssl;
+          server_name network.example.com;
+
+          # SSL Certificate and Key (adjust paths)
+          ssl_certificate /etc/ssl/certs/fullchain.pem;
+          ssl_certificate_key /etc/ssl/certs/privkey.pem;
+
+          # (Optional) Strong security configuration
+          ssl_protocols TLSv1.2 TLSv1.3;
+          ssl_ciphers HIGH:!aNULL:!MD5;
+          ssl_prefer_server_ciphers on;
+          ssl_session_cache shared:SSL:10m;
+          ssl_session_timeout 1d;
+          ssl_session_tickets off;
+
+          # (Optional) HSTS for extra security
+          add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+          # Proxy to Gunicorn/Django app
+          location / {
+              proxy_pass http://127.0.0.1:8000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+
+          # Static files
+          location /static/ {
+              alias /var/www/network.example.com/production/static/;
+          }
+
+          # Media files
+          location /media/ {
+              alias /var/www/network.example.com/production/media/;
+          }
+      }
+
+    We recommend using a systemd service to run gunicorn_ in the background. Here's an example
+    systemd service file:
+
+    .. code-block:: ini
+
+      [Unit]
+      Description=Gunicorn instance to serve SLM
+      After=network.target
+
+      [Service]
+      User=www-data
+      Group=www-data
+      WorkingDirectory=/var/www/network.example.com/production
+      ExecStart=/opt/slm_venv/bin/gunicorn --workers 4 --bind unix:/var/www/network.example.com/production/slm.sock sites.network.production.wsgi:application
+
+      [Install]
+      WantedBy=multi-user.target
+
+
+  .. tab:: Apache
+
+    If you are using Apache_ you can use the :pypi:`mod_wsgi` module to run the SLM under Apache_.
+
+    Here's a notional Apache_ virtual host configuration that will serve your SLM instance:
+
+    .. code-block:: apache
+
+      <VirtualHost *:443>
+          ServerName network.example.com
+          DocumentRoot /var/www/network.example.com/production
+
+          # Enable SSL
+          SSLEngine on
+          SSLCertificateFile /etc/ssl/certs/fullchain.pem
+          SSLCertificateKeyFile /etc/ssl/certs/privkey.pem
+          # (Optional) Intermediate chain if needed
+          # SSLCertificateChainFile /etc/ssl/certs/chain.pem
+
+          # Hardened SSL settings
+          SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+          SSLCipherSuite HIGH:!aNULL:!MD5
+          SSLHonorCipherOrder on
+          SSLCompression off
+          SSLSessionTickets off
+
+          # WSGI configuration
+          WSGIDaemonProcess network python-home=/opt/slm_venv python-path=/var/www/network.example.com/production
+          WSGIProcessGroup network
+          WSGIScriptAlias / /opt/slm_venv/lib/python3.x/site-packages/sites/network/production/wsgi.py
+
+          # Static & media files
+          Alias /static/ /var/www/network.example.com/production/static/
+          Alias /media/ /var/www/network.example.com/production/media/
+
+          <Directory /var/www/network.example.com/production/static>
+              Require all granted
+          </Directory>
+
+          <Directory /var/www/network.example.com/production/media>
+              Require all granted
+          </Directory>
+
+          # Logging
+          ErrorLog ${APACHE_LOG_DIR}/network_error.log
+          CustomLog ${APACHE_LOG_DIR}/network_access.log combined
+      </VirtualHost>
+
+
+routine deploy
+--------------
+
+Anytime you install a new version of your SLM you need to run :django-admin:`routine deploy`. This
+will migrate the database and bundle all static files:
+
+.. code-block:: bash
+
+  (slm_venv) ?> network routine deploy
+
 .. _containerization:
 
 Containerization
 ================
-
-
 
 
 .. _fast_hosting:

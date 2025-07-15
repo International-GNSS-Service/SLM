@@ -36,4 +36,14 @@
 .. _GeoJSON: https://geojson.org/
 .. _GeodesyML: https://github.com/International-GNSS-Service/GeodesyML
 .. _MapBox: https://mapbox.com
-
+.. _Nginx: https://nginx.org
+.. _gunicorn: https://gunicorn.org/
+.. _mod_wsgi: https://modwsgi.readthedocs.io/en/develop/
+.. _Apache: https://httpd.apache.org/
+.. _Docker: https://www.docker.com
+.. _Podman: https://podman.io/
+.. _nvm: https://github.com/nvm-sh/nvm
+.. _npm: https://www.npmjs.com/
+.. _node: https://nodejs.org/
+.. _esbuild: https://esbuild.github.io/
+.. _pip: https://pip.pypa.io/en/stable/

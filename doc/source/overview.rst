@@ -33,7 +33,7 @@ operators and machine automations. There are many challenges to these objectives
 
 
 * **Networks Are Managed By People**
-  
+
   And people make mistakes. An SLM must be robust to the myriad kinds of mistakes people
   make: typos, mistranscriptions, misunderstandings, forgetfulness and tardiness.
 

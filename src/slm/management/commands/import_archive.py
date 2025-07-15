@@ -194,9 +194,9 @@ class Command(TyperCommand):
 
     # this matches fourYYMM.log and four_YYYYMMDD.log styles
     FILE_NAME_REGEX = re.compile(
-        r"^((?P<four_id>[a-zA-Z\d]{4})(?P<yymm>\d{4})|"
-        r"((?P<site>[a-zA-Z\d]{4,9})?\D*(?P<date_part>\d{8})(?P<extra>.*)))"
-        r"[.](?P<ext>(log)|(txt)|(xml))$"
+        r"^((?P<four_id>[a-zA-Z\d]{4})(?P<yymm>\d{4})?|"
+        r"((?P<site>[a-zA-Z\d]{4,})?\D*(?P<date_part>\d{8})?(?P<extra>.*)?))"
+        r"[.](?P<ext>(log)|(sitelog)|(txt)|(xml)|(gml)|(json))$"
     )
 
     def process_filename(
@@ -381,7 +381,9 @@ class Command(TyperCommand):
         traceback: Traceback = traceback,
     ):
         if not archive:
-            archive = Path(input(_("Where is the archive? (directory or tar/zip): ")))
+            archive = Path(
+                input(_("Where is the archive? (directory or tar/zip): ")).strip()
+            )
         self.archive = archive.expanduser()
         if not self.archive.exists():
             raise CommandError(
@@ -414,10 +416,11 @@ class Command(TyperCommand):
         if not self.archive.exists():
             raise CommandError(_("{file} does not exist.").format(file=self.archive))
 
-        if SiteLogFormat.GEODESY_ML in self.formats:
-            from slm.parsing.xsd import load_schemas
+        # if SiteLogFormat.GEODESY_ML in self.formats:
+        #     # TODO - only do this if necessary
+        #     from slm.parsing.xsd import load_schemas
 
-            load_schemas()
+        #     load_schemas()
 
         if self.archive.is_file() and tarfile.is_tarfile(self.archive):
             with tarfile.open(self.archive, "r") as archive:
@@ -583,7 +586,7 @@ class Command(TyperCommand):
                     )
                 save = False
                 recent_first = ArchiveIndex.objects.filter(site=site).order_by(
-                    "-valid_range__lower"
+                    "-valid_range"
                 )
                 latest = recent_first.first()
                 oldest = recent_first.last()
@@ -686,8 +689,12 @@ class Command(TyperCommand):
             with open(log, "wt") as log_f:
                 log_f.write(log_index)
 
-        if log and self.verbosity > 0:
-            return log.absolute()
+        if log:
+            import webbrowser
+
+            webbrowser.open(log.resolve().as_uri())
+            if self.verbosity > 0:
+                return log.absolute()
 
     def process_file(self, file_meta: FileMeta):
         with transaction.atomic():

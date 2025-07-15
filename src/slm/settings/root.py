@@ -17,7 +17,12 @@ from django.core.exceptions import ImproperlyConfigured
 from split_settings.tools import include, optional
 
 from slm.settings import env as settings_environment
-from slm.settings import get_setting, set_default, slm_path_mk_dirs_must_exist
+from slm.settings import (
+    get_setting,
+    set_default,
+    slm_path_mk_dirs_must_exist,
+    slm_path_must_exist,
+)
 
 env = settings_environment()
 
@@ -90,6 +95,7 @@ INSTALLED_APPS = set_default(
         "django_filters",
         "compressor",
         "widget_tweaks",
+        "django.contrib.postgres",
         "django.contrib.admin",
         "django.contrib.auth",
         "django.contrib.contenttypes",
@@ -194,6 +200,19 @@ STATIC_ROOT = env(
     "STATIC_ROOT",
     slm_path_mk_dirs_must_exist,
     default=get_setting("STATIC_ROOT", BASE_DIR / "static"),
+)
+
+env = settings_environment()
+
+GDAL_LIBRARY_PATH = env(
+    "GDAL_LIBRARY_PATH",
+    slm_path_must_exist,
+    default=get_setting("GDAL_LIBRARY_PATH", None),
+)
+GEOS_LIBRARY_PATH = env(
+    "GEOS_LIBRARY_PATH",
+    slm_path_must_exist,
+    default=get_setting("GEOS_LIBRARY_PATH", None),
 )
 
 include("slm.py")

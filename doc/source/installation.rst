@@ -6,11 +6,15 @@
 Installation
 ============
 
-The SLM is both a Django_ app and a fully deployable website. Most users of the SLM
-will want to customize certain aspects of it. To facilitate that we will use the
-:ref:`slm-startproject` bundled command to generate a scaffold to build off of
-(not unlike `Django's startproject <https://docs.djangoproject.com/en/stable/ref/django-admin/#django-admin-startproject>`_) .
-But first we must install some dependencies.
+Depending on your requirements you may wish to dive into the details and build out a
+fully customizable :ref:`manual installation <manual_install>` of the SLM or you may just
+want to get up and running in development or production as fast as possible with a
+:ref:`containerized build <containerization>`. If containers are familiar to you we recommend
+trying to :django-admin:`routine import` your site log archive if you have one into our
+containerized build to try out the SLM and identify any pain points. If you have to make
+significant modifications or additions to behavior you will likely have to build out your
+own manual installation, because our basic container includes only the default functionality
+with basic toggles.
 
 There are generally three deployment contexts under which you might wish to run an SLM.
 Hereafter, we will use the following terminology to describe these deployments:
@@ -22,8 +26,21 @@ Hereafter, we will use the following terminology to describe these deployments:
 * **production** - This is your live instance of the SLM that is used for your real world
   data.
 * **staging** - Depending on your operational requirements you may wish to run a staging
-  server with an identical configuration to your production server to test out updates
-  before deploying them to production.
+  server with an identical configuration and data to your production server to test out
+  updates before deploying them to production.
+
+
+.. _manual_install:
+
+Manual Installation
+===================
+
+The SLM is both a :doc:`Django app <django:ref/applications>` and a fully deployable website. Most
+users of the SLM will want to customize certain aspects of it (things like adding
+:pypi:`django-ldap` or :doc:`two-factor authentication <django-allauth:mfa/index>`). To facilitate
+that we will use the bundled command slm-startproject_ to generate a scaffold to build off of (not
+unlike Django's :django-admin:`startproject`). But first we must install some dependencies.
+
 
 Dependencies
 ############
@@ -46,7 +63,7 @@ environment(s):
      - ✅
      - Programming language runtime.
    * - PostgreSQL_
-     - >=12
+     - >=14
      - ✅
      - Relational Database (RDBMS)
    * - PostGIS_
@@ -54,22 +71,18 @@ environment(s):
      - ✅
      - Geographic information system extension to PostgreSQL_.
    * - Django_ & GeoDjango_
-     - >=4.2
+     - ==4.2.x
      - ✅
      - Django will be installed automatically, but GeoDjango_ has external dependencies that may
        need to be installed manually.
+   * - uv_
+     - >=0.7
+     - ✅
+     - A python build and package management system. Used by the SLM and by slm-startproject_
    * - pgAdmin_
-     - >=7.0
+     - >=9.0
      -
      - A graphical PostgreSQL management utility. Recommended for local development.
-   * - Poetry_
-     - >=1.8
-     -
-     - A python build and package management system. Used by :ref:`slm-startproject`
-   * - pyenv_
-     - >=2.3
-     -
-     - A python management system. Not required but recommended for local development.
 
 |
 
@@ -122,31 +135,42 @@ Start Project
 To get up and running quickly with your customized SLM deployment we bundle a command called
 slm-startproject_ that will scaffold out a directory structure and settings files for you to start
 working with. Before running slm-startproject_ you will need to have installed all of GeoDjango_'s
-dependencies as well as PostgreSQL_ and PostGIS_ and Poetry_. You do not need to install Django_
+dependencies as well as PostgreSQL_ and PostGIS_ and uv_. You do not need to install Django_
 itself yet though.
 
-(1) Install igs-slm_
---------------------
+(1) Run ``slm-startproject``
+----------------------------
+
+.. tabs::
+
+  .. tab:: uvx
+        
+    uvx_ should be able to find our ``slm-startproject`` command. You can test this by running:
 
     .. code:: bash
 
-        ?> pip install igs-slm
+      ?> uvx slm-startproject --help
+  
+  .. tab:: pip
 
-You also have the option of working with our development version from github, but unless you have
-a compelling reason to do so you should use the release on pypi.
+    You can install the :pypi:`igs-slm` package into your local environment and run the command directly.
 
     .. code:: bash
 
-        ?> git clone https://github.com/International-GNSS-Service/SLM.git
-        ?> cd SLM
-        ?> poetry install
+      ?> pip install igs-slm
+      ?> slm-startproject --help
 
-Now you should have a command available on your terminal called slm-startproject_ and when you
-run
+  .. tab:: github
 
-.. code:: bash
+    You also have the option of working with our development version from github, but unless you have
+    a compelling reason to do so you should use the release on pypi.
 
-  ?> slm-startproject --help
+    .. code:: bash
+
+      ?> git clone https://github.com/International-GNSS-Service/SLM.git
+      ?> cd SLM
+      ?> uv sync
+      ?> uv run slm-startproject --help
 
 you should see this:
 
@@ -159,9 +183,6 @@ you should see this:
     :convert-png: latex
 
 |
-
-(2) Run slm-startproject
-------------------------
 
 Before running the command you should decide what your production url will be. If it were
 https://network.example.com we might proceed as follows to create the files in a directory called
@@ -177,8 +198,9 @@ the first question you can just hit enter to accept the defaults:
     What is the name of your site? [{subdomain}]: <enter>
     Where should files live in production? [/var/www/{site}/production]: <enter>
     What should we call your custom Django app? [{org}_extensions]: <enter>
-    Install the mapbox map app? [y/N]: <enter>
-    Use IGS sitelog validation defaults? [y/N]: <enter>
+    How should we connect to the database (db url)? [postgis:///{site}]: <enter>
+    Install the mapbox map app? [Y/n]: <enter>
+    Use IGS sitelog validation defaults? [Y/n]: <enter>
 
 **slm-startproject** will create a directory structure that looks like this:
 
@@ -231,25 +253,22 @@ the first question you can just hit enter to accept the defaults:
   control.**
 
 
-(3) Create environment & database
+(2) Create environment & database
 ---------------------------------
 
-* Use either psql_ or pgAdmin_ to create the database that **slm-startproject** instructs you to.
-  In our example this database would be named 'network'.
+* Use either psql_ or pgAdmin_ to create the database that slm-startproject_ instructs you to.
+  In our example this database would be named ``network``.
 
-* Use poetry to install the virtual environment then activate it. We also recommend configuring
-  poetry to create virtual environments in the same directory as your project:
+* Use uv to install the virtual environment then activate it.
 
     .. code-block:: bash
 
-      ?> poetry config virtualenvs.in-project true
-      ?> poetry install
-      ?> source .venv/bin/activate
+      ?> uv sync --all-extras
 
 
 .. _import_sitelogs:
 
-(4) Import Existing Logs and Deploy
+(3) Import Existing Logs and Deploy
 -----------------------------------
 
 The SLM ships with a number of :ref:`pre-defined routines <routines>`. If you do not have any
@@ -267,7 +286,7 @@ The data import will both generate logs and record import errors and warnings as
 validation flags in the database so you can manually go through the web interface and correct any
 errors.
 
-(5) Run the Development Server
+(4) Run the Development Server
 ------------------------------
 
 You should now be able to start up the development server and see data in your SLM instance.
@@ -291,10 +310,18 @@ their permissions through the admin.
 
   Refer to :ref:`operations` for advice on production deployments.
 
+.. _containerization:
+
+Containerization
+================
+
+
+
+
 .. _fast_hosting:
 
 Fast Hosting
-############
+============
 
 .. todo::
        Instructions for quickly deploying to a hosting service..

@@ -1,10 +1,12 @@
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
 import django
+import environ
 from django.conf import settings
 from django_typer.completers import complete_path
 from packaging.version import Version
@@ -37,7 +39,7 @@ REPORT_MARKDOWN = """
 
 ### Installation Instructions
 
-1. Create a database called `{site}`.
+1. Create a database called `{database_name}`.
 
 2. Use `uv` to install your project's virtual environment:
 
@@ -52,19 +54,42 @@ REPORT_MARKDOWN = """
 3. To install your database and import existing sitelogs, run:
     
     ```bash
-    {site} routine install
+    uv run {site} routine install
     ```
 
 4. To run the development server, run:
     
     ```bash
-    {site} runserver
+    uv run {site} runserver
     ```
 """
 
 INSTALL_UV = """
     **You do not have `uv` installed, see**: https://docs.astral.sh/uv/getting-started/installation/
 """
+
+
+def sanitize_package_dir(name: str) -> str:
+    """
+    Convert an arbitrary string to a valid Python importable name.
+
+    Rules:
+    - Replace any non-alphanumeric character with underscore.
+    - Collapse multiple underscores.
+    - Remove leading/trailing underscores.
+    - Lowercase the result.
+    """
+    return re.sub(r"_+", "_", re.sub(r"[^A-Za-z0-9]+", "_", name)).strip("_").lower()
+
+
+def sanitize_package_name(name: str) -> str:
+    """
+    Replace illegal characters in a package name with underscores
+    according to PyPI naming rules (PEP 508).
+    """
+    return re.sub(
+        r"_+", "_", re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip(".-")
+    ).lower()
 
 
 @app.command(
@@ -121,22 +146,29 @@ def main(
             help="What should we call your custom Django app?",
         ),
     ] = "{org}_extensions",
+    database: Annotated[
+        str,
+        Option(
+            prompt="How should we connect to the database (db url)?",
+            help="How should we connect to the database (db url)?",
+        ),
+    ] = "postgis:///{site}",
     include_map: Annotated[
         bool,
         Option(
-            "--include-map",
+            "--no-include-map",
             prompt="Install the mapbox map app?",
             help="Install the mapbox map app?",
         ),
-    ] = False,
+    ] = True,
     use_igs_validation: Annotated[
         bool,
         Option(
-            "--use-igs-validation",
+            "--no-use-igs-validation",
             prompt="Use IGS sitelog validation defaults?",
             help="Use IGS sitelog validation defaults?",
         ),
-    ] = False,
+    ] = True,
 ):
     netloc = (urlparse(netloc).netloc or netloc).lower()
     parts = netloc.split(".")
@@ -188,12 +220,27 @@ def main(
         }
     )
     if not organization or organization == "{domain}":
-        organization = domain.title()
-    org = organization.replace(" ", "_").lower()
-    extension_app = extension_app.format(org=(org or "slm"))
+        parts = domain.split(".")
+        organization = parts[0]
+        if len(parts) > 1:
+            organization = parts[-2]
+        organization = organization.title()
+    org = organization.replace(" ", "_").replace(".", "_").lower()
+    extension_app = sanitize_package_dir(extension_app.format(org=(org or "slm")))
     site = site.format(subdomain=subdomain).replace(" ", "_").lower()
     project_dir = project_dir.format(subdomain=subdomain)
-    package_name = package_name.format(project_dir=project_dir)
+    package_name = sanitize_package_name(package_name.format(project_dir=project_dir))
+    database = database.format(site=site)
+    if database.isalpha():
+        database = f"postgis:///{database}"
+
+    env = environ.Env()
+    database_name = env.db_url_config(
+        database, engine="django.contrib.gis.db.backends.postgis"
+    )["NAME"]
+
+    if not database_name:
+        raise
 
     # find site packages dir
     local_slm = None
@@ -201,17 +248,33 @@ def main(
     for pth in (Path(pth) for pth in sys.path):
         if pth.name == "site-packages":
             if pth not in slm_pth.parents:
-                if yes(
-                    input(
-                        "It looks like you are using a local clone of the SLM, would "
-                        "you prefer to use this instead of a release on pypi? (Y/n): "
-                    )
-                ):
-                    local_slm = os.path.relpath(
-                        slm_pth.parent.parent,
-                        directory.absolute().resolve() / project_dir,
-                    )
+                local_slm = os.path.relpath(
+                    slm_pth.parent.parent,
+                    directory.absolute().resolve() / project_dir,
+                )
                 break
+            else:
+                # uvx --from path edge case
+                import json
+                from importlib.metadata import version
+
+                direct_url = (
+                    pth / f"igs_slm-{version('igs-slm')}.dist-info" / "direct_url.json"
+                )
+                if direct_url.is_file():
+                    installed_from = json.loads(direct_url.read_text()).get("url", None)
+                    if installed_from.startswith("file:///"):
+                        local_slm = str(Path(installed_from[7:]).resolve())
+                        break
+
+    if local_slm:
+        if not yes(
+            input(
+                "It looks like you are using a local clone of the SLM, would "
+                "you prefer to use this instead of a release on pypi? (Y/n): "
+            )
+        ):
+            local_slm = None
 
     ctx = {
         "netloc": netloc,
@@ -220,6 +283,8 @@ def main(
         "org": org,
         "project_dir": project_dir,
         "site": site,
+        "database": database,
+        "database_name": database_name,
         "production_dir": production_dir.format(site=site),
         "slm_version": slm.__version__,
         "slm_version_next_major": f"{Version(slm.__version__).major + 1}.0",
@@ -244,7 +309,9 @@ def main(
     )
 
     output = (directory / project_dir).absolute().resolve()
-    assert output.is_dir() and output.exists()
+    assert output.is_dir() and output.exists(), (
+        f"Failed to create project directory: {output}"
+    )
 
     Console().print(
         Markdown(
@@ -253,6 +320,7 @@ def main(
                 develop=(output / "sites" / site / "develop/__init__.py").relative_to(
                     output
                 ),
+                database_name=database_name,
                 production=(
                     output / "sites" / site / "production/__init__.py"
                 ).relative_to(output),

@@ -4,7 +4,8 @@
 .. _Django: https://www.djangoproject.com
 .. _GeoDjango: https://docs.djangoproject.com/en/stable/ref/contrib/gis
 .. _Python: https://python.org
-.. _Poetry: https://python-poetry.org
+.. _uv: https://docs.astral.sh/uv/
+.. _uvx: https://docs.astral.sh/uv/concepts/tools/
 .. _GitHub: https://github.com/igs/slm
 .. _PyPI: https://pypi.python.org
 .. _igs-slm: https://pypi.python.org/pypi/igs-slm

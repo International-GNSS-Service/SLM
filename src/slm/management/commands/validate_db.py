@@ -159,7 +159,7 @@ class Command(TyperCommand):
 
         new_flags = Site.objects.aggregate(Sum("num_flags"))["num_flags__sum"]
 
-        delta = new_flags - old_flag_count
+        delta = (new_flags or 0) - (old_flag_count or 0)
 
         if delta >= 0:
             change = "added"
@@ -180,7 +180,9 @@ class Command(TyperCommand):
                     "There are a total of {new_flags} validation flags across "
                     "{site_count} sites. {critical} are critical."
                 ).format(
-                    new_flags=new_flags, site_count=sites.count(), critical=critical
+                    new_flags=(new_flags or 0),
+                    site_count=sites.count(),
+                    critical=critical,
                 )
             )
         )

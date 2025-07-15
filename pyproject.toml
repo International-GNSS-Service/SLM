@@ -74,12 +74,14 @@ dependencies = [
     "chardet>=5.1.0,<6.0.0",
     "psycopg>=3.1",
     "django-typer>=2.1.2,<3.0.0",
+    "click<8.2",  # TODO remove this when django-typer is upgraded
     "django-routines>=1.1.3,<2.0.0",
     "rich>=13.7.1,<14.0.0",
     "requests>=2.32.3,<3.0.0",
     "packaging>=24.2",
     "django-compressor>=4.5.1",
     "django-environ>=0.11.2",
+    "ipdb"
 ]
 
 [build-system]

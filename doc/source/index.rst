@@ -11,35 +11,36 @@ in Python_ and JavaScript using the Django_ web framework.
 
 The SLM aims to provide:
 
-   * GNSS Site meta data (site log) management with a moderation workflow.
-   * Support for multiple organizations and networks to be managed in an access controlled way.
-   * Full legacy site log format support (both import and export).
-   * Full GeodesyML support (both import and export).
-   * JSON renderings of meta data.
-   * Point-and-click graphical editing of site log data.
-   * Public RESTful api for searching site log data.
-   * Authenticated RESTful api for updating site log data.
-   * Full access to the historical record.
-   * Visualizations of networks and site information.
-   * Configurable data validation that goes above and beyond schema validation.
-   * Image and file attachments to sites.
-   * A no-fork extensible architecture that allows organizations to modify out-of-the box behavior
-     with plugins.
+* GNSS Site meta data (site log) management with a moderation workflow.
+* Support for multiple organizations and networks to be managed in an access controlled way.
+* Full legacy site log format support (both import and export).
+* Full GeodesyML support (both import and export).
+* JSON renderings of meta data.
+* Point-and-click graphical editing of site log data.
+* Public RESTful api for searching site log data.
+* Authenticated RESTful api for updating site log data.
+* Full access to the historical record.
+* Visualizations of networks and site information.
+* Configurable data validation that goes above and beyond schema validation.
+* Image and file attachments to sites.
+* A no-fork extensible architecture that allows organizations to modify out-of-the box behavior
+  with plugins.
 
 This documentation speaks to multiple audiences:
 
-   * **Developers** will want to refer to the :ref:`installation`, :ref:`architecture`,
-     :ref:`commands` and :ref:`reference` sections.
-   * **System administrators** may be interested in :ref:`operations` and :ref:`commands`.
-   * **Users** and **network coordinators** will be interested in the :ref:`user_manual`.
-   * **Developers** wishing to work with SLM managed data will be interested in the :ref:`api`.
-   * **Everyone**, but particularly **program managers** will want to take a look at the
-     :ref:`overview`.
+* **Developers** will want to refer to the :ref:`installation`, :ref:`architecture`,
+  :ref:`commands` and :ref:`reference` sections.
+* **System administrators** may be interested in :ref:`operations` and :ref:`commands`.
+* **Users** and **network coordinators** will be interested in the :ref:`user_manual`.
+* **Developers** wishing to work with SLM managed data will be interested in the :ref:`api`.
+* **Everyone**, but particularly **program managers** will want to take a look at the
+  :ref:`overview`.
 
 .. warning::
 
-   The SLM has reached beta-maturity but is still undergoing rapid development. Check back soon for
-   new documentation and updates. A version 1.0 stable release is expected in late September 2024.
+   The SLM has reached beta-maturity but is still undergoing signficant organizational changes.
+   Check back soon for new documentation and updates. A version 1.0 stable release is expected
+   in 2026.
 
 Please use the discussions_ page for general inquiry and the issues_ page to report bugs. Our road
 map is on the projects_ page.

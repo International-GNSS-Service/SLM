@@ -12,12 +12,10 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
 DEBUG = True
 SLM_DEBUG_TOOLBAR = True
 
-include('../base.py')
+WSGI_APPLICATION = "sites.{{ site }}.develop.wsgi.application"
 
 set_default("SILENCED_SYSTEM_CHECKS", []).extend([
     "security.W004",
@@ -25,30 +23,11 @@ set_default("SILENCED_SYSTEM_CHECKS", []).extend([
     "security.W018"
 ])
 
+include('../base.py')
+
 # Special configuration parameters for your local development instance should be
 # placed here:
 include(optional('local.py'))
-
-set_default(
-    'DATABASES',
-    {
-        'default': {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': '{{ site }}',
-            'USER': 'postgres',
-            'PASSWORD': '',
-            'ATOMIC_REQUESTS': True,
-        }
-    }
-)
-
-WSGI_APPLICATION = "sites.{{ site }}.develop.wsgi.application"
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
-    }
-}
 
 INSTALLED_APPS.insert(1, 'django_extensions')
 

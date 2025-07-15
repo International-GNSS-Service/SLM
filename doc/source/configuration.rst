@@ -178,6 +178,12 @@ The following settings may be overridden by environment variables:
    * - :setting:`ADMINS`
      - :ref:`env_types_list`
      - ``"Display Name <name@email.com>, only@email.com"``
+   * - :setting:`GDAL_LIBRARY_PATH`
+     - :ref:`env_types_path`
+     - ``/usr/lib/x86_64-linux-gnu/libgdal.so``
+   * - :setting:`GEOS_LIBRARY_PATH`
+     - :ref:`env_types_path`
+     - ``/usr/lib/x86_64-linux-gnu/libgeos_c.so``
    * - :setting:`EMAIL_SSL_CERTFILE`
      - :ref:`env_types_path`
      - ``/path/to/smtp/cert``

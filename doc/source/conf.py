@@ -123,6 +123,7 @@ intersphinx_mapping = {
     "django-enum": ("https://django-enum.readthedocs.io/en/stable/", None),
     "django-filter": ("https://django-filter.readthedocs.io/en/stable/", None),
     "django-environ": ("https://django-environ.readthedocs.io/en/stable/", None),
+    "django-allauth": ("https://docs.allauth.org/en/latest/", None),
     "python": ('https://docs.python.org/3', None)
 }
 

@@ -215,9 +215,9 @@ class Command(TyperCommand):
 
         self.indexes = (
             ArchiveIndex.objects.filter(
-                site__in=self.sites, valid_range__lower__isnull=True
+                site__in=self.sites, valid_range__upper_inf=True
             )
-            .order_by("site", "-valid_range__lower")
+            .order_by("site", "-valid_range")
             .distinct("site")
         )
 
@@ -467,9 +467,10 @@ class Command(TyperCommand):
                             setattr(form, field, value)
                         form.previous = (
                             ArchiveIndex.objects.filter(
-                                site=index.site, valid_range__lower__lte=index.begin
+                                site=index.site,
+                                valid_range__startswith__lte=index.begin,
                             )
-                            .order_by("-valid_range__lower")
+                            .order_by("-valid_range")
                             .first()
                         )
                         form.save(skip_update=True, set_previous=False)

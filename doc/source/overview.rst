@@ -32,43 +32,43 @@ information about a ground station network and make that information available t
 operators and machine automations. There are many challenges to these objectives. To name a few:
 
 
-    * **Networks Are Managed By People**
-
-        And people make mistakes. An SLM must be robust to the myriad kinds of mistakes people
-        make: typos, mistranscriptions, misunderstandings, forgetfulness and tardiness.
-
-
-    * **Multiple Sources of Truth**
-
-        Often the same information may exist in more than one place. There may be multiple
-        different site logs that disagree about a receiver or which source do you trust when
-        RINEX headers and a site log disagree?
+* **Networks Are Managed By People**
+  
+  And people make mistakes. An SLM must be robust to the myriad kinds of mistakes people
+  make: typos, mistranscriptions, misunderstandings, forgetfulness and tardiness.
 
 
-    * **Evolving Technologies**
+* **Multiple Sources of Truth**
 
-        GNSS technologies are constantly evolving. So the pertinent information that organizations
-        and researches are interested in does too. The data tracked for ground stations must be
-        allowed to evolve over time, while maintaining backwards compatibility with older
-        schemas/data models.
+  Often the same information may exist in more than one place. There may be multiple
+  different site logs that disagree about a receiver or which source do you trust when
+  RINEX headers and a site log disagree?
 
 
-    * **Legacy Systems**
+* **Evolving Technologies**
 
-        A significant amount of resources have gone into developing the legacy systems in operation
-        around the world since the advent of GPS. These systems must be supported while
-        simultaneously enabling modern systems to be built on new technologies.
+  GNSS technologies are constantly evolving. So the pertinent information that organizations
+  and researches are interested in does too. The data tracked for ground stations must be
+  allowed to evolve over time, while maintaining backwards compatibility with older
+  schemas/data models.
 
-    * **Many Consumers**
 
-        There are many different consumers of GNSS ground station data. Many are human some are
-        not. An SLM must provide easy, reliable and normalized access to all consumers and
-        applications.
+* **Legacy Systems**
 
-    * **Different Requirements**
+  A significant amount of resources have gone into developing the legacy systems in operation
+  around the world since the advent of GPS. These systems must be supported while
+  simultaneously enabling modern systems to be built on new technologies.
 
-        Many networks have their own idiosyncratic qualities and institutional requirements that
-        may produce conflicts in what is expected to be present in station meta information.
+* **Many Consumers**
+
+  There are many different consumers of GNSS ground station data. Many are human some are
+  not. An SLM must provide easy, reliable and normalized access to all consumers and
+  applications.
+
+* **Different Requirements**
+
+  Many networks have their own idiosyncratic qualities and institutional requirements that
+  may produce conflicts in what is expected to be present in station meta information.
 
 Solutions
 =========

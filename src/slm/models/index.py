@@ -189,8 +189,6 @@ class ArchiveIndexQuerySet(models.QuerySet):
             # updated
             # we trigger unpublished state by updating the SiteForm
             # prepared date and synchronizing
-            # import ipdb
-            # ipdb.set_trace()
             published_sites = Site.objects.filter(
                 Q(indexes__in=self.filter(end__isnull=True))
                 & Q(status=SiteLogStatus.PUBLISHED)

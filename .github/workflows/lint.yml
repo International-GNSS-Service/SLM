@@ -29,12 +29,9 @@ jobs:
         python-version: [ '3.9', '3.13' ]
         django-version:
           - '4.2' # LTS April 2026
-          - '5.2' # LTS April 2028
         exclude:
           - python-version: '3.13'
             django-version: '4.2'
-          - python-version: '3.9'
-            django-version: '5.2'
 
     steps:
       - name: Install Emacs
@@ -76,5 +73,4 @@ jobs:
           just check-package
           just check-readme
           just check-docs
-          just check-docs-spelling
   

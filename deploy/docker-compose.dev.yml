@@ -1,0 +1,70 @@
+version: '3.9'
+
+# Development override for docker-compose.yml
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"  # Expose PostgreSQL only to localhost
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: dev  # Use development stage if we add multi-stage build
+    command: ["uv", "run", "slm", "runserver", "0.0.0.0:8000"]
+    volumes:
+      - ../src:/app/src:delegated  # Live code reloading
+      - ../pyproject.toml:/app/pyproject.toml:delegated
+      - ../uv.lock:/app/uv.lock:delegated
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - upload_volume:/app/uploads
+    environment:
+      - DEBUG=true
+      - DJANGO_SETTINGS_MODULE=tests.settings  # Use test settings for development
+      - SLM_DEBUG_TOOLBAR=true
+      - COMPRESS_ENABLED=false  # Disable compression in development for faster rebuilds
+    ports:
+      - "8000:8000"  # Expose Django directly for development
+    stdin_open: true
+    tty: true
+
+  # Optional: Watch and rebuild assets during development
+  esbuild-watch:
+    image: node:22-alpine
+    working_dir: /app
+    command: ["npx", "esbuild", "--watch", "--bundle", "--outdir=src/slm/static/slm/js/built/", "src/slm/static/slm/js/*.js"]
+    volumes:
+      - ../src:/app/src
+    profiles:
+      - watch  # Use with: docker compose --profile watch up
+
+  # Optional Redis for caching in development
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - slm-network
+
+  # Optional development database admin tool
+  adminer:
+    image: adminer:4
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+    networks:
+      - slm-network
+
+volumes:
+  redis_data:
+    driver: local

@@ -400,7 +400,7 @@ We recommend setting up your site's working directory somewhere under /var/www:
   ?> mkdir static media logs secrets
 
 web servers
-----------
+-----------
 
 .. tabs::
 

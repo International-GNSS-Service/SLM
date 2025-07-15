@@ -6,5 +6,6 @@ from django.urls import path
 
 app_name = "{{ extension_app }}"
 
+SLM_INCLUDE = True
 
 urlpatterns = []

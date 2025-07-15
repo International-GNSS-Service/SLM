@@ -1,7 +1,15 @@
+"""
+You can make direct modifications to the URLs built by the slm here if needed.
+
+Your extension app will already be included at the root path because it sets:
+
+    SLM_INCLUDE = True.
+"""
+
 from slm.settings.urls import urlpatterns
 from django.urls import path, include
 
+
 urlpatterns.extend([
-    {% if not include_map %}#{% endif %}path('', include('slm.map.urls')),
-    path('', include('{{ extension_app }}.urls')),
+    # add other app URLs here
 ])

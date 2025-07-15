@@ -85,7 +85,6 @@ dependencies = [
 
 [project.optional-dependencies]
 gunicorn = ["gunicorn>=22.0.0"]
-mod-wsgi = ["mod-wsgi>=5.0"]
 
 
 [build-system]

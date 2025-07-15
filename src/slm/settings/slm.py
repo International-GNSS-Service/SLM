@@ -178,13 +178,6 @@ set_default(
     },
 )
 
-# slm provides an implementation of urls.py that will load this list into
-# url patterns. This should be a list of 2-tuples where the first tuple is the
-# path stem mount point for the included apps' URLs and the second element is
-# the string that will be passed to django.urls.include
-SLM_URL_MOUNTS = []
-
-
 # control the domain used to generate absolute links to the SLM log document
 # attachments including images and files. Any standalone artifacts produced by
 # the slm that include links to files served by the SLM will use this domain

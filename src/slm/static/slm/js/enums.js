@@ -201,12 +201,12 @@ class SiteFileUploadStatus {
 }
 class SiteLogFormat {
 	
-	static LEGACY = new SiteLogFormat(1, "LEGACY", "Legacy (ASCII)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "legacy"]);
-	static GEODESY_ML = new SiteLogFormat(2, "GEODESY_ML", "GeodesyML", "application/xml", "bi bi-filetype-xml", "xml", ["xml"]);
-	static JSON = new SiteLogFormat(3, "JSON", "JSON", "application/json", "bi bi-filetype-json", "json", ["json", "js"]);
-	static ASCII_9CHAR = new SiteLogFormat(4, "ASCII_9CHAR", "ASCII (9-Char)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "9char"]);
+	static LEGACY = new SiteLogFormat(1, "LEGACY", "Legacy (ASCII)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "legacy"], ["txt", "sitelog"]);
+	static GEODESY_ML = new SiteLogFormat(2, "GEODESY_ML", "GeodesyML", "application/xml", "bi bi-filetype-xml", "xml", ["xml"], ["gml"]);
+	static JSON = new SiteLogFormat(3, "JSON", "JSON", "application/json", "bi bi-filetype-json", "json", ["json", "js"], ["js"]);
+	static ASCII_9CHAR = new SiteLogFormat(4, "ASCII_9CHAR", "ASCII (9-Char)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "9char"], ["txt", "sitelog"]);
 	
-	constructor (value, name, label, mimetype, icon, ext, alts) {
+	constructor (value, name, label, mimetype, icon, ext, alts, alt_exts) {
 		this.value = value;
 		this.name = name;
 		this.label = label;
@@ -214,6 +214,7 @@ class SiteLogFormat {
 		this.icon = icon;
 		this.ext = ext;
 		this.alts = alts;
+		this.alt_exts = alt_exts;
 	}
 	
 	static ciCompare(a, b) {

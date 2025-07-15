@@ -38,16 +38,6 @@ APIS dictionary. For example the slm.map app extends the public API like so:
         }
     }
 
-Other third party apps may be included at customizable mount points by
-providing a settings.SLM_URL_MOUNTS list. For example to include your app at
-the myapp path you might do this:
-
-.. code-block: python
-
-    SLM_URL_MOUNTS = [
-        ('myapp/', 'myapp.urls')
-    ]
-
 """
 
 from importlib import import_module
@@ -80,7 +70,11 @@ def bring_in_urls(urlpatterns):
 
     for app in reversed(settings.INSTALLED_APPS):
         try:
-            url_module = import_module(f"{app}.urls")
+            url_module_str = f"{app}.urls"
+            url_module = import_module(url_module_str)
+            slm_include = getattr(url_module, "SLM_INCLUDE", False)
+            if not slm_include:
+                continue
             api = getattr(url_module, "APIS", None)
             if api:
                 for api, endpoints in api.items():
@@ -95,6 +89,7 @@ def bring_in_urls(urlpatterns):
                                 endpoint[0] if len(endpoint) < 3 else endpoint[2]
                             ),
                         )
+            urlpatterns.insert(0, path("", include(url_module_str)))
 
         except ImportError:
             if app in {"slm", "slm.map", "network_map", "igs_ext"}:

@@ -366,7 +366,7 @@
         //slm.addColumnFiltering( stationTable );
     </script>
     {% else %}
-    {% trans "To enable maps, create a MapBox account and configure the api key in the admin:" %} <a href="https://mapbox.com">mapbox.com</a>
+    {% trans "To enable maps, create a MapBox account and " %}<a href="{% url 'admin:slm_map_mapsettings_change' 1 %}">{% trans "configure the api key in the admin:" %}</a> <a href="https://mapbox.com">mapbox.com</a>
     {% endif %}
 </div>
 {% endblock %}

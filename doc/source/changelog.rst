@@ -6,13 +6,20 @@
 Change Log
 ==========
 
-v0.1.5b1 (2024-07-15)
+v0.1.5b2 (2025-07-15)
+=====================
+
+* Beta Bug Fix
+* Added `Add debug dependency group <https://github.com/International-GNSS-Service/SLM/issues/155>`_
+* Fixed `WSGI_APPLICATION default is wrong <https://github.com/International-GNSS-Service/SLM/issues/154>`_
+
+v0.1.5b1 (2025-07-15)
 =====================
 
 * Beta Bug Fix
 * Fixed `SLM_INCLUDE url inclusion is not working to spec <https://github.com/International-GNSS-Service/SLM/issues/152>`_
 
-v0.1.5b0 (2024-07-15)
+v0.1.5b0 (2025-07-15)
 =====================
 
 * Beta Increment

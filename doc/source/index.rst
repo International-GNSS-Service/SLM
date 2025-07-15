@@ -30,7 +30,8 @@ This documentation speaks to multiple audiences:
 
 * **Developers** will want to refer to the :ref:`installation`, :ref:`architecture`,
   :ref:`commands` and :ref:`reference` sections.
-* **System administrators** may be interested in :ref:`operations` and :ref:`commands`.
+* **System administrators** may be interested in :ref:`configuration`, :ref:`upgrading` and
+  :ref:`commands`.
 * **Users** and **network coordinators** will be interested in the :ref:`user_manual`.
 * **Developers** wishing to work with SLM managed data will be interested in the :ref:`api`.
 * **Everyone**, but particularly **program managers** will want to take a look at the
@@ -47,9 +48,7 @@ map is on the projects_ page.
 
 Contributions_ from the community are encouraged!
 
-.. APIs
-.. manual/index
-.. operations/index
+
 
 .. toctree::
    :maxdepth: 2
@@ -60,8 +59,10 @@ Contributions_ from the community are encouraged!
    upgrading
    configuration
    architecture/index
+   manual/index
    commands
    dependencies
+   APIs
    reference/index
    changelog
 

@@ -242,5 +242,5 @@ set_default(
 )
 
 WSGI_APPLICATION = env(
-    "WSGI_APPLICATION", default=get_setting("WSGI_APPLICATION", "slm.wsgi")
+    "WSGI_APPLICATION", default=get_setting("WSGI_APPLICATION", "slm.wsgi.application")
 )

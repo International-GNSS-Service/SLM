@@ -1,5 +1,6 @@
 .. include:: refs.rst
 
+.. _configuration:
 
 =============
 Configuration
@@ -518,7 +519,7 @@ We provide a more reasonable default than Django_'s :setting:`django:DEFAULT_FRO
 -----------------------
 .. setting:: WSGI_APPLICATION
 
-Default: ``slm.wsgi``
+Default: ``slm.wsgi.application``
 
 We set a default for :setting:`django:WSGI_APPLICATION` that works if *either*:
 

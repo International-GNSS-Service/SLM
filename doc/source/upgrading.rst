@@ -1,5 +1,6 @@
 .. include:: refs.rst
 
+.. _upgrading:
 
 =========
 Upgrading

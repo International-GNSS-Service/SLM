@@ -35,12 +35,19 @@ Hereafter, we will use the following terminology to describe these deployments:
 Manual Installation
 ===================
 
-The SLM is both a :doc:`Django app <django:ref/applications>` and a fully deployable website. Most
-users of the SLM will want to customize certain aspects of it (things like adding
-:pypi:`django-ldap` or :doc:`two-factor authentication <django-allauth:mfa/index>`). To facilitate
-that we will use the bundled command slm-startproject_ to generate a scaffold to build off of (not
-unlike Django's :django-admin:`startproject`). But first we must install some dependencies.
+The SLM is both a :doc:`Django app <django:ref/applications>` and a fully deployable website. Many
+users of the SLM will want to customize it significantly (things like adding
+:pypi:`django-ldap` or :doc:`two-factor authentication <django-allauth:mfa/index>`). It can also
+be deployed out of the box with a :ref:`minimal configuration <configuration>`. We recommend trying
+a minimal development set up first to familiarize yourself with the software and identify any data
+importing pain points. The following guide includes instructions for running the SLM out of the
+box and for generating a scaffold to customize it. We will first work through a
+:ref:`local develop <slm-startproject>` installation and then we cover
+:ref:`deployment to a production server <deploy>`.
 
+To facilitate customization we provide a bundled command slm-startproject_ to generate a scaffold to
+build off of (not unlike Django's :django-admin:`startproject`). But first we must install some
+dependencies.
 
 Dependencies
 ############
@@ -132,6 +139,8 @@ Platform specific Installation guidance.
 Start Project
 #############
 
+**If you are not customizing the SLM, skip ahead to step 2.**
+
 To get up and running quickly with your customized SLM deployment we bundle a command called
 slm-startproject_ that will scaffold out a directory structure and settings files for you to start
 working with. Before running slm-startproject_ you will need to have installed all of GeoDjango_'s
@@ -162,8 +171,8 @@ itself yet though.
 
   .. tab:: github
 
-    You also have the option of working with our development version from github, but unless you have
-    a compelling reason to do so you should use the release on pypi.
+    You also have the option of working with our development version from github, but unless you
+    have a compelling reason to do so you should use the release on pypi.
 
     .. code:: bash
 
@@ -256,15 +265,56 @@ the first question you can just hit enter to accept the defaults:
 (2) Create environment & database
 ---------------------------------
 
-* Use either psql_ or pgAdmin_ to create the database that slm-startproject_ instructs you to.
-  In our example this database would be named ``network``.
+.. tabs::
 
-* Use uv to install the virtual environment then activate it.
+  .. tab:: Basic Install
+
+    * Use either psql_ or pgAdmin_ to create a database called ``slm``.
+
+    * We recommend creating a local development :mod:`python virtual environment <venv>`, but you
+      may also use any python on your system that meets the :pypi:`igs-slm` minimum python
+      requirement.
+
+    * You will need to set a few environment variables and create an environment variable file so
+      the SLM knows some basic things about itself.
+
+    In your local development directory:
 
     .. code-block:: bash
 
-      ?> uv sync --all-extras
+      ?> python -m venv .venv
+      ?> source .venv/bin/activate
+      (.venv) ?> export SLM_ENV=`pwd`/.env
+      (.venv) ?> touch .env
+      (.venv) ?> pip install "igs-slm[debug]"
 
+    Add a minimal configuraton to the .env file. It may look something like this. You may also
+    refer to the :ref:`configuration` page for all of the available settings. The most important
+    settings are :setting:`SLM_ENV`, :setting:`BASE_DIR`:
+
+    .. code-block:: bash
+
+      DEBUG=True
+      BASE_DIR=./
+      SLM_ORG_NAME="ORG"
+      SLM_SITE_NAME="localhost"
+      # you may have to set these paths if your postgis libraries
+      # are in non-standard locations
+      # GEOS_LIBRARY_PATH=/path/to/libgeos_c.dylib
+      # GDAL_LIBRARY_PATH=/path/to/libgdal.dylib
+
+
+  .. tab:: Custom Install
+
+    * Use either psql_ or pgAdmin_ to create the database that slm-startproject_ instructs you to.
+      In our example this database would be named ``network``.
+
+    * Use uv to install the virtual environment then activate it.
+
+        .. code-block:: bash
+
+          ?> cd ./network
+          ?> uv sync --all-extras
 
 .. _import_sitelogs:
 
@@ -276,11 +326,23 @@ existing logs to import you'll probably just want to run :django-admin:`routine 
 Otherwise gather your logs into a single directory or tar file and run the
 :django-admin:`routine install` routine:
 
-  .. code-block:: bash
+.. tabs::
 
-    ?> <slm> routine install
+  .. tab:: Basic Install
 
-**<slm> is the name of your management script. In our example it would be called 'network'.**
+    .. code-block:: bash
+
+      (.venv) ?> slm routine install
+
+  .. tab:: Custom Install
+
+    .. code-block:: bash
+
+      ?> uv run network routine install
+
+You will be prompted to create a superuser account and also for a file path or directory containing
+site logs you wish to import. After the import is finished an html log of the import process will
+open.
 
 The data import will both generate logs and record import errors and warnings as alerts and
 validation flags in the database so you can manually go through the web interface and correct any
@@ -291,24 +353,39 @@ errors.
 
 You should now be able to start up the development server and see data in your SLM instance.
 
-  .. code-block:: bash
+.. tabs::
 
-    ?> <slm> runserver
-    Performing system checks...
+  .. tab:: Basic Install
 
-    System check identified no issues (1 silenced).
-    Django version 4.2.14, using settings 'sites.<slm>.develop'
-    Starting development server at http://127.0.0.1:8000/
-    Quit the server with CONTROL-C.
+    .. code-block:: bash
+
+      (.venv) ?> <slm> runserver
+      Performing system checks...
+
+      System check identified no issues (1 silenced).
+      Django version 4.2.23, using settings 'slm.settings.root'
+      Starting development server at http://127.0.0.1:8000/
+      Quit the server with CONTROL-C.
+
+  .. tab:: Custom Install
+
+    .. code-block:: bash
+
+      ?> uv run network runserver
+      Performing system checks...
+
+      System check identified no issues (1 silenced).
+      Django version 4.2.23, using settings 'sites.network.develop'
+      Starting development server at http://127.0.0.1:8000/
+      Quit the server with CONTROL-C.
 
 In addition to the front end interface where site logs are edited, moderated and published. We use
 the `Django admin for a more direct access to system data <http://127.0.0.1:8000/admin>`_. This is
 where we control permissions and make site adjustments. You may also add users and agencies and set
 their permissions through the admin.
 
-.. tip::
 
-  Refer to :ref:`operations` for advice on production deployments.
+.. _deploy:
 
 Deploy
 ######
@@ -537,10 +614,19 @@ will migrate the database and bundle all static files:
 
   (slm_venv) ?> network routine deploy
 
+
+.. tip::
+
+  Refer to :ref:`upgrading` for advice on updating the SLM.
+
 .. _containerization:
 
 Containerization
 ================
+
+.. todo::
+
+    Instructions for running our containers..
 
 
 .. _fast_hosting:
@@ -549,4 +635,5 @@ Fast Hosting
 ============
 
 .. todo::
-       Instructions for quickly deploying to a hosting service..
+
+    Instructions for quickly deploying to a hosting service..

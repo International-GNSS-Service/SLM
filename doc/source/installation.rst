@@ -288,7 +288,7 @@ the first question you can just hit enter to accept the defaults:
       (.venv) ?> touch .env
       (.venv) ?> pip install "igs-slm[debug]"
 
-    Add a minimal configuraton to the .env file. It may look something like this. You may also
+    Add a minimal configuration to the .env file. It may look something like this. You may also
     refer to the :ref:`configuration` page for all of the available settings. The most important
     settings are :setting:`SLM_ENV`, :setting:`BASE_DIR`:
 

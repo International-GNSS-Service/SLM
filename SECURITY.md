@@ -22,8 +22,10 @@ The SLM depends on a large stack of upstream software. Not just Django and Pytho
 
 If we exempt the vulnerability the reason will be noted in the [policy file](https://github.com/International-GNSS-Service/SLM/blob/main/.safety-policy.yml).
 
+## Publishing Releases
+
+All releases will have verified tag on github. As of 0.1.5b0 we use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) to issue all releases.
 
 ## Reporting a Vulnerability
 
-If you think you have found a vulnerability, and even if you are not sure, please report it to us in private by going to Security -> Advisories -> New Draft Security Advisory or alternatively, email us at cb@igs.org
-We will review it and get back to you. Please refrain from public discussions of the issue.
+If you think you have found a vulnerability, and even if you are not sure, please [report it to us in private](https://github.com/International-GNSS-Service/SLM/security/advisories/new) or alternatively, email us at cb@igs.org. We will review it and get back to you. Please refrain from public discussions of the issue.

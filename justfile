@@ -302,10 +302,11 @@ validate_version VERSION:
     raw_version = "{{ VERSION }}".lstrip("v")
     version_obj = Version(raw_version)
     # the version should be normalized
-    assert str(version_obj) == raw_version
+    assert str(version_obj) == raw_version, f"{version_obj} != {raw_version}"
     # make sure all places the version appears agree
-    assert raw_version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
-    assert raw_version == slm.__version__
+    pyproject_v = tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
+    assert raw_version == pyproject_v, f"{raw_version} != {pyproject_v}"
+    assert raw_version == slm.__version__, f"{raw_version} != {slm.__version__}"
     print(raw_version)
 
 # issue a relase for the given semver string (e.g. 2.1.0)

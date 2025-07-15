@@ -1,13 +1,12 @@
 from pathlib import Path
-import platform
 from split_settings.tools import include, optional
 from slm.settings import unset
 import os
 
 from slm.settings import resource
 
-SITE_DIR = Path(__file__).resolve().parent / "tmp"
-BASE_DIR = SITE_DIR
+BASE_DIR = Path(__file__).resolve().parent / "tmp"
+os.makedirs(BASE_DIR, exist_ok=True)
 
 ALLOWED_HOSTS = ["*"]
 

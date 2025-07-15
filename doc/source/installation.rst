@@ -149,7 +149,7 @@ itself yet though.
 
     .. code:: bash
 
-      ?> uvx slm-startproject --help
+      ?> uvx --from igs-slm --prerelease slm-startproject --help
 
   .. tab:: pip
 

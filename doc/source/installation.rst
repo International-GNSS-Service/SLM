@@ -395,10 +395,10 @@ Deploy
   We offer a notional deployment strategy here. There are myriad operational concerns that will vary
   based on your organization's so the following examples are merely suggestions.
 
-The scaffold we generated should be checked into version control. You can manage it just like you
-would a normal python package. It can be built and installed using uv_ or pip_ or any other python
-package management tooling that supports wheels. When you install it it will pull in all of its
-required python dependencies.
+If you are customizing the SLM, the scaffold we generated should be checked into version control.
+You can manage it just like you would a normal python package. It can be built and installed using
+uv_ or pip_ or any other python package management tooling that supports wheels. When you install it
+it will pull in all of its required python dependencies.
 
 First you need to make sure your host server has all the dependencies installed, PostGIS_, etc.
 Then you should use ``psql`` to create the database. It is usually sufficient to configure PostGIS_
@@ -450,31 +450,69 @@ environment somewhere you think is appropriate. For example:
 Build and Install
 -----------------
 
-.. code-block:: bash
+.. tabs::
 
-  # in your git repository holding your slm-startproject
-  ?> uv build
-  # get the wheel to your server somehow
-  ?> scp dist/network-x.x.x-py3-none-any.whl yourserver:./
-  ?> ssh yourserver
-  ?> source /opt/slm_venv/bin/activate
-  # install with gunicorn if using nginx or mod_wsgi if using Apache
-  (slm_venv) ?> pip install network-x.x.x-py3-none-any.whl
-  # if using nginx:
-  (slm_venv) ?> pip install gunicorn
-  # if using apache:
-  (slm_venv) ?> pip install mod_wsgi
+  .. tab:: Basic Install
+
+    .. code-block:: bash
+
+      ?> source /opt/slm_venv/bin/activate
+      # install with gunicorn if using nginx or mod_wsgi if using Apache
+      (slm_venv) ?> pip install igs-slm
+      # if using nginx:
+      (slm_venv) ?> pip install gunicorn
+      # if using apache:
+      (slm_venv) ?> pip install mod_wsgi
+
+  .. tab:: Custom Install
+
+    .. code-block:: bash
+
+      # in your git repository holding your slm-startproject
+      ?> uv build
+      # get the wheel to your server somehow
+      ?> scp dist/network-x.x.x-py3-none-any.whl yourserver:./
+      ?> ssh yourserver
+      ?> source /opt/slm_venv/bin/activate
+      # install with gunicorn if using nginx or mod_wsgi if using Apache
+      (slm_venv) ?> pip install network-x.x.x-py3-none-any.whl
+      # if using nginx:
+      (slm_venv) ?> pip install gunicorn
+      # if using apache:
+      (slm_venv) ?> pip install mod_wsgi
 
 Filesystem
 ----------
 
 We recommend setting up your site's working directory somewhere under /var/www:
 
-.. code-block:: bash
+.. tabs::
 
-  ?> mkdir -p /var/www/network.example.com/production
-  ?> cd /var/www/network.example.com/production
-  ?> mkdir static media logs secrets
+  .. tab:: Basic Install
+
+    .. code-block:: bash
+
+      ?> mkdir -p /var/www/network.example.com/production
+      ?> cd /var/www/network.example.com/production
+      ?> mkdir static media logs secrets
+
+    You will need to create an environment file to tell the SLM about itself:
+
+    .. code-block:: bash
+      :caption: /var/www/network.example.com/production/.env
+
+      DEBUG=False
+      BASE_DIR=/var/www/network.example.com/production
+      SLM_ORG_NAME="Example"
+      SLM_SITE_NAME="network.example.com"
+
+  .. tab:: Custom Install
+
+  .. code-block:: bash
+
+    ?> mkdir -p /var/www/network.example.com/production
+    ?> cd /var/www/network.example.com/production
+    ?> mkdir static media logs secrets
 
 web servers
 -----------
@@ -549,6 +587,7 @@ web servers
       User=www-data
       Group=www-data
       WorkingDirectory=/var/www/network.example.com/production
+      Environment="SLM_ENV=/var/www/network.example.com/production/.env"
       ExecStart=/opt/slm_venv/bin/gunicorn --workers 4 --bind unix:/var/www/network.example.com/production/slm.sock sites.network.production.wsgi:application
 
       [Install]
@@ -584,6 +623,13 @@ web servers
           # WSGI configuration
           WSGIDaemonProcess network python-home=/opt/slm_venv python-path=/var/www/network.example.com/production
           WSGIProcessGroup network
+
+          WSGIEnvVar SLM_ENV /var/www/network.example.com/production/.env
+
+          # TODO - For Basic Install:
+          WSGIScriptAlias / /opt/slm_venv/lib/python3.x/site-packages/slm/wsgi.py
+
+          # TODO - For Custom Install:
           WSGIScriptAlias / /opt/slm_venv/lib/python3.x/site-packages/sites/network/production/wsgi.py
 
           # Static & media files
@@ -610,9 +656,32 @@ routine deploy
 Anytime you install a new version of your SLM you need to run :django-admin:`routine deploy`. This
 will migrate the database and bundle all static files:
 
-.. code-block:: bash
 
-  (slm_venv) ?> network routine deploy
+.. tabs::
+
+  .. tab:: Basic Install
+
+    .. code-block:: bash
+
+      (slm_venv) ?> slm routine deploy
+
+    If it is the first installation you can run the :django-admin:`routine install` routine instead:
+
+    .. code-block:: bash
+
+      (slm_venv) ?> slm routine install
+
+  .. tab:: Custom Install
+
+    .. code-block:: bash
+
+      (slm_venv) ?> network routine deploy
+
+    If it is the first installation you can run the :django-admin:`routine install` routine instead:
+
+    .. code-block:: bash
+
+      (slm_venv) ?> network routine install
 
 
 .. tip::

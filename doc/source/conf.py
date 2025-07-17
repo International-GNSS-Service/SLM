@@ -13,12 +13,14 @@ from sphinx.ext.autodoc import between
 import warnings
 import os
 import django
+from django.utils.version import get_docs_version
 import re
 
 sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 sys.path.append(str(Path(__file__).parent.parent.parent))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')
 django.setup()
+
 
 # -- Path setup --------------------------------------------------------------
 
@@ -108,11 +110,10 @@ django_show_db_tables_abstract = True       # Boolean, default: False
 
 autodoc_member_order = 'bysource'
 
-# TODO - ALWAYS POINT THE DJANGO DOCS AT OUR CURRENT DJANGO VERSION, NOT STABLE
 intersphinx_mapping = {
     "django": (
-        "https://docs.djangoproject.com/en/4.2",
-        "https://docs.djangoproject.com/en/4.2/_objects/",
+        f"https://docs.djangoproject.com/en/{get_docs_version()}/",
+        f"https://docs.djangoproject.com/en/{get_docs_version()}/_objects/",
     ),
     "click": ("https://click.palletsprojects.com/en/stable", None),
     "rich": ("https://rich.readthedocs.io/en/stable", None),
@@ -139,6 +140,7 @@ html_css_files = [
     'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css',
 ]
 
+
 def color_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """Role that creates a color box with the hex color."""
     from docutils import nodes
@@ -156,6 +158,7 @@ def color_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     node = nodes.raw('', html, format='html')
     return [node], []
 
+
 def css_icon(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """Role that creates a color box with the hex color."""
     from docutils import nodes
@@ -167,6 +170,7 @@ def css_icon(name, rawtext, text, lineno, inliner, options={}, content=[]):
     html = f'<i class="{icon}" style="font-size:{size}px;"></i>'
     node = nodes.raw('', html, format='html')
     return [node], []
+
 
 def setup(app):
     # Register a sphinx.ext.autodoc.between listener to ignore everything

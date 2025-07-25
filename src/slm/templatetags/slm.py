@@ -254,11 +254,11 @@ def file_icon(file):
 @register.filter(name="file_lines")
 def file_lines(file):
     if isinstance(file, str):
-        return file.split("\n")
+        return file.splitlines()
     if file and os.path.exists(file.file.path):
         content = file.file.open().read()
         try:
-            return content.decode(detect(content).get("encoding", "utf-8")).split("\n")
+            return content.decode(detect(content).get("encoding", "utf-8")).splitlines()
         except (UnicodeDecodeError, LookupError, ValueError):
             return [
                 _("** Unable to determine text encoding - please upload as UTF-8. **")

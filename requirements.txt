@@ -82,7 +82,7 @@ django-typer==2.2.2 ; python_full_version < '3.9'
     #   django-render-static
     #   django-routines
     #   igs-slm
-django-typer==2.6.0 ; python_full_version >= '3.9'
+django-typer==3.2.2 ; python_full_version >= '3.9'
     # via
     #   django-render-static
     #   django-routines

@@ -1423,7 +1423,7 @@ wheels = [
 
 [[package]]
 name = "igs-slm"
-version = "0.1.5b2"
+version = "0.1.5b3"
 source = { editable = "." }
 dependencies = [
     { name = "chardet" },

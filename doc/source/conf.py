@@ -108,6 +108,16 @@ django_show_db_tables = True                # Boolean, default: False
 # Add abstract database tables names (only takes effect if django_show_db_tables is True)
 django_show_db_tables_abstract = True       # Boolean, default: False
 
+autodoc_default_options = {
+    'show-inheritance': True,
+    # Add other autodoc options here if desired, e.g.:
+    # 'members': True,
+    # 'inherited-members': True,
+}
+# In your Sphinx conf.py
+autodoc_typehints = "description"
+autodoc_typehints_format = "short"
+autodoc_class_signature = "separated"
 autodoc_member_order = 'bysource'
 
 intersphinx_mapping = {

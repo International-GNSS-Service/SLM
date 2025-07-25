@@ -158,7 +158,7 @@ itself yet though.
 
     .. code:: bash
 
-      ?> uvx --from igs-slm --prerelease slm-startproject --help
+      ?> uvx --from igs-slm --prerelease allow slm-startproject --help
 
   .. tab:: pip
 

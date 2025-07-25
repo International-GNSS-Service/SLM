@@ -186,15 +186,18 @@ set_default(
 # instance than the instance that generates serialized artifacts
 SLM_FILE_DOMAIN = None
 
-
-set_default("SLM_STATION_NAME_REGEX", None)
-set_default("SLM_STATION_NAME_HELP", _("The name of the station."))
-
-# IGS Settings:
-# SLM_STATION_NAME_REGEX = r"[\w]{4}[\d]{2}[\w]{3}"
-# SLM_STATION_NAME_HELP = _(
-#     "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
-#     "filenames Format: (XXXX - existing four character IGS station "
-#     "name, M - Monument or marker number (0-9), R - Receiver number "
-#     "(0-9), CCC - Three digit ISO 3166-1 country code)"
-# )
+SLM_IGS_STATION_NAMING = env(
+    "SLM_IGS_STATION_NAMING", default=get_setting("SLM_IGS_STATION_NAMING", False)
+)
+if SLM_IGS_STATION_NAMING:
+    # Use IGS naming rules for station names:
+    SLM_STATION_NAME_REGEX = r"[\w]{4}[\d]{2}[\w]{3}"
+    SLM_STATION_NAME_HELP = _(
+        "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
+        "filenames Format: (XXXX - existing four character IGS station "
+        "name, M - Monument or marker number (0-9), R - Receiver number "
+        "(0-9), CCC - Three digit ISO 3166-1 country code)"
+    )
+else:
+    set_default("SLM_STATION_NAME_REGEX", None)
+    set_default("SLM_STATION_NAME_HELP", _("The name of the station."))

@@ -221,6 +221,9 @@ The following settings may be overridden by environment variables:
    * - :setting:`SLM_DEBUG_TOOLBAR`
      - :ref:`env_types_bool`
      - ``on|off``
+   * - :setting:`SLM_IGS_STATION_NAMING`
+     - :ref:`env_types_bool`
+     - ``on|off``
    * - :setting:`SLM_SITE_NAME`
      - :ref:`env_types_bool`
      - ``slm.yourdomain.org``
@@ -444,6 +447,26 @@ Default: ``True``
 Enable or disable the MapBox_ admin map in the SLM. Must be set in the environment
 or prior to the inclusion of ``slm.settings.root``. You may also enable or disable
 the admin map by adding or removing ``slm.map`` from :setting:`INSTALLED_APPS`.
+
+``SLM_IGS_STATION_NAMING`` ⚙️
+------------------------------
+.. setting:: SLM_IGS_STATION_NAMING
+
+Default: ``False``
+
+Enable or disable the use of IGS naming rules for station names. If enabled, the defaults for
+:setting:`SLM_STATION_NAME_REGEX` and :setting:`SLM_STATION_NAME_HELP` will be set to:
+
+.. code-block:: python
+
+    SLM_STATION_NAME_REGEX = r"[\w]{4}[\d]{2}[\w]{3}"
+    SLM_STATION_NAME_HELP = _(
+         "This is the 9 Character station name (XXXXMRCCC) used in RINEX 3 "
+         "filenames Format: (XXXX - existing four character IGS station "
+         "name, M - Monument or marker number (0-9), R - Receiver number "
+         "(0-9), CCC - Three digit ISO 3166-1 country code)"
+    )
+
 
 ``SLM_STATION_NAME_REGEX``
 --------------------------

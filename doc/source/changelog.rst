@@ -6,6 +6,12 @@
 Change Log
 ==========
 
+v0.1.5b3 (2025-07-25)
+=====================
+
+* Fixed `Provide SLM IGS station naming validation toggle. <https://github.com/International-GNSS-Service/SLM/issues/153>`_
+
+
 v0.1.5b2 (2025-07-15)
 =====================
 

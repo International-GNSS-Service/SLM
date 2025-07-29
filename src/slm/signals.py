@@ -46,10 +46,9 @@ published.
 
 site_status_changed = Signal()
 """
-Sent when a site log is published, or when a section of a site log is
-published. Its possible that both the previous and new status states are
-Published. If this happens a site log was edited and published simultaneously.
-The published timestamp will have increased.
+Sent when a site log's status changes. Its possible that both the previous and
+new status states are Published. If this happens a site log was edited and
+published simultaneously. The published timestamp will have increased.
 
 :param sender: The sending object (unreliable).
 :param site: The Site object.

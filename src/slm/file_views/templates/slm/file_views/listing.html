@@ -1,0 +1,70 @@
+{% load static slm %}
+<html xmlns="http://www.w3.org/1999/xhtml">
+    {% block head %}
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>{{ title|default:"Directory Listing" }}</title>
+        <link href="{% static 'slm/file_views/css/listing.css' %}"
+              rel="stylesheet"
+              type="text/css">
+    </head>
+    {% endblock head %}
+    <body>
+        {% block banner %}
+        <img id="banner" src="{% static 'slm/file_views/banner_header.png' %}">
+        {% endblock banner %}
+        {% block listing %}
+        <div class="file-listing">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="name-column">
+                            <a href=".?C=N;O={{ N_ordering|default:'A' }}">Name</a>
+                        </th>
+                        <th class="modified-column">
+                            <a href=".?C=M;O={{ M_ordering|default:'A' }}">Last modified</a>
+                        </th>
+                        <th class="size-column">
+                            <a href=".?C=S;O={{ S_ordering|default:'A' }}">Size</a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if parent %}
+                    <tr>
+                        <td class="icon-column">
+                            <span class="icon">↩️</span>
+                        </td>
+                        <td class="name-column">
+                            <a href="{{ parent }}" class="file-link parent-directory">Parent Directory</a>
+                        </td>
+                        <td class="modified-column">-</td>
+                        <td class="size-column">-</td>
+                    </tr>
+                    {% endif %}
+                    {% for listing in listings %}
+                    <tr>
+                        <td class="icon-column">
+                            <span class="icon">{% if listing.is_dir %}📁{% else %}📄{% endif %}</span>
+                        </td>
+                        <td class="name-column">
+                            <a href="{{listing.display}}{% if listing.is_dir %}/{% endif %}" {% if download and listing.is_dir %}download{% endif %}>{{listing.display}}</a>
+                        </td>
+                        <td class="modified-column">{{ listing.modified|simple_utc }}</td>
+                        <td class="size-column">{% if listing.size %}{% widthratio listing.size 1024 1 %}K{% else %}-{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endblock listing %}
+    {% block footer %}
+    <div id="wrapper_bottom">
+        <div id="footer">
+            <div class="footer_nav"></div>
+        </div>
+    </div>
+    {% endblock footer %}
+</body>
+</html>

@@ -40,6 +40,11 @@ def site_upload_path(instance: "SiteFile", filename: str) -> str:
     file will be saved to:
         MEDIA_ROOT/uploads/<site name>/filename
 
+    If there is a name collision with a file on disk, the _HHMMSS from the file's
+    timestamp will be added onto the name. If the collision is with an ArchivedSiteLog
+    the file already on disk will have its name changed to include the timestamp. This
+    keeps the most recently indexed file for each day having just the date timestamp.
+
     :param filename: The name of the file
     :return: The path where the site file should reside.
     """
@@ -56,7 +61,29 @@ def site_upload_path(instance: "SiteFile", filename: str) -> str:
     )
     if (Path(settings.MEDIA_ROOT) / dest).exists():
         stem, suffix = dest.stem, dest.suffix
-        dest = dest.with_name(f"{stem}_{timestamp.strftime('%H%M%S')}{suffix}")
+        if isinstance(instance, ArchivedSiteLog):
+            # TODO - there is potential here for the database to be out of sync with the filesytem if the outer
+            # transaction fails
+            try:
+                for archive in ArchivedSiteLog.objects.filter(
+                    file__endswith=str(dest.as_posix())
+                ):
+                    current_path = Path(archive.file.path)
+                    new_path = Path(archive.file.path)
+                    if current_path.stem.count("_") < 2:
+                        new_path = current_path.with_name(
+                            f"{current_path.stem}_{archive.index.valid_range.lower.strftime('%H%M%S')}{current_path.suffix}"
+                        )
+                        archive.file.name = archive.file.name.replace(
+                            current_path.name, new_path.name
+                        )
+                        archive.name = Path(archive.file.name).name
+                        current_path.rename(new_path)
+                        archive.save(update_fields=["file", "name"])
+            except ArchivedSiteLog.DoesNotExist:
+                (Path(settings.MEDIA_ROOT) / dest).unlink()
+        else:
+            dest = dest.with_name(f"{stem}_{timestamp.strftime('%H%M%S')}{suffix}")
     return dest.as_posix()
 
 
@@ -212,7 +239,9 @@ class SiteFile(models.Model):
         unique=True,
     )
 
-    size = models.PositiveIntegerField(null=True, default=None, blank=True)
+    size = models.PositiveIntegerField(
+        null=True, default=None, blank=True, db_index=True
+    )
 
     thumbnail = models.ImageField(
         upload_to=site_thumbnail_path,
@@ -253,6 +282,10 @@ class SiteFile(models.Model):
         db_index=True,
         help_text=_("The Geodesy ML version. (Only if file_type is GeodesyML)"),
     )
+
+    @property
+    def on_disk(self) -> Path:
+        return Path(self.file.path)
 
     def update_directory(self):
         for file in [self.file, self.thumbnail]:

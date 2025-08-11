@@ -19,6 +19,7 @@ from split_settings.tools import include, optional
 from slm.settings import env as settings_environment
 from slm.settings import (
     get_setting,
+    resource,
     set_default,
     slm_path_mk_dirs_must_exist,
     slm_path_must_exist,
@@ -60,8 +61,22 @@ SLM_IGS_VALIDATION = env(
 )
 
 SLM_ADMIN_MAP = env("SLM_ADMIN_MAP", bool, default=get_setting("SLM_ADMIN_MAP", True))
+SLM_FILE_VIEWS = env(
+    "SLM_FILE_VIEWS", bool, default=get_setting("SLM_FILE_VIEWS", True)
+)
 SLM_SITE_NAME = env("SLM_SITE_NAME", str, default=get_setting("SLM_SITE_NAME", ""))
 SLM_ORG_NAME = env("SLM_ORG_NAME", str, default=get_setting("SLM_ORG_NAME", "SLM"))
+
+SLM_FILE_VIEW_FORMATS = env(
+    "SLM_FILE_VIEW_FORMATS",
+    list,
+    default=get_setting("SLM_FILE_VIEW_FORMATS", ["ASCII_9CHAR"]),
+)
+SLM_FILE_VIEW_FORMATS = env(
+    "SLM_FILE_VIEW_FORMATS",
+    list,
+    default=get_setting("SLM_FILE_VIEW_FORMATS", ["ASCII_9CHAR"]),
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
@@ -111,6 +126,8 @@ INSTALLED_APPS = set_default(
 
 if SLM_ADMIN_MAP:
     INSTALLED_APPS.insert(0, "slm.map")
+if SLM_FILE_VIEWS:
+    INSTALLED_APPS.insert(0, "slm.file_views")
 
 
 SLM_DATABASE = env(
@@ -244,3 +261,8 @@ set_default(
 WSGI_APPLICATION = env(
     "WSGI_APPLICATION", default=get_setting("WSGI_APPLICATION", "slm.wsgi.application")
 )
+
+if SLM_ADMIN_MAP or "slm.map" in INSTALLED_APPS:
+    include(resource("slm.map", "settings.py"))
+if SLM_FILE_VIEWS or "slm.file_views" in INSTALLED_APPS:
+    include(resource("slm.file_views", "settings.py"))

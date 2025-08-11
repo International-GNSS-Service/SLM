@@ -2,6 +2,7 @@ import os
 import typing as t
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField
 from django.contrib.postgres.fields.ranges import DateTimeTZRange, RangeOperators
@@ -9,15 +10,19 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import (
+    Case,
     CharField,
     DateTimeField,
     Deferrable,
     F,
     Func,
+    IntegerField,
     OuterRef,
     Q,
     Subquery,
     Value,
+    When,
+    Window,
 )
 from django.db.models.functions import (
     Cast,
@@ -28,7 +33,9 @@ from django.db.models.functions import (
     Lower,
     LPad,
     Now,
+    RowNumber,
     Substr,
+    TruncDate,
 )
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -274,7 +281,7 @@ class ArchiveIndexQuerySet(models.QuerySet):
         name_len: t.Optional[int] = None,
         field_name: str = "filename",
         lower_case: bool = False,
-        log_format: bool = None,
+        log_format: SiteLogFormat = None,
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -308,7 +315,7 @@ class ArchiveIndexQuerySet(models.QuerySet):
             LPad(Cast(ExtractDay(begin), models.CharField()), 2, fill_text=Value("0")),
         ]
         if log_format:
-            parts.append(Value(f".{log_format.ext}"))
+            parts.append(Value(f".{log_format.suffix}"))
 
         return self.annotate(**{field_name: Concat(*parts, output_field=CharField())})
 
@@ -455,7 +462,7 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
         name_len: t.Optional[int] = None,
         field_name: str = "filename",
         lower_case: bool = False,
-        log_format: t.Optional[SiteLogFormat] = None,
+        include_ext: bool = True,
     ):
         """
         Add the log names (w/o) extension as a property called filename to
@@ -465,7 +472,7 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
             the first name_len characters of the site name.
         :param field_name: Change the name of the annotated field.
         :param lower_case: Filenames will be lowercase if true.
-        :param log_format: If given, add the extension for the given format
+        :param include_ext: If true (default), include the extension for the log file type.
         :return: A queryset with the filename annotation added.
         """
         name_str = F("site__name")
@@ -496,9 +503,69 @@ class ArchivedSiteLogQuerySet(models.QuerySet):
                 fill_text=Value("0"),
             ),
         ]
-        if log_format:
-            parts.append(Value(f".{log_format.ext}"))
+        if include_ext:
+            parts.append(
+                Case(
+                    *[
+                        When(log_format=key, then=Value(f".{ext}"))
+                        for key, ext in getattr(
+                            settings,
+                            "SLM_FORMAT_EXTENSIONS",
+                            {fmt: fmt.ext for fmt in SiteLogFormat},
+                        ).items()
+                    ],
+                    default=Value(""),
+                    output_field=CharField(),
+                ),
+            )
         return self.annotate(**{field_name: Concat(*parts)})
+
+    def best_format(self):
+        """
+        This query fetches a linear history of site logs, but only picks the most appropriate
+        format from the index for each point in time. By default the most appropriate format
+        is the rank ordering defined in :class:`slm.defines.SiteLogFormat` unless otherwise
+        specified in the :setting:`SLM_FORMAT_PRIORITY` mapping.
+        """
+        if priorities := getattr(settings, "SLM_FORMAT_PRIORITY"):
+            return self.annotate(
+                log_format_order=Case(
+                    *[When(log_format=k, then=v) for k, v in priorities.items()],
+                    default=999,
+                    output_field=IntegerField(),
+                ),
+                best_fmt=Window(
+                    expression=RowNumber(),
+                    partition_by=[
+                        F("index__site"),
+                        TruncDate("timestamp"),
+                    ],
+                    order_by=[
+                        F("timestamp").desc(),
+                        F("log_format_order").asc(),  # use mapped priority
+                    ],
+                ),
+            ).filter(best_fmt=1)
+        else:
+            return self.annotate(
+                best_fmt=Window(
+                    expression=RowNumber(),
+                    partition_by=[
+                        F("index__site"),
+                        TruncDate("timestamp"),
+                    ],
+                    order_by=[
+                        F("timestamp").desc(),
+                        F("log_format").desc(),
+                    ],  # higher format wins
+                ),
+            ).filter(best_fmt=1)
+
+    def most_recent(self):
+        return self.filter(index__valid_range__upper_inf=True)
+
+    def non_current(self):
+        return self.filter(index__valid_range__upper_inf=False)
 
 
 class ArchivedSiteLog(SiteFile):

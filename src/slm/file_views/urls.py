@@ -1,13 +1,12 @@
+import typing as t
+from pathlib import Path
+
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import path
 
-from slm.defines import SiteLogFormat
-from slm.file_views.views import (
-    FinalLogView,
-    LegacyFTPArchiveView,
-    LegacyFTPView,
-    sinex,
-)
+from .config import Entry, File, Listing
+from .views import FileSystemView
 
 SLM_INCLUDE = True
 
@@ -15,46 +14,34 @@ app_name = "slm_file_views"
 
 urlpatterns = []
 
-for list_file_type in getattr(settings, "SLM_FILE_VIEW_FORMATS", []):
-    list_file_type = SiteLogFormat(list_file_type)
-    urlpatterns.extend(
-        [
-            path(
-                f"files/{list_file_type.ext}/",
-                LegacyFTPView.as_view(),
-                kwargs={"log_format": list_file_type},
-                name=f"{list_file_type.ext}_files",
-            ),
-            path(
-                f"files/{list_file_type.ext}/<str:log_name>",
-                LegacyFTPView.as_view(),
-                kwargs={"log_format": list_file_type},
-                name=f"{list_file_type.ext}_files",
-            ),
-        ]
+Branch = t.Sequence[t.Union[t.Tuple[str, t.Union[Entry, "Branch"]]]]
+
+
+def add_paths(url_path: Path, entries: Branch):
+    listings = []
+    for entry in entries:
+        try:
+            pth, entries = entry
+        except (TypeError, ValueError) as err:
+            raise ImproperlyConfigured(
+                "Setting SLM_FILE_VIEW_STRUCTURE must contain sequences of (str, Entry) tuples."
+            ) from err
+        listings.append(Listing(pth, is_dir=not isinstance(entries, File)))
+        if isinstance(entries, Entry):
+            urlpatterns.extend(entries.urls(url_path / pth))
+        else:
+            add_paths(url_path / pth, entries)
+
+    urlpatterns.append(
+        path(
+            Entry.path_str(url_path),
+            FileSystemView.as_view(),
+            kwargs={"path": url_path, "listings": listings},
+        )
     )
 
-if file_type_ranking := getattr(settings, "SLM_ARCHIVE_FORMAT_RANKING", None):
-    (
-        path(
-            "archive/",
-            LegacyFTPArchiveView.as_view(),
-            name="archive",
-        ),
-    )
-    (
-        path(
-            "archive/<str:log_name>",
-            LegacyFTPArchiveView.as_view(),
-            name="archive",
-        ),
-    )
-    (path("final/", FinalLogView.as_view(), name="final"),)
-    path(
-        "final/<str:log_name>",
-        FinalLogView.as_view(),
-        name="final",
-    )
 
-if snx_name := getattr(settings, "SLM_SINEX_FILENAME", None):
-    urlpatterns.append(path(f"files/{snx_name}", sinex, name="sinex"))
+add_paths(
+    Path("/") / getattr(settings, "SLM_FILE_VIEW_ROOT", {}),
+    (getattr(settings, "SLM_FILE_VIEW_STRUCTURE", []) or []),
+)

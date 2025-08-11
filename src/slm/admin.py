@@ -27,6 +27,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.db.models import BooleanField, Count, Q
 from django.db.models.expressions import ExpressionWrapper
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -81,6 +82,9 @@ class UserAgencyInline(admin.TabularInline):
 class TideGaugeInline(admin.TabularInline):
     model = TideGauge.sites.through
     extra = 0
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("site", "gauge")
 
 
 class SiteTGInline(admin.TabularInline):
@@ -263,16 +267,49 @@ class NetworkInline(admin.TabularInline):
     model = Network.sites.through
     extra = 0
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("network", "site")
+
 
 class SiteAgencyInline(admin.TabularInline):
     model = Agency.sites.through
     extra = 0
 
 
+class SiteIndexInline(admin.TabularInline):
+    model = ArchiveIndex
+    extra = 0
+    readonly_fields = ("time_range_display",)
+    fields = ("time_range_display",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("site")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def time_range_display(self, obj):
+        if obj and obj.pk:
+            begin_formatted = obj.begin.strftime("%Y-%m-%d %H:%M:%S")
+            end_formatted = obj.end.strftime("%Y-%m-%d %H:%M:%S") if obj.end else ""
+            time_range = f"{begin_formatted} - {end_formatted}"
+            url = reverse(
+                f"admin:{obj._meta.app_label}_{obj._meta.model_name}_change",
+                args=[obj.pk],
+            )
+            return format_html('<a href="{}">{}</a>', url, time_range)
+        return "-"
+
+    time_range_display.short_description = "Time Range"
+
+
 @admin.register(Site)
 class SiteAdmin(admin.ModelAdmin):
     search_fields = ("name",)
-    inlines = [SiteAgencyInline, NetworkInline, TideGaugeInline]
+    inlines = [SiteAgencyInline, NetworkInline, TideGaugeInline, SiteIndexInline]
     exclude = ["agencies"]
 
 
@@ -466,7 +503,7 @@ class ArchiveFileInline(admin.TabularInline):
         for field in ArchivedSiteLog._meta.get_fields()
         if field.name not in ["id", "site", "thumbnail", "name", "timestamp"]
     ] + ["view_file"]
-    can_delete = False
+    can_delete = True
     exclude = ["site", "file", "thumbnail", "name", "timestamp"]
 
     def path(self, obj):

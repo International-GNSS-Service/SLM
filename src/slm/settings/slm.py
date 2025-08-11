@@ -8,6 +8,7 @@ from slm.defines import (
     AlertLevel,
     GeodesyMLVersion,
     SiteFileUploadStatus,
+    SiteLogFormat,
     SiteLogStatus,
 )
 from slm.settings import env as settings_environment
@@ -201,3 +202,51 @@ if SLM_IGS_STATION_NAMING:
 else:
     set_default("SLM_STATION_NAME_REGEX", None)
     set_default("SLM_STATION_NAME_HELP", _("The name of the station."))
+
+
+# these settings control site log format precedence and naming
+SLM_FORMAT_PRIORITY = {
+    SiteLogFormat(fmt): int(priority)
+    for fmt, priority in env(
+        "SLM_FORMAT_PRIORITY", dict, default=get_setting("SLM_FORMAT_PRIORITY", {})
+    )
+}
+
+priorities = SLM_FORMAT_PRIORITY or {fmt: fmt.value for fmt in SiteLogFormat}
+
+SLM_DEFAULT_FORMAT = SiteLogFormat(
+    env(
+        "SLM_DEFAULT_FORMAT",
+        str,
+        max(priorities, key=priorities.get),
+    )
+)
+
+SLM_FORMAT_EXTENSIONS = {
+    **{fmt: fmt.ext for fmt in SiteLogFormat},
+    **{
+        SiteLogFormat(fmt): ext
+        for fmt, ext in env(
+            "SLM_FORMAT_EXTENSIONS",
+            dict,
+            default=get_setting(
+                "SLM_FORMAT_EXTENSIONS", {fmt: fmt.ext for fmt in SiteLogFormat}
+            ),
+        ).items()
+    },
+}
+
+# when logs are published, the following formats will be rendered to the site log index
+SLM_ENABLED_FORMATS = [
+    SiteLogFormat(fmt)
+    for fmt in env(
+        "SLM_ENABLED_FORMATS",
+        list,
+        default=get_setting(
+            "SLM_ENABLED_FORMATS", [SiteLogFormat.ASCII_9CHAR, SiteLogFormat.GEODESY_ML]
+        ),
+    )
+]
+
+if SLM_DEFAULT_FORMAT not in SLM_ENABLED_FORMATS:
+    SLM_ENABLED_FORMATS.insert(0, SLM_DEFAULT_FORMAT)

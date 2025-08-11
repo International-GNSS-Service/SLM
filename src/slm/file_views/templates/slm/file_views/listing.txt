@@ -1,2 +1,0 @@
-{% load slm %}{% for site in sites %}{{ site.filename}}{{padding}} {{site.last_publish|iso_utc}}   {{site.size|default:"-----"}}
-{% endfor %}

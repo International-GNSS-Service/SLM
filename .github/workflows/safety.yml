@@ -35,7 +35,7 @@ jobs:
         with:
           detached: true
         timeout-minutes: 60
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         id: sp

@@ -9,6 +9,7 @@ Change Log
 .. v0.1.6b0 (2025-XX-XX)
 .. =====================
 
+.. * Fixed `SLM site log serialization cuts lines at 79 characters - this should be 80. <https://github.com/International-GNSS-Service/SLM/issues/166>`_
 .. * Fixed `Allow "URL for More Information" to split a url across multiple lines. <https://github.com/International-GNSS-Service/SLM/issues/165>`_
 .. * Implemented `Antenna Alignment from True north should be desired not required. <https://github.com/International-GNSS-Service/SLM/issues/164>`_
 

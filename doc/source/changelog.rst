@@ -6,6 +6,12 @@
 Change Log
 ==========
 
+.. v0.1.6b0 (2025-XX-XX)
+.. =====================
+
+.. * Fixed `Antenna Alignment from True north should be desired not required. <https://github.com/International-GNSS-Service/SLM/issues/164>`_
+
+
 v0.1.5b3 (2025-07-25)
 =====================
 

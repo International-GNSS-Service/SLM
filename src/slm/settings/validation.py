@@ -93,7 +93,7 @@ set_default(
                 TimeRangeBookendValidator(),
             ],
             "marker_une": [FieldRequired(allow_legacy_nulls=True)],
-            "alignment": [FieldRequired(allow_legacy_nulls=True)],
+            "alignment": [FieldRequired(allow_legacy_nulls=True, desired=True)],
         },
         "slm.SiteSurveyedLocalTies": {
             "name": [FieldRequired()],

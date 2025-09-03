@@ -334,7 +334,11 @@ class Command(TyperCommand):
                     f"{antenna.antenna_type.model:<15.15} "
                     f"{antenna.radome_type.model:4.4} "
                     f"{antenna.serial_number:<5.5} "
-                    f"{antenna.alignment if antenna.alignment else 0.0:>4.0f}"
+                    + (
+                        f"{antenna.alignment:>4.0f}"
+                        if antenna.alignment is not None
+                        else " " * 4
+                    )
                 )
                 # todo: add antenna offset defaulting to zero if its unknown?
                 #  seems wrong

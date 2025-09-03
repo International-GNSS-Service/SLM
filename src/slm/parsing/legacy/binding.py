@@ -21,6 +21,7 @@ from slm.parsing import (
     Finding,
     _Ignored,
     _Warning,
+    concat_str,
     remove_from_start,
     to_alignment,
     to_antenna,
@@ -116,7 +117,7 @@ def to_temp_stab(value):
             value.lower().replace(" ", "").replace("(", "").replace(")", "")
             == "degc+/-degc"
         ):
-            return _Ignored, _Ignored, _Ignored
+            return _Ignored("Looks like a placeholder."), None, None
 
         if "yes" in value.lower() or "indoors" in value.lower():
             return _Warning(value=True, msg="Interpreted as 'stabilized'"), None, None
@@ -638,7 +639,7 @@ class SiteLogBinder(BaseBinder):
             for log_name, bindings in [
                 ("Primary Data Center", ("primary", to_str)),
                 ("Secondary Data Center", ("secondary", to_str)),
-                ("URL for More Information", ("more_info", to_str)),
+                ("URL for More Information", ("more_info", concat_str)),
                 ("Site Map", ("sitemap", to_str)),
                 ("Site Diagram", ("site_diagram", to_str)),
                 ("Horizon Mask", ("horizon_mask", to_str)),

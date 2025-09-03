@@ -333,7 +333,7 @@
 
      Primary Data Center      : {% if moreinformation %}{{ moreinformation.primary }}{% endif %}
      Secondary Data Center    : {% if moreinformation %}{{ moreinformation.secondary }}{% endif %}
-     URL for More Information : {% if moreinformation %}{{ moreinformation.more_info }}{% endif %}
+     URL for More Information : {% if moreinformation %}{{ moreinformation.more_info|multi_line }}{% endif %}
      Hardcopy on File
        Site Map               : {% if moreinformation %}{{ moreinformation.sitemap }}{% else %}(Y or URL){% endif %}
        Site Diagram           : {% if moreinformation %}{{ moreinformation.site_diagram }}{% else %}(Y or URL){% endif %}

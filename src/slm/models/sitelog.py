@@ -4219,6 +4219,7 @@ class SiteMoreInformation(SiteSection):
         blank=True,
         verbose_name=_("URL for More Information"),
         db_index=True,
+        max_length=8000,
     )
 
     sitemap = models.CharField(

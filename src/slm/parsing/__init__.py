@@ -788,6 +788,16 @@ def to_str(value):
     return value
 
 
+def concat_str(value):
+    """
+    For multi-line inputs, concatenate the lines, stripping white space at each line
+    break. This is necessary for things like multi-line urls.
+    """
+    if value is None:
+        return ""
+    return "".join([ln.strip() for ln in value.splitlines()])
+
+
 class BaseBinder:
     parsed: BaseParser = None
 

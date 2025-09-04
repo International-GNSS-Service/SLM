@@ -255,7 +255,13 @@ class PointWidget(MultiWidget):
 
     def value_from_datadict(self, data, files, name):
         if name in data:
-            return [float(coord) for coord in data.getlist(name)]
+            coords = []
+            for coord in data.getlist(name):
+                try:
+                    coords.append(float(coord))
+                except (ValueError, TypeError):
+                    coords.append(coord)
+            return coords
         return None
 
 
@@ -284,9 +290,15 @@ class SLMPointField(PointField):
             raise ValidationError(
                 self.error_messages["invalid_geom_type"], code="invalid_geom_type"
             )
-        return (
-            Point(*[None if val in ["", None] else float(val) for val in value]) or None
-        )
+        try:
+            return (
+                Point(*[None if val in ["", None] else float(val) for val in value])
+                or None
+            )
+        except (ValueError, TypeError) as err:
+            raise ValidationError(
+                self.error_messages["invalid_geom_type"], code="invalid_geom_type"
+            ) from err
 
 
 class AutoSelectMixin:

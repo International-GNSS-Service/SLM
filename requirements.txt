@@ -57,7 +57,7 @@ django-crispy-forms==2.3
     # via
     #   crispy-bootstrap5
     #   igs-slm
-django-enum==1.3.3
+django-enum==2.2.4
     # via igs-slm
 django-filter==24.3
     # via igs-slm

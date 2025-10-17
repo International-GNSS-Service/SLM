@@ -295,3 +295,54 @@ class TimeRangeValidator(SLMValidator):
                         instance,
                         field,
                     )
+
+
+class PositionsMatchValidator(SLMValidator):
+    """
+    Attach this validator to SiteLocation llh and/or xyz fields to validate that these
+    positions are within the given tolerance of each other.
+    """
+
+    tolerance = 1.0
+    """
+    3D tolerance in meters between the positions before flagging.
+    """
+
+    def __init__(
+        self,
+        *args,
+        severity=FlagSeverity.BLOCK_SAVE,
+        tolerance: float = tolerance,
+        **kwargs,
+    ):
+        self.tolerance = tolerance
+        super().__init__(*args, severity=severity, **kwargs)
+
+    def __call__(self, instance, field, value):
+        from math import sqrt
+
+        from slm.utils import llh2xyz
+
+        fieldname = field.name
+        xyz1 = value if fieldname == "xyz" else llh2xyz(value)
+        other = "xyz" if fieldname == "llh" else "llh"
+        otherfield = instance._meta.get_field(other)
+        if xyz1:
+            xyz2 = (
+                llh2xyz(getattr(instance, other))
+                if other == "llh"
+                else getattr(instance, other)
+            )
+            if xyz2:
+                diff = sqrt(
+                    (xyz1[0] - xyz2[0]) ** 2
+                    + (xyz1[1] - xyz2[1]) ** 2
+                    + (xyz1[2] - xyz2[2]) ** 2
+                )
+                if diff > self.tolerance:
+                    print(instance.site.name, diff)
+                    self.throw_error(
+                        f"{diff:.2f} meters away from {otherfield.verbose_name}",
+                        instance,
+                        field,
+                    )

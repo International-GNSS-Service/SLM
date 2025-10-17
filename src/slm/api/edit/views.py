@@ -614,6 +614,10 @@ class SectionViewSet(type):
                     do_revert = validated_data.pop("revert", False)
                     update_status = None
 
+                    # the upload viewsets tag the context so we can tweak behavior for
+                    # uploaded files
+                    is_from_upload = self.context.get("upload", False)
+
                     if not is_moderator:
                         # non-moderators are not allowed to publish!
                         if do_publish:
@@ -676,7 +680,7 @@ class SectionViewSet(type):
                         return instance
 
                     try:
-                        if ModelClass is SiteLocation:
+                        if ModelClass is SiteLocation and not is_from_upload:
                             # if XYZ or LLH should be computed from the other we do that here, so it happens
                             # before the validators run. We also do it in save().
                             llh = validated_data.get("llh", None)
@@ -1543,7 +1547,7 @@ class SiteFileUploadViewSet(
                             posted_subsections[section.heading_index].add(instance)
 
                     serializer = section_view.serializer_class(
-                        data=data, context={"request": request}
+                        data=data, context={"request": request, "upload": True}
                     )
                     if not serializer.is_valid(raise_exception=False):
                         errors[index] = {

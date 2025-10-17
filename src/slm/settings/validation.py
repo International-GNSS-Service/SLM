@@ -18,6 +18,7 @@ from slm.validators import (
     EnumValidator,
     FieldRequired,
     NonEmptyValidator,
+    PositionsMatchValidator,
     TimeRangeBookendValidator,
     TimeRangeValidator,
     VerifiedEquipmentValidator,
@@ -68,8 +69,8 @@ set_default(
             "city": [FieldRequired()],
             "country": [FieldRequired(), EnumValidator()],
             "tectonic": [EnumValidator()],
-            "xyz": [FieldRequired()],
-            "llh": [FieldRequired()],
+            "xyz": [FieldRequired(), PositionsMatchValidator()],
+            "llh": [FieldRequired(), PositionsMatchValidator()],
         },
         "slm.SiteReceiver": {
             "receiver_type": [VerifiedEquipmentValidator(), ActiveEquipmentValidator()],

@@ -8,7 +8,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.gis.db import models as gis_models
-from django.contrib.gis.geos.point import Point
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
@@ -56,7 +55,7 @@ from slm.defines import (
     TectonicPlates,
 )
 from slm.models.fields import StationNameField
-from slm.utils import date_to_str, llh2xyz, lon_360_to_180, xyz2llh
+from slm.utils import date_to_str
 from slm.validators import get_validators
 
 
@@ -2364,17 +2363,6 @@ class SiteLocation(SiteSection):
             "information. Format: (multiple lines)"
         ),
     )
-
-    def save(self, *args, **kwargs):
-        # if XYZ or LLH should be computed from the other we do that here, so it happens
-        # before the validators run. We also do it in save().
-        if self.llh:
-            self.llh = Point(self.llh[0], lon_360_to_180(self.llh[1]), self.llh[2])
-        if self.coordinate_mode == CoordinateMode.ECEF and self.xyz:
-            self.llh = Point(*xyz2llh(self.xyz))
-        elif self.coordinate_mode == CoordinateMode.LLH and self.llh:
-            self.xyz = Point(*llh2xyz(self.llh))
-        super().save(*args, **kwargs)
 
 
 class SiteReceiverManager(SiteSubSectionManager):

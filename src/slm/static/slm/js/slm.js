@@ -130,10 +130,10 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
             'button.accordion-button'
         ).removeClass('slm-section-deleted');
         form.find('.alert.slm-form-deleted').hide();
-        form.find('.form-control:visible').removeAttr('disabled');
-        form.find('input.form-check-input:visible').removeAttr('disabled', '');
         form.find('.slm-flag').show();
         form.find('div[contenteditable]').attr('contenteditable', true);
+        // wait until this is swapped with form class
+        // slm.setFormFields(form, data);
     }
 
     if (data.hasOwnProperty('_diff') && Object.keys(data._diff).length) {

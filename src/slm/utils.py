@@ -328,12 +328,12 @@ def get_exif_tags(file_path):
     return {}
 
 
-def xyz2llh(*xyz) -> t.Tuple[float, float, float]:
+def xyz2llh(*xyz, geodetic=True) -> t.Tuple[float, float, float]:
     """
     Convert ECEF to LLH using ITRF2020 Ellipsoid.
 
     :param xyz: A 3-tuple or 3 xyz parameters, e.g. xyz2llh(x,y,z) or xyz2llh((x,y,z))
-    :return: A 3-tuple of latitude, longitude, height. Longitude is geocentric (0-360) and height is in meters.
+    :return: A 3-tuple of latitude, longitude, height. Longitude is geodetic (+/-180) by default and height is in meters.
     """
     a_e = 6378.137e3  # meters
     f_e = 1 / 298.257222101  # ITRF2020 flattening
@@ -359,7 +359,7 @@ def xyz2llh(*xyz) -> t.Tuple[float, float, float]:
         lon = lon + 360
     h = a_e * (p * cos(phi) + z * sin(phi) - sqrt(1 - e2 * (sin(phi)) ** 2))
 
-    return lat, lon, h
+    return lat, lon_360_to_180(lon) if geodetic else lon, h
 
 
 def llh2xyz(*llh) -> t.Tuple[float, float, float]:

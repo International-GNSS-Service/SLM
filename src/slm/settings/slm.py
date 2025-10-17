@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from slm.defines import (
     AlertLevel,
+    CoordinateMode,
     GeodesyMLVersion,
     SiteFileUploadStatus,
     SiteLogFormat,
@@ -250,3 +251,11 @@ SLM_ENABLED_FORMATS = [
 
 if SLM_DEFAULT_FORMAT not in SLM_ENABLED_FORMATS:
     SLM_ENABLED_FORMATS.insert(0, SLM_DEFAULT_FORMAT)
+
+
+SLM_COORDINATE_MODE = CoordinateMode(
+    env(
+        "SLM_COORDINATE_MODE",
+        default=get_setting("SLM_COORDINATE_MODE", CoordinateMode.INDEPENDENT),
+    )
+)

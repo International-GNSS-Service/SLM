@@ -15,6 +15,7 @@ slm.defines
    aspiration
    cardinaldirection
    collocationstatus
+   coordinatemode
    equipmentstate
    flagseverity
    fracturespacing

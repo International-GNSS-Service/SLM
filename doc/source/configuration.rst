@@ -239,6 +239,9 @@ The following settings may be overridden by environment variables:
    * - :setting:`SLM_IGS_VALIDATION`
      - :ref:`env_types_bool`
      - ``on|off``
+   * - :setting:`SLM_COORDINATE_MODE`
+     - :class:`str`
+     - ``INDEPENDENT|ECEF|LLH``
    * - :setting:`STATIC_ROOT`
      - :ref:`env_types_path`
      - ``path/to/static/from/basedir``
@@ -422,6 +425,45 @@ Default: ``True``
 
 Use the default IGS log :ref:`validation rules <validation>`. If ``False`` no validation
 will be performed on site log values other than basic database column type checks.
+
+``SLM_COORDINATE_MODE`` ⚙️
+--------------------------
+.. setting:: SLM_COORDINATE_MODE
+
+Default: ``INDEPENDENT``
+
+Site logs contain position fields in both lat/lon/height and xyz (ECEF). By default the SLM will
+allow users to specify these values indepenendently. Optionally it can be configured to compute
+one from the other using the ITRF2020 ellipsoid parameters:
+
+.. tabs::
+
+    .. tab:: Visual
+
+      .. list-table::
+        :header-rows: 1
+        :widths: 10 70
+
+        * - :class:`~slm.defines.CoordinateMode`
+          - Behavior
+        * - :attr:`~slm.defines.CoordinateMode.INDEPENDENT`
+          - User specifies station coordinates in ECEF and LLH seperately.
+        * - :attr:`~slm.defines.CoordinateMode.ECEF`
+          - User specifies station coordinates in ECEF, LLH coordinates are calculated by the system.
+        * - :attr:`~slm.defines.CoordinateMode.LLH`
+          - User specifies station coordinates in LLH, ECEF coordinates are calculated by the system.
+
+    .. tab:: Code
+
+      .. code-block:: python
+
+        from slm.defines import CoordinateMode
+
+        SLM_COORDINATE_MODE = CoordinateMode.ECEF
+
+
+If using IGS validation rules there is also a validator that will throw warnings if these
+coordinates differ by more than 1 meter in three dimensions.
 
 ``SLM_SECURITY_DEFAULTS`` ⚙️
 ----------------------------

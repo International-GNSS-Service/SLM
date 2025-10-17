@@ -17,6 +17,7 @@ from ckeditor.widgets import CKEditorWidget
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div, Layout
 from django import forms
+from django.conf import settings
 from django.contrib.gis.forms import PointField
 from django.contrib.gis.geos import Point, Polygon
 from django.core.exceptions import FieldDoesNotExist, ValidationError
@@ -45,6 +46,7 @@ from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
 from slm.defines import (
     AlertLevel,
     CardinalDirection,
+    CoordinateMode,
     FrequencyStandardType,
     ISOCountry,
     SiteLogStatus,
@@ -623,12 +625,16 @@ class SiteLocationForm(SectionForm):
     xyz = SLMPointField(
         help_text=SiteLocation._meta.get_field("xyz").help_text,
         label=SiteLocation._meta.get_field("xyz").verbose_name,
+        disabled=getattr(settings, "SLM_COORDINATE_MODE", CoordinateMode.INDEPENDENT)
+        == CoordinateMode.LLH,
     )
 
     llh = SLMPointField(
         help_text=SiteLocation._meta.get_field("llh").help_text,
         label=SiteLocation._meta.get_field("llh").verbose_name,
         attrs={"step": 0.0000001},
+        disabled=getattr(settings, "SLM_COORDINATE_MODE", CoordinateMode.INDEPENDENT)
+        == CoordinateMode.ECEF,
     )
 
     class Meta:

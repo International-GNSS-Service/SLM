@@ -76,6 +76,7 @@ from slm.api.serializers import SiteLogSerializer
 from slm.api.views import BaseSiteLogDownloadViewSet
 from slm.defines import (
     CardinalDirection,
+    CoordinateMode,
     SiteFileUploadStatus,
     SiteLogFormat,
     SiteLogStatus,
@@ -113,6 +114,7 @@ from slm.models import (
     SiteWaterVaporRadiometer,
 )
 from slm.parsing.legacy.parser import Error, Warn
+from slm.utils import llh2xyz, xyz2llh
 
 
 class StationFilterForm(BaseStationFilterForm):
@@ -674,6 +676,22 @@ class SectionViewSet(type):
                         return instance
 
                     try:
+                        if ModelClass is SiteLocation:
+                            # if XYZ or LLH should be computed from the other we do that here, so it happens
+                            # before the validators run. We also do it in save().
+                            llh = validated_data.get("llh", None)
+                            xyz = validated_data.get("xyz", None)
+
+                            if (
+                                ModelClass.coordinate_mode == CoordinateMode.ECEF
+                                and xyz
+                            ):
+                                validated_data["llh"] = Point(*xyz2llh(xyz))
+                            elif (
+                                ModelClass.coordinate_mode == CoordinateMode.LLH and llh
+                            ):
+                                validated_data["xyz"] = Point(*llh2xyz(llh))
+
                         # this is a new section
                         if instance is None:
                             new_section = super().create(validated_data)

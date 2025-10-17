@@ -6,6 +6,7 @@ from slm.defines.AntennaReferencePoint import AntennaReferencePoint
 from slm.defines.Aspiration import Aspiration
 from slm.defines.CardinalDirection import CardinalDirection
 from slm.defines.CollocationStatus import CollocationStatus
+from slm.defines.CoordinateMode import CoordinateMode
 from slm.defines.EquipmentState import EquipmentState
 from slm.defines.FlagSeverity import FlagSeverity
 from slm.defines.FractureSpacing import FractureSpacing
@@ -30,6 +31,7 @@ __all__ = [
     "Aspiration",
     "CardinalDirection",
     "CollocationStatus",
+    "CoordinateMode",
     "EquipmentState",
     "FlagSeverity",
     "FractureSpacing",

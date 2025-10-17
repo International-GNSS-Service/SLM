@@ -48,7 +48,7 @@ set_default(
         # 'sitemultipathsources',
         # 'sitesignalobstructions',
         # 'sitelocalepisodiceffects',
-        "siteoperationalcontact",
+        # "siteoperationalcontact",
         # 'siteresponsibleagency',
         # 'sitemoreinformation'
     ],

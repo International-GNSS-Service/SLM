@@ -22,7 +22,7 @@ from typing_extensions import Annotated
 
 from slm.defines import ISOCountry
 from slm.models import Network, Site, SiteAntenna, SiteReceiver
-from slm.utils import dddmmss_ss_parts, transliterate, xyz2llh
+from slm.utils import dddmmss_ss_parts, lon_180_to_360, transliterate, xyz2llh
 
 DEFAULT_ANTEX = "https://files.igs.org/pub/station/general/igs20.atx.gz"
 
@@ -275,15 +275,13 @@ class Command(TyperCommand):
                 continue
 
             # is sinex longitude 0-360 or -180 to 180?
-            lon_deg, lon_min, lon_sec = dddmmss_ss_parts(
-                llh[1] if llh[1] > 0 else llh[1] + 360
-            )
+            lon_deg, lon_min, lon_sec = dddmmss_ss_parts(lon_180_to_360(llh[1]))
 
             yield (
                 f" {site.four_id.lower()}  A "
                 f"{site.iers_domes_number:>9} P "
-                f"{location:<21}  {lon_deg:3d} {lon_min:2d} "
-                f"{lon_sec:>4.1f} {lat_deg:3d} {lat_min:2d} "
+                f"{location:<21}  {lon_deg:3.0f} {lon_min:2d} "
+                f"{lon_sec:>4.1f} {lat_deg:3.0f} {lat_min:2d} "
                 f"{lat_sec:>4.1f} {llh[2]:>7.1f}"
             )
         yield "-SITE/ID"

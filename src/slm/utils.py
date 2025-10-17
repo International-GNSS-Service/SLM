@@ -1,7 +1,8 @@
 import json
 import re
+import typing as t
 from datetime import date, datetime, timedelta
-from math import atan2, cos, sin, sqrt
+from math import atan2, copysign, cos, floor, sin, sqrt
 
 from dateutil import parser as date_parser
 from django.conf import settings
@@ -39,43 +40,121 @@ def get_record_model():
         ) from ve
 
 
-def dddmmssss_to_decimal(dddmmssss):
-    if dddmmssss is not None:
-        if isinstance(dddmmssss, str):
-            dddmmssss = float(dddmmssss)
-        dddmmssss /= 10000
-        degrees = int(dddmmssss)
-        minutes = (dddmmssss - degrees) * 100
-        seconds = float((minutes - int(minutes)) * 100)
-        return degrees + int(minutes) / 60 + seconds / 3600
-    return None
+def dddmmssss_to_decimal(
+    dddmmssss: t.Optional[t.Union[float, str, int]], sec_digits: int = 6
+) -> t.Optional[float]:
+    """
+    Convert DDDMMSS.ss composite to decimal degrees.
+    Preserves -0.0 and normalizes 60s/60m carries.
+
+    :param dddmmssss: latitude or longitude in DDDMMSS.SS format
+    :return: the coordinate in decimal degrees
+    """
+    if dddmmssss is None:
+        return None
+    if isinstance(dddmmssss, str):
+        dddmmssss = float(dddmmssss)
+
+    sgn = copysign(1.0, dddmmssss)
+    v = abs(dddmmssss)
+
+    # Extract D, M, S from DDDMMSS.ss
+    degrees = int(v // 10000)
+    remainder = v - degrees * 10000
+    minutes = int(remainder // 100)
+    seconds = remainder - minutes * 100
+
+    # Clean up float noise and normalize carries
+    seconds = round(seconds, sec_digits)
+    if seconds >= 60.0:
+        seconds = 0.0
+        minutes += 1
+    if minutes >= 60:
+        minutes = 0
+        degrees += 1
+
+    dec = degrees + minutes / 60.0 + seconds / 3600.0
+    return copysign(dec, sgn)
 
 
-def decimal_to_dddmmssss(dec):
-    if dec is not None:
-        if isinstance(dec, str):
-            dec = float(dec)
-        degrees = int(dec)
-        minutes = (dec - degrees) * 60
-        seconds = float(minutes - int(minutes)) * 60
-        return degrees * 10000 + int(minutes) * 100 + seconds
-    return None
+def decimal_to_dddmmssss(
+    dec: t.Optional[t.Union[str, float]], sec_digits: int = 2
+) -> t.Optional[float]:
+    """
+    Convert decimal degrees to DDDMMSS.SS... as a float.
+    Preserves the sign of -0.0 and normalizes carry (sec/min -> min/deg).
+
+    :param: dec: string or float of decimal degrees of either latitude or longitude
+    :return: floating point lat or lon in DDDMMSS.SS format
+    """
+    if dec is None:
+        return None
+    if isinstance(dec, str):
+        dec = float(dec)
+
+    # Work with absolute value; keep original sign with copysign at the end
+    a = abs(dec)
+
+    degrees = int(a)
+    minutes_full = (a - degrees) * 60.0
+    minutes = int(minutes_full)
+    seconds = (minutes_full - minutes) * 60.0
+
+    # Round seconds, then normalize carries (60s -> +1m, 60m -> +1d)
+    seconds = round(seconds, sec_digits)
+    if seconds >= 60.0:
+        seconds = 0.0
+        minutes += 1
+    if minutes >= 60:
+        minutes = 0
+        degrees += 1
+
+    # Compose as DDDMMSS.ss (minutes and seconds are non-negative)
+    composite = degrees * 10000 + minutes * 100 + seconds
+    return copysign(composite, dec)
 
 
-def dddmmss_ss_parts(dec):
+def dddmmss_ss_parts(
+    dec: t.Optional[t.Union[str, float, int]], sec_digits: int = 2
+) -> t.Tuple[t.Optional[float], t.Optional[int], t.Optional[float]]:
     """
     Return (degrees, minutes, seconds) from decimal degrees
     :param dec: Decimal degrees lat or lon
-    :return:
+    :return: a 3-tuple of degrees, minutes seconds components. The degrees component will be a
+      whole number, but is a float so that it may contain the sign.
     """
-    if dec is not None:
-        if isinstance(dec, str):
-            dec = float(dec)
-        degrees = int(dec)
-        minutes = (dec - degrees) * 60
-        seconds = float(minutes - int(minutes)) * 60
-        return degrees, abs(int(minutes)), abs(seconds)
-    return None, None, None
+    if dec is None:
+        return None, None, None
+    if isinstance(dec, str):
+        dec = float(dec)
+
+    sign = int(copysign(1, dec))
+    v = abs(dec)
+
+    degrees = floor(v)
+    minutes_full = (v - degrees) * 60
+    minutes = floor(minutes_full)
+    seconds = (minutes_full - minutes) * 60
+
+    seconds = round(seconds, sec_digits)
+
+    # Handle rounding overflow (e.g. 59.9999 → 60.0)
+    if seconds >= 60.0:
+        seconds = 0.0
+        minutes += 1
+    if minutes >= 60:
+        minutes = 0
+        degrees += 1
+
+    return (sign * float(degrees), minutes, seconds)
+
+
+def lon_180_to_360(lon):
+    return lon % 360.0
+
+
+def lon_360_to_180(lon):
+    return ((lon + 180) % 360) - 180
 
 
 def set_protocol(request):
@@ -249,10 +328,19 @@ def get_exif_tags(file_path):
     return {}
 
 
-def xyz2llh(xyz):
-    a_e = 6378.1366e3  # meters
-    f_e = 1 / 298.25642  # IERS2000 standards
+def xyz2llh(*xyz) -> t.Tuple[float, float, float]:
+    """
+    Convert ECEF to LLH using ITRF2020 Ellipsoid.
+
+    :param xyz: A 3-tuple or 3 xyz parameters, e.g. xyz2llh(x,y,z) or xyz2llh((x,y,z))
+    :return: A 3-tuple of latitude, longitude, height. Longitude is geocentric (0-360) and height is in meters.
+    """
+    a_e = 6378.137e3  # meters
+    f_e = 1 / 298.257222101  # ITRF2020 flattening
     radians2degree = 45 / atan2(1, 1)
+
+    # allow xyz2llh(x,y,z) or xyz2llh((x,y,z))
+    xyz = xyz[0] if len(xyz) == 1 else xyz
 
     xyz_array = [v / a_e for v in xyz]
     (x, y, z) = (xyz_array[0], xyz_array[1], xyz_array[2])
@@ -272,6 +360,43 @@ def xyz2llh(xyz):
     h = a_e * (p * cos(phi) + z * sin(phi) - sqrt(1 - e2 * (sin(phi)) ** 2))
 
     return lat, lon, h
+
+
+def llh2xyz(*llh) -> t.Tuple[float, float, float]:
+    """
+    Convert LLH (latitude, longitude, height) to ECEF (X, Y, Z)
+    using ITRF2020 Ellipsoid.
+
+    :param llh: A 3-tuple or 3 separate parameters, e.g. llh2xyz(lat, lon, h) or llh2xyz((lat, lon, h))
+    :returns: (x, y, z) in meters
+    """
+    a_e = 6378.137e3  # semi-major axis in meters
+    f_e = 1 / 298.257222101  # flattening (ITRF2020)
+    radians_per_degree = atan2(1, 1) / 45  # inverse of your radians2degree
+
+    # allow llh2xyz(lat, lon, h) or llh2xyz((lat, lon, h))
+    llh = llh[0] if len(llh) == 1 else llh
+    lat, lon, h = llh
+
+    # convert to radians
+    phi = lat * radians_per_degree
+    lam = lon * radians_per_degree
+
+    e2 = f_e * (2 - f_e)
+    sin_phi = sin(phi)
+    cos_phi = cos(phi)
+    sin_lam = sin(lam)
+    cos_lam = cos(lam)
+
+    # prime vertical radius of curvature
+    N = a_e / sqrt(1 - e2 * sin_phi**2)
+
+    # ECEF coordinates
+    x = (N + h) * cos_phi * cos_lam
+    y = (N + h) * cos_phi * sin_lam
+    z = ((1 - e2) * N + h) * sin_phi
+
+    return x, y, z
 
 
 def convert_9to4(text: str, name: str) -> str:

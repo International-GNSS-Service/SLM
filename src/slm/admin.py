@@ -382,7 +382,7 @@ class AntennaCalibrationAdmin(admin.ModelAdmin):
 
 
 class LogEntryAdmin(admin.ModelAdmin):
-    search_fields = ("site__name", "radome__model")
+    search_fields = ("site__name",)
     list_display = ("timestamp", "site", "type", "ip")
     list_filter = ("type", "section")
     ordering = ("-timestamp",)

@@ -346,6 +346,7 @@ class ArchivedSiteLogView(FileSystemView):
                 listings.aggregate(Max("display_len"))["display_len__max"],
                 context.get("max_len", 0),
             )
+
         return context
 
     def get_queryset(

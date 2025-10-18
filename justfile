@@ -152,7 +152,7 @@ docs: build-docs-html open-docs
 
 # serve the documentation, with auto-reload
 docs-live: install-docs
-    @just run sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8000 --delay 1
+    @just run sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8001 --delay 1
 
 _link_check:
     -uv run sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build

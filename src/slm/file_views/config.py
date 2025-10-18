@@ -98,6 +98,11 @@ class Entry:
     view set this to :func:`~django.contrib.auth.decorators.login_required`
     """
 
+    options: t.Dict[str, t.Any] = field(default_factory=dict)
+    """
+    Extra kwargs to pass to path().
+    """
+
     @abstractmethod
     def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]: ...
 
@@ -105,6 +110,7 @@ class Entry:
         from django.conf import settings
 
         return {
+            **self.options,
             "download": self.download
             if self.download is not None
             else getattr(settings, "SLM_FILE_VIEW_DOWNLOAD", False),

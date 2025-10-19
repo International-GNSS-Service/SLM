@@ -382,8 +382,6 @@ class ArchivedSiteLogView(FileSystemView):
             fltr &= Q(index__site__status__in=log_status)
         if log_formats:
             fltr &= Q(log_format__in=log_formats)
-        if non_current:
-            fltr &= Q(index__valid_range__upper_inf=False)
 
         qry = ArchivedSiteLog.objects.filter(fltr)
 
@@ -392,6 +390,15 @@ class ArchivedSiteLogView(FileSystemView):
 
         if most_recent:
             qry = qry.most_recent()
+
+        if non_current:
+            # we do it this way because in cases where the latest log has multiple indexes
+            # on the same day the last same day index will appear in the results - if we
+            # exclude the last  indexes in the same query it breaks
+            # the windowing exclusion of older same day logs for that latest index date
+            qry = ArchivedSiteLog.objects.filter(
+                pk__in=qry, index__valid_range__upper_inf=False
+            )
 
         if name_len is not None or lower_case is not None:
             self.lookup_field = "display"

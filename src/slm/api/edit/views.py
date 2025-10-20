@@ -680,6 +680,7 @@ class SectionViewSet(type):
                         return instance
 
                     try:
+                        location_updated = False
                         if ModelClass is SiteLocation and not is_from_upload:
                             # if XYZ or LLH should be computed from the other we do that here, so it happens
                             # before the validators run. We also do it in save().
@@ -690,10 +691,12 @@ class SectionViewSet(type):
                                 ModelClass.coordinate_mode == CoordinateMode.ECEF
                                 and xyz
                             ):
+                                location_updated = True
                                 validated_data["llh"] = Point(*xyz2llh(xyz))
                             elif (
                                 ModelClass.coordinate_mode == CoordinateMode.LLH and llh
                             ):
+                                location_updated = True
                                 validated_data["xyz"] = Point(*llh2xyz(llh))
 
                         # this is a new section
@@ -779,8 +782,18 @@ class SectionViewSet(type):
                                         else:
                                             setattr(instance, field, new_value)
 
-                                    if field in flags:
+                                    # handle special case where llh/xyz are linked and if one is
+                                    # updated we should remove flags for both
+                                    # TODO less hard coded way to handle this -
+                                    # linked fields definitions on the validators?
+                                    if location_updated and field in {"llh", "xyz"}:
+                                        for cfield in ["llh", "xyz"]:
+                                            if cfield in flags:
+                                                del flags[cfield]
+
+                                    elif field in flags:
                                         del flags[field]
+
                         if update:
                             if instance.published:
                                 validated_data["_flags"] = flags

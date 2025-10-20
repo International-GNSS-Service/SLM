@@ -167,7 +167,16 @@ class Form extends slm.Persistable {
                     data[field.name] = [value];
                 }
             } else {
-                data[field.name] = value;
+                if (Object.hasOwn(data, field.name)) {
+                    const current = data[field.name];
+                    if (Array.isArray(current)) {
+                        current.push(value);
+                    } else {
+                        data[field.name] = [current, value];
+                    }
+                } else {
+                    data[field.name] = value;
+                }
             }
         }
 
@@ -234,16 +243,20 @@ class Form extends slm.Persistable {
                         checked.prop('checked', true);
                         this.element.find(`[name="${field}"]:checkbox`).not(checked).prop('checked', false);
                         break;
-                    default:
-                        if (ipt.length > 0) {
-                            throw TypeError(`Array given for form data type: ${ipt.prop('type')}`);
+                    case 'number':
+                        if (value.length === ipt.length) {
+                            let idx = 0;
+                            for (const val of value) { $(ipt[idx++]).val(val); }
+                            break;
                         }
+                    default:
+                        throw TypeError(`Type mismatch: ${value} ${ipt.prop('type')}`);
                 }
             } else if (ipt.length > 1) {
                 const types = [];
                 ipt.each(function () { types.push($(this).prop('type')); });
                 const values = this.decompose(types, value);
-                ipt.map((e, i) => { setField(e, values[i]); });
+                ipt.each((i, e) => setField($(e), values[i]));
             } else { setField(ipt, value); }
         }.bind(this));
 
@@ -302,22 +315,20 @@ class Form extends slm.Persistable {
     }
 
     decompose(types, value) {
-        switch (types) {
-            case ['date', 'time']:
+        const typeList = Array.isArray(types) ? types : Array.from(types);
+        if (typeList.length === 2 && typeList[0] === 'date' && typeList[1] === 'time') {
                 if (value) { return value.split('T'); }
                 return ['', ''];
-            default:
-                throw TypeError(`Unexpected decomposition types: ${types}`);
         }
+        throw TypeError(`Unexpected decomposition types: ${types}`);
     }
 
     compose(types, inputs) {
-        switch (types) {
-            case ['date', 'time']:
-                return `${inputs.get(0).value}T${inputs.get(1).value || "00:00"}Z`
-            default:
-                throw TypeError(`Unexpected composition types: ${types}`);
+        const typeList = Array.isArray(types) ? types : Array.from(types);
+        if (typeList.length === 2 && typeList[0] === 'date' && typeList[1] === 'time') {
+            return `${inputs[0]}T${inputs[1] || "00:00"}Z`                
         }
+        throw TypeError(`Unexpected composition types: ${[...typeList].join(', ')}`);
     }
 
     clear() {

@@ -132,8 +132,10 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         form.find('.alert.slm-form-deleted').hide();
         form.find('.slm-flag').show();
         form.find('div[contenteditable]').attr('contenteditable', true);
-        // wait until this is swapped with form class
-        // slm.setFormFields(form, data);
+        
+        // TODO Form class setters/getters still not completely working for all forms
+        // const filterForm = new slm.Form(form);
+        // filterForm.data = data;
     }
 
     if (data.hasOwnProperty('_diff') && Object.keys(data._diff).length) {

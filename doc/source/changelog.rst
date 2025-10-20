@@ -9,15 +9,23 @@ Change Log
 .. v0.1.6b0 (2025-XX-XX)
 .. =====================
 
+.. * Implemented `Should be able to pass string arguments to GeneratedFile views. <https://github.com/International-GNSS-Service/SLM/issues/184>`_
+.. * Fixed `ArchivedLog view can erroneously include logs from last index date if multiple indexes exist for that date. <https://github.com/International-GNSS-Service/SLM/issues/183>`_
+.. * Fixed `Need to be able to pass url kwargs to file view Entries. <https://github.com/International-GNSS-Service/SLM/issues/182>`_
+.. * Fixed `LogEntry admin search field errors out <https://github.com/International-GNSS-Service/SLM/issues/181>`_
+.. * Fixed `Add a validator to check XYZ/LLH consistency. <https://github.com/International-GNSS-Service/SLM/issues/180>`_
+.. * Fixed `Generated SINEX with latitudes at 0 degrees S lose the sign <https://github.com/International-GNSS-Service/SLM/issues/176>`_
 .. * Fixed `SLM site log serialization cuts lines at 79 characters - this should be 80. <https://github.com/International-GNSS-Service/SLM/issues/166>`_
 .. * Fixed `Allow "URL for More Information" to split a url across multiple lines. <https://github.com/International-GNSS-Service/SLM/issues/165>`_
 .. * Implemented `Antenna Alignment from True north should be desired not required. <https://github.com/International-GNSS-Service/SLM/issues/164>`_
 .. * Fixed `Some malformed query parameters result in unhandled exceptions producing 500s instead of 400s <https://github.com/International-GNSS-Service/SLM/issues/162>`_
+.. * Implemented `Provide app that contains the igs file list views. <https://github.com/International-GNSS-Service/SLM/issues/108>`_
 
 
 v0.1.5b3 (2025-07-25)
 =====================
 
+* Fixed `WSGI_APPLICATION default is wrong <https://github.com/International-GNSS-Service/SLM/issues/154>`_
 * Fixed `Provide SLM IGS station naming validation toggle. <https://github.com/International-GNSS-Service/SLM/issues/153>`_
 * Fixed `Sometimes the javascript diffing/site log error renderer inserts extra newlines. <https://github.com/International-GNSS-Service/SLM/issues/151>`_
 

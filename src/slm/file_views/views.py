@@ -455,7 +455,7 @@ def command_output_view(
     Return a generated sinex file from the currently published site log data.
     """
     out = StringIO()
-    call_command(command, **kwargs, stdout=out)
+    call_command(command, *kwargs.pop("args", []), **kwargs, stdout=out)
     out.seek(0)
     contents = out.getvalue()
     path = Path(request.path)

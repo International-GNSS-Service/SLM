@@ -212,6 +212,11 @@ class _Command:
     must write the file to standard out.
     """
 
+    args: t.List[str] = field(default_factory=list)
+    """
+    CLI string arguments to pass to the command.
+    """
+
 
 @dataclass
 class GeneratedFile(File, _Command):
@@ -233,6 +238,7 @@ class GeneratedFile(File, _Command):
             **super().kwargs(),
             "command": self.command,
             "mimetype": self.mimetype,
+            "args": self.args,
             **kwargs,
         }
 

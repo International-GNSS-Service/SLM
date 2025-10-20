@@ -117,7 +117,7 @@ def test_xyz_llh_conversions():
     # 4) Equator, 90°W — X=0, Y=-a, Z=0  => lat 0°, lon -90°, h≈0
     lat, lon, h = xyz2llh(0.0, -a, 0.0)
     assert lat == pytest.approx(0.0, abs=1e-12)
-    assert lon == pytest.approx(270, abs=1e-12)
+    assert lon == pytest.approx(-90, abs=1e-12)
     assert h == pytest.approx(0.0, abs=1e-4)
 
     # 5) Equator, 180°/−180° — X=−a, Y=0, Z=0 => lat 0°, lon ±180°, h≈0

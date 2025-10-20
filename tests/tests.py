@@ -234,7 +234,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             "country": "NO",
             "tectonic": "EU",
             "xyz": [1202431.0, 252627.0, 6237768.0],
-            "llh": [79.92958055555556, 11.865094444444441, 79.0],
+            "llh": [78.9295809046, 11.8650953117, 78.99],
             "additional_information": "",
         }
 
@@ -285,7 +285,8 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             secure=True,
             format="json",
         )
-        self.assertTrue(ident_ret.status_code < 300)
+
+        self.assertTrue(loc_ret.status_code < 300)
         site.refresh_from_db()
 
         self.assertEqual(site.status, SiteLogStatus.PROPOSED)
@@ -457,12 +458,7 @@ class TestEditAPI(SLMSignalTracker, TestCase):
             )
             site.refresh_from_db()
             self.assertEqual(site.status, SiteLogStatus.PROPOSED)
-            try:
-                self.assertTrue(ret.status_code < 300)
-            except:
-                import ipdb
-
-                ipdb.set_trace()
+            self.assertTrue(ret.status_code < 300)
 
         self.clear_signals()
         self.assertTrue(c.login(email="editor@example.com", password="password"))

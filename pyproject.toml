@@ -141,6 +141,7 @@ dev = [
     "pre-commit>=3.5.0",
     "tomlkit>=0.13.2",
     "djlint>=1.35.2",
+    "whitenoise>=6.7.0",
 ]
 docs = [
     "Sphinx>=7.2.0,<8.0.0; python_version > '3.8'",

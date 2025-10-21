@@ -33,7 +33,7 @@ class EquipmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Equipment
-        fields = ["model", "description", "state", "manufacturer"]
+        fields = ["id", "model", "description", "state", "manufacturer"]
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):

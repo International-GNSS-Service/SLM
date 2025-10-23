@@ -6,6 +6,11 @@
 Change Log
 ==========
 
+v0.2.0b2 (2025-10-23)
+=====================
+
+* Fix order of check_upgrade set-db-version in deploy routine.
+
 v0.2.0b1 (2025-10-23)
 =====================
 

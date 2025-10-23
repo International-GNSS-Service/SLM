@@ -30,7 +30,7 @@ command("deploy", "check", "--deploy")
 command("deploy", "check_upgrade", "is-safe")
 command("deploy", "shellcompletion", "install", switches=["initial"])
 command("deploy", "migrate", priority=11)
-command("deploy", "check_upgrade", "set-db-version")
+command("deploy", "check_upgrade", "set-db-version", priority=15)
 command("deploy", "renderstatic", priority=20)
 command("deploy", "collectstatic", "--no-input", priority=21)
 if get_setting("COMPRESS_OFFLINE", False) and get_setting("COMPRESS_ENABLED", False):

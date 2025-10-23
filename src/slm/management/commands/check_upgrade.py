@@ -26,7 +26,7 @@ from slm.models import SLMVersion
 
 def parse_version(version: str) -> Version:
     try:
-        parse(version)
+        return parse(version)
     except InvalidVersion as verr:
         raise typer.BadParameter(
             f"{version} is not a valid Python package version string."
@@ -68,10 +68,12 @@ class Command(TyperCommand):
     # these specific versions. These versions are points at which the migration
     # files were remade - meaning the database state may not be migrated correctly
     # if it was not first updated to be state consistent with these specific versions.
-    VERSION_WAYPOINTS = list(sorted([parse("0.1.5b")]))
+    VERSION_WAYPOINTS = list(sorted([parse("0.2.0b0")]))
 
     requires_migrations_checks = False
     requires_system_checks = []
+
+    slm_version = parse_version(slm_version)
 
     def closest_waypoint_gte(self, version: Version) -> t.Optional[Version]:
         idx = bisect.bisect_left(self.VERSION_WAYPOINTS, version)
@@ -90,23 +92,23 @@ class Command(TyperCommand):
     )
     def is_safe(self):
         db_version: Version = SLMVersion.load().version or parse("0.1.4b")
-        if db_version > slm_version:
+        if db_version > self.slm_version:
             # downgrades are possible with reversible migrations - we only
             # balk if the downgrade would travel through a migration waypoint
             nearest_waypoint = self.closest_waypoint_lte(db_version)
-            if nearest_waypoint and nearest_waypoint > slm_version:
+            if nearest_waypoint and nearest_waypoint > self.slm_version:
                 raise CommandError(
-                    f"Unable to downgrade from {db_version} to {slm_version}. "
+                    f"Unable to downgrade from {db_version} to {self.slm_version}. "
                     f"Traverses version waypoint: {nearest_waypoint}. "
                     f"It is recommended that you restore from a database backup."
                 )
-        elif db_version < slm_version:
+        elif db_version < self.slm_version:
             # Upgrades must pass through all waypoints between the database code version and
             # the installed version of igs-slm
             nearest_waypoint = self.closest_waypoint_gte(db_version)
-            if nearest_waypoint and nearest_waypoint < slm_version:
+            if nearest_waypoint and nearest_waypoint < self.slm_version:
                 raise CommandError(
-                    f"Unable to upgrade from {db_version} to {slm_version}. "
+                    f"Unable to upgrade from {db_version} to {self.slm_version}. "
                     f"Traverses version waypoint: {nearest_waypoint}. "
                     f"You must first install and upgrade SLM at the waypoint: "
                     f"pip install igs-slm=={nearest_waypoint}."
@@ -125,9 +127,7 @@ class Command(TyperCommand):
             ),
         ],
     ):
-        from slm import __version__ as slm_version
-
-        version = version or parse_version(slm_version)
+        version = version or self.slm_version
         if version != SLMVersion.load().version:
             confirm = typer.confirm(
                 _(

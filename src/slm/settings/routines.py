@@ -27,6 +27,7 @@ routine(
 )
 
 command("deploy", "check", "--deploy")
+command("deploy", "check_upgrade", "is-safe")
 command("deploy", "shellcompletion", "install", switches=["initial"])
 command("deploy", "migrate", priority=11)
 command("deploy", "renderstatic", priority=20)

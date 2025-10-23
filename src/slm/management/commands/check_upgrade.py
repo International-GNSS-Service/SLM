@@ -68,7 +68,7 @@ class Command(TyperCommand):
     # these specific versions. These versions are points at which the migration
     # files were remade - meaning the database state may not be migrated correctly
     # if it was not first updated to be state consistent with these specific versions.
-    VERSION_WAYPOINTS = list(sorted([parse("0.2.0b0")]))
+    VERSION_WAYPOINTS = []  # list(sorted([parse("0.2.0b0")]))
 
     requires_migrations_checks = False
     requires_system_checks = []

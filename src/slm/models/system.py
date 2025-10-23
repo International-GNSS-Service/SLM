@@ -781,13 +781,17 @@ class SLMVersion(SingletonModel):
     version_str = models.CharField(default="", blank=True)
 
     @classmethod
-    def update(cls, version: t.Optional[Version] = None):
+    def update(cls, version: t.Optional[t.Union[Version, str]] = None):
         if not version:
             from slm import __version__ as slm_version
 
-            version = parse_version(slm_version)
+            version = slm_version
+
+        if isinstance(version, str):
+            version = parse_version(version)
+
         instance = cls.load()
-        instance.version_str = str(version)
+        instance.version_str = str(version)  # normalized!
         instance.save()
 
     @property

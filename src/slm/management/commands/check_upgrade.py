@@ -145,4 +145,9 @@ class Command(TyperCommand):
             if not confirm:
                 self.secho(_("Aborted."), fg="red")
                 raise typer.Exit(code=1)
-            SLMVersion.update(version=version)
+            try:
+                SLMVersion.update(version=version)
+            except ProgrammingError:
+                # this could happen if we are backwards migrating and the table no longer
+                # exists, but we're called via a migrate signal
+                pass

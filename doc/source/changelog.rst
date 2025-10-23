@@ -6,19 +6,10 @@
 Change Log
 ==========
 
-v0.2.0b2 (2025-10-23)
+v0.2.0b3 (2025-10-23)
 =====================
 
-* Fix order of check_upgrade set-db-version in deploy routine.
-
-v0.2.0b1 (2025-10-23)
-=====================
-
-* Fix an issue with deploy/check_upgrade.
-
-v0.2.0b0 (2025-10-23)
-=====================
-
+* Fix issues with check_upgrade so that it fails gracefully when the version table is not present.
 * Implemented `Should be able to pass string arguments to GeneratedFile views. <https://github.com/International-GNSS-Service/SLM/issues/184>`_
 * Fixed `ArchivedLog view can erroneously include logs from last index date if multiple indexes exist for that date. <https://github.com/International-GNSS-Service/SLM/issues/183>`_
 * Fixed `Need to be able to pass url kwargs to file view Entries. <https://github.com/International-GNSS-Service/SLM/issues/182>`_

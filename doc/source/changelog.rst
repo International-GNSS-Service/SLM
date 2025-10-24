@@ -6,6 +6,12 @@
 Change Log
 ==========
 
+.. v0.3.0b0 (2025-10-24)
+.. =====================
+
+.. * Fixed `Cache clearing signal receivers are not registered. <https://github.com/International-GNSS-Service/SLM/issues/189>`_
+
+
 v0.2.0b3 (2025-10-23)
 =====================
 

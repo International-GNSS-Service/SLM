@@ -10,6 +10,7 @@ Change Log
 .. =====================
 
 .. * Fixed `Cache clearing signal receivers are not registered. <https://github.com/International-GNSS-Service/SLM/issues/189>`_
+.. * Implemented `filew_views should support entries that create listings without adding urls <https://github.com/International-GNSS-Service/SLM/issues/188>`_
 
 
 v0.2.0b3 (2025-10-23)

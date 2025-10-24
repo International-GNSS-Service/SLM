@@ -1,6 +1,5 @@
 import inspect
 import typing as t
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -75,7 +74,7 @@ class Listing:
 
 @dataclass
 class Entry:
-    view: str
+    view: str = ""
     """
     The import path to the view function or class.
     """
@@ -103,8 +102,18 @@ class Entry:
     Extra kwargs to pass to path().
     """
 
-    @abstractmethod
-    def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]: ...
+    def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]:
+        if self.view_callback is None:
+            return []
+        path_str = self.path_str(pth)
+        return (
+            path(
+                path_str,
+                self.view_callback,
+                kwargs=self.kwargs(**kwargs),
+                name=self.view_name(pth),
+            ),
+        )
 
     def kwargs(self, **kwargs) -> t.Dict[str, t.Any]:
         from django.conf import settings
@@ -118,7 +127,9 @@ class Entry:
         }
 
     @property
-    def view_callback(self) -> t.Callable[..., t.Any]:
+    def view_callback(self) -> t.Optional[t.Callable[..., t.Any]]:
+        if not self.view:
+            return None
         view = import_string(self.view)
         view = view.as_view() if inspect.isclass(view) else view
         if self.decorator:
@@ -137,8 +148,18 @@ class Entry:
 class Directory(Entry):
     order_key: t.Sequence[str] = ("is_dir", "display")
 
-    @abstractmethod
-    def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]: ...
+    def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]:
+        if self.view_callback is None:
+            return []
+        path_str = self.path_str(pth)
+        return (
+            path(
+                path_str,
+                self.view_callback,
+                kwargs=self.kwargs(**kwargs),
+                name=self.view_name(pth),
+            ),
+        )
 
 
 @dataclass
@@ -150,6 +171,8 @@ class FileSystemDirectory(Directory):
         return {**super().kwargs(), "glob": self.glob, **kwargs}
 
     def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]:
+        if self.view_callback is None:
+            return []
         path_str = self.path_str(pth)
         return (
             path(
@@ -243,6 +266,8 @@ class GeneratedFile(File, _Command):
         }
 
     def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]:
+        if self.view_callback is None:
+            return []
         return (
             path(
                 self.path_str(pth),

@@ -145,7 +145,7 @@ DATABASES["default"] = {
 
 SLM_CACHE = env("SLM_CACHE", str, default=set_default("SLM_CACHE", "locmemcache://"))
 CACHES = set_default("CACHES", {})
-CACHES["default"] = {**CACHES.get("default", {}), **env.cache_url_config(SLM_CACHE)}
+CACHES["default"] = {**env.cache_url_config(SLM_CACHE), **CACHES.get("default", {})}
 
 set_default("CRISPY_ALLOWED_TEMPLATE_PACKS", "bootstrap5")
 set_default("CRISPY_TEMPLATE_PACK", "bootstrap5")

@@ -952,9 +952,9 @@ django-typer==2.2.2 ; python_full_version < '3.9' \
     #   django-render-static
     #   django-routines
     #   igs-slm
-django-typer==2.6.0 ; python_full_version >= '3.9' \
-    --hash=sha256:60b15b67d8540000aa9851ba0e381dda8700fc1a418b3861844a2eabdbf96fc3 \
-    --hash=sha256:7635fc3d3af6d9e80b53089c969e3947a8e1cd127e4a497a1c46696eebddec62
+django-typer==3.4.0 ; python_full_version >= '3.9' \
+    --hash=sha256:0555a505b53d753f5245f863855a7f3fbcda22eb7ed999b5941d23d01f651bf7 \
+    --hash=sha256:0fa84d50e73e886d8f8e4c251bd5a7a07a0e56e996c3e48d1bdedd8f47639d2d
     # via
     #   django-render-static
     #   django-routines

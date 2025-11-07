@@ -422,6 +422,9 @@ fieldset.slm-form-group > legend {
     /*color: #ffecb5;*/
     color: #0079AD;
 }
+.invalid-feedback {
+    display: block;
+}
 .was-validated .form-control.slm-form-unpublished:invalid:focus, .form-control.is-invalid.slm-form-unpublished:focus {
   border-color: #0079AD;
   box-shadow: 0 0 0 0.25rem #0079AD5F;

@@ -6,6 +6,11 @@
 Change Log
 ==========
 
+.. v0.4.0b0 (2025-11-07)
+.. =====================
+
+.. * Fixed `Asset compression should not pull in esbuild latest at runtime <https://github.com/International-GNSS-Service/SLM/issues/190>`_
+
 v0.3.0b0 (2025-10-24)
 =====================
 

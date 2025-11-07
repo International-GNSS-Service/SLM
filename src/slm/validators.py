@@ -340,7 +340,6 @@ class PositionsMatchValidator(SLMValidator):
                     + (xyz1[2] - xyz2[2]) ** 2
                 )
                 if diff > self.tolerance:
-                    print(instance.site.name, diff)
                     self.throw_error(
                         f"{diff:.2f} meters away from {otherfield.verbose_name}",
                         instance,

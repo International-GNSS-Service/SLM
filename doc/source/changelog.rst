@@ -9,6 +9,7 @@ Change Log
 .. v0.4.0b0 (2025-11-07)
 .. =====================
 
+.. * Fixed `Publish Changes button shows for non-moderator users after form save. <https://github.com/International-GNSS-Service/SLM/issues/196>`_
 .. * Implemented `Add admin ability to impersonate a user. <https://github.com/International-GNSS-Service/SLM/issues/194>`_
 .. * Fixed `Asset compression should not pull in esbuild latest at runtime <https://github.com/International-GNSS-Service/SLM/issues/190>`_
 

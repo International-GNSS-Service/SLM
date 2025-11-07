@@ -161,8 +161,8 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         slm.setFormFlagUI(form);
     }
     if (
-        (data.hasOwnProperty('published') && !data.published) ||
-        (data.hasOwnProperty('is_deleted') && data.is_deleted) &&
+        ((data.hasOwnProperty('published') && !data.published) ||
+        (data.hasOwnProperty('is_deleted') && data.is_deleted)) &&
         data.can_publish
     ) {
         form.find('button[name="publish"]').show();

@@ -161,11 +161,12 @@ slm.handlePostSuccess = function(form, response, status, jqXHR) {
         slm.setFormFlagUI(form);
     }
     if (
-        ((data.hasOwnProperty('published') && !data.published) ||
-        (data.hasOwnProperty('is_deleted') && data.is_deleted)) &&
-        data.can_publish
+        (data.hasOwnProperty('published') && !data.published) ||
+        (data.hasOwnProperty('is_deleted') && data.is_deleted)
     ) {
-        form.find('button[name="publish"]').show();
+        if (data.can_publish) {
+            form.find('button[name="publish"]').show();
+        }
         if (form.data('hasPublished')) {
             form.find('button[name="revert"]').show();
         }

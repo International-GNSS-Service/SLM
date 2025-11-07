@@ -110,6 +110,8 @@ INSTALLED_APPS = set_default(
         "django_filters",
         "compressor",
         "widget_tweaks",
+        "hijack",
+        "hijack.contrib.admin",
         "django.contrib.postgres",
         "django.contrib.admin",
         "django.contrib.auth",
@@ -174,6 +176,7 @@ set_default(
         "slm.middleware.SetLastVisitMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
+        "hijack.middleware.HijackUserMiddleware",
     ],
 )
 

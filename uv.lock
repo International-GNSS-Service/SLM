@@ -1452,6 +1452,38 @@ wheels = [
 ]
 
 [[package]]
+name = "django-hijack"
+version = "3.6.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.9'",
+]
+dependencies = [
+    { name = "django", marker = "python_full_version < '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5a/b4/060df2d828d6c569824976ce83fe63c8a742459b006f35acd0d7e1a2acdc/django_hijack-3.6.2.tar.gz", hash = "sha256:c300bbf4de81d5240fc468038d76fb3729dea053743ac6f9aea994c1f9ba2870", size = 14205, upload-time = "2024-10-18T21:00:47.708Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/23/5b161cabf3db5a99852e92b3017a38b20554f9c40ab1d0390163ee77ef0d/django_hijack-3.6.2-py3-none-any.whl", hash = "sha256:8e36b136fd5a60c2f01606837e406877d6260610bffc3219f6fe0a5d56018fab", size = 31345, upload-time = "2024-10-18T21:00:46.063Z" },
+]
+
+[[package]]
+name = "django-hijack"
+version = "3.7.4"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.11'",
+    "python_full_version == '3.10.*'",
+    "python_full_version == '3.9.*'",
+]
+dependencies = [
+    { name = "django", marker = "python_full_version >= '3.9'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/8b/4757ff84e0d5d6d709973c46ceaa350a2e15903625cb68a630cffb2693b9/django_hijack-3.7.4.tar.gz", hash = "sha256:08419f130b9ab95b605b30b1bad30a01412cf58b1ff56c67e51527b25383ea64", size = 14285, upload-time = "2025-08-06T15:56:43.275Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1c/22/1429fec0a1d1a707c8f9397ce167e742401f6c2fa905d988c832b75f97d4/django_hijack-3.7.4-py3-none-any.whl", hash = "sha256:73ede036db49b13e615994e28e98446345d27400bdc54100be218a20cb3130aa", size = 31450, upload-time = "2025-08-06T15:56:42.052Z" },
+]
+
+[[package]]
 name = "django-ipware"
 version = "7.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2181,6 +2213,8 @@ dependencies = [
     { name = "django-environ", version = "0.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "django-environ", version = "0.12.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "django-filter" },
+    { name = "django-hijack", version = "3.6.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "django-hijack", version = "3.7.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "django-ipware" },
     { name = "django-polymorphic" },
     { name = "django-render-static" },
@@ -2287,6 +2321,7 @@ requires-dist = [
     { name = "django-environ", specifier = ">=0.11.2" },
     { name = "django-extensions", marker = "extra == 'debug'", specifier = ">=3.1.5,<4.0.0" },
     { name = "django-filter", specifier = ">=24.2,<25.0.0" },
+    { name = "django-hijack", specifier = ">=3.6.2" },
     { name = "django-ipware", specifier = ">=7.0.1,<8.0.0" },
     { name = "django-polymorphic", specifier = ">=4.1.0,<5.0" },
     { name = "django-render-static", specifier = ">=3.1.2,<4.0.0" },

@@ -31,6 +31,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from hijack.contrib.admin import HijackUserAdminMixin
 from polymorphic.admin import (
     PolymorphicChildModelAdmin,
     PolymorphicChildModelFilter,
@@ -117,7 +118,7 @@ class ModeratorListFilter(admin.SimpleListFilter):
         return queryset
 
 
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(HijackUserAdminMixin, BaseUserAdmin):
     # chooses which fields to display for admin users
     list_display = (
         "email",

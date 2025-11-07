@@ -110,6 +110,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("ckeditor/", include("ckeditor_uploader.urls")),
     path("", include("slm.urls")),
+    path("hijack/", include("hijack.urls")),
 ]
 
 if getattr(settings, "SLM_DEBUG_TOOLBAR", False):

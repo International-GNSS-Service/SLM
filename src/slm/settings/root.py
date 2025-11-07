@@ -149,6 +149,9 @@ SLM_CACHE = env("SLM_CACHE", str, default=set_default("SLM_CACHE", "locmemcache:
 CACHES = set_default("CACHES", {})
 CACHES["default"] = {**env.cache_url_config(SLM_CACHE), **CACHES.get("default", {})}
 
+# do not show django hijack window - we use our own menu
+HIJACK_INSERT_BEFORE = None
+
 set_default("CRISPY_ALLOWED_TEMPLATE_PACKS", "bootstrap5")
 set_default("CRISPY_TEMPLATE_PACK", "bootstrap5")
 

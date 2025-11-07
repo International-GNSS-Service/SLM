@@ -1003,3 +1003,23 @@ textarea[name="custom_graphic"] {
         font-size: small;
     }
 }
+
+.nav-link.hijacked {
+  background-color: orange !important;
+  color: white !important;  /* optional: ensures text is readable */
+  border-radius: 5px;
+}
+.nav-link.hijacked:hover,
+.nav-link.hijacked:focus,
+.nav-link.hijacked:active,
+.nav-link.hijacked.show {
+  background-color: darkorange !important;
+  color: white !important;
+}
+
+li.release-hijack button.dropdown-item {
+    background-color: orange;
+    border: none;
+    cursor: pointer;
+    padding: 4px 16px 4px 16px;
+}

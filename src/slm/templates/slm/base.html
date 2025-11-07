@@ -135,7 +135,7 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                       <a class="nav-link" href="{% url 'slm:alerts' %}" aria-label="notifications">Alerts <i class="bi bi-bell{% if alert_level %}-fill {{ alert_level.css }}{% endif %} ms-1"></i></a>
                     </li>
                     <li class="nav-item dropdown">
-                      <a id="user-dropdown" class="nav-link dropdown-toggle" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
+                      <a id="user-dropdown" class="nav-link dropdown-toggle {% if user.is_hijacked %}hijacked{% endif %}" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"> {% if user.name %}{{ user.name }}{% else %}{{ user.email }}{% endif %} </a>
                       <ul class="dropdown-menu dropdown-menu-end">
                         <!-- User Drop Down -->
                         {% if request.user.is_superuser %}
@@ -150,7 +150,23 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
                         <li>
                           <hr class="dropdown-divider">
                         </li>
+                        {% if user.is_hijacked %}
+                        <li class="release-hijack">
+                          <form action="{% url 'hijack:release' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button
+                              type="submit"
+                              class="dropdown-item"
+                              aria-label="End impersonation and return to your original account"
+                              title="End impersonation and return to your original account"
+                            >
+                              Release
+                            </button>
+                          </form>
+                        </li>
+                        {% else %}
                         <li><a class="dropdown-item" href="{% url "account_logout" %}">Logout</a></li>
+                        {% endif %}
                       </ul>
                     </li>
                   </ul>

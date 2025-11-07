@@ -16,11 +16,11 @@ set_default(
     (
         (
             "text/javascript",
-            "npx -yes esbuild@latest {infile} --bundle --minify --outfile={outfile}",
+            "npx -yes esbuild@0.25.12 {infile} --bundle --minify --outfile={outfile}",
         ),
         (
             "module",
-            "npx -yes esbuild@latest {infile} --bundle --minify --outfile={outfile}",
+            "npx -yes esbuild@0.25.12 {infile} --bundle --minify --outfile={outfile}",
         ),
     ),
 )

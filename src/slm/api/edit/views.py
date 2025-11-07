@@ -68,7 +68,7 @@ from slm.api.permissions import (
     CanEditSite,
     CanRejectReview,
     IsUserOrAdmin,
-    UpdateAdminOnly,
+    VerifyModerationActions,
 )
 from slm.api.public.views import AgencyViewSet as PublicAgencyViewSet
 from slm.api.public.views import NetworkViewSet as PublicNetworkViewSet
@@ -988,7 +988,7 @@ class SectionViewSet(type):
 
         obj.serializer_class = ViewSetSerializer
         obj.filterset_class = ViewSetFilter
-        obj.permission_classes = (IsAuthenticated, CanEditSite, UpdateAdminOnly)
+        obj.permission_classes = (IsAuthenticated, CanEditSite, VerifyModerationActions)
         obj.pagination_class = DataTablesPagination
         obj.filter_backends = (DjangoFilterBackend,)
 

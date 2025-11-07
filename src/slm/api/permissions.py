@@ -19,12 +19,30 @@ class IsUserOrAdmin(permissions.BasePermission):
         return False
 
 
-class UpdateAdminOnly(permissions.BasePermission):
-    """ """
+class VerifyModerationActions(permissions.BasePermission):
+    """
+    If we get a PATCH action - check that it is allowed.
+
+    reverts - allow editors
+    publish - only moderators
+    other direct patch operations - only moderators
+    """
 
     def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
         if view.action in {"update", "partial_update"}:
-            return request.user.is_superuser
+            site = (
+                obj.site if hasattr(obj, "site") and isinstance(obj.site, Site) else obj
+            )
+            if request.data.get("revert", False):
+                return site.can_edit(request.user)
+            if request.data.get("publish", False):
+                return site.can_publish(request.user)
+            return site.is_moderator(request.user)
         return True
 
 

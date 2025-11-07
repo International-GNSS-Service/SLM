@@ -10,6 +10,7 @@ Change Log
 .. =====================
 
 .. * Fixed `Publish Changes button shows for non-moderator users after form save. <https://github.com/International-GNSS-Service/SLM/issues/196>`_
+.. * Fixed `Non super users cannot revert section changes - returns 403 <https://github.com/International-GNSS-Service/SLM/issues/193>`_
 .. * Implemented `Add admin ability to impersonate a user. <https://github.com/International-GNSS-Service/SLM/issues/194>`_
 .. * Fixed `Asset compression should not pull in esbuild latest at runtime <https://github.com/International-GNSS-Service/SLM/issues/190>`_
 

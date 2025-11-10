@@ -312,6 +312,9 @@ class SiteAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     inlines = [SiteAgencyInline, NetworkInline, TideGaugeInline, SiteIndexInline]
     exclude = ["agencies"]
+    ordering = ("name",)
+    list_display = ("name", "status")
+    list_filter = ("status",)
 
 
 @admin.register(Network)

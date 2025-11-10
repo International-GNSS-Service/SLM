@@ -6,6 +6,11 @@
 Change Log
 ==========
 
+v0.4.1b0 (2025-11-10)
+=====================
+
+* Fixed `Sort all admin tables by default. <https://github.com/International-GNSS-Service/SLM/issues/197>`_
+
 v0.4.0b0 (2025-11-07)
 =====================
 

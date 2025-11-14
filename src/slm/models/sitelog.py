@@ -993,7 +993,7 @@ class Site(models.Model):
         return modified_sections
 
     @property
-    def four_id(self):
+    def four_id(self) -> str:
         return self.name[:4]
 
     def publish(self, request=None, silent=False, timestamp=None):

@@ -149,12 +149,16 @@ def dddmmss_ss_parts(
     return (sign * float(degrees), minutes, seconds)
 
 
-def lon_180_to_360(lon):
-    return lon % 360.0
+def lon_180_to_360(lon: t.Optional[float]) -> t.Optional[float]:
+    if lon is not None:
+        return lon % 360.0
+    return None
 
 
-def lon_360_to_180(lon):
-    return ((lon + 180) % 360) - 180
+def lon_360_to_180(lon: t.Optional[float]) -> t.Optional[float]:
+    if lon is not None:
+        return ((lon + 180) % 360) - 180
+    return None
 
 
 def set_protocol(request):

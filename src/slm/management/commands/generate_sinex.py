@@ -2,6 +2,43 @@
 Generates a SINEX_ file from the current published database state.
 
 The default antex file used is https://files.igs.org/pub/station/general/igs20.atx.gz
+
+SINEX format description:
+    https://www.iers.org/SharedDocs/Publikationen/EN/IERS/Documents/ac/sinex/sinex_v202_pdf.pdf
+
+
+Extend this command and (re)implement section producers if you want to customize sinex output.
+
+.. code-block: python
+
+    import typing as t
+    from slm.management.commands.generate_sinex import Command as GenerateSinex
+
+
+    class Command(GenerateSinex):
+
+        def header(self, antex_file: str) -> t.Generator[str, None, None]:
+            yield from super().header(antex_file)
+            yield "+FILE/REFERENCE"
+            yield " DESCRIPTION        IGS Central Bureau"
+            yield " OUTPUT             historical sinex header file"
+            yield " CONTACT            cb@igs.org"
+            yield " SOFTWARE           SLM2SNX"
+            yield " HARDWARE           x86_64 Linux | AWS Cloud"
+            yield f" INPUT              SiteLog Manager, {self.sinex_code.lower()}.atx"
+            yield "-FILE/REFERENCE"
+            yield "+FILE/COMMENT"
+            yield " This file is generated daily from all current IGS site logs in"
+            yield "    https://files.igs.org/pub/station/log/"
+            yield (
+                " Phase center offsets are a function of antenna type, using as reference"
+            )
+            yield f"    {antex_file.rstrip('.gz')}"
+            yield "-FILE/COMMENT"
+            yield "+INPUT/ACKNOWLEDGMENTS"
+            yield " IGS International GNSS Service"
+            yield "-INPUT/ACKNOWLEDGMENTS"
+
 """
 
 import html
@@ -13,6 +50,7 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
+from django.conf import settings
 from django.core.management import CommandError
 from django.db.models import Prefetch
 from django.utils.translation import gettext as _
@@ -23,8 +61,6 @@ from typing_extensions import Annotated
 from slm.defines import ISOCountry
 from slm.models import Network, Site, SiteAntenna, SiteReceiver
 from slm.utils import dddmmss_ss_parts, lon_180_to_360, transliterate, xyz2llh
-
-DEFAULT_ANTEX = "https://files.igs.org/pub/station/general/igs20.atx.gz"
 
 
 def rec_dd():
@@ -71,7 +107,7 @@ def date2YYdoy(date):
 
 
 class Command(TyperCommand):
-    help = _("Generate the sinex files for each station.")
+    help = _("Generate a SINEX file from sitelog data.")
 
     used_antennas: set
     sinex_code: str = ""
@@ -79,6 +115,10 @@ class Command(TyperCommand):
     atx: dict
     sat_phase_center: dict
     utf8: bool = False
+
+    antex_file: str = "https://files.igs.org/pub/station/general/igs20.atx.gz"
+
+    sites: t.Sequence[Site]
 
     suppressed_base_arguments = {
         *TyperCommand.suppressed_base_arguments,
@@ -89,6 +129,9 @@ class Command(TyperCommand):
     }
     requires_migrations_checks = False
     requires_system_checks = []
+
+    creating_agency: str = settings.SLM_ORG_NAME
+    originating_agency: str = creating_agency
 
     def handle(
         self,
@@ -104,14 +147,14 @@ class Command(TyperCommand):
         ] = None,
         antex_file: Annotated[
             str, Option(help=_("The antex file to use."))
-        ] = DEFAULT_ANTEX,
+        ] = antex_file,
         include_networks: Annotated[
             t.Optional[t.List[Network]],
             Option(
                 **model_parser_completer(
                     Network, lookup_field="name", case_insensitive=True
                 ),
-                help=_("Include non-public sites in the given networks."),
+                help=_("Include all sites in the given networks."),
             ),
         ] = None,
         include_former: Annotated[
@@ -124,19 +167,28 @@ class Command(TyperCommand):
                 "--utf8", help=_("Allow multi-byte UTF-8 characters in the output.")
             ),
         ] = False,
+        creating_agency: Annotated[
+            str, Option("--creator", help="The creating agency short name.")
+        ] = creating_agency,
+        originating_agency: Annotated[
+            str, Option("--origin", help="The originating agency short name.")
+        ] = originating_agency,
     ):
         self.sinex_code = ""
         self.siteAnt = rec_dd()
         self.atx = rec_dd()
         self.sat_phase_center = rec_dd()
+        self.antex_file = antex_file
         self.utf8 = utf8
+        self.creating_agency = creating_agency
+        self.originating_agency = originating_agency
 
         sites = Site.objects.all().order_by("name")
         sites = sites.public() if include_former else sites.active()
         if include_networks:
             sites |= sites.filter(networks__in=include_networks)
 
-        sites = sites.distinct()
+        self.sites = sites.distinct()
 
         self.used_antennas = set(
             [
@@ -148,7 +200,7 @@ class Command(TyperCommand):
             ]
         )
 
-        self.build_antex_index(antex_file)
+        self.build_antex_index()
 
         output = self.stdout
         if destination:
@@ -157,19 +209,51 @@ class Command(TyperCommand):
             )
 
         # write header
-        for line in self.transliterate(self.header(antex_file)):
+        for line in self.transliterate(self.header()):
+            output.write(f"{line}\n")
+
+        # write FILE/REFERENCE
+        for line in self.transliterate(self.file_reference()):
+            output.write(f"{line}\n")
+
+        # write FILE/COMMENT
+        for line in self.transliterate(self.file_comment()):
+            output.write(f"{line}\n")
+
+        # write INPUT/HISTORY
+        for line in self.transliterate(self.input_history()):
+            output.write(f"{line}\n")
+
+        # write INPUT/FILES
+        for line in self.transliterate(self.input_files()):
+            output.write(f"{line}\n")
+
+        # write INPUT/ACKNOWLEDGEMENTS
+        for line in self.transliterate(self.input_acknowledgments()):
+            output.write(f"{line}\n")
+
+        # write NUTATION/DATA
+        for line in self.transliterate(self.nutation_data()):
+            output.write(f"{line}\n")
+
+        # write PRECESSION/DATA
+        for line in self.transliterate(self.precession_data()):
+            output.write(f"{line}\n")
+
+        # write SOURCE/ID
+        for line in self.transliterate(self.source_id()):
             output.write(f"{line}\n")
 
         # write SITE/ID section
-        for line in self.transliterate(self.site_ids(sites)):
+        for line in self.transliterate(self.site_ids()):
             output.write(f"{line}\n")
 
         # write SITE/RECEIVER section
-        for line in self.transliterate(self.site_receivers(sites)):
+        for line in self.transliterate(self.site_receivers()):
             output.write(f"{line}\n")
 
         # write SITE/ANTENNA section
-        for line in self.transliterate(self.site_antennas(sites)):
+        for line in self.transliterate(self.site_antennas()):
             output.write(f"{line}\n")
 
         # write GPS/PHASECENTER section
@@ -181,15 +265,51 @@ class Command(TyperCommand):
             output.write(f"{line}\n")
 
         # write SITE/ECCENTRICITY
-        for line in self.transliterate(self.site_eccentricity(sites)):
+        for line in self.transliterate(self.site_eccentricity()):
             output.write(f"{line}\n")
 
         # write SATELLITE/ID
         for line in self.transliterate(self.satellite_ids()):
             output.write(f"{line}\n")
 
-        # write +SATELLITE/PHASE_CENTER
+        # write SATELLITE/PHASE_CENTER
         for line in self.transliterate(self.satellite_phase_centers()):
+            output.write(f"{line}\n")
+
+        # write BIAS/EPOCHS
+        for line in self.transliterate(self.bias_epochs()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/EPOCHS
+        for line in self.transliterate(self.solution_epochs()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/STATISTICS
+        for line in self.transliterate(self.solution_statistics()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/ESTIMATE
+        for line in self.transliterate(self.solution_estimate()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/APRIORI
+        for line in self.transliterate(self.solution_apriori()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/MATRIX_ESTIMATE
+        for line in self.transliterate(self.solution_matrix_estimate()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/MATRIX_APRIORI
+        for line in self.transliterate(self.solution_matrix_apriori()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/NORMAL_EQUATION_VECTOR
+        for line in self.transliterate(self.solution_normal_equation_vector()):
+            output.write(f"{line}\n")
+
+        # write SOLUTION/NORMAL_EQUATION_MATRIX
+        for line in self.transliterate(self.solution_normal_equation_matrix()):
             output.write(f"{line}\n")
 
         # close out the file
@@ -210,7 +330,7 @@ class Command(TyperCommand):
         for ustr in utf8_str:
             yield transliterate(ustr)
 
-    def header(self, antex_file) -> t.Generator[str, None, None]:
+    def header(self) -> t.Generator[str, None, None]:
         now = datetime.now()
         now_date = "%04d-%02d-%02dT%02d:%02d:%02d" % (
             now.year,
@@ -223,34 +343,71 @@ class Command(TyperCommand):
         now_year, now_jday, now_seconds = date2YYdoy(now_date)
 
         yield (
-            "%%=SNX 2.02 IGS %02d:%03d:%05d IGS 00:000:00000 00:000:00000 P "
+            f"%%=SNX 2.02 {self.creating_agency} %02d:%03d:%05d {self.originating_agency} 00:000:00000 00:000:00000 P "
             "00000 0" % (now_year, now_jday, now_seconds)
         )
-        yield "+FILE/REFERENCE"
-        yield " DESCRIPTION        IGS Central Bureau"
-        yield " OUTPUT             historical sinex header file"
-        yield " CONTACT            cb@igs.org"
-        yield " SOFTWARE           SLM2SNX"
-        yield " HARDWARE           x86_64 Linux | AWS Cloud"
-        yield f" INPUT              SiteLog Manager, {self.sinex_code.lower()}.atx"
-        yield "-FILE/REFERENCE"
-        yield "+FILE/COMMENT"
-        yield " This file is generated daily from all current IGS site logs in"
-        yield "    https://files.igs.org/pub/station/log/"
-        yield (
-            " Phase center offsets are a function of antenna type, using as reference"
-        )
-        yield f"    {antex_file.rstrip('.gz')}"
-        yield "-FILE/COMMENT"
-        yield "+INPUT/ACKNOWLEDGMENTS"
-        yield " IGS International GNSS Service"
-        yield "-INPUT/ACKNOWLEDGMENTS"
 
     def footer(self) -> t.Generator[str, None, None]:
         yield "%ENDSNX"
 
-    def site_ids(self, sites) -> t.Generator[str, None, None]:
-        sites = sites.with_location_fields().with_identification_fields()
+    def file_reference(self) -> t.Generator[str, None, None]:
+        """
+        +FILE/REFERENCE
+        -FILE/REFERENCE
+        """
+        yield from []
+
+    def file_comment(self) -> t.Generator[str, None, None]:
+        """
+        +FILE/COMMENT
+        -FILE/COMMENT
+        """
+        yield from []
+
+    def input_history(self) -> t.Generator[str, None, None]:
+        """
+        +INPUT/HISTORY
+        -INPUT/HISTORY
+        """
+        yield from []
+
+    def input_files(self) -> t.Generator[str, None, None]:
+        """
+        +INPUT/FILES
+        -INPUT/FILES
+        """
+        yield from []
+
+    def input_acknowledgments(self) -> t.Generator[str, None, None]:
+        """
+        +INPUT/ACKNOWLEDGEMENTS
+        -INPUT/ACKNOWLEDGEMENTS
+        """
+        yield from []
+
+    def nutation_data(self) -> t.Generator[str, None, None]:
+        """
+        +NUTATION/DATA
+        -NUTATION/DATA
+        """
+        yield from []
+
+    def precession_data(self) -> t.Generator[str, None, None]:
+        """
+        +PRECESSION/DATA
+        -PRECESSION/DATA
+        """
+        yield from []
+
+    def source_id(self) -> t.Generator[str, None, None]:
+        """
+        +SOURCE/ID
+        -SOURCE/ID
+        """
+        yield from []
+
+    def site_ids(self) -> t.Generator[str, None, None]:
+        sites = self.sites.with_location_fields().with_identification_fields()
         yield "+SITE/ID"
         yield (
             "*CODE PT __DOMES__ T _STATION DESCRIPTION__ _LONGITUDE_ "
@@ -261,39 +418,54 @@ class Command(TyperCommand):
                 (
                     site.country.short_name
                     if isinstance(site.country, ISOCountry)
-                    else site.country
+                    else site.country or ""
                 )
             )
-            llh = xyz2llh(site.xyz.coords)
+            llh = xyz2llh(site.xyz.coords) if site.xyz else [None, None, None]
             location = html.unescape(
-                f"{site.city or site.state}"
+                f"{site.city or site.state or ''}"
                 f"{',' if site.city or site.state else ''}{ctry}"
             )[:21]
             lat_deg, lat_min, lat_sec = dddmmss_ss_parts(llh[0])
-
-            if lat_deg is None:
-                continue
 
             # is sinex longitude 0-360 or -180 to 180?
             lon_deg, lon_min, lon_sec = dddmmss_ss_parts(lon_180_to_360(llh[1]))
 
             yield (
                 f" {site.four_id.lower()}  A "
-                f"{site.iers_domes_number:>9} P "
-                f"{location:<21}  {lon_deg:3.0f} {lon_min:2d} "
-                f"{lon_sec:>4.1f} {lat_deg:3.0f} {lat_min:2d} "
-                f"{lat_sec:>4.1f} {llh[2]:>7.1f}"
+                + (
+                    f"{site.iers_domes_number:>9} P "
+                    if site.iers_domes_number
+                    else " " * 12
+                )
+                + f"{location:<21}  "
+                + (
+                    (
+                        f"{lon_deg:3.0f} {lon_min:2d} "
+                        f"{lon_sec:>4.1f} {lat_deg:3.0f} {lat_min:2d} "
+                        f"{lat_sec:>4.1f} {llh[2]:>7.1f}"
+                    )
+                    if lat_deg and lon_deg
+                    else " " * 31
+                )
             )
         yield "-SITE/ID"
 
-    def site_receivers(self, sites) -> t.Generator[str, None, None]:
+    def site_data(self) -> t.Generator[str, None, None]:
+        """
+        +SITE/DATA
+        -SITE/DATA
+        """
+        yield from []
+
+    def site_receivers(self) -> t.Generator[str, None, None]:
         yield "+SITE/RECEIVER"
         yield (
             "*CODE PT SOLN T _DATA START_ __DATA_END__ ___RECEIVER_TYPE____ "
             "_S/N_ _FIRMWARE__"
         )
 
-        for site in sites.prefetch_related(
+        for site in self.sites.prefetch_related(
             Prefetch(
                 "sitereceiver_set",
                 queryset=SiteReceiver.objects.published()
@@ -311,12 +483,12 @@ class Command(TyperCommand):
                 )
         yield "-SITE/RECEIVER"
 
-    def site_antennas(self, sites) -> t.Generator[str, None, None]:
+    def site_antennas(self) -> t.Generator[str, None, None]:
         yield "+SITE/ANTENNA"
         yield (
             "*CODE PT SOLN T _DATA START_ __DATA_END__ ____ANTENNA_TYPE____ _S/N_ _DAZ"
         )
-        for site in sites.prefetch_related(
+        for site in self.sites.prefetch_related(
             Prefetch(
                 "siteantenna_set",
                 queryset=SiteAntenna.objects.published()
@@ -422,25 +594,31 @@ class Command(TyperCommand):
             yield f" {ant} ----  {_e08} ------ ------ ------ {self.sinex_code:10s}"
         yield "-SITE/GAL_PHASE_CENTER"
 
-    def site_eccentricity(self, sites) -> t.Generator[str, None, None]:
+    def site_eccentricity(self) -> t.Generator[str, None, None]:
         yield "+SITE/ECCENTRICITY"
         yield (
             "*CODE PT SOLN T _DATA START_ __DATA_END__ REF __DX_U__ __DX_N__ __DX_E__"
         )
-        for site in sites.prefetch_related(
+        for site in self.sites.prefetch_related(
             Prefetch(
                 "siteantenna_set",
                 queryset=SiteAntenna.objects.published().order_by("installed"),
             )
-        ):
+        ).filter():
             for antenna in site.siteantenna_set.all():
                 yield (
                     f" {site.four_id.lower():4.4}  A ---- P "
                     f"{sinex_time(antenna.installed):12.12} "
                     f"{sinex_time(antenna.removed):12.12} UNE "
-                    f"{antenna.marker_une[0]:8.4f} "
-                    f"{antenna.marker_une[1]:8.4f} "
-                    f"{antenna.marker_une[2]:8.4f}"
+                    + (
+                        (
+                            f"{antenna.marker_une[0]:8.4f} "
+                            f"{antenna.marker_une[1]:8.4f} "
+                            f"{antenna.marker_une[2]:8.4f}"
+                        )
+                        if antenna.marker_une
+                        else " " * 26
+                    )
                 )
         yield "-SITE/ECCENTRICITY"
 
@@ -521,10 +699,72 @@ class Command(TyperCommand):
                 )
         yield "-SATELLITE/PHASE_CENTER"
 
-    def build_antex_index(self, antex_file: str):
+    def bias_epochs(self) -> t.Generator[str, None, None]:
         """
-        Streams the antex file from files.igs.org and builds an index off of
-        it.
+        +BIAS/EPOCHS
+        -BIAS/EPOCHS
+        """
+        yield from []
+
+    def solution_epochs(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/EPOCHS
+        -SOLUTION/EPOCHS
+        """
+        yield from []
+
+    def solution_statistics(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/STATISTICS
+        -SOLUTION/STATISTICS
+        """
+        yield from []
+
+    def solution_estimate(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/ESTIMATE
+        -SOLUTION/ESTIMATE
+        """
+        yield from []
+
+    def solution_apriori(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/APRIORI
+        -SOLUTION/APRIORI
+        """
+        yield from []
+
+    def solution_matrix_estimate(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/MATRIX_ESTIMATE
+        -SOLUTION/MATRIX_ESTIMATE
+        """
+        yield from []
+
+    def solution_matrix_apriori(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/MATRIX_APRIORI
+        -SOLUTION/MATRIX_APRIORI
+        """
+        yield from []
+
+    def solution_normal_equation_vector(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/NORMAL_EQUATION_VECTOR
+        -SOLUTION/NORMAL_EQUATION_VECTOR
+        """
+        yield from []
+
+    def solution_normal_equation_matrix(self) -> t.Generator[str, None, None]:
+        """
+        +SOLUTION/NORMAL_EQUATION_MATRIX
+        -SOLUTION/NORMAL_EQUATION_MATRIX
+        """
+        yield from []
+
+    def build_antex_index(self):
+        """
+        Streams the antex file and builds an index off of it.
 
         :param antex_file: The url to the antex file to use, may be gzipped or
             uncompressed.
@@ -667,7 +907,7 @@ class Command(TyperCommand):
                 sat_num,
             ]
 
-        resp = requests.get(antex_file, stream=True)
+        resp = requests.get(self.antex_file, stream=True)
         if resp.status_code < 300:
             last = ""
             decomp = None
@@ -690,6 +930,6 @@ class Command(TyperCommand):
                     params = process_line(line, *params)
         else:
             raise CommandError(
-                f"Unable to fetch antex file ({antex_file}):"
+                f"Unable to fetch antex file ({self.antex_file}):"
                 f"{resp.status_code} {resp.reason}"
             )

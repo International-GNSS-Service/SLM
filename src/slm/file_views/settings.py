@@ -12,7 +12,10 @@ SLM_SINEX_FILENAME = env(
     str,
     default=get_setting(
         "SLM_SINEX_FILENAME",
-        get_setting("SLM_ORG_NAME", "stations").lower().replace(" ", "_"),
+        get_setting("SLM_ORG_NAME", "stations")
+        .lower()
+        .replace(" ", "_")
+        .replace("/", "_"),
     ),
 )
 if SLM_SINEX_FILENAME and "." not in SLM_SINEX_FILENAME:

@@ -7,17 +7,12 @@
 
 <h1>{% trans "Sign In" %}</h1>
 
-<p>{% blocktrans %}If you have not created an account yet, then please
-<a href="{{ signup_url }}">sign up</a> first.{% endblocktrans %}</p>
-
 {% block page_content %}
 <div class="card slm-account-card" style="width: 50rem;">
     <div class="card-body bg-light p-5">
         {% include "messages.html" %}
-        <h1 class="card-title">Welcome</h1>
-        <p class="card-text">Please sign in with your IGS Member login information. For registration inquiries, please contact us.</p>
-        <p class="card-header" style="font-weight: bold;">(Note: This site is ONLY for Authorized Users to Edit and Maintain IGS Site Log Data. If you need to view Site Log Data go to igs.org)</p>
-        <br>
+        {% block login_notice %}
+        {% endblock login_notice %}
         <!-- Uses form for login authentication -->
        <form class="login" method="POST" action="{% url 'account_login' %}">
         {% for error in form.non_field_errors %}

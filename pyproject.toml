@@ -1,6 +1,6 @@
 [project]
 name = "igs-slm"
-version = "0.4.1b0"
+version = "0.5.0b0"
 description = "IGS Site Log Manager"
 requires-python = ">=3.8,<4.0"
 authors = [

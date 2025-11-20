@@ -6,6 +6,12 @@
 Change Log
 ==========
 
+v0.5.0b0 (2025-11-20)
+=====================
+
+* Fixed `Downloads of site logs trigger generation of new formats for FORMER stations. <https://github.com/International-GNSS-Service/SLM/issues/203>`_
+
+
 v0.4.1b0 (2025-11-10)
 =====================
 

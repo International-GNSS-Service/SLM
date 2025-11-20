@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from django.http import FileResponse
+from django.http import FileResponse, Http404
 from django.utils.translation import gettext as _
 from django_filters import filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -174,8 +174,12 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
         """
         index = self.get_object()
         archived = ArchivedSiteLog.objects.from_index(
-            index=index, log_format=request.accepted_renderer.format
+            index=index, log_format=request.accepted_renderer.format, generate=False
         )
+        if not archived:
+            raise Http404(
+                f"No log file in format {request.accepted_renderer.format} at index {index.begin}"
+            )
         return FileResponse(
             archived.file,
             filename=index.site.get_filename(

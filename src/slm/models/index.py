@@ -415,7 +415,13 @@ class ArchivedSiteLogManager(models.Manager):
     file does not exist.
     """
 
-    def from_index(self, index, log_format, regenerate=False):
+    def from_index(
+        self,
+        index: ArchiveIndex,
+        log_format: SiteLogFormat,
+        regenerate: bool = False,
+        generate: bool = True,
+    ):
         from slm.api.serializers import SiteLogSerializer
 
         if index:
@@ -424,6 +430,16 @@ class ArchivedSiteLogManager(models.Manager):
                 return file
             elif file:
                 file.delete()
+
+            if not file and not generate:
+                # if we are not allowed to generate, pull out the closest format we can find
+                # out of the supersedes list
+                for superseded in log_format.supersedes:
+                    file = index.files.filter(log_format=superseded).first()
+                    if file:
+                        return file
+                return None
+
             filename = index.site.get_filename(
                 log_format=log_format, epoch=index.begin, lower_case=True
             )

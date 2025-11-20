@@ -516,6 +516,19 @@ class IndexView(StationContextView):
 class DownloadView(StationContextView):
     template_name = "slm/station/download.html"
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        indexed_formats = set(
+            ctx["site"].indexes.first().files.values_list("log_format", flat=True)
+        )
+        return {
+            "has_ascii": SiteLogFormat.ASCII_9CHAR in indexed_formats
+            or SiteLogFormat.LEGACY in indexed_formats,
+            "has_xml": SiteLogFormat.GEODESY_ML in indexed_formats,
+            "has_json": SiteLogFormat.JSON in indexed_formats,
+            **ctx,
+        }
+
 
 class UserProfileView(SLMView):
     template_name = "slm/profile.html"

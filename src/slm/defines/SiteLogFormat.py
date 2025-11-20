@@ -18,7 +18,7 @@ class SiteLogFormat(
     LEGACY      = 1, _("Legacy (ASCII)"), "text/plain",       "bi bi-file-text",     "log",  ["text", "txt", "legacy", "sitelog"], []
     GEODESY_ML  = 2, _("GeodesyML"),      "application/xml",  "bi bi-filetype-xml",  "xml",  ["xml", "gml"],                       []
     JSON        = 3, _("JSON"),           "application/json", "bi bi-filetype-json", "json", ["json", "js"],                       []
-    ASCII_9CHAR = 4, _("ASCII (9-Char)"), "text/plain",       "bi bi-file-text",     "log",  ["text", "txt", "9char", "sitelog"],  [LEGACY]
+    ASCII_9CHAR = 4, _("ASCII (9-Char)"), "text/plain",       "bi bi-file-text",     "log",  ["text", "txt", "9char", "sitelog"],  [LEGACY[0]]
     # fmt: on
 
     def __str__(self):

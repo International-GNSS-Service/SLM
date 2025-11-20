@@ -505,10 +505,10 @@ class ArchiveFileInline(admin.TabularInline):
     readonly_fields = [
         field.name if field.name != "file" else "path"
         for field in ArchivedSiteLog._meta.get_fields()
-        if field.name not in ["id", "site", "thumbnail", "name", "timestamp"]
+        if field.name not in ["id", "site", "thumbnail", "name"]
     ] + ["view_file"]
     can_delete = True
-    exclude = ["site", "file", "thumbnail", "name", "timestamp"]
+    exclude = ["site", "file", "thumbnail", "name"]
 
     def path(self, obj):
         return format_html('<a href="{}" download>{}</a>', obj.link, obj.file.name)
@@ -534,6 +534,9 @@ class ArchiveIndexAdmin(admin.ModelAdmin):
 
     inlines = [ArchiveFileInline]
     readonly_fields = ["site"]
+
+    def has_add_permission(self, request):
+        return False
 
     def begin(self, obj):
         return obj.begin

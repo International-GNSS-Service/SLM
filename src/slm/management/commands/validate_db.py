@@ -11,14 +11,13 @@ import typing as t
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Sum
 from django.utils.translation import gettext as _
 from django_typer.management import TyperCommand, model_parser_completer
 from tqdm import tqdm
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-from slm.defines import SiteLogStatus
 from slm.models import GeodesyMLInvalid, Site
 
 
@@ -76,15 +75,10 @@ class Command(TyperCommand):
         critical = 0
         old_flag_count = Site.objects.aggregate(Sum("num_flags"))["num_flags__sum"]
         with transaction.atomic():
-            sites = sites or Site.objects.all()
-            if not all:
-                sites = Site.objects.filter(
-                    Q(pk__in=[site.pk for site in sites])
-                    & Q(status__in=[SiteLogStatus.PUBLISHED, SiteLogStatus.UPDATED])
-                )
+            sites = sites or (Site.objects.all() if all else Site.objects.active())
 
             with tqdm(
-                total=sites.count(),
+                total=len(sites),
                 desc=_("Validating"),
                 unit="sites",
                 postfix={"site": ""},
@@ -181,7 +175,7 @@ class Command(TyperCommand):
                     "{site_count} sites. {critical} are critical."
                 ).format(
                     new_flags=(new_flags or 0),
-                    site_count=sites.count(),
+                    site_count=len(sites),
                     critical=critical,
                 )
             )

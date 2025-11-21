@@ -259,3 +259,7 @@ SLM_COORDINATE_MODE = CoordinateMode(
         default=get_setting("SLM_COORDINATE_MODE", CoordinateMode.INDEPENDENT),
     )
 )
+
+SLM_IMMUTABLE_INDEX = env(
+    "SLM_IMMUTABLE_INDEX", default=get_setting("SLM_IMMUTABLE_INDEX", True)
+)

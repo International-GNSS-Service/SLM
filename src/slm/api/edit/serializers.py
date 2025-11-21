@@ -5,6 +5,7 @@ from django_enum.drf import EnumField
 from rest_framework import serializers
 
 from slm import signals as slm_signals
+from slm.api.public.serializers import ArchiveSerializer as PublicArchiveSerializer
 from slm.models import (
     Agency,
     Alert,
@@ -314,3 +315,10 @@ class SiteFileUploadSerializer(serializers.ModelSerializer):
             for field in fields
             if field not in {"status", "name", "description", "direction"}
         ]
+
+
+class ArchiveSerializer(PublicArchiveSerializer):
+    file = serializers.FileField(write_only=True, required=False)
+
+    class Meta(PublicArchiveSerializer.Meta):
+        fields = [*PublicArchiveSerializer.Meta.fields, "file"]

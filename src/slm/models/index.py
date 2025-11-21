@@ -604,6 +604,12 @@ class ArchivedSiteLog(SiteFile):
     def link(self):
         return reverse("slm_public_api:archive-detail", kwargs={"pk": self.pk})
 
+    @cached_property
+    def edit_link(self):
+        if getattr(settings, "SLM_IMMUTABLE_INDEX", True):
+            return None
+        return reverse("slm_edit_api:archive-detail", kwargs={"pk": self.pk})
+
     def parse(self) -> BaseBinder:
         if self.log_format is SiteLogFormat.GEODESY_ML:
             return xsd_parsing.SiteLogBinder(

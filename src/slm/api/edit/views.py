@@ -49,6 +49,7 @@ from rest_framework.serializers import ModelSerializer, SlugRelatedField
 from slm import signals as slm_signals
 from slm.api.edit.serializers import (
     AlertSerializer,
+    ArchiveSerializer,
     LogEntrySerializer,
     ReviewRequestSerializer,
     SiteFileUploadSerializer,
@@ -71,6 +72,7 @@ from slm.api.permissions import (
     VerifyModerationActions,
 )
 from slm.api.public.views import AgencyViewSet as PublicAgencyViewSet
+from slm.api.public.views import ArchiveViewSet as PublicArchiveViewSet
 from slm.api.public.views import NetworkViewSet as PublicNetworkViewSet
 from slm.api.serializers import SiteLogSerializer
 from slm.api.views import BaseSiteLogDownloadViewSet
@@ -1678,3 +1680,7 @@ class ImageOperationsViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet)
         except ValueError:
             return Response({"rotate": "rotate must be an integer"}, status=400)
         return Response(status=204)
+
+
+class ArchiveViewSet(mixins.UpdateModelMixin, PublicArchiveViewSet):
+    serializer_class = ArchiveSerializer

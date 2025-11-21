@@ -518,10 +518,13 @@ class ArchiveFileInline(admin.TabularInline):
 
     def view_file(self, obj):
         if obj.pk:
+            edit_link = obj.edit_link
             return format_html(
-                '<button type="button" class="button view-file" data-url="{}">{}</button>',
-                obj.link,
-                _("View"),
+                '<button type="button" class="button {}-file" data-filename="{}" data-url="{}">{}</button>',
+                "edit" if edit_link else "view",
+                obj.name,
+                edit_link or obj.link,
+                _("Edit") if edit_link else _("View"),
             )
         return ""
 

@@ -10,6 +10,7 @@ v0.5.0b0 (2025-11-20)
 =====================
 
 * Fixed `slm javascript is not loaded on DRF admin pages. <https://github.com/International-GNSS-Service/SLM/issues/209>`_
+* Implemented `Allow admins to edit indexed site log files directly through the admin. <https://github.com/International-GNSS-Service/SLM/issues/207>`_
 * Fixed `Downloads of site logs trigger generation of new formats for FORMER stations. <https://github.com/International-GNSS-Service/SLM/issues/203>`_
 
 

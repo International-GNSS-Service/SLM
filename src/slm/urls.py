@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.urls import path, register_converter
 
 from slm.api.edit import views as edit_views
@@ -56,6 +57,11 @@ APIS = {
         ("agency", edit_views.AgencyViewSet),
         ("network", edit_views.NetworkViewSet),
         ("image", edit_views.ImageOperationsViewSet),
+        *(
+            []
+            if getattr(settings, "SLM_IMMUTABLE_INDEX", True)
+            else [("archive", edit_views.ArchiveViewSet)]
+        ),
     ],
     "public": [
         ("stations", public_views.StationListViewSet),

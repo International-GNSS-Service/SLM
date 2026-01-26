@@ -52,13 +52,13 @@ from pathlib import Path
 import requests
 from django.conf import settings
 from django.core.management import CommandError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.utils.translation import gettext as _
 from django_typer.management import TyperCommand, model_parser_completer
 from typer import Argument, Option
 from typing_extensions import Annotated
 
-from slm.defines import ISOCountry
+from slm.defines import ISOCountry, SiteLogStatus
 from slm.models import Network, Site, SiteAntenna, SiteReceiver
 from slm.utils import dddmmss_ss_parts, lon_180_to_360, transliterate, xyz2llh
 
@@ -184,7 +184,11 @@ class Command(TyperCommand):
         self.originating_agency = originating_agency
 
         sites = Site.objects.all().order_by("name")
-        sites = sites.public() if include_former else sites.active()
+        sites = (
+            sites.public().filter(~Q(status__in=[SiteLogStatus.PROPOSED]))
+            if include_former
+            else sites.active()
+        )
         if include_networks:
             sites |= sites.filter(networks__in=include_networks)
 

@@ -55,7 +55,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@v4
       - name: Install Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}

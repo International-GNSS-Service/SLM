@@ -76,7 +76,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@v4
       - name: Install GIS Libs
         run: |
           sudo apt-get update
@@ -112,7 +112,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@v4
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}

@@ -1,18 +1,15 @@
-from pathlib import Path
 from unittest import TestCase
 
 from slm.parsing.legacy.binding import SiteLogBinder
 from slm.parsing.legacy.parser import Error, SiteLogParser
-
-file_dir = Path(__file__).parent / "files"
+from tests.resources import AAA200USA_LOG
 
 
 class TestLegacyParser(TestCase):
     AAA200USA = ""
 
     def setUp(self):
-        with open(file_dir / "AAA200USA_20220909.log", "r") as log:
-            self.AAA200USA = log.read()
+        self.AAA200USA = AAA200USA_LOG.read_text()
 
     def test_AAA200USA(self):
         parsed = SiteLogParser(self.AAA200USA)

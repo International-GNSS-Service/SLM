@@ -143,6 +143,7 @@ dev = [
     "tomlkit>=0.13.2",
     "djlint>=1.35.2",
     "whitenoise>=6.7.0",
+    "pytest-playwright>=0.7.0,<1.0.0 ; python_full_version >= '3.9'",
 ]
 docs = [
     "Sphinx>=7.2.0,<8.0.0; python_version > '3.8'",
@@ -185,6 +186,9 @@ python_files = "test*.py"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
 env = [
     "TERMINAL_WIDTH=80",
+]
+markers = [
+    "e2e: Playwright browser tests against a live server (deselect with '-m \"not e2e\"')",
 ]
 
 addopts = [

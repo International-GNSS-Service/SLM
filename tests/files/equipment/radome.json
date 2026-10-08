@@ -1,0 +1,16 @@
+[
+  {
+    "model": "JVDM",
+    "manufacturer": "JAVAD GNSS",
+    "description": "",
+    "state": 100,
+    "replaced": []
+  },
+  {
+    "model": "NONE",
+    "manufacturer": null,
+    "description": "No radome",
+    "state": 100,
+    "replaced": []
+  }
+]

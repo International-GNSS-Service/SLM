@@ -1,11 +1,9 @@
 from datetime import date, datetime
-from pathlib import Path
 from unittest import TestCase
 
 from slm.parsing.xsd.binding import SiteLogBinder
 from slm.parsing.xsd.parser import Error, SiteLogParser
-
-file_dir = Path(__file__).parent / "files"
+from tests.resources import GML_04, GML_05
 
 
 class TestXSDParser(TestCase):
@@ -21,11 +19,9 @@ class TestXSDParser(TestCase):
     }
 
     def setUp(self):
-        with open(file_dir / "0.4/20na_20161027.xml", "r") as log:
-            self.ex_04 = log.read()
+        self.ex_04 = GML_04.read_text()
 
-        with open(file_dir / "0.5/20na_20161027.xml", "r") as log:
-            self.ex_05 = log.read()
+        self.ex_05 = GML_05.read_text()
 
     def test_0_4(self):
         parsed = SiteLogParser(self.ex_04)

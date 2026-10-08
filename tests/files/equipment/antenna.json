@@ -1,0 +1,22 @@
+[
+  {
+    "model": "JAV_GRANT-G3T",
+    "manufacturer": "JAVAD GNSS",
+    "description": "GrAnt-G3T",
+    "state": 100,
+    "reference_point": null,
+    "graphic": "",
+    "features": null,
+    "replaced": []
+  },
+  {
+    "model": "TRM59800.00",
+    "manufacturer": "TRIMBLE",
+    "description": "Zephyr Geodetic 2",
+    "state": 100,
+    "reference_point": null,
+    "graphic": "",
+    "features": null,
+    "replaced": []
+  }
+]

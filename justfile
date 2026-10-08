@@ -1,5 +1,5 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
-set unstable := true
+set unstable
 set script-interpreter := ['uv', 'run', '--script']
 
 export PYTHONPATH := source_directory()
@@ -65,6 +65,10 @@ install-precommit:
 install *OPTS:
     uv sync --all-extras {{ OPTS }}
     @just run pre-commit install
+
+# install the browser used by the Playwright (e2e) tests
+install-browsers:
+    uv run playwright install --with-deps chromium
 
 # install without extra dependencies
 install-basic:

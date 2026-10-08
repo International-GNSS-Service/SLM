@@ -4,10 +4,15 @@ from django.http import FileResponse, Http404
 from django.utils.translation import gettext as _
 from django_filters import filters
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.utils import translate_validation
 from rest_framework import mixins, renderers, viewsets
 from rest_framework.generics import get_object_or_404
 
-from slm.api.filter import InitialValueFilterSet, SLMDateTimeFilter
+from slm.api.filter import (
+    InitialValueFilterSet,
+    SLMBooleanFilter,
+    SLMDateTimeFilter,
+)
 from slm.defines import SiteLogFormat
 from slm.models import ArchivedSiteLog, ArchiveIndex
 
@@ -87,7 +92,7 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
             ),
         )
 
-        lower_case = filters.BooleanFilter(
+        lower_case = SLMBooleanFilter(
             method="noop", help_text=_("If true filename will be lowercase.")
         )
 
@@ -143,6 +148,22 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
 
         return obj
 
+    def get_filename_kwargs(self, request):
+        """
+        Get the validated filename parameters (name_len, lower_case) from the
+        query string.
+        """
+        filterset = self.filterset_class(
+            data=request.GET, queryset=self.get_queryset(), request=request
+        )
+        if not filterset.is_valid():
+            raise translate_validation(filterset.errors)
+        name_len = filterset.form.cleaned_data.get("name_len")
+        return {
+            "name_len": None if name_len is None else int(name_len),
+            "lower_case": bool(filterset.form.cleaned_data.get("lower_case")),
+        }
+
     def get_format_suffix(self, **kwargs):
         requested_format = super().get_format_suffix(**kwargs)
 
@@ -189,7 +210,6 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
             filename=index.site.get_filename(
                 log_format=archived.log_format,
                 epoch=index.begin,
-                name_len=request.GET.get("name_len", None),
-                lower_case=request.GET.get("lower_case", False),
+                **self.get_filename_kwargs(request),
             ),
         )

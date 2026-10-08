@@ -435,6 +435,19 @@ def test_download_unpublished_head(api_client, editor, updated_site, fmt):
     assert updated_site.name[:4].upper() in body.upper()
 
 
+def test_download_unpublished_filename(api_client, editor, updated_site):
+    response = api_client(editor).get(
+        reverse(
+            "slm_edit_api:download-detail",
+            kwargs={"site": updated_site.name, "format": "xml"},
+        ),
+        {"unpublished": True, "name_len": 4, "lower_case": True},
+        secure=True,
+    )
+    assert response.status_code == 200
+    assert "aaa6_" in response.get("Content-Disposition", "")
+
+
 def test_edit_api_root(api_client, editor):
     assert api_client(editor).get(url("api-root"), secure=True).status_code == 200
 

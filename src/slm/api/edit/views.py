@@ -460,8 +460,7 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
                     filename=site.get_filename(
                         log_format=request.accepted_renderer.format,
                         epoch=datetime.now(),
-                        name_len=request.GET.get("name_len", None),
-                        lower_case=request.GET.get("lower_case", False),
+                        **self.get_filename_kwargs(request),
                     ),
                 )
             except Site.DoesNotExist:

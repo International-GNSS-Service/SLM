@@ -195,16 +195,21 @@ def test_download_lower_case(api_client, published_site):
     assert "aaa600usa_" in response.get("Content-Disposition", "")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=TypeError,
-    reason="BUG: the name_len query parameter is passed to Site.get_filename() "
-    "as a string and used as a slice index.",
-)
 def test_download_name_len(api_client, published_site):
     response = download(api_client(), published_site.name, "xml", name_len=4)
     assert response.status_code == 200
     assert "AAA6_" in response.get("Content-Disposition", "")
+
+
+def test_download_name_len_invalid(api_client, published_site):
+    response = download(api_client(), published_site.name, "xml", name_len="abc")
+    assert response.status_code == 400
+
+
+def test_download_lower_case_false(api_client, published_site):
+    response = download(api_client(), published_site.name, "xml", lower_case="false")
+    assert response.status_code == 200
+    assert "AAA600USA_" in response.get("Content-Disposition", "")
 
 
 def test_download_unknown_site(api_client, db):

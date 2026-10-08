@@ -191,15 +191,16 @@ def test_import_equipment_remove(published_site, equipment_source):
     assert Receiver.objects.filter(model="JAVAD TRE_3 DELTA").exists()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: invoking a subcommand (e.g. `import_equipment receivers`) returns "
-    "the chained results list from handle(), and Django's execute() crashes "
-    "calling .endswith() on it.",
-)
 def test_import_equipment_subcommand(db, equipment_source):
     run("import_equipment", "receivers")
+    assert Receiver.objects.filter(model="TRIMBLE ALLOY").exists()
+    assert not Antenna.objects.filter(model="TRM59800.00").exists()
+
+
+def test_import_equipment_chained_subcommands(db, equipment_source):
+    run("import_equipment", "receivers", "antennas")
+    assert Receiver.objects.filter(model="TRIMBLE ALLOY").exists()
+    assert Antenna.objects.filter(model="TRM59800.00").exists()
 
 
 ###############################################################################

@@ -611,7 +611,12 @@ class SectionViewSet(type):
                     # directly on POST data in a Permission object is more
                     # difficult
                     site = validated_data.get("site") or instance.site
-                    is_moderator = site.is_moderator(self.context["request"].user)
+                    user = self.context["request"].user
+                    if not site.can_edit(user) or (
+                        instance is not None and not instance.site.can_edit(user)
+                    ):
+                        raise PermissionDenied()
+                    is_moderator = site.is_moderator(user)
                     do_publish = validated_data.pop("publish", False)
                     do_revert = validated_data.pop("revert", False)
                     update_status = None

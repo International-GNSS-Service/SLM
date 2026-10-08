@@ -79,12 +79,6 @@ def test_section_list_hidden_from_other_agency(
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG (authz): POSTing to a section list endpoint only requires "
-    "authentication - perform_section_update never checks site.can_edit(), so "
-    "a user from another agency can edit (but not publish) any site's sections.",
-)
 def test_other_agency_cannot_edit(api_client, other_editor, editor, published_site):
     row = section_rows(api_client(editor), "siteidentification", published_site)[0]
     response = post(

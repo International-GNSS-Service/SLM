@@ -146,6 +146,10 @@ class BaseSiteLogDownloadViewSet(mixins.RetrieveModelMixin, viewsets.GenericView
     def get_format_suffix(self, **kwargs):
         requested_format = super().get_format_suffix(**kwargs)
 
+        # no suffix - let content negotiation pick the renderer
+        if requested_format is None:
+            return None
+
         # if the site name is a 4-id return the old 4char log format
         if "site" in kwargs and len(kwargs["site"]) == 4 and requested_format == "log":
             return SiteLogFormat.LEGACY

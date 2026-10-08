@@ -222,15 +222,11 @@ def test_public_file_download(api_client, published_site):
         assert response.status_code == 200
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=ValueError,
-    reason="BUG: get_format_suffix() calls SiteLogFormat(None) when no format "
-    "suffix is given, so a bare download URL 500s instead of using a default.",
-)
 def test_download_without_format_suffix(api_client, published_site):
     response = api_client().get(
         reverse("slm_public_api:download-detail", kwargs={"site": published_site.name}),
         secure=True,
     )
     assert response.status_code == 200
+    assert "AAA600USA_" in response.get("Content-Disposition", "")
+    assert ".log" in response.get("Content-Disposition", "")

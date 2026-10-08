@@ -13,8 +13,7 @@ from slm import signals as slm_signals
 import os
 import pytest
 
-AAA600USA = Path(__file__).parent / "files" / "AAA600USA_20240418.log"
-JPLM_JPG = Path(__file__).parent / "files" / "jplm.jpg"
+from tests.resources import AAA600USA_LOG as AAA600USA, JPLM_JPG
 
 
 class TestUploads(SLMSignalTracker, TestCase):
@@ -141,7 +140,6 @@ class TestUploads(SLMSignalTracker, TestCase):
         self.assertEqual(aaa600.siteresponsibleagency_set.count(), 1)
         self.assertEqual(aaa600.sitemoreinformation_set.count(), 1)
 
-    @pytest.mark.skip(reason="Temporary fail")
     def test_image_upload(self):
         self.clear_signals()
 

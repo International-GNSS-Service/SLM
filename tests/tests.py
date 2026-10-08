@@ -26,10 +26,6 @@ from slm import signals as slm_signals
 from slm.api.edit import views as edit_views
 from slm.defines import SiteLogStatus, EquipmentState
 from slm.models import Agency, Network, Site, Radome, Antenna, Receiver
-from tests.defines.ISOCountry import TestISOCountry  # dont remove
-from tests.defines.SiteLogStatus import TestSiteLogStatus  # dont remove
-from tests.parsing.legacy import TestLegacyParser  # dont remove
-from tests.parsing.xsd import TestXSDParser  # dont remove
 
 
 class ReceivedSignal:

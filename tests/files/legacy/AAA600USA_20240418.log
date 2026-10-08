@@ -1,0 +1,303 @@
+     AAA600USA Site Information Form (site log)
+     International GNSS Service
+     See Instructions at:
+       https://files.igs.org/pub/station/general/sitelog_instr.txt
+
+0.   Form
+
+     Prepared by (full name)  : Brian Kohan
+     Date Prepared            : 2024-04-18
+     Report Type              : NEW
+     If Update:
+      Previous Site Log       : 
+      Modified/Added Sections : 1, 2, 4.1, 6.1, 8.1.1, 9.2.1, 11, 12, 13
+
+
+1.   Site Identification of the GNSS Monument
+
+     Site Name                : Frogtown
+     Four Character ID        : AAA6
+     Monument Inscription     : 
+     IERS DOMES Number        : 12345M678
+     CDP Number               : 
+     Monument Description     : 
+       Height of the Monument : 
+       Monument Foundation    : 
+       Foundation Depth       : 
+     Marker Description       : 
+     Date Installed           : 2023-04-03T00:00Z
+     Geologic Characteristic  : 
+       Bedrock Type           : 
+       Bedrock Condition      : 
+       Fracture Spacing       : over 200 cm
+       Fault zones nearby     : 
+         Distance/activity    : 
+     Additional Information   : 
+
+
+2.   Site Location Information
+
+     City or Town             : Los Angeles
+     State or Province        : California
+     Country                  : United States of America (the)
+     Tectonic Plate           : NORTH AMERICAN
+     Approximate Position (ITRF)
+       X coordinate (m)       : -2501506.0000
+       Y coordinate (m)       : -4658713.0000
+       Z coordinate (m)       : 3554914.0000
+       Latitude (N is +)      : +0340526.33
+       Longitude (E is +)     : -1181401.21
+       Elevation (m,ellips.)  : 242.0
+     Additional Information   : 
+
+
+3.   GNSS Receiver Information
+
+3.1  Receiver Type            : JAVAD TRE_3 DELTA
+     Satellite System         : GPS+GLO+GAL+BDS
+     Serial Number            : JV1234AB5678
+     Firmware Version         : 4.3.00
+     Elevation Cutoff Setting : 
+     Date Installed           : 2023-04-03T00:00Z
+     Date Removed             : 2023-11-06T00:00Z
+     Temperature Stabiliz.    : 24 +/- 5 C
+     Additional Information   : 
+
+3.2  Receiver Type            : JAVAD TRE_3 DELTA
+     Satellite System         : GPS+GLO+GAL+BDS
+     Serial Number            : JV1234AB5678
+     Firmware Version         : 4.5.00
+     Elevation Cutoff Setting : 
+     Date Installed           : 2023-11-06T00:00Z
+     Date Removed             : (CCYY-MM-DDThh:mmZ)
+     Temperature Stabiliz.    : 24 +/- 5 C
+     Additional Information   : 
+
+3.x  Receiver Type            : (A20, from rcvr_ant.tab; see instructions)
+     Satellite System         : (GPS+GLO+GAL+BDS+QZSS+SBAS)
+     Serial Number            : (A20, but note the first A5 is used in SINEX)
+     Firmware Version         : (A11)
+     Elevation Cutoff Setting : (deg)
+     Date Installed           : (CCYY-MM-DDThh:mmZ)
+     Date Removed             : (CCYY-MM-DDThh:mmZ)
+     Temperature Stabiliz.    : (none or tolerance in degrees C)
+     Additional Information   : (multiple lines)
+
+
+4.   GNSS Antenna Information
+
+4.1  Antenna Type             : JAV_GRANT-G3T   JVDM
+     Serial Number            : ANT-987654321
+     Antenna Reference Point  : BAM
+     Marker->ARP Up Ecc. (m)  : 0.0000
+     Marker->ARP North Ecc(m) : 0.0000
+     Marker->ARP East Ecc(m)  : 0.0000
+     Alignment from True N    : +1 deg
+     Antenna Radome Type      : JVDM
+     Radome Serial Number     : 
+     Antenna Cable Type       : 
+     Antenna Cable Length     : 
+     Date Installed           : 2023-04-03T00:00Z
+     Date Removed             : (CCYY-MM-DDThh:mmZ)
+     Additional Information   : 
+
+4.x  Antenna Type             : (A20, from rcvr_ant.tab; see instructions)
+     Serial Number            : (A*, but note the first A5 is used in SINEX)
+     Antenna Reference Point  : (BPA/BCR/XXX from "antenna.gra"; see instr.)
+     Marker->ARP Up Ecc. (m)  : (F8.4)
+     Marker->ARP North Ecc(m) : (F8.4)
+     Marker->ARP East Ecc(m)  : (F8.4)
+     Alignment from True N    : (deg; + is clockwise/east)
+     Antenna Radome Type      : (A4 from rcvr_ant.tab; see instructions)
+     Radome Serial Number     :
+     Antenna Cable Type       : (vendor & type number)
+     Antenna Cable Length     : (m)
+     Date Installed           : (CCYY-MM-DDThh:mmZ)
+     Date Removed             : (CCYY-MM-DDThh:mmZ)
+     Additional Information   : (multiple lines)
+
+
+5.   Surveyed Local Ties
+
+5.x  Tied Marker Name         :
+     Tied Marker Usage        : (SLR/VLBI/LOCAL CONTROL/FOOTPRINT/etc)
+     Tied Marker CDP Number   : (A4)
+     Tied Marker DOMES Number : (A9)
+     Differential Components from GNSS Marker to the tied monument (ITRS)
+       dx (m)                 : (m)
+       dy (m)                 : (m)
+       dz (m)                 : (m)
+     Accuracy (mm)            : (mm)
+     Survey method            : (GPS CAMPAIGN/TRILATERATION/TRIANGULATION/etc)
+     Date Measured            : (CCYY-MM-DDThh:mmZ)
+     Additional Information   : (multiple lines)
+
+
+6.   Frequency Standard
+
+6.1  Standard Type            : EXTERNAL H-MASER
+       Input Frequency        : 10.0 MHz
+       Effective Dates        : 2023-04-03/CCYY-MM-DD
+       Notes                  : 
+
+6.x  Standard Type            : (INTERNAL or EXTERNAL H-MASER/CESIUM/etc)
+       Input Frequency        : (if external)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines)
+
+
+7.   Collocation Information
+
+7.x  Instrumentation Type     : (GPS/GLONASS/DORIS/PRARE/SLR/VLBI/TIME/etc)
+       Status                 : (PERMANENT/MOBILE)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines)
+
+
+8.   Meteorological Instrumentation
+
+8.1.1 Humidity Sensor Model   : HUMI-5
+       Manufacturer           : Honeywell
+       Serial Number          : 
+       Data Sampling Interval : 
+       Accuracy (% rel h)     : 
+       Aspiration             : NATURAL
+       Height Diff to Ant     : 2.0 m
+       Calibration date       : 
+       Effective Dates        : 2023-04-03/CCYY-MM-DD
+       Notes                  : 
+
+8.1.x Humidity Sensor Model   :
+       Manufacturer           :
+       Serial Number          :
+       Data Sampling Interval : (sec)
+       Accuracy (% rel h)     : (% rel h)
+       Aspiration             : (UNASPIRATED/NATURAL/FAN/etc)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines)
+
+8.2.x Pressure Sensor Model   :
+       Manufacturer           :
+       Serial Number          :
+       Data Sampling Interval : (sec)
+       Accuracy               : (hPa)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines)
+
+8.3.x Temp. Sensor Model      :
+       Manufacturer           :
+       Serial Number          :
+       Data Sampling Interval : (sec)
+       Accuracy               : (deg C)
+       Aspiration             : (UNASPIRATED/NATURAL/FAN/etc)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines)
+
+8.4.x Water Vapor Radiometer  :
+       Manufacturer           :
+       Serial Number          :
+       Distance to Antenna    : (m)
+       Height Diff to Ant     : (m)
+       Calibration date       : (CCYY-MM-DD)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Notes                  : (multiple lines)
+
+8.5.x Other Instrumentation   : (multiple lines)
+
+
+9.  Local Ongoing Conditions Possibly Affecting Computed Position
+
+9.1.x Radio Interferences     : (TV/CELL PHONE ANTENNA/RADAR/etc)
+       Observed Degradations  : (SN RATIO/DATA GAPS/etc)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Additional Information : (multiple lines)
+
+9.2.1 Multipath Sources       : Building
+       Effective Dates        : 2023-04-03/CCYY-MM-DD
+       Additional Information : There is a building directly to the east.
+
+9.2.x Multipath Sources       : (METAL ROOF/DOME/VLBI ANTENNA/etc)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Additional Information : (multiple lines)
+
+9.3.x Signal Obstructions     : (TREES/BUILDINGS/etc)
+       Effective Dates        : (CCYY-MM-DD/CCYY-MM-DD)
+       Additional Information : (multiple lines)
+
+
+10.  Local Episodic Effects Possibly Affecting Data Quality
+
+10.x Date                     : (CCYY-MM-DD/CCYY-MM-DD)
+     Event                    : (TREE CLEARING/CONSTRUCTION/etc)
+
+
+11.   On-Site, Point of Contact Agency Information
+
+     Agency                   : Test Sites
+     Preferred Abbreviation   : TEST
+     Mailing Address          : (multiple lines)
+     Primary Contact
+       Contact Name           : Brian Kohan
+       Telephone (primary)    : 9196324982
+       Telephone (secondary)  : 
+       Fax                    : 
+       E-mail                 : bckohan@gmail.com
+     Secondary Contact
+       Contact Name           : 
+       Telephone (primary)    : 
+       Telephone (secondary)  : 
+       Fax                    : 
+       E-mail                 : 
+     Additional Information   : 
+
+
+12.  Responsible Agency (if different from 11.)
+
+     Agency                   : Test Sites
+     Preferred Abbreviation   : TEST
+     Mailing Address          : (multiple lines)
+     Primary Contact
+       Contact Name           : Brian Kohan
+       Telephone (primary)    : 9196324982
+       Telephone (secondary)  : 
+       Fax                    : 
+       E-mail                 : bckohan@gmail.com
+     Secondary Contact
+       Contact Name           : 
+       Telephone (primary)    : 
+       Telephone (secondary)  : 
+       Fax                    : 
+       E-mail                 : 
+     Additional Information   : 
+
+
+13.  More Information
+
+     Primary Data Center      : JPL
+     Secondary Data Center    : BKG
+     URL for More Information : 
+     Hardcopy on File
+       Site Map               : 
+       Site Diagram           : 
+       Horizon Mask           : 
+       Monument Description   : 
+       Site Pictures          : 
+     Additional Information   : 
+     Antenna Graphics with Dimensions
+
+
+                  -------------------                     <--  0.0622
+                /                     \
+              /                         \
+             +---------------------------+                <--  0.0325
+                     \           /
+                      \         /
+                        +--x--+                           <--  0.0000  BAM=ARP
+                                                                       RXC=NRP
+             <--         0.1404        -->

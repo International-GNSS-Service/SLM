@@ -86,6 +86,11 @@ jobs:
           just setup ${{ steps.sp.outputs.python-path }}
           just test-lock Django~=${{ matrix.django-version }}.0
           just install
+      - name: Install Playwright Browsers
+        # pytest-playwright requires python >= 3.9, the e2e tests are skipped on 3.8
+        if: ${{ matrix.python-version != '3.8' }}
+        run: |
+          just install-browsers
       - name: Run Unit Tests
         run: |
           just test-all

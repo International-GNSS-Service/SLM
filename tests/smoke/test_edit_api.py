@@ -7,8 +7,8 @@ from django.urls import reverse
 
 from slm import signals as slm_signals
 from slm.api.edit import views as edit_views
-from slm.defines import SiteLogStatus
-from slm.models import Alert, LogEntry, Site, SiteSubSection
+from slm.defines import AlertLevel, SiteLogStatus
+from slm.models import Alert, LogEntry, Site, SiteSubSection, UserAlert
 
 from .test_public_api import rows
 
@@ -366,17 +366,22 @@ def test_alerts_list_and_dismiss(api_client, editor, moderator, updated_site):
     assert not Alert.objects.filter(pk=alert_id).exists()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: AlertFilter.for_user calls get_user_model().filter() instead "
-    "of get_user_model().objects.filter().",
-)
-def test_alerts_filter_by_user(api_client, moderator, updated_site):
-    response = api_client(moderator).get(
-        url("alerts-list"), {"user": moderator.email}, secure=True
+def test_alerts_filter_by_user(
+    api_client, superuser, editor, moderator, published_site
+):
+    mine = UserAlert.objects.create(
+        user=moderator, header="mine", level=AlertLevel.NOTICE
+    )
+    theirs = UserAlert.objects.create(
+        user=editor, header="theirs", level=AlertLevel.NOTICE
+    )
+    response = api_client(superuser).get(
+        url("alerts-list"), {"user": moderator.email.upper()}, secure=True
     )
     assert response.status_code == 200
+    found = {row["id"] for row in rows(response)}
+    assert mine.pk in found
+    assert theirs.pk not in found
 
 
 def test_log_entries(api_client, editor, other_editor, updated_site):

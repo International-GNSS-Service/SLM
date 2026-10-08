@@ -374,8 +374,8 @@ class AlertViewSet(
             ).distinct()
 
         def for_user(self, queryset, name, value):
-            return queryset.for_user(
-                get_user_model().filter(email__iexact=value)
+            return queryset.filter(
+                queryset.user_q(get_user_model().objects.filter(email__iexact=value))
             ).distinct()
 
         class Meta:

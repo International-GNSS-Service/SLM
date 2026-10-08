@@ -694,7 +694,7 @@ class Command(TyperCommand):
 
             webbrowser.open(log.resolve().as_uri())
             if self.verbosity > 0:
-                return log.absolute()
+                self.secho(str(log.absolute()))
 
     def process_file(self, file_meta: FileMeta):
         with transaction.atomic():

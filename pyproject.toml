@@ -123,7 +123,7 @@ slm = "slm.manage:main"
 [dependency-groups]
 dev = [
     "django-extensions>=3.1.5,<4.0.0",
-    "pydot>=2.0.0,<3.0.0",
+    "pydot>=2.0.0,<5.0.0",
     "pyparsing>=3.0.6,<4.0.0",
     "ipython==8.12.3",
     "pytest>=8.1.1,<9.0.0",

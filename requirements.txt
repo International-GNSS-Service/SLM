@@ -2378,8 +2378,9 @@ requests==2.32.5 ; python_full_version >= '3.9' \
     # via
     #   igs-slm
     #   safety
-restructuredtext-lint==1.4.0 \
-    --hash=sha256:1b235c0c922341ab6c530390892eb9e92f90b9b75046063e047cacfb0f050c45
+restructuredtext-lint==2.0.2 \
+    --hash=sha256:374c0d3e7e0867b2335146a145343ac619400623716b211b9a010c94426bbed7 \
+    --hash=sha256:dd25209b9e0b726929d8306339faf723734a3137db382bcf27294fa18a6bc52b
     # via doc8
 rich==13.9.4 \
     --hash=sha256:439594978a49a09530cff7ebc4b5c7103ef57baf48d5ea3184f21d9a2befa098 \

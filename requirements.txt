@@ -1037,9 +1037,9 @@ djangorestframework==3.15.2 ; python_full_version < '3.9' \
     # via
     #   djangorestframework-gis
     #   igs-slm
-djangorestframework==3.16.1 ; python_full_version >= '3.9' \
-    --hash=sha256:166809528b1aced0a17dc66c24492af18049f2c9420dbd0be29422029cfc3ff7 \
-    --hash=sha256:33a59f47fb9c85ede792cbf88bde71893bcda0667bc573f784649521f1102cec
+djangorestframework==3.18.1 ; python_full_version >= '3.9' \
+    --hash=sha256:605d79fa2ec2f02905492e5ea13d903c2d842d0b4c915a57f7bf02ab9f3c91dd \
+    --hash=sha256:f1409d698967aaf82d5d98d76b549c8fba8bd92ebd0d83d24454508f72168dc2
     # via
     #   djangorestframework-gis
     #   igs-slm

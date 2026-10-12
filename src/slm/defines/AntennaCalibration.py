@@ -1,9 +1,11 @@
-from django_enum.choices import IntegerChoices
-from enum_properties import s
+from enum import nonmember
+
+from enum_properties import IntEnumProperties, p, s
 
 
-class AntennaCalibrationMethod(IntegerChoices):
+class AntennaCalibrationMethod(IntEnumProperties, p("label")):
     _symmetric_builtins_ = [s("name", case_fold=True)]
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     CONVERTED = 0, "CONVERTED"

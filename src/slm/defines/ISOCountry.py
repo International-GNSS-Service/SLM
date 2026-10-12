@@ -1,12 +1,14 @@
 """The standard enum type for ISO 3166-1 common countrys"""
 
+from enum import nonmember
+
 from django.utils.translation import gettext_lazy as _
-from django_enum.choices import TextChoices
-from enum_properties import p, s
+from enum_properties import StrEnumProperties, p, s
 
 
 class ISOCountry(
-    TextChoices,
+    StrEnumProperties,
+    p("label"),
     s("numeric"),  # type: ignore
     s("alpha3", case_fold=True),  # type: ignore
     p("independent"),  # type: ignore
@@ -18,6 +20,7 @@ class ISOCountry(
     """
 
     _symmetric_builtins_ = [s("name", case_fold=True), s("ascii", case_fold=True)]
+    do_not_call_in_templates = nonmember(True)
 
     AD = "AD", _("Andorra"), 20, "AND", True, "Andorra", "the Principality of Andorra"
     AE = (

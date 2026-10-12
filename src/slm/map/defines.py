@@ -1,14 +1,21 @@
+from enum import nonmember
+
 from django.utils.translation import gettext_lazy as _
-from django_enum.choices import IntegerChoices
-from enum_properties import p, s
+from enum_properties import IntEnumProperties, p, s
 
 
-class MapBoxStyle(IntegerChoices, s("slug", case_fold=True), p("version")):
+class MapBoxStyle(
+    IntEnumProperties,
+    s("label", case_fold=True),
+    s("slug", case_fold=True),
+    p("version"),
+):
     """
     https://docs.mapbox.com/api/maps/styles/
     """
 
-    _symmetric_builtins_ = ["name", s("label", case_fold=True), "uri"]
+    _symmetric_builtins_ = ["name", "uri"]
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     # name             value    label                slug           version
@@ -34,12 +41,13 @@ class MapBoxStyle(IntegerChoices, s("slug", case_fold=True), p("version")):
         return self.uri
 
 
-class MapBoxProjection(IntegerChoices, s("slug", case_fold=True)):
+class MapBoxProjection(IntEnumProperties, s("label"), s("slug", case_fold=True)):
     """
     https://docs.mapbox.com/mapbox-gl-js/style-spec/projection/
     """
 
-    _symmetric_builtins_ = ["name", "label"]
+    _symmetric_builtins_ = ["name"]
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     # name                  value   label                        slug

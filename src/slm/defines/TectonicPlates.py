@@ -1,9 +1,11 @@
-from django_enum.choices import TextChoices
-from enum_properties import s
+from enum import nonmember
+
+from enum_properties import StrEnumProperties, s
 
 
-class TectonicPlates(TextChoices):
-    _symmetric_builtins_ = [s("name", case_fold=True), s("label", case_fold=True)]
+class TectonicPlates(StrEnumProperties, s("label", case_fold=True)):
+    _symmetric_builtins_ = [s("name", case_fold=True)]
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     AFRICAN        = "AF", "African"

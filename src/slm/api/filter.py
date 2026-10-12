@@ -10,6 +10,7 @@ from django.http import QueryDict
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
+from django_enum.utils import choices as enum_choices
 from django_filters import (
     BaseInFilter,
     BooleanFilter,
@@ -371,7 +372,7 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     id = MustIncludeThese()
 
     status = django_filters.MultipleChoiceFilter(
-        choices=SiteLogStatus.choices, distinct=True
+        choices=enum_choices(SiteLogStatus), distinct=True
     )
 
     alert = django_filters.MultipleChoiceFilter(
@@ -413,11 +414,11 @@ class BaseStationFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
     )
 
     frequency_standard = django_filters.MultipleChoiceFilter(
-        choices=FrequencyStandardType.choices, method="filter_equipment"
+        choices=enum_choices(FrequencyStandardType), method="filter_equipment"
     )
 
     country = django_filters.MultipleChoiceFilter(
-        choices=ISOCountry.choices, method="filter_country"
+        choices=enum_choices(ISOCountry), method="filter_country"
     )
 
     current = SLMBooleanFilter(method="noop", distinct=True, field_name="current")

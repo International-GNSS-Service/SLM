@@ -32,6 +32,7 @@ from django_enum.fields import (
     EnumPositiveSmallIntegerField,
     EnumSmallIntegerField,
 )
+from django_enum.utils import choices as enum_choices
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, renderers, serializers, status, viewsets
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -1256,12 +1257,16 @@ class SiteFileUploadViewSet(
     class FileFilter(CrispyFormCompat, AcceptListArguments, FilterSet):
         name = django_filters.CharFilter(field_name="name", lookup_expr="istartswith")
 
-        file_type = django_filters.MultipleChoiceFilter(choices=SLMFileType.choices)
+        file_type = django_filters.MultipleChoiceFilter(
+            choices=enum_choices(SLMFileType)
+        )
 
-        log_format = django_filters.MultipleChoiceFilter(choices=SiteLogFormat.choices)
+        log_format = django_filters.MultipleChoiceFilter(
+            choices=enum_choices(SiteLogFormat)
+        )
 
         status = django_filters.MultipleChoiceFilter(
-            choices=SiteFileUploadStatus.choices
+            choices=enum_choices(SiteFileUploadStatus)
         )
 
         class Meta:

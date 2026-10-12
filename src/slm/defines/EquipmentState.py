@@ -1,10 +1,12 @@
+from enum import nonmember
+
 from django.utils.translation import gettext_lazy as _
-from django_enum.choices import IntegerChoices
-from enum_properties import p, s
+from enum_properties import IntEnumProperties, p, s
 
 
-class EquipmentState(IntegerChoices, p("help_text")):
+class EquipmentState(IntEnumProperties, p("label"), p("help_text")):
     _symmetric_builtins_ = [s("name", case_fold=True)]
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     ACTIVE     = 100, _("In Use"),     _("This coding is in active use.")

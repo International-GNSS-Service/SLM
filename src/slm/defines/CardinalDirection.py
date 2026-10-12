@@ -1,10 +1,12 @@
+from enum import nonmember
+
 from django.utils.translation import gettext_lazy as _
-from django_enum.choices import TextChoices
-from enum_properties import s
+from enum_properties import StrEnumProperties, p, s
 
 
-class CardinalDirection(TextChoices):
+class CardinalDirection(StrEnumProperties, p("label")):
     _symmetric_builtins_ = [s("name", case_fold=True)]
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     NORTH      =  "N", _("North")

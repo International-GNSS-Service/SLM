@@ -147,7 +147,9 @@ class Command(TyperCommand):
         logs: Annotated[
             Path,
             Option(
-                help=_("Write logs to this directory."),
+                help=_(
+                    "Write logs to this directory. No logs will be written by default."
+                ),
                 shell_complete=complete_directory,
             ),
         ] = logs,
@@ -345,7 +347,7 @@ class Command(TyperCommand):
                 log_f.write(log_index)
 
             if self.verbosity > 0:
-                self.secho(str(index_file.absolute()))
+                return index_file.absolute()
 
     def update_head(self, record: ImportRecord) -> bool:
         index = record.index

@@ -199,17 +199,15 @@ https://docs.djangoproject.com/en/3.2/topics/templates/
   {% compress js inline %}
   <script type='text/javascript'>
     $(document).ready(function() {
-      var options = {
-        html: true,
-        content: $('[data-name="quick-help-info"]')
+      // the quick help button is not rendered on every page (e.g. login)
+      var helpPopover = document.querySelector('.help-popover');
+      if (helpPopover) {
+        new bootstrap.Popover(helpPopover, {
+          container: 'body',
+          html: true,
+          content: document.getElementById('quick-help-info'),
+        });
       }
-      var helpPopover = document.getElementById('quick-help')
-      var popover = new bootstrap.Popover(
-          document.querySelector('.help-popover'), {
-        container: 'body',
-        html: true,
-        content: document.getElementById('quick-help-info'),
-      })
     })
   </script>
   {% endcompress %}

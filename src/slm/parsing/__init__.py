@@ -470,6 +470,7 @@ def try_prefixes(value, converter, delimiter=" "):
 
     parts = value.split(delimiter)
     trailing = []
+    error = None
     while parts:
         try:
             success = try_parse(" ".join(parts))
@@ -479,8 +480,11 @@ def try_prefixes(value, converter, delimiter=" "):
                     value=success.value if isinstance(success, _Warning) else success,
                 )
             return success
-        except ValueError:
+        except ValueError as err:
+            error = error or err
             trailing.append(parts.pop())
+    # no prefix of the value could be converted
+    raise error
 
 
 def to_antenna(value):

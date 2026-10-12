@@ -195,16 +195,21 @@ def test_download_lower_case(api_client, published_site):
     assert "aaa600usa_" in response.get("Content-Disposition", "")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=TypeError,
-    reason="BUG: the name_len query parameter is passed to Site.get_filename() "
-    "as a string and used as a slice index.",
-)
 def test_download_name_len(api_client, published_site):
     response = download(api_client(), published_site.name, "xml", name_len=4)
     assert response.status_code == 200
     assert "AAA6_" in response.get("Content-Disposition", "")
+
+
+def test_download_name_len_invalid(api_client, published_site):
+    response = download(api_client(), published_site.name, "xml", name_len="abc")
+    assert response.status_code == 400
+
+
+def test_download_lower_case_false(api_client, published_site):
+    response = download(api_client(), published_site.name, "xml", lower_case="false")
+    assert response.status_code == 200
+    assert "AAA600USA_" in response.get("Content-Disposition", "")
 
 
 def test_download_unknown_site(api_client, db):
@@ -222,15 +227,11 @@ def test_public_file_download(api_client, published_site):
         assert response.status_code == 200
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=ValueError,
-    reason="BUG: get_format_suffix() calls SiteLogFormat(None) when no format "
-    "suffix is given, so a bare download URL 500s instead of using a default.",
-)
 def test_download_without_format_suffix(api_client, published_site):
     response = api_client().get(
         reverse("slm_public_api:download-detail", kwargs={"site": published_site.name}),
         secure=True,
     )
     assert response.status_code == 200
+    assert "AAA600USA_" in response.get("Content-Disposition", "")
+    assert ".log" in response.get("Content-Disposition", "")

@@ -70,15 +70,10 @@ def test_malformed_log_reports_findings(api_client, editor, proposed_site):
     assert proposed_site.siteidentification_set.count() == 0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: an impossible Date Installed (2023-13-45T99:99Z) produces no "
-    "parser finding at all.",
-)
 def test_malformed_log_flags_invalid_date(api_client, editor, proposed_site):
     upload_file(api_client(editor), proposed_site, MALFORMED_LOG)
     upload = SiteFileUpload.objects.get(site=proposed_site)
-    assert "27" in upload.context["findings"]
+    assert "27" in errors(upload)
 
 
 def test_geodesyml_upload(api_client, editor, proposed_site):

@@ -374,8 +374,8 @@ class AlertViewSet(
             ).distinct()
 
         def for_user(self, queryset, name, value):
-            return queryset.for_user(
-                get_user_model().filter(email__iexact=value)
+            return queryset.filter(
+                queryset.user_q(get_user_model().objects.filter(email__iexact=value))
             ).distinct()
 
         class Meta:
@@ -460,8 +460,7 @@ class SiteLogDownloadViewSet(BaseSiteLogDownloadViewSet):
                     filename=site.get_filename(
                         log_format=request.accepted_renderer.format,
                         epoch=datetime.now(),
-                        name_len=request.GET.get("name_len", None),
-                        lower_case=request.GET.get("lower_case", False),
+                        **self.get_filename_kwargs(request),
                     ),
                 )
             except Site.DoesNotExist:
@@ -611,7 +610,12 @@ class SectionViewSet(type):
                     # directly on POST data in a Permission object is more
                     # difficult
                     site = validated_data.get("site") or instance.site
-                    is_moderator = site.is_moderator(self.context["request"].user)
+                    user = self.context["request"].user
+                    if not site.can_edit(user) or (
+                        instance is not None and not instance.site.can_edit(user)
+                    ):
+                        raise PermissionDenied()
+                    is_moderator = site.is_moderator(user)
                     do_publish = validated_data.pop("publish", False)
                     do_revert = validated_data.pop("revert", False)
                     update_status = None

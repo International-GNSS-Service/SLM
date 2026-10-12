@@ -44,12 +44,6 @@ def test_login_logout(page, editor):
     expect(page).to_have_url(re.compile(r"/accounts/login/"))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason='BUG: the login page throws "Cannot read properties of undefined '
-    "(reading 'trigger')\" from a Bootstrap tooltip/popover initialised "
-    "without a valid config.",
-)
 def test_login_page_has_no_errors(page, console_errors):
     errors = console_errors(page)
     goto(page, "account_login")

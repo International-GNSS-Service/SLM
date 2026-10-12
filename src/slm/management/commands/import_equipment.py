@@ -72,11 +72,7 @@ class Command(TyperCommand, rich_markup_mode="markdown", chain=True):
         """Global equipment request params"""
         return {"state": [st.value for st in self.states]}
 
-    # discard the chained subcommand results - Django's BaseCommand.execute()
-    # would try to write them to stdout
-    @initialize(
-        invoke_without_command=True, result_callback=lambda *args, **kwargs: None
-    )
+    @initialize(invoke_without_command=True)
     def init(
         self,
         ctx: Context,

@@ -66,12 +66,6 @@ def test_head_from_index(published_site, tmp_path):
     assert published_site.siteidentification_set.head() is not None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: with verbosity > 0 (the default) handle() returns the log index "
-    "Path, and Django's execute() crashes calling .endswith() on it.",
-)
 def test_head_from_index_default_verbosity(published_site, tmp_path):
     run("head_from_index", published_site.name, "--no-prompt", "--logs", str(tmp_path))
 
@@ -194,13 +188,6 @@ def test_import_equipment_remove(published_site, equipment_source):
     assert Receiver.objects.filter(model="JAVAD TRE_3 DELTA").exists()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: invoking a subcommand (e.g. `import_equipment receivers`) returns "
-    "the chained results list from handle(), and Django's execute() crashes "
-    "calling .endswith() on it.",
-)
 def test_import_equipment_subcommand(db, equipment_source):
     run("import_equipment", "receivers")
 
@@ -225,12 +212,6 @@ def test_import_archive(agency_1, equipment, tmp_path):
         assert agency_1 in site.agencies.all()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AttributeError,
-    reason="BUG: with verbosity > 0 (the default) handle() returns the log index "
-    "Path, and Django's execute() crashes calling .endswith() on it.",
-)
 def test_import_archive_default_verbosity(db, tmp_path):
     run("import_archive", str(ARCHIVE), "--logs", str(tmp_path))
 

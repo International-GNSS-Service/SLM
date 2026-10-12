@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from django.utils.functional import cached_property
-from django_enum import IntegerChoices
+from django_enum.choices import IntegerChoices
 from enum_properties import s
 
 

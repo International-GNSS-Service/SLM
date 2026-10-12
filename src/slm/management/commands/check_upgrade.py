@@ -9,6 +9,7 @@ current software version is unsafe on the current database version.
 """
 
 import typing as t
+from typing import Annotated
 
 import typer
 from django.core.management import CommandError
@@ -18,7 +19,6 @@ from django.db.migrations.recorder import MigrationRecorder
 from django.utils.translation import gettext as _
 from django_typer.management import TyperCommand, command
 from packaging.version import InvalidVersion, Version, parse
-from typing_extensions import Annotated
 
 from slm import __version__ as slm_version
 from slm.models import SLMVersion

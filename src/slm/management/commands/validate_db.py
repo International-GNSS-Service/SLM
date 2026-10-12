@@ -8,15 +8,16 @@ in the database.
 """
 
 import typing as t
+from typing import Annotated
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
 from django.utils.translation import gettext as _
-from django_typer.management import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand
+from django_typer.utils import model_parser_completer
 from tqdm import tqdm
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from slm.models import GeodesyMLInvalid, Site
 

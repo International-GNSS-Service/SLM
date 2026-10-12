@@ -1,7 +1,7 @@
 """The standard enum type for ISO 3166-1 common countrys"""
 
 from django.utils.translation import gettext_lazy as _
-from django_enum import TextChoices
+from django_enum.choices import TextChoices
 from enum_properties import p, s
 
 

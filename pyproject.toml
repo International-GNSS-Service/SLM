@@ -2,7 +2,7 @@
 name = "igs-slm"
 version = "0.5.0b0"
 description = "IGS Site Log Manager"
-requires-python = ">=3.8,<4.0"
+requires-python = ">=3.11,<4.0"
 authors = [
   {name = "Brian Kohan", email = "bkohan@jpl.nasa.gov"},
   {name = "Ashley Santiago", email = "ashley.k.santiago@jpl.nasa.gov"},
@@ -31,65 +31,62 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Development Status :: 4 - Beta",
-    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.2",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Topic :: Software Development :: Libraries",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
-    "django (>=4.2.23,<5.0)",
-    "django-split-settings>=1.2.0,<2.0.0",
-    "importlib-resources>1.3.0",
+    "Django>=5.2,<6.0",
+    "django-split-settings>=1.3.2,<2.0.0",
     "django-allauth>=65.4",
-    "django-widget-tweaks>=1.4.12,<2.0.0",
-    "djangorestframework>=3.15.2,<4.0.0",
-    "django-render-static>=3.1.2,<4.0.0",
-    "django-filter>=24.2,<25.0.0",
-    "python-dateutil>=2.8.2,<3.0.0",
-    "django-ipware>=7.0.1,<8.0.0",
-    "django-enum>=1.2.2,<2.0.0",
-    "enum-properties>=1.7.0,<2.0.0",
-    "tqdm>=4.64.1,<5.0.0",
-    "geojson>=3.1.0,<4.0.0",
-    "Pillow>=10.0.0,<11.0.0",
-    "polyline>=2.0.0,<3.0.0",
-    "lxml>=5.2.1,<6.0.0",
+    "django-widget-tweaks>=1.5.0,<2.0.0",
+    "djangorestframework>=3.16.0,<4.0.0",
+    "django-render-static>=3.3.0,<4.0.0",
+    "django-filter>=25.1,<27.0",
+    "python-dateutil>=2.9.0,<3.0.0",
+    "django-ipware>=7.0.1,<9.0.0",
+    "django-enum>=2.2.0,<3.0.0",
+    "enum-properties>=2.3.0,<3.0.0",
+    "tqdm>=4.67.0,<5.0.0",
+    "geojson>=3.2.0,<4.0.0",
+    "Pillow>=11.0.0,<13.0.0",
+    "polyline>=2.0.2,<3.0.0",
+    "lxml>=6.0.1,<7.0.0",
     "django-polymorphic>=4.1.0,<5.0",
-    "Jinja2>=3.1.2,<4.0.0",
-    "django-ckeditor>=6.5.1,<7.0.0",
-    "django-crispy-forms>=2.0,<3.0.0",
-    "crispy-bootstrap5>=2024.2,<2025.0",
-    "djangorestframework-gis>=1.0,<2.0.0",
-    "chardet>=5.1.0,<6.0.0",
-    "psycopg>=3.1",
-    "django-typer>=2.1.2,<3.0.0",
-    "click<8.2", # TODO remove this when django-typer is upgraded
-    "django-routines>=1.1.3,<2.0.0",
-    "rich>=13.7.1,<15.0.0",
+    "Jinja2>=3.1.6,<4.0.0",
+    "django-ckeditor>=6.7.2,<7.0.0",
+    "django-crispy-forms>=2.4,<3.0.0",
+    "crispy-bootstrap5>=2025.4",
+    "djangorestframework-gis>=1.1,<2.0.0",
+    "chardet>=5.2.0,<8.0.0",
+    "psycopg>=3.2",
+    "django-typer>=4.1.1,<5.0.0",
+    "django-routines>=1.6.0,<2.0.0",
+    "rich>=14.0.0,<16.0.0",
     "requests>=2.32.4,<3.0.0",
     "packaging>=24.2",
     "django-compressor>=4.5.1",
-    "django-environ>=0.11.2",
+    "django-environ>=0.12.0",
     "django-hijack>=3.6.2",
 ]
 
 [project.optional-dependencies]
-gunicorn = ["gunicorn>=22.0.0"]
+gunicorn = ["gunicorn>=23.0.0"]
 debug = [
     "ipdb>=0.13.13,<1.0.0",
-    "django-debug-toolbar>=4.1.0,<5.0.0",
-    "django-extensions>=3.1.5,<4.0.0",
+    "django-debug-toolbar>=5.0.0",
+    "django-extensions>=3.2.3",
 ]
 
 
@@ -121,43 +118,58 @@ slm-startproject = 'slm.bin.startproject:app'
 slm = "slm.manage:main"
 
 [dependency-groups]
-dev = [
-    "django-extensions>=3.1.5,<4.0.0",
-    "pydot>=2.0.0,<3.0.0",
-    "pyparsing>=3.0.6,<4.0.0",
-    "ipython==8.12.3",
-    "pytest>=8.1.1,<9.0.0",
-    "pytest-django>=4.5.2,<5.0.0",
-    "coverage>=7.2.1,<8.0.0",
-    "readme-renderer[md]>=43.0,<44.0",
-    "safety>=3.1.0,<4.0.0",
-    "pytest-cov>=5.0.0,<6.0.0",
-    "django-test-migrations>=1.2.0,<2.0.0",
-    "doc8>=1.1.1,<2.0.0",
-    "django-debug-toolbar>=4.1.0,<5.0.0",
-    "pygount>=1.4.0,<2.0.0",
-    "ruff>=0.4.1,<1.0.0",
-    "django-stubs>=5.0.2,<6.0.0",
-    "ipdb>=0.13.13,<1.0.0",
-    "pre-commit>=3.5.0",
-    "tomlkit>=0.13.2",
-    "djlint>=1.35.2",
-    "whitenoise>=6.7.0",
-    "pytest-playwright>=0.7.0,<1.0.0 ; python_full_version >= '3.9'",
-]
 docs = [
-    "Sphinx>=7.2.0,<8.0.0; python_version > '3.8'",
-    "Sphinx>=7.0.0,<8.0.0; python_version <= '3.8'",
-    "sphinxcontrib-typer[html,pdf,png]>=0.5.0,<1.0.0; python_version >= '3.9'",
-    "sphinx-tabs>=3.4.5,<4.0.0",
-    "sphinxcontrib-svg2pdfconverter[cairosvg]>=1.2.2,<2.0.0",
-    "sphinxcontrib-spelling>=8.0.0,<9.0.0; python_version > '3.10'",
-    "sphinxcontrib-spelling<8.0.0; python_version <= '3.10'",
-    "pyenchant==3.3.0rc1; python_version > '3.10'",
-    "pyenchant>=3.2.0,<4.0.0; python_version <= '3.10'",
-    "furo==2024.8.6",
-    "sphinx-autobuild>=2021.3.14",
+    "doc8>=1.1.2",
+    "furo>=2024.8.6",
+    "readme-renderer[md]>=44.0",
+    "sphinx>=8.0.0",
+    "sphinx-autobuild>=2024.10.3",
+    "sphinx-tabs>=3.4.7",
     "sphinxcontrib-django>=2.5",
+    "sphinxcontrib-typer[html,pdf,png]>=0.10.0",
+    "sphinxcontrib-svg2pdfconverter[cairosvg]>=1.2.3",
+    "sphinxcontrib-spelling>=8.0.0",
+    "pyenchant>=3.2.2",
+]
+typing = [
+    "pyright>=1.1.390",
+    "mypy>=1.19.1",
+    "django-stubs[compatible-mypy]>=5.1.3",
+    "django-stubs-ext>=5.1.3",
+]
+lint = [
+    "ruff>=0.15.0",
+    "readme-renderer[md]>=43.0",
+    "doc8>=1.1.2",
+    "djlint>=1.36.4",
+    "bandit[toml,sarif]>=1.7.10",
+]
+coverage = ["coverage[toml]>=7.6.1"]
+test = [
+    { include-group = "coverage" },
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-django>=4.10.0",
+    "pytest-env>=1.1.5",
+    "django-test-migrations>=1.4.0",
+    "django-extensions>=3.2.3",
+    "whitenoise>=6.8.0",
+    "playwright>=1.58.0",
+    "pytest-playwright>=0.7.0",
+]
+dev = [
+    { include-group = "typing" },
+    { include-group = "test" },
+    { include-group = "docs" },
+    { include-group = "lint" },
+    "django-debug-toolbar>=5.0.0",
+    "packaging>=24.2",
+    "tomlkit>=0.13.3",
+    "ipdb>=0.13.13",
+    "ipython>=8.18.1",
+    "pydot>=3.0.0",
+    "pyparsing>=3.2.0",
+    "pygount>=1.8.0",
 ]
 
 # todo doc8 configuration here is not being picked up and doesnt seem to be working
@@ -172,12 +184,24 @@ sphinx = true
 # allow_redefinition = false
 check_untyped_defs = true
 ignore_missing_imports = true
-exclude = ["tests"]
 plugins = ["mypy_django_plugin.main"]
+mypy_path = ["src"]
+packages = ["slm"]
+exclude = ["src/slm/bin/templates"]
 
 [tool.django-stubs]
 django_settings_module = "tests.settings"
 
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+include = ["src/slm"]
+exclude = ["src/slm/bin/templates"]
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnusedImport = true
+reportDuplicateImport = true
 
 [tool.pytest.ini_options]
 # py.test options:
@@ -189,6 +213,13 @@ env = [
 ]
 markers = [
     "e2e: Playwright browser tests against a live server (deselect with '-m \"not e2e\"')",
+]
+
+# upstream typer has deprecated shell_complete in favor of autocomplete, but
+# has not updated the autocomplete interface.
+# https://github.com/fastapi/typer/pull/1006
+filterwarnings = [
+    "ignore:.*shell_complete.*:DeprecationWarning:typer.core"
 ]
 
 addopts = [
@@ -204,7 +235,7 @@ omit = [
 ]
 branch = true
 source = ["slm"]
-concurrency = ["multiprocessing"]
+concurrency = ["thread", "multiprocessing"]
 parallel = true
 relative_files = true
 command_line = "-m pytest --cov=slm"
@@ -222,6 +253,30 @@ exclude = [
     "igs_tools",
     "src/slm/bin/templates"
 ]
+target-version = "py311"
 
 [tool.ruff.lint]
 exclude = ["tests/**/*"]
+# ruff < 0.17 default rules - todo adopt the expanded default rule set
+select = ["E4", "E7", "E9", "F"]
+
+[tool.bandit]
+targets = ["src"]
+exclude_dirs = [
+    "./tests",
+    "./.venv",
+    "./doc",
+]
+
+skips = [
+    "B101",  # assert_used - assertions are fine in tests and Django code
+    "B110",  # Try, Except, Pass detected - these are intentional
+]
+
+# Severity level threshold
+# Options: LOW, MEDIUM, HIGH
+severity = "MEDIUM"
+
+# Confidence level threshold
+# Options: LOW, MEDIUM, HIGH
+confidence = "MEDIUM"

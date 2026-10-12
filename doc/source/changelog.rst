@@ -6,6 +6,15 @@
 Change Log
 ==========
 
+v0.6.0b0 (2026-XX-XX)
+=====================
+
+* BREAKING: Drop support for Python < 3.11 and Django 4.2. Support Python 3.11-3.15 and
+  Django 5.2 LTS.
+* Upgrade dependencies, including django-typer 4, django-enum 2, enum-properties 2 and lxml 6.
+* Add database check constraints for enumeration fields (django-enum 2).
+
+
 v0.5.0b0 (2026-10-15)
 =====================
 

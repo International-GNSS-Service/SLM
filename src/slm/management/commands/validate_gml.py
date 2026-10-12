@@ -4,13 +4,13 @@ Update the data availability information for each station.
 
 import typing as t
 from pathlib import Path
+from typing import Annotated
 
 from django.core.management import CommandError
 from django.utils.translation import gettext as _
 from django_typer.management import TyperCommand
 from lxml import etree
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from slm.defines import GeodesyMLVersion
 from slm.management.commands import EnumParser

@@ -20,6 +20,7 @@ from another SLM or from the IGS by default:
 """
 
 import typing as t
+from typing import Annotated
 
 import requests
 from django.db.models import Q
@@ -27,7 +28,6 @@ from django.utils.translation import gettext as _
 from django_typer.completers import these_strings
 from django_typer.management import TyperCommand, command, initialize
 from typer import Context, Option
-from typing_extensions import Annotated
 
 from slm.defines import EquipmentState
 from slm.models.equipment import Antenna, Manufacturer, Radome, Receiver

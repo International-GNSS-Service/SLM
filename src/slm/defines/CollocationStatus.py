@@ -1,4 +1,4 @@
-from django_enum import TextChoices
+from django_enum.choices import TextChoices
 from enum_properties import s
 
 

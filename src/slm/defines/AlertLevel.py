@@ -1,5 +1,5 @@
 from django.utils.translation import gettext_lazy as _
-from django_enum import IntegerChoices
+from django_enum.choices import IntegerChoices
 from enum_properties import s
 
 

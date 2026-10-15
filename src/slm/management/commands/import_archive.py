@@ -190,6 +190,7 @@ class Command(TyperCommand):
     logs: Path = Path("{SLM_LOG_DIR}") / "import_archive.{TIMESTAMP}"
     verbosity: int = 1
     traceback: bool = False
+    no_browser: bool = False
 
     log_file_tmpl = "slm/reports/file_log.html"
     log_index_tmpl = "slm/reports/index_log.html"
@@ -379,6 +380,13 @@ class Command(TyperCommand):
                 ),
             ),
         ] = site_dirs,
+        no_browser: Annotated[
+            bool,
+            Option(
+                "--no-browser",
+                help=_("Do not open the import log in a web browser when done."),
+            ),
+        ] = no_browser,
         verbosity: Verbosity = verbosity,
         traceback: Traceback = traceback,
     ):
@@ -406,6 +414,7 @@ class Command(TyperCommand):
         self.site_dirs = site_dirs
         self.verbosity = verbosity
         self.traceback = traceback
+        self.no_browser = no_browser
 
         self.unresolved = []
         self.created = set()
@@ -692,9 +701,10 @@ class Command(TyperCommand):
                 log_f.write(log_index)
 
         if log:
-            import webbrowser
+            if not self.no_browser:
+                import webbrowser
 
-            webbrowser.open(log.resolve().as_uri())
+                webbrowser.open(log.resolve().as_uri())
             if self.verbosity > 0:
                 return log.absolute()
 

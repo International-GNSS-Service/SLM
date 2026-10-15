@@ -204,6 +204,7 @@ def test_import_archive(agency_1, equipment, tmp_path):
         agency_1.shortname,
         "--logs",
         str(tmp_path),
+        "--no-browser",
         verbosity=0,
     )
     for name in ("AAA200USA", "AAA600USA"):
@@ -213,7 +214,7 @@ def test_import_archive(agency_1, equipment, tmp_path):
 
 
 def test_import_archive_default_verbosity(db, tmp_path):
-    run("import_archive", str(ARCHIVE), "--logs", str(tmp_path))
+    run("import_archive", str(ARCHIVE), "--logs", str(tmp_path), "--no-browser")
 
 
 def test_import_archive_no_create(db, tmp_path):
@@ -223,6 +224,7 @@ def test_import_archive_no_create(db, tmp_path):
         "--no-create-sites",
         "--logs",
         str(tmp_path),
+        "--no-browser",
         verbosity=0,
     )
     assert not Site.objects.filter(name="AAA200USA").exists()

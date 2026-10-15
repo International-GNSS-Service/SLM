@@ -8,13 +8,13 @@ jump. This command will check for these cases and fail if the migration from the
 current software version is unsafe on the current database version.
 """
 
-import bisect
 import typing as t
 
 import typer
 from django.core.management import CommandError
 from django.db import ProgrammingError, connection
 from django.db.migrations.loader import MigrationLoader
+from django.db.migrations.recorder import MigrationRecorder
 from django.utils.translation import gettext as _
 from django_typer.management import TyperCommand, command
 from packaging.version import InvalidVersion, Version, parse
@@ -68,7 +68,7 @@ class Command(TyperCommand):
     # these specific versions. These versions are points at which the migration
     # files were remade - meaning the database state may not be migrated correctly
     # if it was not first updated to be state consistent with these specific versions.
-    VERSION_WAYPOINTS = []  # list(sorted([parse("0.2.0b0")]))
+    VERSION_WAYPOINTS: t.List[Version] = [parse("0.5.0b0")]
 
     requires_migrations_checks = False
     requires_system_checks = []
@@ -76,48 +76,55 @@ class Command(TyperCommand):
     slm_version = parse_version(slm_version)
 
     @property
-    def db_version(self) -> Version:
-        try:
-            return SLMVersion.load().version or parse("0.1.4b")
-        except ProgrammingError:
-            return parse("0.1.4b")
-
-    def closest_waypoint_gte(self, version: Version) -> t.Optional[Version]:
-        idx = bisect.bisect_left(self.VERSION_WAYPOINTS, version)
-        if idx < len(self.VERSION_WAYPOINTS):
-            return self.VERSION_WAYPOINTS[idx]
-        return None
-
-    def closest_waypoint_lte(self, version: Version) -> t.Optional[Version]:
-        idx = bisect.bisect_right(self.VERSION_WAYPOINTS, version)
-        if idx > 0:
-            return self.VERSION_WAYPOINTS[idx - 1]
-        return None
+    def db_version(self) -> t.Optional[Version]:
+        """
+        The igs-slm version the database was last migrated by, or None if igs-slm
+        has never been migrated on this database. This is read directly from the
+        database - the cached SLMVersion singleton may be stale (e.g. after a
+        database restore).
+        """
+        recorder = MigrationRecorder(connection)
+        if (
+            not recorder.has_table()
+            or not recorder.migration_qs.filter(app="slm").exists()
+        ):
+            return None
+        if SLMVersion._meta.db_table in connection.introspection.table_names():
+            row = SLMVersion.objects.filter(pk=1).first()
+            if row and row.version:
+                return row.version
+        # databases migrated before the version was recorded
+        return parse("0.1.4b")
 
     @command(
         help="Check that it is safe to run migrations from the installed version of igs-slm."
     )
     def is_safe(self):
-        if self.db_version > self.slm_version:
-            # downgrades are possible with reversible migrations - we only
-            # balk if the downgrade would travel through a migration waypoint
-            nearest_waypoint = self.closest_waypoint_lte(self.db_version)
-            if nearest_waypoint and nearest_waypoint > self.slm_version:
+        db_version = self.db_version
+        if db_version is None:
+            return
+        waypoints = sorted(self.VERSION_WAYPOINTS)
+        if db_version > self.slm_version:
+            # downgrades are possible with reversible migrations - we only balk if
+            # the database has been migrated past a waypoint we would return to or
+            # past - the migrations to undo that no longer exist.
+            crossed = [wp for wp in waypoints if self.slm_version <= wp < db_version]
+            if crossed:
                 raise CommandError(
-                    f"Unable to downgrade from {self.db_version} to {self.slm_version}. "
-                    f"Traverses version waypoint: {nearest_waypoint}. "
+                    f"Unable to downgrade from {db_version} to {self.slm_version}. "
+                    f"Traverses version waypoint: {crossed[-1]}. "
                     f"It is recommended that you restore from a database backup."
                 )
-        elif self.db_version < self.slm_version:
-            # Upgrades must pass through all waypoints between the database code version and
-            # the installed version of igs-slm
-            nearest_waypoint = self.closest_waypoint_gte(self.db_version)
-            if nearest_waypoint and nearest_waypoint < self.slm_version:
+        elif db_version < self.slm_version:
+            # Upgrades must pass through all waypoints between the database code
+            # version and the installed version of igs-slm
+            crossed = [wp for wp in waypoints if db_version < wp < self.slm_version]
+            if crossed:
                 raise CommandError(
-                    f"Unable to upgrade from {self.db_version} to {self.slm_version}. "
-                    f"Traverses version waypoint: {nearest_waypoint}. "
+                    f"Unable to upgrade from {db_version} to {self.slm_version}. "
+                    f"Traverses version waypoint: {crossed[0]}. "
                     f"You must first install and upgrade SLM at the waypoint: "
-                    f"pip install igs-slm=={nearest_waypoint}."
+                    f"pip install igs-slm=={crossed[0]}."
                 )
 
     @command(

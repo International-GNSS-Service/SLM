@@ -9,6 +9,14 @@ Change Log
 v0.5.0b0 (2025-XX-XX)
 =====================
 
+.. important::
+
+    This release is a :ref:`version waypoint <version_waypoints>`. Upgrades from earlier
+    versions to versions after 0.5.0b0 must first upgrade to and migrate with 0.5.0b0.
+
+* Fixed version waypoint checks: databases at a waypoint were refused upgrades past it,
+  fresh databases were refused migrations once a waypoint existed, downgrades back to a
+  waypoint were allowed and a stale cached database version could be used.
 * Fixed `Thumbnail generation and retrieve is broken. <https://github.com/International-GNSS-Service/SLM/issues/214>`_
 * Fixed `slm javascript is not loaded on DRF admin pages. <https://github.com/International-GNSS-Service/SLM/issues/209>`_
 * Implemented `Allow admins to edit indexed site log files directly through the admin. <https://github.com/International-GNSS-Service/SLM/issues/207>`_

@@ -58,6 +58,10 @@ or a :django-admin:`migrate` the SLM will check that the upgrade is safe and pas
 no waypoints. If it is not safe it will safely exit with a warning. You may also manually
 check if your upgrade is safe by calling the :django-admin:`check_upgrade` command.
 
+The version waypoints are:
+
+* **0.5.0b0**
+
 .. _semver:
 
 Semantic Versioning

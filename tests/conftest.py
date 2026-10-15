@@ -16,6 +16,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.db import transaction
 from django.dispatch import Signal
 from django.urls import reverse
@@ -186,6 +187,15 @@ def build_seed():
 #
 # This does not work with ``transactional_db``/``live_server`` - the e2e
 # package overrides ``seed`` to build per-test instead.
+
+
+@pytest.fixture(scope="session", autouse=True)
+def render_urls_js():
+    """
+    urls.js is rendered into STATIC_ROOT on deploy (it is not committed) and the
+    compressed page assets require it.
+    """
+    call_command("renderstatic", "slm/js/urls.js")
 
 
 @pytest.fixture(scope="session")

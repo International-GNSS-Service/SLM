@@ -1,6 +1,6 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set unstable
-set script-interpreter := ['uv', 'run', '--script']
+set script-interpreter := ['uv', 'run', '--project', '.', '--script']
 
 export PYTHONPATH := source_directory()
 export DJANGO_SETTINGS_MODULE := "tests.settings"

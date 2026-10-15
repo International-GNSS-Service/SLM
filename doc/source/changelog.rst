@@ -6,7 +6,7 @@
 Change Log
 ==========
 
-v0.5.0b0 (2025-XX-XX)
+v0.5.0b0 (2026-10-15)
 =====================
 
 .. important::
@@ -21,6 +21,19 @@ v0.5.0b0 (2025-XX-XX)
 * Fixed `slm javascript is not loaded on DRF admin pages. <https://github.com/International-GNSS-Service/SLM/issues/209>`_
 * Implemented `Allow admins to edit indexed site log files directly through the admin. <https://github.com/International-GNSS-Service/SLM/issues/207>`_
 * Fixed `Downloads of site logs trigger generation of new formats for FORMER stations. <https://github.com/International-GNSS-Service/SLM/issues/203>`_
+* Fixed `Site log download without a format suffix returns 500 <https://github.com/International-GNSS-Service/SLM/issues/230>`_
+* Fixed `name_len query parameter on site log downloads returns 500 <https://github.com/International-GNSS-Service/SLM/issues/231>`_
+* Fixed `Filtering alerts by user (?user=) returns 500 <https://github.com/International-GNSS-Service/SLM/issues/233>`_
+* Fixed `Legacy parser silently accepts impossible dates <https://github.com/International-GNSS-Service/SLM/issues/236>`_
+* Fixed `Login page throws a JavaScript error from Bootstrap tooltip/popover init <https://github.com/International-GNSS-Service/SLM/issues/237>`_
+* Fixed section edits through the edit API not checking that the user may edit the site.
+* Fixed archived site log file naming so that existing files are never overwritten.
+* :django-admin:`validate_db` now validates any sites given explicitly, regardless of status.
+* :django-admin:`generate_sinex` no longer includes proposed stations when
+  ``--include-former`` is given.
+* Removed IGS specific components from :django-admin:`generate_sinex` and the login page
+  (part of `Separate out erroneous IGS specific references. <https://github.com/International-GNSS-Service/SLM/issues/198>`_).
+* Added smoke and Playwright end-to-end test suites.
 
 
 v0.4.1b0 (2025-11-10)

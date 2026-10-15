@@ -1,11 +1,15 @@
 from enum import nonmember
+from typing import Annotated
 
 from django.utils.translation import gettext_lazy as _
-from enum_properties import IntEnumProperties, p, s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class EquipmentState(IntEnumProperties, p("label"), p("help_text")):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class EquipmentState(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+    help_text: str
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

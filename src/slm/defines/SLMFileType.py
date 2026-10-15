@@ -1,11 +1,15 @@
 from enum import nonmember
+from typing import Annotated
 
 from django.utils.translation import gettext_lazy as _
-from enum_properties import IntEnumProperties, p, s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class SLMFileType(IntEnumProperties, p("label"), s("type")):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class SLMFileType(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+    type: Annotated[str, Symmetric()]
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

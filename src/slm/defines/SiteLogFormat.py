@@ -1,19 +1,19 @@
 from enum import nonmember
+from typing import Annotated
 
 from django.utils.translation import gettext_lazy as _
-from enum_properties import IntEnumProperties, p, s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class SiteLogFormat(
-    IntEnumProperties,
-    p("label"),
-    s("mimetype", case_fold=True),
-    p("icon"),
-    s("ext", case_fold=True),
-    s("alts", case_fold=True),
-    p("supersedes"),
-):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class SiteLogFormat(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+    mimetype: Annotated[str, Symmetric(case_fold=True)]
+    icon: str
+    ext: Annotated[str, Symmetric(case_fold=True)]
+    alts: Annotated[list[str], Symmetric(case_fold=True)]
+    supersedes: list[int]
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

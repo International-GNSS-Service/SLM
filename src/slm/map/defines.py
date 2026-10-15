@@ -1,20 +1,20 @@
 from enum import nonmember
+from typing import Annotated
 
 from django.utils.translation import gettext_lazy as _
-from enum_properties import IntEnumProperties, p, s
+from enum_properties import IntEnumProperties, Symmetric, symmetric
 
 
-class MapBoxStyle(
-    IntEnumProperties,
-    s("label", case_fold=True),
-    s("slug", case_fold=True),
-    p("version"),
-):
+class MapBoxStyle(IntEnumProperties):
     """
     https://docs.mapbox.com/api/maps/styles/
     """
 
-    _symmetric_builtins_ = ["name", "uri"]
+    name: Annotated[str, Symmetric()]
+    label: Annotated[str, Symmetric(case_fold=True)]
+    slug: Annotated[str, Symmetric(case_fold=True)]
+    version: int
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off
@@ -29,6 +29,7 @@ class MapBoxStyle(
     NAVIGATION_NIGHT  = 8, _("Navigation Night"),  "navigation-night",   1
     # fmt: on
 
+    @symmetric()
     @property
     def uri(self):
         return f"mapbox://styles/mapbox/{self.version_slug}"
@@ -41,12 +42,15 @@ class MapBoxStyle(
         return self.uri
 
 
-class MapBoxProjection(IntEnumProperties, s("label"), s("slug", case_fold=True)):
+class MapBoxProjection(IntEnumProperties):
     """
     https://docs.mapbox.com/mapbox-gl-js/style-spec/projection/
     """
 
-    _symmetric_builtins_ = ["name"]
+    name: Annotated[str, Symmetric()]
+    label: Annotated[str, Symmetric()]
+    slug: Annotated[str, Symmetric(case_fold=True)]
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

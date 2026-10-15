@@ -1,17 +1,17 @@
 from enum import nonmember
 from pathlib import Path
+from typing import Annotated
 
 from django.utils.functional import cached_property
-from enum_properties import IntEnumProperties, s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class GeodesyMLVersion(
-    IntEnumProperties,
-    s("label", case_fold=True),
-    s("version"),
-    s("xmlns", case_fold=True),
-):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class GeodesyMLVersion(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: Annotated[str, Symmetric(case_fold=True)]
+    version: Annotated[float, Symmetric()]
+    xmlns: Annotated[str, Symmetric(case_fold=True)]
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

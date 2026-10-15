@@ -1,10 +1,13 @@
 from enum import nonmember
+from typing import Annotated
 
-from enum_properties import IntEnumProperties, p, s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class AntennaCalibrationMethod(IntEnumProperties, p("label")):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class AntennaCalibrationMethod(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

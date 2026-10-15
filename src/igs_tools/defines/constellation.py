@@ -1,10 +1,13 @@
-from enum_properties import IntFlagProperties, p, s
+from typing import Annotated
+
+from enum_properties import IntFlagProperties, Symmetric
 
 
-class GNSSConstellation(
-    IntFlagProperties,
-    s('label'), s('_id'), s('full_name')
-):
+class GNSSConstellation(IntFlagProperties):
+    label: Annotated[str, Symmetric()]
+    _id: Annotated[str, Symmetric()]
+    full_name: Annotated[str, Symmetric()]
+
     GPS   = 2**0, 'GPS',   'G', 'GPS'
     GLO   = 2**1, 'GLO',   'R', 'GLONASS'
     GAL   = 2**2, 'GAL',   'E', 'Galileo'

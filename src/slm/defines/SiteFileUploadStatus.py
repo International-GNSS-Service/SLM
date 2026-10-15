@@ -1,18 +1,22 @@
 from enum import nonmember
+from typing import Annotated
 
 from django.utils.translation import gettext_lazy as _
-from enum_properties import IntEnumProperties, p, s
+from enum_properties import IntEnumProperties, Symmetric
 
 from slm.defines import SLMFileType
 
 
-class SiteFileUploadStatus(IntEnumProperties, p("label"), p("help")):
+class SiteFileUploadStatus(IntEnumProperties):
     """
     Depending on file type different uploads will have different relevant
     status tuples.
     """
 
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+    help: str
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

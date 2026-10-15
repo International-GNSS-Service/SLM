@@ -1,12 +1,14 @@
 from enum import nonmember
+from typing import Annotated
 
-from enum_properties import StrEnumProperties, s
+from enum_properties import StrEnumProperties, Symmetric
 
 
-class FrequencyStandardType(
-    StrEnumProperties, s("label", case_fold=True), s("geodesy_ml", case_fold=True)
-):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class FrequencyStandardType(StrEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: Annotated[str, Symmetric(case_fold=True)]
+    geodesy_ml: Annotated[str, Symmetric(case_fold=True)]
+
     do_not_call_in_templates = nonmember(True)
 
     # fmt: off

@@ -13,10 +13,9 @@ default:
 [script]
 manage *COMMAND:
     import os
-    import sys
     import shlex
-    from pathlib import Path
     from django.core import management
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.settings")
     management.execute_from_command_line(["just manage", *shlex.split("{{ COMMAND }}")])
 
 # install the uv package manager
@@ -30,76 +29,47 @@ install-uv:
 install-uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-[linux]
-[macos]
-install-nvm:
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-
-[linux]
-[macos]
-install-node: install-nvm
-    source ~/.nvm/nvm.sh && nvm install 22
-
-# install the uv package manager
-[windows]
-install-nvm:
-    winget install Schniz.fnm
-
-[windows]
-install-node: install-nvm
-    fnm install 22
-
-install-esbuild: install-node
-    npm install esbuild
-
 # setup the venv and pre-commit hooks, optionally specify python version
 setup python="python":
     uv venv -p {{ python }}
-    @just run pre-commit install
+    @just install-prek
 
 # install git pre-commit hooks
-install-precommit:
-    @just run pre-commit install
+install-prek:
+    uvx prek install
 
 # update and install development dependencies
-install *OPTS:
-    uv sync --all-extras {{ OPTS }}
-    @just run pre-commit install
+install *OPTS="--all-extras":
+    uv sync {{ OPTS }}
 
 # install the browser used by the Playwright (e2e) tests
-install-browsers:
-    uv run playwright install --with-deps chromium
+install-browsers *ENV:
+    @just run {{ ENV }} --no-default-groups --group test playwright install --with-deps chromium
 
-# install without extra dependencies
-install-basic:
-    uv sync
+_install-docs:
+    uv sync --no-default-groups --group docs --all-extras
 
-# install documentation dependencies
-install-docs:
-    uv sync --group docs --all-extras
+# run static type checking with mypy
+check-types-mypy *ENV:
+    @just run {{ ENV }} --no-default-groups --all-extras --group typing mypy
 
-[script]
-_lock-python:
-    import tomlkit
-    import sys
-    f='pyproject.toml'
-    d=tomlkit.parse(open(f).read())
-    d['project']['requires-python']='=={}'.format(sys.version.split()[0])
-    open(f,'w').write(tomlkit.dumps(d))
+# run static type checking with pyright
+check-types-pyright *ENV:
+    @just run {{ ENV }} --no-default-groups --all-extras --group typing pyright
 
-# lock to specific python and versions of given dependencies
-test-lock +PACKAGES: _lock-python
-    uv add {{ PACKAGES }}
+# run all static type checking
+check-types *ENV:
+    @just check-types-mypy {{ ENV }}
+    @just check-types-pyright {{ ENV }}
 
-# run static type checking
-check-types:
-
-#     @just run mypy
-#     @just run pyright
+# run all static type checking in an isolated environment
+check-types-isolated *ENV:
+    @just check-types-mypy {{ ENV }} --exact --isolated
+    @just check-types-pyright {{ ENV }} --exact --isolated
 
 # run package checks
 check-package:
-    @just run pip check
+    uv pip check
 
 # remove doc build artifacts
 [script]
@@ -108,22 +78,19 @@ clean-docs:
     shutil.rmtree('./doc/build', ignore_errors=True)
 
 # remove the virtual environment
-[script]
 clean-env:
-    import shutil
-    import sys
-    shutil.rmtree(".venv", ignore_errors=True)
+    python -c "import shutil, pathlib; p=pathlib.Path('.venv'); shutil.rmtree(p, ignore_errors=True) if p.exists() else None"
 
 # remove all git ignored files
 clean-git-ignored:
     git clean -fdX
 
-# remove all non repository artifacts
-clean: clean-docs clean-git-ignored clean-env
+# remove all non-repository artifacts
+clean: clean-docs clean-env clean-git-ignored
 
 # build html documentation
-build-docs-html: install-docs
-    @just run sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
+build-docs-html:
+    @just run --group docs --all-extras --isolated --no-default-groups --exact sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
 
 [script]
 _open-pdf-docs:
@@ -132,16 +99,16 @@ _open-pdf-docs:
     webbrowser.open(f"file://{Path('./doc/build/pdf/slm.pdf').absolute()}")
 
 # build pdf documentation
-build-docs-pdf: install-docs
-    @just run sphinx-build --fresh-env --builder latex --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
+build-docs-pdf:
+    @just run --group docs --all-extras --isolated --no-default-groups --exact sphinx-build --fresh-env --builder latex --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
     make -C ./doc/build/pdf
     @just _open-pdf-docs
 
 # build the docs
 build-docs: build-docs-html
 
-# build src package and wheel
-build:
+# build docs and package
+build: build-docs-html
     uv build
 
 # open the html documentation
@@ -154,129 +121,72 @@ open-docs:
 # build and open the documentation
 docs: build-docs-html open-docs
 
-# serve the documentation, with auto-reload
-docs-live: install-docs
-    @just run sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8001 --delay 1
+# serve the documentation with auto-reload
+docs-live:
+    @just run --group docs --all-extras --isolated --no-default-groups sphinx-autobuild doc/source doc/build --open-browser --watch src --port 0 --delay 1
 
-_link_check:
-    -uv run sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
+_link-check:
+    -uv run --no-default-groups --group docs --all-extras sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
 
-_spell_check:
-    -uv run sphinx-build -b spelling -Q ./doc/source ./doc/build/spelling
+_spell-check:
+    -uv run --no-default-groups --group docs --all-extras sphinx-build -b spelling -Q ./doc/source ./doc/build/spelling
 
-# check the documentation links for broken links
+# check documentation links for broken links
 [script]
-check-docs-links: _link_check
+check-docs-links: _link-check
     import os
     import sys
     import json
     from pathlib import Path
     # The json output isn't valid, so we have to fix it before we can process.
     data = json.loads(f"[{','.join((Path(os.getcwd()) / 'doc/build/output.json').read_text().splitlines())}]")
-    broken_links = [link for link in data if link["status"] not in {"working", "redirected", "unchecked", "ignored"}]
+    broken_links = [
+        link for link in data
+        if link["status"] not in {"working", "redirected", "unchecked", "ignored"}
+    ]
     if broken_links:
         for link in broken_links:
             print(f"[{link['status']}] {link['filename']}:{link['lineno']} -> {link['uri']}", file=sys.stderr)
         sys.exit(1)
 
-# lint the documentation
-check-docs:
-    @just run doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
-
 # check the documentation for misspelled words
 [script]
-check-docs-spelling: _spell_check
+check-docs-spelling: _spell-check
     import os
     import sys
-    import json
     import re
     from pathlib import Path
     from rich.console import Console
     from rich.text import Text
 
-    error_rex = re.compile(r"^(.*?):(\d+): \((.*?)\) \[(.*?)\]$") 
+    error_rex = re.compile(r"^(.*?):(\d+): \((.*?)\) \[(.*?)\]$")
     spelling_dir = Path(os.getcwd()) / 'doc/build/spelling'
-
+    console = Console()
+    found = False
     for file in spelling_dir.glob("*.spelling"):
         with file.open() as f:
             for misspelling in f:
-                if misspelling.strip():
-                    mtch = error_rex.match(misspelling.strip())
-                    if mtch:
-                        filepath, lineno, word, suggestions = mtch.groups()
-                        suggestions_list = [s.strip().strip('"') for s in suggestions.split(",")]
-                        console = Console()
-                        output = Text()
-                        output.append(filepath, style="blue")
-                        output.append(f":{lineno}", style="yellow")
-                        output.append(f": ", style="default")
-                        output.append(word, style="red")
-                        output.append(" → ", style="default")
-                        output.append(", ".join(suggestions_list), style="green")
-                        console.print(output)
-        sys.exit(1)
+                if mtch := error_rex.match(misspelling.strip()):
+                    found = True
+                    filepath, lineno, word, suggestions = mtch.groups()
+                    suggestions_list = [s.strip().strip('"') for s in suggestions.split(",")]
+                    output = Text()
+                    output.append(filepath, style="blue")
+                    output.append(f":{lineno}", style="yellow")
+                    output.append(": ", style="default")
+                    output.append(word, style="red")
+                    output.append(" → ", style="default")
+                    output.append(", ".join(suggestions_list), style="green")
+                    console.print(output)
+    sys.exit(1 if found else 0)
 
-# lint the code
-check-lint:
-    @just run ruff check --select I
-    @just run ruff check
+# lint the documentation
+check-docs *ENV:
+    @just run {{ ENV }} --no-default-groups --group docs doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
 
-# check if the code needs formatting
-check-format:
-    @just run ruff format --check
-
-# check that the readme renders
-check-readme:
-    @just run python -m readme_renderer ./README.md -o /tmp/README.html
-
-# sort the python imports
-sort-imports:
-    @just run ruff check --fix --select I
-
-# format the code and sort imports
-format: sort-imports
-    just --fmt --unstable
-    @just run ruff format
-
-# sort the imports and fix linting issues
-lint: sort-imports
-    @just run ruff check --fix
-
-# fix formatting, linting issues and import sorting
-fix: lint format
-
-# run all static checks
-check: check-lint check-format check-types check-package check-docs check-docs-links check-readme
-
-# run all tests
-test-all *ENV: coverage-erase
-    uv run {{ ENV }} --all-extras --exact pytest --cov-append
-
-# run tests
-test *TESTS:
-    @just run pytest --cov-append {{ TESTS }}
-
-# run the pre-commit checks
-precommit:
-    @just run pre-commit
-
-# erase any coverage data
-coverage-erase:
-    @just run coverage erase
-
-# generate the test coverage report
-coverage:
-    @just run coverage combine --keep *.coverage
-    @just run coverage report
-    @just run coverage xml
-
-# run the command in the virtual environment
-run +ARGS:
-    uv run {{ ARGS }}
-
-# fetch the intersphinx references for the given package
+# fetch intersphinx references for the given package
 [script]
-fetch-refs LIB: install-docs
+fetch-refs LIB: _install-docs
     import os
     from pathlib import Path
     import logging as _logging
@@ -284,7 +194,6 @@ fetch-refs LIB: install-docs
     import runpy
     from sphinx.ext.intersphinx import inspect_main
     _logging.basicConfig()
-
     libs = runpy.run_path(Path(os.getcwd()) / "doc/source/conf.py").get("intersphinx_mapping")
     url = libs.get("{{ LIB }}", None)
     if not url:
@@ -293,8 +202,99 @@ fetch-refs LIB: install-docs
         url = f"{url[0].rstrip('/')}/objects.inv"
     else:
         url = url[1]
-
     raise SystemExit(inspect_main([url]))
+
+# lint the code
+check-lint *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --select I
+    @just run {{ ENV }} --no-default-groups --group lint ruff check
+
+# check if the code needs formatting
+check-format *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --check
+
+# check that the readme renders
+check-readme *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
+
+# sort the python imports
+sort-imports *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --fix --select I
+
+# format the code and sort imports
+format *ENV:
+    @just sort-imports {{ ENV }}
+    just --fmt --unstable
+    @just run {{ ENV }} --no-default-groups --group lint ruff format
+
+# format the github workflow files
+format-workflows:
+    npx prettier --write ".github/workflows/*.{yml,yaml}"
+
+# sort imports and fix linting issues
+lint *ENV:
+    @just sort-imports {{ ENV }}
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --fix
+
+# fix formatting, linting issues and import sorting
+fix *ENV:
+    @just lint {{ ENV }}
+    @just format {{ ENV }}
+
+# run bandit static security analysis
+bandit:
+    @just run --no-default-groups --group lint bandit -c pyproject.toml -r ./src --severity-level medium --confidence-level medium -f sarif -o bandit.sarif
+
+# run zizmor security analysis of CI
+zizmor:
+    cargo install --locked zizmor
+    zizmor --persona auditor --format sarif .github/workflows/ > zizmor.sarif
+
+# run all static checks
+check *ENV:
+    @just check-lint {{ ENV }}
+    @just check-format {{ ENV }}
+    @just check-package
+    @just check-docs {{ ENV }}
+    @just check-readme {{ ENV }}
+
+# run all checks including documentation link checking (slow)
+check-all *ENV:
+    @just check {{ ENV }}
+    @just check-docs-links
+
+# run all tests (pass -p for a specific python version, e.g. -p 3.13)
+test-all *ENV:
+    @just run {{ ENV }} --no-default-groups --exact --all-extras --group test --isolated pytest --cov-append
+
+# run specific tests (project venv)
+test *TESTS:
+    @just run --group test --no-sync pytest {{ TESTS }}
+
+# debug a test
+debug-test *TESTS:
+    @just run pytest \
+      -o addopts='-ra -q' \
+      -s --trace --pdbcls=IPython.terminal.debugger:Pdb \
+      --headed {{ TESTS }}
+
+# run the pre-commit checks
+prek:
+    uvx prek run
+
+# erase any coverage data
+coverage-erase:
+    @just run --no-default-groups --group coverage coverage erase
+
+# generate the test coverage report
+coverage:
+    @just run --no-default-groups --group coverage coverage combine --keep *.coverage
+    @just run --no-default-groups --group coverage coverage report
+    @just run --no-default-groups --group coverage coverage xml
+
+# run the command in the virtual environment
+run +ARGS:
+    uv run {{ ARGS }}
 
 # validate the given version string against the lib version
 [script]
@@ -313,8 +313,121 @@ validate_version VERSION:
     assert raw_version == slm.__version__, f"{raw_version} != {slm.__version__}"
     print(raw_version)
 
-# issue a relase for the given semver string (e.g. 2.1.0)
-release VERSION:
+# The waypoint must be listed in check_upgrade's VERSION_WAYPOINTS and tagged. Migrations are
+# generated in a worktree of the tag with that release's locked dependencies. Pass TOOL to use
+# a different django-remake-migrations requirement (e.g. one supporting the tag's Django).
+#
+# remake all migrations from the database state of the given waypoint release (e.g. 0.5.0b0)
+[script]
+remake-migrations VERSION TOOL="":
+    import os
+    import re
+    import subprocess
+    import sys
+    import tempfile
+    from importlib.metadata import version as installed
+    from pathlib import Path
+
+    import django
+    from packaging.version import Version
+
+    django.setup()
+    from django.conf import settings
+    from django.db.migrations.loader import MigrationLoader
+
+    from slm.management.commands.check_upgrade import Command as CheckUpgrade
+
+    waypoint = Version("{{ VERSION }}")
+    if waypoint not in CheckUpgrade.VERSION_WAYPOINTS:
+        sys.exit(f"{waypoint} is not in check_upgrade's VERSION_WAYPOINTS")
+    tool = "{{ TOOL }}" or f"django-remake-migrations=={installed('django-remake-migrations')}"
+
+    loader = MigrationLoader(None, ignore_no_migrations=True, load=False)
+    loader.load_disk()
+    migration_dirs = {}
+    for app_label, name in loader.disk_migrations:
+        if app_label in {"slm", "slm_map"}:
+            module = sys.modules[loader.disk_migrations[(app_label, name)].__module__]
+            migration_dirs[app_label] = Path(module.__file__).parent
+
+    remake_settings = "\n".join([
+        "from tests.settings import *  # noqa: F403",
+        "INSTALLED_APPS = [*INSTALLED_APPS, 'django_remake_migrations']  # noqa: F405",
+        "REMAKE_MIGRATIONS_REPLACES_ALL = True",
+        "REMAKE_MIGRATIONS_EXTENSIONS = {'slm': [",
+        "    'django.contrib.postgres.operations.CITextExtension',",
+        "    'django.contrib.postgres.operations.BtreeGistExtension',",
+        "]}",
+    ])
+    env = {**os.environ, "DJANGO_SETTINGS_MODULE": "remake_settings"}
+    # use the GDAL/GEOS libraries this environment is configured with
+    for var in ["GDAL_LIBRARY_PATH", "GEOS_LIBRARY_PATH"]:
+        if getattr(settings, var, None):
+            env.setdefault(var, str(getattr(settings, var)))
+
+    remade = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        worktree = Path(tmp) / "waypoint"
+        subprocess.run(["git", "worktree", "add", "--detach", worktree, f"v{waypoint}"], check=True)
+        try:
+            (worktree / "remake_settings.py").write_text(remake_settings)
+            env["PYTHONPATH"] = str(worktree)
+            subprocess.run(
+                ["uv", "run", "--frozen", "--isolated", "--all-extras", "--with", tool,
+                 "python", "manage.py", "remakemigrations"],
+                cwd=worktree, env=env, check=True,
+            )
+            for app_label, directory in migration_dirs.items():
+                (path,) = (worktree / directory.relative_to(Path.cwd())).glob("0001_remaked_*.py")
+                remade[app_label] = (path.stem, path.read_text())
+        finally:
+            subprocess.run(["git", "worktree", "remove", "--force", worktree], check=True)
+
+    # (app_label, name) of every replaced migration -> its replacement
+    replaced = {}
+    for app_label, (name, source) in remade.items():
+        for key in re.findall(r"\('(\w+)', '(\w+)'\)", source.split("initial = True")[0]):
+            replaced[key] = (app_label, name)
+
+    for app_label, (name, source) in remade.items():
+        # CheckConstraint(check=) was renamed to condition= in Django 5.1
+        source = source.replace("CheckConstraint(check=", "CheckConstraint(condition=")
+        if app_label == "slm":
+            source = source.replace(
+                "\n\n\nclass Migration",
+                "\nfrom slm.migration_operations import install_operations\n\n\nclass Migration",
+                1,
+            )
+            head, tail = source.rsplit("\n    ]\n", 1)
+            source = f"{head}\n        *install_operations(),\n    ]\n{tail}"
+        (migration_dirs[app_label] / f"{name}.py").write_text(source)
+
+    for (app_label, name) in replaced:
+        if app_label in migration_dirs:
+            (migration_dirs[app_label] / f"{name}.py").unlink(missing_ok=True)
+
+    # migrations made after the waypoint now depend on the remade migrations
+    for directory in migration_dirs.values():
+        for path in directory.glob("[0-9]*.py"):
+            if path.stem in {name for name, _ in remade.values()}:
+                continue
+            source = path.read_text()
+            for (app_label, name), (new_app, new_name) in replaced.items():
+                source = re.sub(
+                    rf"""\(\s*(["']){app_label}\1,\s*(["']){name}\2\s*\)""",
+                    f'("{new_app}", "{new_name}")',
+                    source,
+                )
+            path.write_text(source)
+
+    dirs = [str(directory) for directory in migration_dirs.values()]
+    subprocess.run(["ruff", "check", "--fix", "-q", "--select", "I", *dirs], check=True)
+    subprocess.run(["ruff", "check", "--fix", "-q", *dirs], check=True)
+    subprocess.run(["ruff", "format", *dirs], check=True)
+    print("Remade migrations - review the diff, then run: just manage makemigrations --check")
+
+# issue a release for the given semver string (e.g. 2.1.0)
+release VERSION: install check-all
     @just validate_version v{{ VERSION }}
     git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
-    git push origin v{{ VERSION }}
+    git push https://github.com/International-GNSS-Service/SLM.git v{{ VERSION }}

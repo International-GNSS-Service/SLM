@@ -1,10 +1,15 @@
+from enum import nonmember
+from typing import Annotated
+
 from django.utils.translation import gettext_lazy as _
-from django_enum import IntegerChoices
-from enum_properties import s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class AlertLevel(IntegerChoices):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class AlertLevel(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     NOTICE  = 1, _("NOTICE")

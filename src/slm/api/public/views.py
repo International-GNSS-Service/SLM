@@ -9,6 +9,7 @@ from django.db.models import Prefetch, Q
 from django.http import FileResponse
 from django.utils.translation import gettext as _
 from django_enum.filters import EnumFilter
+from django_enum.utils import choices as enum_choices
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework import mixins, viewsets
 from rest_framework.filters import OrderingFilter
@@ -371,7 +372,7 @@ class EquipmentFilter(CrispyFormCompat, FilterSet):
     )
     manufacturer = django_filters.CharFilter(method="manufacturer_filter")
     state = django_filters.MultipleChoiceFilter(
-        choices=EquipmentState.choices, distinct=True
+        choices=enum_choices(EquipmentState), distinct=True
     )
     related_formfield = None
 

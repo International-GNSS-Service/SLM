@@ -1,13 +1,15 @@
-from enum_properties import EnumProperties, p, s
+from typing import Annotated
+from enum_properties import EnumProperties, Symmetric
 from pathlib import Path
 from .rinex import DataRate
 from igs_tools.utils import day_of_year
 
 
-class DataCenter(
-    EnumProperties,
-    p('protocol'), s('domain'), p('port'), s('full_name')
-):
+class DataCenter(EnumProperties):
+    protocol: str
+    domain: Annotated[str, Symmetric()]
+    port: int
+    full_name: Annotated[str, Symmetric()]
 
     IGN   = 'IGN',   'ftp',   'igs.ign.fr',             21,  "Institut National de l'Information Géographique et Forestière"
     SIO   = 'SIO',   'ftp',   'garner.ucsd.edu',        21,  'Scripps Institution of Oceanography'

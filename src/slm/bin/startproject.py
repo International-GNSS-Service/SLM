@@ -3,18 +3,18 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from typing import Annotated
 from urllib.parse import urlparse
 
 import django
 import environ
 from django.conf import settings
-from django_typer.completers import complete_path
+from django_typer.completers.path import paths
 from packaging.version import Version
 from render_static.engine import StaticTemplateEngine
 from rich.console import Console
 from rich.markdown import Markdown
 from typer import Argument, Option, Typer, secho
-from typing_extensions import Annotated
 
 import slm
 
@@ -103,7 +103,7 @@ def main(
             show_default=False,
         ),
     ],
-    directory: Annotated[Path, Argument(shell_complete=complete_path)] = os.getcwd(),
+    directory: Annotated[Path, Argument(shell_complete=paths)] = os.getcwd(),
     organization: Annotated[
         str,
         Option(

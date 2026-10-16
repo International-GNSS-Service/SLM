@@ -101,8 +101,10 @@ def test_upload_image(logged_in_page, editor, published_site, console_errors):
     goto(page, "slm:upload", published_site.name)
 
     with page.expect_response(
-        lambda r: f"/api/edit/files/{published_site.name}" in r.url
-        and r.request.method == "POST"
+        lambda r: (
+            f"/api/edit/files/{published_site.name}" in r.url
+            and r.request.method == "POST"
+        )
     ) as resp:
         page.locator("input.dz-hidden-input").set_input_files(str(JPLM_JPG))
     assert resp.value.ok, resp.value.text()
@@ -125,8 +127,10 @@ def test_moderator_publish(
 
     page.once("dialog", lambda dialog: dialog.accept())
     with page.expect_response(
-        lambda r: "/api/edit/stations/" in r.url
-        and r.request.method in {"PATCH", "PUT", "POST"}
+        lambda r: (
+            "/api/edit/stations/" in r.url
+            and r.request.method in {"PATCH", "PUT", "POST"}
+        )
     ) as resp:
         page.locator("button[name=publish]").first.click()
     assert resp.value.ok, resp.value.text()

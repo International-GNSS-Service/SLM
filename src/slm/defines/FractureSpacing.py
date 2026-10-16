@@ -1,9 +1,14 @@
-from django_enum import TextChoices
-from enum_properties import s
+from enum import nonmember
+from typing import Annotated
+
+from enum_properties import StrEnumProperties, Symmetric
 
 
-class FractureSpacing(TextChoices):
-    _symmetric_builtins_ = [s("name", case_fold=True), s("label", case_fold=True)]
+class FractureSpacing(StrEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: Annotated[str, Symmetric(case_fold=True)]
+
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     ZERO                          =   "0", "0 cm"

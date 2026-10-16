@@ -1,6 +1,7 @@
 from igs_tools.defines import DataCenter
 from typing import Union, List
-import ftplib
+# GNSS data centers serve data over FTP
+import ftplib  # nosec B402
 import requests
 from bs4 import BeautifulSoup
 
@@ -10,7 +11,7 @@ class _FTPConnection:
     connection: ftplib.FTP
 
     def __init__(self, domain, username, password):
-        self.connection = ftplib.FTP(domain)
+        self.connection = ftplib.FTP(domain)  # nosec B321
         self.connection.login(user=username, passwd=password)
 
     def list(self, directory: str) -> List[str]:

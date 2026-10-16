@@ -2,32 +2,76 @@ name: Test
 
 permissions:
   contents: read
-  
+
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
+    tags-ignore:
+      - "*"
+    branches: ["main"]
   pull_request:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/test.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "justfile"
+  merge_group:
   workflow_call:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Open ssh debug session.'
+        description: "Open ssh debug session."
+        required: true
+        default: false
+        type: boolean
+      clear_cache:
+        description: "Clear GitHub Tool cache."
         required: true
         default: false
         type: boolean
   schedule:
-    - cron: '0 13 * * *'  # Runs at 6 am pacific every day
+    # Every Sunday at 9:00 AM Los Angeles time (17:00 UTC).
+    - cron: "0 17 * * 0"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: write
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
-        django-version:
-          - '4.2' # LTS April 2026
+        # Django 5.2 supports PostgreSQL >= 14
+        # postgis images are pinned to their digests (satisfies zizmor unpinned-images)
+        include:
+          - python-version: "3.11"
+            dependencies: "lowest-direct"
+            postgres-version: "14"
+            postgres-image: "postgis/postgis:14-3.5@sha256:2543ae2bc9497ca62cd740268be228f7a6974020207634e2b189fe36be82b749"
+
+          - python-version: "3.12"
+            dependencies: "highest"
+            postgres-version: "17"
+            postgres-image: "postgis/postgis:17-3.5@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6"
+
+          - python-version: "3.13"
+            dependencies: "highest"
+            postgres-version: "17"
+            postgres-image: "postgis/postgis:17-3.5@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6"
+
+          - python-version: "3.14"
+            dependencies: "highest"
+            postgres-version: "18"
+            postgres-image: "postgis/postgis:18-3.6@sha256:60f6ad1d21ea86a67d47780b9a0d1e1d200500f62b19293fa834d0dea80b8677"
+
+          - python-version: "3.15"
+            dependencies: "highest"
+            postgres-version: "18"
+            postgres-image: "postgis/postgis:18-3.6@sha256:60f6ad1d21ea86a67d47780b9a0d1e1d200500f62b19293fa834d0dea80b8677"
 
     env:
       POSTGRES_DB: slm_test
@@ -35,105 +79,105 @@ jobs:
       POSTGRES_PASSWORD: slm!test
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
-      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}.coverage
-      
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-pg${{ matrix.postgres-version }}.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DATABASE_VERSION: ${{ matrix.postgres-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependencies }}
+
     services:
       postgres:
-        image: postgis/postgis:16-3.4
+        image: ${{ matrix.postgres-image }}
         env:
           POSTGRES_DB: slm_test
           POSTGRES_USER: slm
           POSTGRES_PASSWORD: slm!test
-          POSTGRES_HOST: localhost
         ports:
           - 5432:5432
-        # Options to set health checks
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        
+
     steps:
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+        with:
+          just-version: "1.58.0"
+      - name: Install GIS Libs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdal-bin
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
-        uses: mxschmitt/action-tmate@v3.23
-        with:
-          detached: true
+        uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113
         timeout-minutes: 60
-      - uses: actions/checkout@v6
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        id: sp
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-      - name: Install Just
-        uses: extractions/setup-just@v3
-      - name: Install GIS Libs
-        run: |
-          sudo apt-get update
-          sudo apt install gdal-bin
-      - name: Install Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just test-lock Django~=${{ matrix.django-version }}.0
-          just install
       - name: Install Playwright Browsers
-        # pytest-playwright requires python >= 3.9, the e2e tests are skipped on 3.8
-        if: ${{ matrix.python-version != '3.8' }}
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just install-browsers
+          just install-browsers -p "$TEST_PYTHON" --resolution "$DEPENDENCY_RESOLUTION" --isolated
       - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all
+          just test-all -p "$TEST_PYTHON" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
-
 
   coverage-combine:
     needs: [test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # for oidc authentication to codecov
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        id: sp
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          python-version: '3.12'
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.14"
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Setup Just
-        uses: extractions/setup-just@v3
-      - name: Install Release Dependencies
-        run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+        with:
+          just-version: "1.58.0"
       - name: Get coverage files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           pattern: "*.coverage"
           merge-multiple: true
       - run: ls -la *.coverage
       - run: just coverage
-
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files:
-            ./coverage.xml
+          use_oidc: true
+          files: ./coverage.xml

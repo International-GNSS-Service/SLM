@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from django.db.models import Model
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from slm.defines import EquipmentState, FlagSeverity
@@ -29,8 +29,8 @@ def get_validators(model, field):
     """
     from django.conf import settings
 
-    if isinstance(model, Model) or (
-        isinstance(model, type) and issubclass(model, Model)
+    if isinstance(model, models.Model) or (
+        isinstance(model, type) and issubclass(model, models.Model)
     ):
         model = model._meta.label
     return getattr(settings, "SLM_DATA_VALIDATORS", {}).get(model, {}).get(field, [])

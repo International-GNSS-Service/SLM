@@ -1,0 +1,64 @@
+name: Bandit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+      - "justfile"
+      - ".github/workflows/bandit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bandit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bandit-analysis:
+    name: Run Bandit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # allow uploading code scanning results
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        id: sp
+        with:
+          python-version: "3.x"
+          allow-prereleases: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        with:
+          enable-cache: false
+      - name: Install Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+        with:
+          just-version: "1.58.0"
+
+      - name: Run Bandit
+        run: |
+          just bandit
+
+      - name: Upload analysis results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bandit-results
+          path: bandit.sarif
+          retention-days: 7
+
+      - name: Upload to code-scanning
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd
+        with:
+          sarif_file: bandit.sarif

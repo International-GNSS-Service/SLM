@@ -4,12 +4,13 @@ Update the data availability information for each station.
 
 import typing as t
 from datetime import datetime, timedelta
+from typing import Annotated
 
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-from django_typer.management import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand
+from django_typer.utils import model_parser_completer
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from igs_tools.defines import DataCenter
 from igs_tools.directory import DirectoryListing

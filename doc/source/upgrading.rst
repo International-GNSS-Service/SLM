@@ -58,6 +58,20 @@ or a :django-admin:`migrate` the SLM will check that the upgrade is safe and pas
 no waypoints. If it is not safe it will safely exit with a warning. You may also manually
 check if your upgrade is safe by calling the :django-admin:`check_upgrade` command.
 
+The remade migrations ``replace`` the migrations they were made from, so databases migrated by
+the waypoint release are recognized as already migrated by them and no manual edits of the
+migration table are needed.
+
+.. note::
+
+    **If you have extended the SLM with your own apps**, your migrations may depend on
+    migrations of the ``slm`` app that were removed at a waypoint. Django resolves these
+    dependencies to the replacing migration, so they will continue to work, but you should
+    update them to depend on the replacing migration (e.g. ``("slm", "0001_remaked_20261016")``)
+    because the ``replaces`` list will eventually be removed. If a data migration of yours
+    relies on historical ``slm`` model state from before the waypoint, it will now see the
+    model state of the waypoint release instead.
+
 The version waypoints are:
 
 * **0.5.0b0**

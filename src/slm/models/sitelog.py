@@ -1671,9 +1671,11 @@ class SiteSubSectionQuerySet(SiteSectionQueryset):
 
         sorted_sections = sorted(
             (obj for obj in self),
-            key=lambda o: OrderTuple(getattr(o, o.order_field), o.subsection)
-            if getattr(self.model, "order_field", None)
-            else lambda o: o.subsection,
+            key=lambda o: (
+                OrderTuple(getattr(o, o.order_field), o.subsection)
+                if getattr(self.model, "order_field", None)
+                else lambda o: o.subsection
+            ),
         )
         if reverse:
             return list(reversed(sorted_sections))
@@ -1812,7 +1814,7 @@ class SiteSubSection(SiteSection):
         ]
         constraints = [
             CheckConstraint(
-                check=~(Q(published=False) & Q(is_deleted=True)),
+                condition=~(Q(published=False) & Q(is_deleted=True)),
                 name="%(app_label)s_%(class)s_no_mod_deleted",
             )
         ]

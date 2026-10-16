@@ -996,7 +996,7 @@ class Site(models.Model):
     def four_id(self) -> str:
         return self.name[:4]
 
-    def publish(self, request=None, silent=False, timestamp=None):
+    def publish(self, request=None, silent=False, timestamp=None, index_only=False):
         """
         Publish the current HEAD edits on this SiteLog.
 
@@ -1004,6 +1004,8 @@ class Site(models.Model):
         :param silent: If True, no publish signal will be sent.
         :param timestamp: Timestamp to use for the publish, if none - will
             be the time of this call
+        :param index_only: If true, do not change the status from a non-active status
+            to PUBLISHED.
         :return: The number of sections and subsections that had changes
             that were published or 0 if no changes were at HEAD to publish.
         """
@@ -2042,7 +2044,7 @@ class SiteIdentification(SiteSection):
 
     @cached_property
     def nine_character_id(self):
-        return self.site.name.upper()
+        return self.site.name[0:9].upper()
 
     monument_inscription = models.CharField(
         max_length=50,

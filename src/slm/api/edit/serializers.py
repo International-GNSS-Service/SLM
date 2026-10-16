@@ -74,6 +74,12 @@ class StationSerializer(serializers.ModelSerializer):
                     _("You do not have permission to publish the site log.")
                 )
             instance.publish(request=self.context["request"])
+        elif validated_data.get("update", False):
+            if not instance.can_publish(self.context["request"].user):
+                raise PermissionDenied(
+                    _("You do not have permission to update the site log.")
+                )
+            instance.publish(request=self.context["request"], update_only=True)
             # instance.refresh_from_db() - necessary?
         return instance
 

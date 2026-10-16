@@ -311,10 +311,17 @@ class SiteIndexInline(admin.TabularInline):
 class SiteAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     inlines = [SiteAgencyInline, NetworkInline, TideGaugeInline, SiteIndexInline]
-    exclude = ["agencies"]
+    exclude = ["agencies", "modified_user", "preferred"]
     ordering = ("name",)
     list_display = ("name", "status")
     list_filter = ("status",)
+    readonly_fields = (
+        "num_flags",
+        "last_update",
+        "last_publish",
+        "last_user",
+        "max_alert",
+    )
 
 
 @admin.register(Network)

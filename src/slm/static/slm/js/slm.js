@@ -830,6 +830,14 @@ slm.publish = function(siteId) {
     });
 }
 
+slm.update = function(siteId) {
+    return $.ajax({
+        url: slm.urls.reverse('slm_edit_api:stations-detail', {kwargs: {'pk': siteId}}),
+        data: {'update': true},
+        method: 'PATCH'
+    });
+}
+
 slm.revert = function(siteId) {
     return $.ajax({
         url: slm.urls.reverse('slm_edit_api:stations-detail', {kwargs: {'pk': siteId}}),

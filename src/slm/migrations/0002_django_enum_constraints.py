@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("contenttypes", "0002_remove_content_type_name"),
-        ("slm", "0001_alter_archivedsitelog_size_and_more"),
+        ("slm", "0001_remaked_20261016"),
     ]
 
     operations = [

@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("slm_map", "0001_initial"),
+        ("slm_map", "0001_remaked_20261016"),
     ]
 
     operations = [

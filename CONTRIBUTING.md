@@ -107,6 +107,29 @@ The release workflow is triggered by tag creation. You must have [git tag signin
     just release x.x.x
 ```
 
+## Version Waypoints
+
+Migrations accumulate over time. At a version waypoint (see
+[upgrading](https://igs-slm.readthedocs.io/en/latest/upgrading.html#version-waypoints)) we remake
+them from the waypoint release's database state so they replace all prior migrations:
+
+1. Release the waypoint version and add it to `VERSION_WAYPOINTS` in
+   `src/slm/management/commands/check_upgrade.py`.
+2. On the branch for the next release run:
+
+    ```bash
+    just remake-migrations x.x.x
+    ```
+
+    This generates the remade migrations in a worktree of the waypoint tag, with that release's
+    locked dependencies, and replaces the old migration files. Migrations made after the waypoint
+    are kept and repointed at the remade migrations. Operations that model state cannot express
+    (data and raw SQL) belong in `src/slm/migration_operations.py`, which is appended to the
+    remade slm migration so that they run on fresh installs.
+
+3. Review the diff, then check that `just manage makemigrations --check` reports no changes and
+   that a database migrated by the waypoint release upgrades cleanly.
+
 ## Just Recipes
 ```shell
 just

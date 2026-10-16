@@ -313,6 +313,119 @@ validate_version VERSION:
     assert raw_version == slm.__version__, f"{raw_version} != {slm.__version__}"
     print(raw_version)
 
+# The waypoint must be listed in check_upgrade's VERSION_WAYPOINTS and tagged. Migrations are
+# generated in a worktree of the tag with that release's locked dependencies. Pass TOOL to use
+# a different django-remake-migrations requirement (e.g. one supporting the tag's Django).
+#
+# remake all migrations from the database state of the given waypoint release (e.g. 0.5.0b0)
+[script]
+remake-migrations VERSION TOOL="":
+    import os
+    import re
+    import subprocess
+    import sys
+    import tempfile
+    from importlib.metadata import version as installed
+    from pathlib import Path
+
+    import django
+    from packaging.version import Version
+
+    django.setup()
+    from django.conf import settings
+    from django.db.migrations.loader import MigrationLoader
+
+    from slm.management.commands.check_upgrade import Command as CheckUpgrade
+
+    waypoint = Version("{{ VERSION }}")
+    if waypoint not in CheckUpgrade.VERSION_WAYPOINTS:
+        sys.exit(f"{waypoint} is not in check_upgrade's VERSION_WAYPOINTS")
+    tool = "{{ TOOL }}" or f"django-remake-migrations=={installed('django-remake-migrations')}"
+
+    loader = MigrationLoader(None, ignore_no_migrations=True, load=False)
+    loader.load_disk()
+    migration_dirs = {}
+    for app_label, name in loader.disk_migrations:
+        if app_label in {"slm", "slm_map"}:
+            module = sys.modules[loader.disk_migrations[(app_label, name)].__module__]
+            migration_dirs[app_label] = Path(module.__file__).parent
+
+    remake_settings = "\n".join([
+        "from tests.settings import *  # noqa: F403",
+        "INSTALLED_APPS = [*INSTALLED_APPS, 'django_remake_migrations']  # noqa: F405",
+        "REMAKE_MIGRATIONS_REPLACES_ALL = True",
+        "REMAKE_MIGRATIONS_EXTENSIONS = {'slm': [",
+        "    'django.contrib.postgres.operations.CITextExtension',",
+        "    'django.contrib.postgres.operations.BtreeGistExtension',",
+        "]}",
+    ])
+    env = {**os.environ, "DJANGO_SETTINGS_MODULE": "remake_settings"}
+    # use the GDAL/GEOS libraries this environment is configured with
+    for var in ["GDAL_LIBRARY_PATH", "GEOS_LIBRARY_PATH"]:
+        if getattr(settings, var, None):
+            env.setdefault(var, str(getattr(settings, var)))
+
+    remade = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        worktree = Path(tmp) / "waypoint"
+        subprocess.run(["git", "worktree", "add", "--detach", worktree, f"v{waypoint}"], check=True)
+        try:
+            (worktree / "remake_settings.py").write_text(remake_settings)
+            env["PYTHONPATH"] = str(worktree)
+            subprocess.run(
+                ["uv", "run", "--frozen", "--isolated", "--all-extras", "--with", tool,
+                 "python", "manage.py", "remakemigrations"],
+                cwd=worktree, env=env, check=True,
+            )
+            for app_label, directory in migration_dirs.items():
+                (path,) = (worktree / directory.relative_to(Path.cwd())).glob("0001_remaked_*.py")
+                remade[app_label] = (path.stem, path.read_text())
+        finally:
+            subprocess.run(["git", "worktree", "remove", "--force", worktree], check=True)
+
+    # (app_label, name) of every replaced migration -> its replacement
+    replaced = {}
+    for app_label, (name, source) in remade.items():
+        for key in re.findall(r"\('(\w+)', '(\w+)'\)", source.split("initial = True")[0]):
+            replaced[key] = (app_label, name)
+
+    for app_label, (name, source) in remade.items():
+        # CheckConstraint(check=) was renamed to condition= in Django 5.1
+        source = source.replace("CheckConstraint(check=", "CheckConstraint(condition=")
+        if app_label == "slm":
+            source = source.replace(
+                "\n\n\nclass Migration",
+                "\nfrom slm.migration_operations import install_operations\n\n\nclass Migration",
+                1,
+            )
+            head, tail = source.rsplit("\n    ]\n", 1)
+            source = f"{head}\n        *install_operations(),\n    ]\n{tail}"
+        (migration_dirs[app_label] / f"{name}.py").write_text(source)
+
+    for (app_label, name) in replaced:
+        if app_label in migration_dirs:
+            (migration_dirs[app_label] / f"{name}.py").unlink(missing_ok=True)
+
+    # migrations made after the waypoint now depend on the remade migrations
+    for directory in migration_dirs.values():
+        for path in directory.glob("[0-9]*.py"):
+            if path.stem in {name for name, _ in remade.values()}:
+                continue
+            source = path.read_text()
+            for (app_label, name), (new_app, new_name) in replaced.items():
+                source = re.sub(
+                    rf"""\(\s*(["']){app_label}\1,\s*(["']){name}\2\s*\)""",
+                    f'("{new_app}", "{new_name}")',
+                    source,
+                )
+            path.write_text(source)
+
+    dirs = [str(directory) for directory in migration_dirs.values()]
+    subprocess.run(["ruff", "check", "--fix", "-q", "--select", "I", *dirs], check=True)
+    subprocess.run(["ruff", "check", "--fix", "-q", *dirs], check=True)
+    subprocess.run(["ruff", "format", *dirs], check=True)
+    print("Remade migrations - review the diff, then run: just manage makemigrations --check")
+
 # issue a release for the given semver string (e.g. 2.1.0)
 release VERSION: install check-all
     @just validate_version v{{ VERSION }}

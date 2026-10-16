@@ -60,8 +60,7 @@ def get_ordered_migration_paths(app_label):
 
 class Command(TyperCommand):
     help = _(
-        "Make sure the attempted upgrade is safe. And if it is, make any migration table "
-        "edits that are necessary."
+        "Make sure the attempted upgrade or downgrade does not traverse a version waypoint."
     )
 
     # when upgrading the SLM it is required that an upgrade run through

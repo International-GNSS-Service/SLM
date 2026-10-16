@@ -1,6 +1,6 @@
 [project]
 name = "igs-slm"
-version = "0.5.0b0"
+version = "0.6.0b0"
 description = "IGS Site Log Manager"
 requires-python = ">=3.11,<4.0"
 authors = [
@@ -145,6 +145,8 @@ lint = [
     "bandit[toml,sarif]>=1.7.10",
 ]
 coverage = ["coverage[toml]>=7.6.1"]
+# used by just remake-migrations to remake migrations at version waypoints
+remake = ["django-remake-migrations>=3.1.0"]
 test = [
     { include-group = "coverage" },
     "pytest>=8.3.4",
@@ -162,6 +164,7 @@ dev = [
     { include-group = "test" },
     { include-group = "docs" },
     { include-group = "lint" },
+    { include-group = "remake" },
     "django-debug-toolbar>=5.0.0",
     "packaging>=24.2",
     "tomlkit>=0.13.3",

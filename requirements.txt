@@ -566,6 +566,7 @@ django==5.2.18 \
     #   django-ipware
     #   django-js-asset
     #   django-polymorphic
+    #   django-remake-migrations
     #   django-render-static
     #   django-routines
     #   django-stubs
@@ -638,6 +639,9 @@ django-polymorphic==4.11.7 \
     --hash=sha256:23ee903f79b9c4ebd36fee952f955d80c3d51f3eee9fa23639c4bafe3be616a2 \
     --hash=sha256:9d616e9e2870efd62a5ee387294830c80935a31786e50da137bd76668dd5437d
     # via igs-slm
+django-remake-migrations==3.1.0 \
+    --hash=sha256:9c047e26120b7590bed324c1ef4faee078f6e936513b571dacaf63f9aa1934dd \
+    --hash=sha256:cb43f60f0094d55340ca94c1999204068d85f923ccf139625d2fc0fd3ab7f64c
 django-render-static==3.7.1 \
     --hash=sha256:a46d27ea419acb8250e486db4a1fa8eb9a2d8beb90cf494ddbb80f8a6635644c \
     --hash=sha256:b0b067c7e923541695ceb5531f96d508aca518486cbb362a5a6463b22c9cc3f9

@@ -6,7 +6,7 @@
 [![Documentation Status](https://readthedocs.org/projects/igs-slm/badge/?version=latest)](http://igs-slm.readthedocs.io/?badge=latest/)
 [![codecov](https://codecov.io/github/International-GNSS-Service/SLM/graph/badge.svg?token=PQVWN1LNM3)](https://codecov.io/github/International-GNSS-Service/SLM)
 [![Test Status](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml?branch=main)
-[![Lint Status](https://github.com/International-GNSS-Service/SLM/workflows/lint/badge.svg)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml)
+[![Lint Status](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml?branch=main)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 # ![](https://github.com/International-GNSS-Service/SLM/blob/main/src/slm/static/slm/img/slm-logo.svg?raw=true) 

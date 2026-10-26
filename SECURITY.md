@@ -1,7 +1,6 @@
 # Security Policy
 
 [![CodeQL](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql?query=branch:main)
-[![Safety](https://github.com/International-GNSS-Service/SLM/actions/workflows/safety.yml/badge.svg?branch=main)](https://docs.safetycli.com/safety-docs)
 [![Zizmor](https://github.com/International-GNSS-Service/SLM/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/International-GNSS-Service/SLM/badge)](https://securityscorecards.dev/viewer/?uri=github.com/International-GNSS-Service/SLM)
 
@@ -14,7 +13,7 @@ Only the latest version of the SLM is supported on the versions of Python and Dj
 
 ## Monitoring Dependencies
 
-The SLM depends on a large stack of upstream software. Not just Django and Python but third party extensions. Before inclusion as a dependency, upstream software is carefully reviewed for stability, ongoing support and trust. We rely on [Safety](https://safetycli.com/) for monitoring upstream vulnerabilities. When a new vulnerability is discovered the security badge on this page will indicate a failure against [our policy](https://github.com/International-GNSS-Service/SLM/blob/main/.safety-policy.yml). We will triage the vulnerability and make one of three decisions:
+The SLM depends on a large stack of upstream software. Not just Django and Python but third party extensions. Before inclusion as a dependency, upstream software is carefully reviewed for stability, ongoing support and trust. We rely on [dependabot](https://github.com/dependabot) for monitoring upstream vulnerabilities. When a new vulnerability is discovered we will triage the vulnerability and make one of three decisions:
 
 1. Replace the dependency
 2. Upgrade the dependency
@@ -25,6 +24,8 @@ If we exempt the vulnerability the reason will be noted in the [policy file](htt
 ## Publishing Releases
 
 All releases will have verified tag on github. As of 0.1.5b0 we use [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) to issue all releases.
+
+CI vulnerabilities are a common-mode vector for supply chain attacks. We run [zizmor](https://docs.zizmor.sh/) at its highest audit level on our CI workflows.
 
 ## Reporting a Vulnerability
 

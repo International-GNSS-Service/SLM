@@ -2,6 +2,7 @@
 
 [![CodeQL](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/github-code-scanning/codeql?query=branch:main)
 [![Zizmor](https://github.com/International-GNSS-Service/SLM/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
+[![Bandit](https://github.com/International-GNSS-Service/SLM/actions/workflows/bandit.yml/badge.svg?branch=main)](https://bandit.readthedocs.io)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/International-GNSS-Service/SLM/badge)](https://securityscorecards.dev/viewer/?uri=github.com/International-GNSS-Service/SLM)
 
 

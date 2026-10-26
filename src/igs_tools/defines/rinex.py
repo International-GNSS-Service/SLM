@@ -1,11 +1,13 @@
 from datetime import date
-from enum_properties import IntEnumProperties, IntFlagProperties, p, s
+from typing import Annotated
+from enum_properties import IntEnumProperties, IntFlagProperties, Symmetric
 
 
-class RinexVersion(
-    IntEnumProperties,
-    s('label'), s('major'), s('slug'), p('published')
-):
+class RinexVersion(IntEnumProperties):
+    label: Annotated[str, Symmetric()]
+    major: Annotated[int, Symmetric()]
+    slug: Annotated[str, Symmetric()]
+    published: date
 
     # Minor version not known
 
@@ -39,7 +41,9 @@ class RinexVersion(
         return str(self.label)
 
 
-class DataRate(IntFlagProperties, s('label'), s('slug', case_fold=True)):
+class DataRate(IntFlagProperties):
+    label: Annotated[str, Symmetric()]
+    slug: Annotated[str, Symmetric(case_fold=True)]
 
     DAILY     =  2**1, 'Daily',     'daily'
     HOURLY    =  2**2, 'Hourly',    'hourly'

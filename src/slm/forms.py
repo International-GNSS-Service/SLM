@@ -38,8 +38,8 @@ from django.forms.widgets import (
 from django.urls import reverse_lazy
 from django.utils.functional import Promise, SimpleLazyObject, cached_property
 from django.utils.translation import gettext as _
-from django_enum.choices import choices
 from django_enum.forms import EnumChoiceField
+from django_enum.utils import choices
 from polyline import polyline
 
 from slm.api.edit.serializers import UserProfileSerializer, UserSerializer
@@ -212,7 +212,7 @@ class EnumMultipleChoiceField(EnumChoiceField, TypedMultipleChoiceField):
     def coerce(self, value):
         if isinstance(value, self.enum):
             return value
-        return [super(EnumMultipleChoiceField, self).coerce(val) for val in value]
+        return [self.default_coerce(val) for val in value]
 
 
 class SLMDateField(forms.DateField):

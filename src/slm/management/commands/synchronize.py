@@ -13,13 +13,14 @@ Some examples of denormalized state in the SLM include:
 """
 
 import typing as t
+from typing import Annotated
 
 from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import gettext as _
-from django_typer.management import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand
+from django_typer.utils import model_parser_completer
 from typer import Argument
-from typing_extensions import Annotated
 
 from slm.models import Site
 

@@ -29,7 +29,6 @@ from django.db.models import BooleanField, Count, Q
 from django.db.models.expressions import ExpressionWrapper
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from hijack.contrib.admin import HijackUserAdminMixin
 from polymorphic.admin import (
@@ -363,8 +362,8 @@ class TideGaugeAdmin(admin.ModelAdmin):
     inlines = [SiteTGInline]
 
     def sonel_link(self, obj):
-        return mark_safe(
-            f'<a href="{obj.sonel_link}" target="_blank">{obj.sonel_link}</a>'
+        return format_html(
+            '<a href="{}" target="_blank">{}</a>', obj.sonel_link, obj.sonel_link
         )
 
     def get_queryset(self, request):

@@ -48,15 +48,16 @@ import zlib
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 
 import requests
 from django.conf import settings
 from django.core.management import CommandError
 from django.db.models import Prefetch, Q
 from django.utils.translation import gettext as _
-from django_typer.management import TyperCommand, model_parser_completer
+from django_typer.management import TyperCommand
+from django_typer.utils import model_parser_completer
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from slm.defines import ISOCountry, SiteLogStatus
 from slm.models import Network, Site, SiteAntenna, SiteReceiver

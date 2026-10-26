@@ -22,18 +22,20 @@ import typing as t
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.db import DatabaseError, models, transaction
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
-from django_typer.completers import complete_directory, these_strings
-from django_typer.management import TyperCommand, model_parser_completer
+from django_typer.completers import these_strings
+from django_typer.completers.path import directories
+from django_typer.management import TyperCommand
 from django_typer.types import Traceback, Verbosity
+from django_typer.utils import model_parser_completer
 from tqdm import tqdm
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from slm.defines import AlertLevel, SiteLogFormat, SiteLogStatus
 from slm.models import ArchivedSiteLog, ArchiveIndex, ImportAlert, Site
@@ -150,7 +152,7 @@ class Command(TyperCommand):
                 help=_(
                     "Write logs to this directory. No logs will be written by default."
                 ),
-                shell_complete=complete_directory,
+                shell_complete=directories,
             ),
         ] = logs,
         formats: Annotated[

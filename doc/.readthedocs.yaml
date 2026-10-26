@@ -7,9 +7,9 @@ version: 2
 
 # Set the version of Python and other tools you might need
 build:
-  os: ubuntu-22.04
+  os: ubuntu-26.04
   tools:
-    python: "3.12"
+    python: "3.14"
   apt_packages:
     - binutils
     - libproj-dev
@@ -18,7 +18,7 @@ build:
   jobs:
     post_install:
       - pip install uv
-      - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --all-extras --group docs --link-mode=copy
+      - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --all-extras --no-default-groups --group docs --link-mode=copy
 
 
 # Build documentation in the docs/ directory with Sphinx

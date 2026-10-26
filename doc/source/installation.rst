@@ -66,7 +66,7 @@ environment(s):
      - Description
 
    * - Python_
-     - >=3.8
+     - >=3.11
      - ✅
      - Programming language runtime.
    * - PostgreSQL_
@@ -78,7 +78,7 @@ environment(s):
      - ✅
      - Geographic information system extension to PostgreSQL_.
    * - Django_ & GeoDjango_
-     - ==4.2.x
+     - >=5.2,<6.2
      - ✅
      - Django will be installed automatically, but GeoDjango_ has external dependencies that may
        need to be installed manually.
@@ -363,7 +363,7 @@ You should now be able to start up the development server and see data in your S
       Performing system checks...
 
       System check identified no issues (1 silenced).
-      Django version 4.2.23, using settings 'slm.settings.root'
+      Django version 5.2.18, using settings 'slm.settings.root'
       Starting development server at http://127.0.0.1:8000/
       Quit the server with CONTROL-C.
 
@@ -375,7 +375,7 @@ You should now be able to start up the development server and see data in your S
       Performing system checks...
 
       System check identified no issues (1 silenced).
-      Django version 4.2.23, using settings 'sites.network.develop'
+      Django version 5.2.18, using settings 'sites.network.develop'
       Starting development server at http://127.0.0.1:8000/
       Quit the server with CONTROL-C.
 

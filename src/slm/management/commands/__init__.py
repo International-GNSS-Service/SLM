@@ -1,10 +1,10 @@
 import typing as t
 from enum import Enum
 
-from click import Context, Parameter, ParamType
-from click.shell_completion import CompletionItem
 from django.core.management import CommandError
 from django.utils.translation import gettext as _
+from django_typer.completers import CompletionItem
+from django_typer.parsers import Context, Parameter, ParamType
 
 
 class EnumParser(ParamType):

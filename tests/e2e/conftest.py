@@ -113,16 +113,18 @@ def console_errors(live_server):
         errors = []
         page.on(
             "console",
-            lambda msg: errors.append(f"console: {msg.text}")
-            if msg.type == "error"
-            else None,
+            lambda msg: (
+                errors.append(f"console: {msg.text}") if msg.type == "error" else None
+            ),
         )
         page.on("pageerror", lambda exc: errors.append(f"pageerror: {exc}"))
         page.on(
             "response",
-            lambda resp: errors.append(f"{resp.status}: {resp.url}")
-            if resp.status >= 400 and resp.url.startswith(live_server.url)
-            else None,
+            lambda resp: (
+                errors.append(f"{resp.status}: {resp.url}")
+                if resp.status >= 400 and resp.url.startswith(live_server.url)
+                else None
+            ),
         )
         return errors
 

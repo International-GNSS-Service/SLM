@@ -32,6 +32,7 @@ import typing as t
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import Annotated
 
 from dateutil.parser import ParserError
 from dateutil.parser import parse as parse_datetime
@@ -42,12 +43,13 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.timezone import is_naive, make_aware
 from django.utils.translation import gettext as _
-from django_typer.completers import complete_directory, complete_path, these_strings
-from django_typer.management import TyperCommand, get_command, model_parser_completer
+from django_typer.completers import these_strings
+from django_typer.completers.path import directories, paths
+from django_typer.management import TyperCommand, get_command
 from django_typer.types import Traceback, Verbosity
+from django_typer.utils import model_parser_completer
 from tqdm import tqdm
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from slm.defines import SiteLogFormat, SiteLogStatus, SLMFileType
 from slm.models import Agency, ArchivedSiteLog, ArchiveIndex, Site, User
@@ -188,6 +190,7 @@ class Command(TyperCommand):
     logs: Path = Path("{SLM_LOG_DIR}") / "import_archive.{TIMESTAMP}"
     verbosity: int = 1
     traceback: bool = False
+    no_browser: bool = False
 
     log_file_tmpl = "slm/reports/file_log.html"
     log_index_tmpl = "slm/reports/index_log.html"
@@ -297,7 +300,7 @@ class Command(TyperCommand):
                     "The path to the archive containing the legacy site logs to "
                     "import. May be a tar file, a directory or a single site log."
                 ),
-                shell_complete=complete_path,
+                shell_complete=paths,
             ),
         ] = None,
         no_create_sites: Annotated[
@@ -354,7 +357,7 @@ class Command(TyperCommand):
             Path,
             Option(
                 help=_("Write parser logs to this directory."),
-                shell_complete=complete_directory,
+                shell_complete=directories,
             ),
         ] = logs,
         formats: Annotated[
@@ -377,6 +380,13 @@ class Command(TyperCommand):
                 ),
             ),
         ] = site_dirs,
+        no_browser: Annotated[
+            bool,
+            Option(
+                "--no-browser",
+                help=_("Do not open the import log in a web browser when done."),
+            ),
+        ] = no_browser,
         verbosity: Verbosity = verbosity,
         traceback: Traceback = traceback,
     ):
@@ -404,6 +414,7 @@ class Command(TyperCommand):
         self.site_dirs = site_dirs
         self.verbosity = verbosity
         self.traceback = traceback
+        self.no_browser = no_browser
 
         self.unresolved = []
         self.created = set()
@@ -690,9 +701,10 @@ class Command(TyperCommand):
                 log_f.write(log_index)
 
         if log:
-            import webbrowser
+            if not self.no_browser:
+                import webbrowser
 
-            webbrowser.open(log.resolve().as_uri())
+                webbrowser.open(log.resolve().as_uri())
             if self.verbosity > 0:
                 return log.absolute()
 

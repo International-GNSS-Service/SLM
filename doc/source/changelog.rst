@@ -6,6 +6,20 @@
 Change Log
 ==========
 
+v0.6.0b0 (2026-XX-XX)
+=====================
+
+* BREAKING: Drop support for Python < 3.11 and Django 4.2. Support Python 3.11-3.15 and
+  Django 5.2 LTS.
+* Upgrade dependencies, including django-typer 4, django-enum 2, enum-properties 2 and lxml 6.
+* Add database check constraints for enumeration fields (django-enum 2).
+* BREAKING: Migrations have been remade from the 0.5.0b0 version waypoint. Databases must be
+  migrated by 0.5.0b0 before upgrading. See :ref:`version_waypoints` for the effect on apps
+  that extend the SLM.
+* :django-admin:`migrate` now checks for version waypoints before loading the migrations, so
+  unsafe upgrades fail with a clear message.
+
+
 v0.5.0b0 (2026-10-15)
 =====================
 

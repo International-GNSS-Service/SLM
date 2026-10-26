@@ -1,23 +1,26 @@
 """The standard enum type for ISO 3166-1 common countrys"""
 
+from enum import nonmember
+from typing import Annotated
+
 from django.utils.translation import gettext_lazy as _
-from django_enum import TextChoices
-from enum_properties import p, s
+from enum_properties import StrEnumProperties, Symmetric, symmetric
 
 
-class ISOCountry(
-    TextChoices,
-    s("numeric"),  # type: ignore
-    s("alpha3", case_fold=True),  # type: ignore
-    p("independent"),  # type: ignore
-    s("short_name", case_fold=True),  # type: ignore
-    s("full_name", case_fold=True),  # type: ignore
-):
+class ISOCountry(StrEnumProperties):
     """
     An enumeration for ISO 3166-1 Country codes.
     """
 
-    _symmetric_builtins_ = [s("name", case_fold=True), s("ascii", case_fold=True)]
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+    numeric: Annotated[int, Symmetric()]
+    alpha3: Annotated[str, Symmetric(case_fold=True)]
+    independent: bool
+    short_name: Annotated[str, Symmetric(case_fold=True)]
+    full_name: Annotated[str, Symmetric(case_fold=True)]
+
+    do_not_call_in_templates = nonmember(True)
 
     AD = "AD", _("Andorra"), 20, "AND", True, "Andorra", "the Principality of Andorra"
     AE = (
@@ -1150,6 +1153,7 @@ class ISOCountry(
     ZW = "ZW", _("Zimbabwe"), 716, "ZWE", True, "Zimbabwe", "the Republic of Zimbabwe"
     # pylint: disable=C0303
 
+    @symmetric(case_fold=True)
     @property
     def ascii(self):
         ascii_name = self.short_name

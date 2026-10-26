@@ -11,18 +11,14 @@ parts of this pipeline.
 import typing as t
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 
 from django.core.management import CommandError
 from django.db.models import Q
 from django.utils.translation import gettext as _
-from django_typer.management import (
-    TyperCommand,
-    command,
-    initialize,
-    model_parser_completer,
-)
+from django_typer.management import TyperCommand, command, initialize
+from django_typer.utils import model_parser_completer
 from typer import Argument, Option
-from typing_extensions import Annotated
 
 from slm.api.serializers import SiteLogSerializer
 from slm.defines import GeodesyMLVersion, SiteLogFormat

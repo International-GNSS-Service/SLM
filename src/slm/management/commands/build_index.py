@@ -12,6 +12,7 @@ log files of the specified formats.
 """
 
 import typing as t
+from typing import Annotated
 
 from django.db import transaction
 from django.utils.translation import gettext as _
@@ -19,7 +20,6 @@ from django_typer.completers import these_strings
 from django_typer.management import TyperCommand
 from tqdm import tqdm
 from typer import Option
-from typing_extensions import Annotated
 
 from slm.defines import SiteLogFormat, SiteLogStatus
 from slm.models import ArchiveIndex, Site

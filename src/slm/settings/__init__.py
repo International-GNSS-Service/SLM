@@ -12,11 +12,11 @@ import re
 import sys
 import typing as t
 from functools import partial
+from importlib import resources
 from os import PathLike
 from pathlib import Path
 
 import environ
-import importlib_resources
 from django.core.exceptions import ImproperlyConfigured
 
 re.Pattern
@@ -55,13 +55,6 @@ def split_email_str(email: str) -> t.Tuple[str, str]:
 
 
 def _is_relative_to(parent: Path, child: Path) -> bool:
-    # TODO remove when python >=3.9
-    if sys.version_info[:2] < (3, 9):
-        try:
-            child.relative_to(parent)
-            return True
-        except ValueError:
-            return False
     return child.is_relative_to(parent)
 
 
@@ -238,6 +231,6 @@ def resource(package: str, file: PathLike):
     :param file: The name of the python settings module
     :return: The full string path to the resource.
     """
-    profile2 = importlib_resources.files(package) / file
-    with importlib_resources.as_file(profile2) as profile2_path:
+    profile2 = resources.files(package) / file
+    with resources.as_file(profile2) as profile2_path:
         return str(profile2_path)

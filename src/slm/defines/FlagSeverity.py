@@ -1,10 +1,15 @@
+from enum import nonmember
+from typing import Annotated
+
 from django.utils.translation import gettext_lazy as _
-from django_enum import IntegerChoices
-from enum_properties import s
+from enum_properties import IntEnumProperties, Symmetric
 
 
-class FlagSeverity(IntegerChoices):
-    _symmetric_builtins_ = [s("name", case_fold=True)]
+class FlagSeverity(IntEnumProperties):
+    name: Annotated[str, Symmetric(case_fold=True)]
+    label: str
+
+    do_not_call_in_templates = nonmember(True)
 
     # fmt: off
     BLOCK_SAVE    = 1, _("Block Save")

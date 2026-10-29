@@ -2,6 +2,7 @@
 [![PyPI version](https://badge.fury.io/py/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm/)
 [![PyPI djversions](https://img.shields.io/pypi/djversions/igs-slm.svg)](https://pypi.org/project/igs-slm/)
+[![Postgres](https://img.shields.io/badge/Postgres-14%2B-blue)](https://www.postgresql.org/)
 [![PyPI status](https://img.shields.io/pypi/status/igs-slm.svg)](https://pypi.python.org/pypi/igs-slm)
 [![Documentation Status](https://readthedocs.org/projects/igs-slm/badge/?version=latest)](http://igs-slm.readthedocs.io/?badge=latest/)
 [![codecov](https://codecov.io/github/International-GNSS-Service/SLM/graph/badge.svg?token=PQVWN1LNM3)](https://codecov.io/github/International-GNSS-Service/SLM)

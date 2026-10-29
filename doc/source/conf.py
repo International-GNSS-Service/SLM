@@ -146,6 +146,16 @@ linkcheck_ignore = [
     r"http://127\.0\.0\.1:8000/admin/?",
     r"https://network\.example\.com/?",
 ]
+linkcheck_workers = 10
+linkcheck_retries = 2
+linkcheck_timeout = 30
+
+linkcheck_request_headers = {
+    "*": {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+    }
+}
 
 
 def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):

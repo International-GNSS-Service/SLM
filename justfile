@@ -126,7 +126,7 @@ docs-live:
     @just run --group docs --all-extras --isolated --no-default-groups sphinx-autobuild doc/source doc/build --open-browser --watch src --port 0 --delay 1
 
 _link-check:
-    -uv run --no-default-groups --group docs --all-extras sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
+    -uv run --no-default-groups --group docs --all-extras sphinx-build -b linkcheck -Q ./doc/source ./doc/build
 
 _spell-check:
     -uv run --no-default-groups --group docs --all-extras sphinx-build -b spelling -Q ./doc/source ./doc/build/spelling

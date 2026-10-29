@@ -6,7 +6,7 @@
 Change Log
 ==========
 
-v0.6.0b0 (2026-XX-XX)
+v0.6.0b0 (2026-10-29)
 =====================
 
 * BREAKING: Drop support for Python < 3.11 and Django 4.2. Support Python 3.11-3.15 and

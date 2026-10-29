@@ -54,7 +54,9 @@ def site_upload_path(instance: "SiteFile", filename: str) -> str:
     if instance.SUB_DIRECTORY:
         prefix = Path(instance.SUB_DIRECTORY)
     dest = prefix / instance.site.name / filename
-    if (Path(settings.MEDIA_ROOT) / dest).exists():
+    # ask the field's storage rather than probing MEDIA_ROOT directly: it respects
+    # the configured backend and safe_join refuses any path escaping the storage root
+    if instance.file.storage.exists(dest.as_posix()):
         stem, suffix = dest.stem, dest.suffix
         if isinstance(instance, ArchivedSiteLog):
             # TODO - there is potential here for the database to be out of sync with the

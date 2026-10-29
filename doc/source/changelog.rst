@@ -21,6 +21,9 @@ v0.6.0b0 (2026-10-29)
 * Station names are now always validated to exclude path separators, dots, whitespace and
   control characters, independent of :setting:`SLM_STATION_NAME_REGEX`, because they are
   used as file system path components and URL segments.
+* The site file collision check now asks the file field's storage backend whether the
+  destination exists instead of probing ``MEDIA_ROOT`` directly, so it honors the configured
+  storage and refuses any path that escapes the storage root.
 * Glob backed file views (``FileSystemDirectory``) now confine listings to the wildcard free
   root of the configured pattern, skipping symlinks that resolve outside of it, and reject
   relative patterns at startup. Serving a listed file, JSON listings and the ``match`` query

@@ -83,6 +83,17 @@ def test_from_glob_excludes_symlinks_that_escape_the_root(tree):
     assert names == {"a.txt", "inside_link.txt"}
 
 
+def test_from_glob_symlink_keeps_its_name_but_resolves_on_disk(tree):
+    listings = {
+        listing.display: listing for listing in Listing.from_glob(str(tree / "*.txt"))
+    }
+    link = listings["inside_link.txt"]
+    assert link.display == "inside_link.txt"
+    assert link.on_disk == (tree / "a.txt").resolve()
+    assert link.on_disk.is_symlink() is False
+    assert link.size == 1
+
+
 def test_from_glob_applies_name_filter(tree):
     names = {
         listing.display

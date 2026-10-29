@@ -92,20 +92,25 @@ class Listing:
         root = os.path.realpath(Listing.glob_root(pattern))
         for path_str in iglob(pattern):
             # realpath + prefix check is the containment idiom static analyzers
-            # recognize - keep it in this form.
+            # recognize. Every filesystem call below must use the checked value
+            # (real), not path_str, or the check does not cover it.
             real = os.path.realpath(path_str)
             if not real.startswith(root + os.sep):
                 continue
-            on_disk = Path(path_str)
+            # a symlink is displayed under its own name but served from its target
+            display = Path(path_str).name
+            if not filter(display):
+                continue
+            on_disk = Path(real)
             stat = on_disk.stat()
-            if filter(on_disk.name):
-                yield Listing(
-                    display=on_disk.name,
-                    modified=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
-                    size=None if on_disk.is_dir() else stat.st_size,
-                    is_dir=on_disk.is_dir(),
-                    on_disk=on_disk,
-                )
+            is_dir = on_disk.is_dir()
+            yield Listing(
+                display=display,
+                modified=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+                size=None if is_dir else stat.st_size,
+                is_dir=is_dir,
+                on_disk=on_disk,
+            )
 
 
 @dataclass

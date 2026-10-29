@@ -2,4 +2,4 @@ name: CodeQL configuration
 
 paths-ignore:
   - src/slm/bin/templates/**
-  
+  - src/slm/static_templates/**

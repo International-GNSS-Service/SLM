@@ -18,9 +18,17 @@ if not SECRET_KEY:
     if not sk_file.is_file():
         from django.core.management.utils import get_random_secret_key
 
-        os.makedirs(SLM_SECRETS_DIR, exist_ok=True)
         SECRET_KEY = get_random_secret_key()
-        sk_file.write_text(f"{SECRET_KEY}\n")
-        sk_file.chmod(0o640)
+        try:
+            # create the file with restrictive permissions from the start so it is
+            # never world readable, and exclusively so concurrent workers starting
+            # up at the same time end up sharing one key instead of each writing
+            # their own
+            fd = os.open(sk_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o640)
+        except FileExistsError:
+            SECRET_KEY = sk_file.read_text().strip()
+        else:
+            with os.fdopen(fd, "w") as sk:
+                sk.write(f"{SECRET_KEY}\n")
     else:
         SECRET_KEY = sk_file.read_text().strip()

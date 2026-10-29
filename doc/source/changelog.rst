@@ -28,6 +28,9 @@ v0.6.0b0 (2026-10-29)
   filter options, time picker values, new site form errors and the edit page section
   targets are now HTML escaped or inserted as text. Autocomplete highlighting also no longer
   breaks on search terms containing regular expression metacharacters.
+* The generated ``SECRET_KEY`` file is now created with mode 0640 from the start instead
+  of being chmodded after a default-mode write, and concurrent workers starting against an
+  empty secrets directory now share one generated key instead of racing to overwrite it.
 * The site file collision check now asks the file field's storage backend whether the
   destination exists instead of probing ``MEDIA_ROOT`` directly, so it honors the configured
   storage and refuses any path that escapes the storage root.

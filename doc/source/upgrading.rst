@@ -9,11 +9,11 @@ Upgrading
 .. warning::
 
    Upgrades (e.g. running :django-admin:`migrate` or :django-admin:`routine deploy`) with a
-   new version of igs-slm_ installed may cause hard or impossible to reverse changes to your
+   new version of :pypi:`igs-slm` installed may cause hard or impossible to reverse changes to your
    data.
 
 If you are using the SLM without extensions or with extensions without forking it, upgrading to
-new versions of the igs-slm_ package is usually as straight forward as installing the latest
+new versions of the :pypi:`igs-slm` package is usually as straight forward as installing the latest
 version and running :django-admin:`routine deploy`. This will run a collection of routines that
 migrates the current database structure and state into alignment with the updated code. These
 migration routines may alter database structure, database content or files on disk.
@@ -23,7 +23,7 @@ migration routines may alter database structure, database content or files on di
 Always Backup!
 ==============
 
-Before upgrading to a new version of the igs-slm_ package ALWAYS backup the current state of
+Before upgrading to a new version of the :pypi:`igs-slm` package ALWAYS backup the current state of
 your SLM. The main state includes:
 
 * The database(s).
@@ -42,7 +42,7 @@ Version Waypoints
 =================
 
 **The igs-slm package has version waypoints that upgrades must pass through**. Django
-automatically generates migration files as the database models change. The igs-slm_
+automatically generates migration files as the database models change. The :pypi:`igs-slm`
 developers also create migrations to manipulate data and files. Over time these migration
 files pile up and slow down testing and fresh installations. Django provides a
 :django-admin:`squashmigrations` command to alleviate this problem, but it has significant
@@ -81,7 +81,7 @@ The version waypoints are:
 Semantic Versioning
 ===================
 
-The igs-slm_ package uses `semantic versioning <https://semver.org/>`_. Major non-backwards
+The :pypi:`igs-slm` package uses `semantic versioning <https://semver.org/>`_. Major non-backwards
 compatible changes will bump the major version after the 1.0.0 release. It is important to note,
 that semver allows breaking changes between the feature versions of the 0.x series. Do not expect
 backwards compatibility between 0.x versions.

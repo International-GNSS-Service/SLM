@@ -3,8 +3,8 @@ Generates a SINEX_ file from the current published database state.
 
 The default antex file used is https://files.igs.org/pub/station/general/igs20.atx.gz
 
-SINEX format description:
-    https://www.iers.org/SharedDocs/Publikationen/EN/IERS/Documents/ac/sinex/sinex_v202_pdf.pdf
+`SINEX format description
+<https://www.iers.org/fileadmin/SharedDocs/Publikationen/EN/IERS/Documents/ac/sinex/sinex_v202_pdf.pdf>`_
 
 
 Extend this command and (re)implement section producers if you want to customize sinex output.

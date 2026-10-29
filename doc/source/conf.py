@@ -138,17 +138,21 @@ intersphinx_mapping = {
     "python": ('https://docs.python.org/3', None)
 }
 
+html_css_files = [
+    'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css',
+]
+
+linkcheck_ignore = [
+    r"http://127\.0\.0\.1:8000/admin/?",
+    r"https://network\.example\.com/?",
+]
+
 
 def pypi_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     from docutils import nodes
     url = f"https://pypi.org/project/{text}/"
     node = nodes.reference(rawtext, text, refuri=url, **options)
     return [node], []
-
-
-html_css_files = [
-    'https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css',
-]
 
 
 def color_role(name, rawtext, text, lineno, inliner, options={}, content=[]):

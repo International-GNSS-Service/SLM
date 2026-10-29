@@ -129,7 +129,7 @@ In addition to the SLM specific commands, the common Django commands you will ne
    * - :django-admin:`migrate`
      - Run any unapplied migration scripts on the database.
    * - :django-admin:`collectstatic`
-     - Gather all static artifacts from Django apps and move them into STATIC_ROOT_.
+     - Gather all static artifacts from Django apps and move them into :external+django:setting:`STATIC_ROOT`.
    * - :django-admin:`shell`
      - Launch an interactive shell with your site bootstrapped and a live connection to the
        database.
@@ -141,10 +141,10 @@ Commands installed by third party apps that may also be useful or necessary:
 
    * - Command
      - Short Description
-   * - renderstatic_
+   * - :django-admin:`renderstatic`
      - Generate static artifacts from your code/configuration. This mostly includes JavaScript
        artifacts. See :django-admin:`routine deploy`
-   * - shellcompletion_
+   * - :django-admin:`shellcompletion`
      - Install/test shell tab completion for all management commands.
 
 |
@@ -348,8 +348,8 @@ Routines
 --------
 
 Routines are groupings of commands that can be configured in settings and run together.
-They are defined using the app django-routines_. The commands that are run as part of a routine
-can be added to or subtracted from in customized deployments of the SLM. Out of the box the
+They are defined using the app :pypi:`django-routines`. The commands that are run as part of a
+routine can be added to or subtracted from in customized deployments of the SLM. Out of the box the
 SLM provides the following routines:
 
 deploy

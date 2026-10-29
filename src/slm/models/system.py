@@ -57,38 +57,35 @@ def site_upload_path(instance: "SiteFile", filename: str) -> str:
     if (Path(settings.MEDIA_ROOT) / dest).exists():
         stem, suffix = dest.stem, dest.suffix
         if isinstance(instance, ArchivedSiteLog):
-            # TODO - there is potential here for the database to be out of sync with the filesytem if the outer
-            # transaction fails
-            try:
-                for archive in ArchivedSiteLog.objects.filter(
-                    file__endswith=str(dest.as_posix())
-                ):
-                    current_path = Path(archive.file.path)
-                    new_path = Path(archive.file.path)
-                    if current_path.stem.count("_") < 2:
-                        new_path = current_path.with_name(
-                            f"{current_path.stem}_{archive.index.valid_range.lower.strftime('%H%M%S')}{current_path.suffix}"
-                        )
-                        idx = 0
-                        while new_path.exists():
-                            if idx > 0:
-                                new_path = new_path.with_name(
-                                    f"{new_path.stem[: new_path.stem.rindex('-')]}-{idx}{new_path.suffix}"
-                                )
-                            else:
-                                new_path = new_path.with_name(
-                                    f"{new_path.stem}-{idx}{new_path.suffix}"
-                                )
-                            idx += 1
+            # TODO - there is potential here for the database to be out of sync with the
+            # filesytem if the outer transaction fails
+            for archive in ArchivedSiteLog.objects.filter(
+                file__endswith=str(dest.as_posix())
+            ):
+                current_path = Path(archive.file.path)
+                new_path = Path(archive.file.path)
+                if current_path.stem.count("_") < 2:
+                    new_path = current_path.with_name(
+                        f"{current_path.stem}_{archive.index.valid_range.lower.strftime('%H%M%S')}{current_path.suffix}"
+                    )
+                    idx = 0
+                    while new_path.exists():
+                        if idx > 0:
+                            new_path = new_path.with_name(
+                                f"{new_path.stem[: new_path.stem.rindex('-')]}-{idx}{new_path.suffix}"
+                            )
+                        else:
+                            new_path = new_path.with_name(
+                                f"{new_path.stem}-{idx}{new_path.suffix}"
+                            )
+                        idx += 1
 
-                        archive.file.name = archive.file.name.replace(
-                            current_path.name, new_path.name
-                        )
-                        archive.name = Path(archive.file.name).name
-                        current_path.rename(new_path)
-                        archive.save(update_fields=["file", "name"])
-            except ArchivedSiteLog.DoesNotExist:
-                (Path(settings.MEDIA_ROOT) / dest).unlink()
+                    archive.file.name = archive.file.name.replace(
+                        current_path.name, new_path.name
+                    )
+                    archive.name = Path(archive.file.name).name
+                    current_path.rename(new_path)
+                    archive.save(update_fields=["file", "name"])
         else:
             timestamp = (
                 instance.index.begin

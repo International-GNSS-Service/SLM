@@ -2,6 +2,21 @@
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+validate_station_name_characters = RegexValidator(
+    regex=r"\A[^/\\.\s\x00-\x1f]+\Z",
+    message=_(
+        "Station names may not contain path separators, dots, whitespace or "
+        "control characters."
+    ),
+    code="unsafe_station_name",
+)
+"""
+Station names are used as filesystem path components and URL segments, so this
+baseline rule always applies, independent of any :setting:`SLM_STATION_NAME_REGEX`
+a deployment configures on top of it.
+"""
 
 
 class StationNameField(models.CharField):
@@ -9,7 +24,14 @@ class StationNameField(models.CharField):
     The StationNameField allows validation and help text to be configured in settings.
     These values will not be deconstructed into the migration files allowing users of
     the SLM to define their own semantics and validation logic around station names.
+
+    Regardless of configuration, names are always required to be safe for use as a
+    path component and URL segment (see :data:`validate_station_name_characters`).
     """
+
+    # default_validators are never serialized into migrations, so this baseline
+    # rule can be enforced unconditionally without touching deconstruct().
+    default_validators = [validate_station_name_characters]
 
     class StationNameValidator(RegexValidator):
         pass

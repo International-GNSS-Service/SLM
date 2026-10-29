@@ -18,6 +18,9 @@ v0.6.0b0 (2026-10-29)
   that extend the SLM.
 * :django-admin:`migrate` now checks for version waypoints before loading the migrations, so
   unsafe upgrades fail with a clear message.
+* Station names are now always validated to exclude path separators, dots, whitespace and
+  control characters, independent of :setting:`SLM_STATION_NAME_REGEX`, because they are
+  used as file system path components and URL segments.
 
 
 v0.5.0b0 (2026-10-15)

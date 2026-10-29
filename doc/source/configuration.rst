@@ -517,8 +517,11 @@ Enable or disable the use of IGS naming rules for station names. If enabled, the
 Default: ``None``
 
 Provide a regular expression to validate new station names against. By
-default no validation occurs and station names may be any string up to
-50 characters in length.
+default no additional validation occurs and station names may be any string up
+to 50 characters in length that does not contain path separators (``/`` or
+``\``), dots, whitespace or control characters. That baseline rule always
+applies because station names are used as file system path components and URL
+segments; this setting layers deployment specific semantics on top of it.
 
 For example the IGS station name standard uses this regular expression:
 

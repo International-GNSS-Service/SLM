@@ -17,13 +17,13 @@ jobs:
   lint:
     permissions:
       contents: read
-    uses: ./.github/workflows/lint.yml
+    uses: $/.github/workflows/lint.yml
 
   test:
     permissions:
       contents: read
       id-token: write # to allow codecov oidc upload
-    uses: ./.github/workflows/test.yml
+    uses: $/.github/workflows/test.yml
 
   build:
     name: Build Package

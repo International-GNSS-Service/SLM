@@ -1,6 +1,7 @@
 import csv
 import fnmatch
 import mimetypes
+import re
 import typing as t
 from datetime import datetime, timezone
 from io import StringIO
@@ -56,6 +57,24 @@ def file_cache_key(path: Path, property: t.Optional[str] = None) -> str:
     return key
 
 
+_FNMATCH_WRAPPER = re.compile(r"\A\(\?s:(?P<body>.*)\)\\[Zz]\Z", re.DOTALL)
+
+
+def fnmatch_to_regex(pattern: str) -> str:
+    """
+    Translate a shell wildcard pattern into a bare regular expression suitable
+    for a database ``regex`` lookup.
+
+    :func:`fnmatch.translate` wraps its result in a non-capturing group with the
+    DOTALL flag and anchors it with ``\\Z`` (``\\z`` from Python 3.14), neither of
+    which the database regex engine wants. Only that wrapper is removed; the
+    translated body is untouched.
+    """
+    translated = fnmatch.translate(pattern)
+    match = _FNMATCH_WRAPPER.match(translated)
+    return match.group("body") if match else translated
+
+
 class FileSystemView(TemplateView):
     """
     A base file system view that renders file system artifacts.
@@ -79,7 +98,7 @@ class FileSystemView(TemplateView):
         matches = self.request.GET.getlist("match", [])
         if filename:
             matches.append(filename)
-        return filename
+        return matches
 
     def filter_listings(
         self, listings: t.Iterable[Listing], patterns: t.List[str]
@@ -177,8 +196,9 @@ class FileSystemView(TemplateView):
                 *self.builtin_listings,
                 *Listing.from_glob(
                     kwargs.get("glob", None),
-                    filter=lambda name: any(
-                        fnmatch(name, pattern) for pattern in patterns
+                    filter=lambda name: (
+                        not patterns
+                        or any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
                     ),
                 ),
             ),
@@ -227,7 +247,8 @@ class FileSystemView(TemplateView):
                     "size": listing.size,
                 }
                 for listing in context["listings"]
-            ]
+            ],
+            safe=False,
         )
 
     def render_csv_response(self, context):
@@ -262,13 +283,14 @@ class FileSystemView(TemplateView):
                 if listing.display == filename:
                     found = listing
                     break
-            if not found:
+            if not found or found.on_disk is None or found.is_dir:
                 raise Http404()
+            # FileResponse closes the handle once the response has been streamed
             return FileResponse(
-                listing.on_disk,
+                open(found.on_disk, "rb"),
                 as_attachment=context.get("download", False)
-                or not is_browser_renderable(listing.display),
-                filename=listing.display,
+                or not is_browser_renderable(found.display),
+                filename=found.display,
             )
         return super().get(request, *args, filename=filename, **kwargs)
 
@@ -312,13 +334,7 @@ class ArchivedSiteLogView(FileSystemView):
             pattern_filter = Q()
             pattern_key = f"{self.translate_order_key('display')}__iregex"
             for pattern in patterns:
-                pattern_filter |= Q(
-                    **{
-                        pattern_key: fnmatch.translate(pattern)
-                        .rstrip(")\\Z")
-                        .lstrip("(?s:")
-                    }
-                )
+                pattern_filter |= Q(**{pattern_key: fnmatch_to_regex(pattern)})
             listings = listings.filter(pattern_filter)
 
         context["download"] = kwargs.get(

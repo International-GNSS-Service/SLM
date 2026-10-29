@@ -204,7 +204,7 @@ class SiteLogFormat {
 	static LEGACY = new SiteLogFormat(1, "LEGACY", "Legacy (ASCII)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "legacy", "sitelog"], [], "log");
 	static GEODESY_ML = new SiteLogFormat(2, "GEODESY_ML", "GeodesyML", "application/xml", "bi bi-filetype-xml", "xml", ["xml", "gml"], [], "xml");
 	static JSON = new SiteLogFormat(3, "JSON", "JSON", "application/json", "bi bi-filetype-json", "json", ["json", "js"], [], "json");
-	static ASCII_9CHAR = new SiteLogFormat(4, "ASCII_9CHAR", "ASCII (9-Char)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "9char", "sitelog"], "[(1, 'Legacy (ASCII)')]", "log");
+	static ASCII_9CHAR = new SiteLogFormat(4, "ASCII_9CHAR", "ASCII (9-Char)", "text/plain", "bi bi-file-text", "log", ["text", "txt", "9char", "sitelog"], [1], "log");
 	
 	constructor (value, name, label, mimetype, icon, ext, alts, supersedes, suffix) {
 		this.value = value;

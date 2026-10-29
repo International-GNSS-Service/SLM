@@ -21,6 +21,12 @@ v0.6.0b0 (2026-10-29)
 * Station names are now always validated to exclude path separators, dots, whitespace and
   control characters, independent of :setting:`SLM_STATION_NAME_REGEX`, because they are
   used as file system path components and URL segments.
+* Glob backed file views (``FileSystemDirectory``) now confine listings to the wildcard free
+  root of the configured pattern, skipping symlinks that resolve outside of it, and reject
+  relative patterns at startup. Serving a listed file, JSON listings and the ``match`` query
+  parameter filter were broken for these views and now work. The ``match`` filter on archive
+  listings mangled patterns beginning with ``s`` or ending with ``Z`` and failed outright on
+  Python 3.14; it is now translated correctly.
 
 
 v0.5.0b0 (2026-10-15)

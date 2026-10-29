@@ -1,14 +1,19 @@
 import inspect
+import os
+import re
 import typing as t
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from django.urls import path
 from django.urls.resolvers import URLPattern
 from django.utils.module_loading import import_string
 
 from slm.defines import SiteLogFormat, SiteLogStatus
+
+_GLOB_MAGIC = re.compile(r"[*?\[]")
 
 
 @dataclass
@@ -42,12 +47,36 @@ class Listing:
     The path to the file or directory on disk.
     """
 
+    @staticmethod
+    def glob_root(pattern: str) -> Path:
+        """
+        The longest leading path of a glob pattern that contains no wildcards.
+        This is the directory the pattern is trusted to expose; nothing outside
+        of it is ever listed.
+
+        :param pattern: A glob pattern
+        :return: The wildcard free prefix of the pattern as a Path, or ``.`` if
+            the pattern starts with a wildcard.
+        """
+        root: t.List[str] = []
+        for part in Path(pattern).parts:
+            if _GLOB_MAGIC.search(part):
+                break
+            root.append(part)
+        return Path(*root) if root else Path(".")
+
+    @staticmethod
     def from_glob(
         pattern: t.Optional[str], filter: t.Callable[[str], bool] = lambda _: True
     ) -> t.Generator["Listing", None, None]:
         """
         Yield :class:`~slm.file_views.config.Listing` objects from a glob
         pattern.
+
+        The pattern is deployment configuration, not request data. Even so,
+        matches are confined to :meth:`glob_root`: a symlink inside the globbed
+        tree that resolves to a location outside of it is skipped, so the
+        configured pattern is the complete description of what can be served.
 
         :param pattern: A glob pattern
         :param filter: A callable that takes the name of the file or directory
@@ -56,20 +85,27 @@ class Listing:
         :return: An iterable of :class:`~slm.file_views.config.Listing`
             objects.
         """
-        if pattern:
-            from glob import iglob
+        if not pattern:
+            return
+        from glob import iglob
 
-            for path_str in iglob(pattern):
-                on_disk = Path(path_str)
-                stat = on_disk.stat()
-                if filter(on_disk.name):
-                    yield Listing(
-                        display=on_disk.name,
-                        modified=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
-                        size=None if on_disk.is_dir() else stat.st_size,
-                        is_dir=on_disk.is_dir(),
-                        on_disk=on_disk,
-                    )
+        root = os.path.realpath(Listing.glob_root(pattern))
+        for path_str in iglob(pattern):
+            # realpath + prefix check is the containment idiom static analyzers
+            # recognize - keep it in this form.
+            real = os.path.realpath(path_str)
+            if not real.startswith(root + os.sep):
+                continue
+            on_disk = Path(path_str)
+            stat = on_disk.stat()
+            if filter(on_disk.name):
+                yield Listing(
+                    display=on_disk.name,
+                    modified=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc),
+                    size=None if on_disk.is_dir() else stat.st_size,
+                    is_dir=on_disk.is_dir(),
+                    on_disk=on_disk,
+                )
 
 
 @dataclass
@@ -173,6 +209,13 @@ class FileSystemDirectory(Directory):
     def urls(self, pth: Path, **kwargs) -> t.Sequence[URLPattern]:
         if self.view_callback is None:
             return []
+        if self.glob and not Path(self.glob).is_absolute():
+            # a relative pattern would be resolved against the process working
+            # directory, which makes the listing depend on how the server was started
+            raise ImproperlyConfigured(
+                f"FileSystemDirectory glob for {self.path_str(pth)} must be an "
+                f"absolute path, got: {self.glob!r}"
+            )
         path_str = self.path_str(pth)
         return (
             path(

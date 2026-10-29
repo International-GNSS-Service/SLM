@@ -296,6 +296,11 @@ coverage:
 run +ARGS:
     uv run {{ ARGS }}
 
+# upgrade dependency lock files
+update-deps:
+    uv sync --upgrade
+    uv export --no-emit-local -o requirements.txt
+
 # validate the given version string against the lib version
 [script]
 validate_version VERSION:

@@ -143,7 +143,12 @@ Add new section capability is not functional.
             if (hash) {
                 const btn = $(`button${hash}`);
                 btn.removeClass('collapsed');
-                $(btn.attr('data-bs-target')).addClass('show');
+                // resolve the target by id rather than handing the attribute to $(), which
+                // would parse it as markup if it ever started with '<'
+                const target = btn.attr('data-bs-target') || '';
+                if (target.startsWith('#')) {
+                    $(document.getElementById(target.slice(1))).addClass('show');
+                }
             }
 
             // initialize photo gallery

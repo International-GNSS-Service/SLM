@@ -54,29 +54,32 @@
             }
         ).fail(
             function(jqXHR, textStatus, errorThrown) {
+                // error messages may echo what was submitted, so they are always
+                // inserted as text, never as markup
+                const failAlert = function(message) {
+                    return $('<div class="alert alert-danger slm-form-fail"></div>').append(
+                        $('<strong></strong>').text(message)
+                    );
+                };
                 if (jqXHR.hasOwnProperty('responseJSON')) {
                     const error = jqXHR.responseJSON;
-                    if (Array.isArray(data)) {
-                        for (const error of data) {
-                            form.prepend(
-                                `<div class="alert alert-danger slm-form-fail">` +
-                                    `<strong>${error}</strong>` +
-                                `</div>`
-                            );
+                    if (Array.isArray(error)) {
+                        for (const message of error) {
+                            form.prepend(failAlert(message));
                         }
                     } else {
                         for (const [key, value] of Object.entries(error)) {
                             let errorElem = form.find(`#id_${key}`);
                             errorElem.addClass('is-invalid');
-                            errorElem.after(`<div class="invalid-feedback">${value}</div>`);
+                            errorElem.after(
+                                $('<div class="invalid-feedback"></div>').text(
+                                    Array.isArray(value) ? value.join(' ') : String(value)
+                                )
+                            );
                         }
                     }
                 } else if (jqXHR.hasOwnProperty('responseText')) {
-                    form.prepend(
-                        `<div class="alert alert-danger slm-form-fail">` +
-                            `<strong>${jqXHR.responseText}</strong>` +
-                         `</div>`
-                    );
+                    form.prepend(failAlert(jqXHR.responseText));
                 }
                 console.log(jqXHR);
             }

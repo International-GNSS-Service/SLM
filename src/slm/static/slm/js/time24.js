@@ -191,8 +191,8 @@ slm.time24Init = function(inputs = null) {
     const setTime = function(timeInput, timeSelect) {
         let hours = timeSelect.find('div.hour-scroll > span.time-set').text();
         let minutes = timeSelect.find('div.minute-scroll > span.time-set').text();
-        timeInput.find('span.hours').html(hours);
-        timeInput.find('span.minutes').html(minutes);
+        timeInput.find('span.hours').text(hours);
+        timeInput.find('span.minutes').text(minutes);
         if (hours !== null && minutes !== null) {
             timeInput.find('input[type="time"]').val(
                 `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`

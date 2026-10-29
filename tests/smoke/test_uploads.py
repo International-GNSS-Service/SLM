@@ -188,6 +188,27 @@ def test_upload_unknown_site(api_client, editor, db):
     assert response.status_code == 404
 
 
+def test_upload_site_errors_are_json_not_reflected_html(
+    api_client, editor, other_editor, published_site
+):
+    """
+    The site name comes straight from the URL. The 404 and 403 bodies must not be
+    served as HTML or a crafted link would execute script in the victim's session.
+    """
+    payload = "<img src=x onerror=alert(1)>"
+    response = api_client(editor).get(
+        reverse("slm_edit_api:files-list", kwargs={"site": payload}), secure=True
+    )
+    assert response.status_code == 404
+    assert response["Content-Type"].startswith("application/json")
+    assert response.json() == {"detail": f"{payload} does not exist."}
+
+    response = api_client(other_editor).get(files_url(published_site), secure=True)
+    assert response.status_code == 403
+    assert response["Content-Type"].startswith("application/json")
+    assert published_site.name in response.json()["detail"]
+
+
 def test_upload_page_shows_file(client, editor, published_site):
     client.force_login(editor)
     upload = SiteFileUpload.objects.filter(site=published_site).first()

@@ -21,6 +21,13 @@ v0.6.0b0 (2026-10-29)
 * Station names are now always validated to exclude path separators, dots, whitespace and
   control characters, independent of :setting:`SLM_STATION_NAME_REGEX`, because they are
   used as file system path components and URL segments.
+* Fix a reflected cross-site scripting issue in the site file upload API: the 404 and 403
+  responses echoed the site name from the URL as HTML. They are now JSON ``detail`` errors
+  like the rest of the API.
+* Harden the front end against markup injection: autocomplete suggestions, table column
+  filter options, time picker values, new site form errors and the edit page section
+  targets are now HTML escaped or inserted as text. Autocomplete highlighting also no longer
+  breaks on search terms containing regular expression metacharacters.
 * The site file collision check now asks the file field's storage backend whether the
   destination exists instead of probing ``MEDIA_ROOT`` directly, so it honors the configured
   storage and refuses any path that escapes the storage root.

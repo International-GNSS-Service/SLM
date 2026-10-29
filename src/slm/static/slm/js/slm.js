@@ -1,5 +1,24 @@
 if (typeof slm === 'undefined' || slm === null) { var slm = {}; }
 
+/**
+ * Escape a value for safe insertion into HTML markup (element content or a
+ * double quoted attribute). Use this whenever data that did not originate in a
+ * trusted template is concatenated into an HTML string.
+ */
+slm.escapeHtml = function(value) {
+    if (value === null || value === undefined) { return ''; }
+    return String(value).replace(/[&<>"']/g, function(ch) {
+        return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch];
+    });
+};
+
+/**
+ * Escape a string so it matches literally when used to build a RegExp.
+ */
+slm.escapeRegex = function(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 $(document).ready(function() {
     $(".collapse .nav-link").click(function () {
         $(".collapse .nav-link").removeClass("active");
@@ -730,7 +749,9 @@ slm.addColumnFiltering = function( table) {
                         selected = api.ajax.params( )[idx];
                     }
                     var title = $( this ).text( );
-                    let html = '<select id=' + id + '__filter_col_' +  idx + ' name=' +  idx + ' placeholder="Filter ' + title + '">';
+                    // the values come from the server response and go straight into markup, so
+                    // escape everything that is not a literal in this file
+                    let html = '<select id="' + slm.escapeHtml( id + '__filter_col_' + idx ) + '" name="' + slm.escapeHtml( idx ) + '" placeholder="Filter ' + slm.escapeHtml( title ) + '">';
                     html += '<option ' + (selected === '' ? 'selected' : '') + ' value></option>';
                     if ( selected === 'false' ) {
                         selected = false;
@@ -744,7 +765,7 @@ slm.addColumnFiltering = function( table) {
                     data.filterableCols[col_name][1].forEach(function(value) {
                         let strValue = value;
                         if ( value !== null && Number.isFinite(value) ) strValue = value.toString( );
-                        html += '<option ' + ( selected === strValue ? 'selected' : '' ) + ' value="' + value + '">' + (col_name in value_map ? value_map[col_name](value) : value) + '</option>'
+                        html += '<option ' + ( selected === strValue ? 'selected' : '' ) + ' value="' + slm.escapeHtml( value ) + '">' + slm.escapeHtml( col_name in value_map ? value_map[col_name](value) : value ) + '</option>'
                     });
                     html += '</select>'
 

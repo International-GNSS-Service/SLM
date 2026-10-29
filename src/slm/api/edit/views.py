@@ -15,11 +15,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models, transaction
 from django.db.models import Q
 from django.http import Http404
-from django.http.response import (
-    FileResponse,
-    HttpResponseForbidden,
-    HttpResponseNotFound,
-)
+from django.http.response import FileResponse, JsonResponse
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django_enum.drf import EnumField
@@ -1282,14 +1278,17 @@ class SiteFileUploadViewSet(
     def dispatch(self, request, *args, **kwargs):
         self.site = kwargs.pop("site", None)
         self.original_request = request
+        # these bodies echo the URL and the user, so they must never be served as
+        # HTML - JSON matches the error shape of the rest of the API
         try:
             self.site = Site.objects.get(name__iexact=self.site)
         except Site.DoesNotExist:
-            return HttpResponseNotFound(f"{self.site} does not exist.")
+            return JsonResponse({"detail": f"{self.site} does not exist."}, status=404)
 
         if not self.site.can_edit(request.user):
-            return HttpResponseForbidden(
-                f"{request.user} cannot edit site {self.site.name}"
+            return JsonResponse(
+                {"detail": f"{request.user} cannot edit site {self.site.name}"},
+                status=403,
             )
 
         return super().dispatch(request, *args, **kwargs)

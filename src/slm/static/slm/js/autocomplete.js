@@ -12,7 +12,9 @@ class AutoComplete extends slm.FormWidget {
      *  returning a string label to use for the suggestion.
      *
      *  When providing a render suggestion, text that is searchable should be
-     *  wrapped in <span class="matchable"></span>
+     *  wrapped in <span class="matchable"></span>. The obj passed in has every
+     *  string property HTML escaped already, so its values can be dropped into
+     *  markup directly.
      */
 
     textInput;
@@ -45,7 +47,7 @@ class AutoComplete extends slm.FormWidget {
         if (value) {
             if (label !== this.selected[value]) {
                 this.remove(this.formField.val());
-                this.textInput.html(searchStr);
+                this.textInput.text(searchStr);
                 let sel = window.getSelection();
                 sel.selectAllChildren(this.textInput.get(0));
                 sel.collapseToEnd();
@@ -75,10 +77,16 @@ class AutoComplete extends slm.FormWidget {
     }
 
     makeSuggestion(suggestion) {
+        // label and basic end up in markup, so render them from an escaped copy
+        // of the api object; value is only ever used as data
+        const safe = {};
+        for (const [key, val] of Object.entries(suggestion)) {
+            safe[key] = typeof val === 'string' ? slm.escapeHtml(val) : val;
+        }
         return {
-            label: this.renderSuggestion(suggestion),
+            label: this.renderSuggestion(safe),
             value: suggestion[this.valueParam],
-            basic: suggestion[this.labelParam]
+            basic: safe[this.labelParam]
         }
     }
 
@@ -196,15 +204,25 @@ class AutoComplete extends slm.FormWidget {
         this.autocomplete.data('ui-autocomplete')._renderItem = function (ul, item) {
             const label = $(`<div>${item.label}</div>`);
             if (this.term) {
+                const matcher = new RegExp(slm.escapeRegex(this.term), 'gi');
                 label.find('span.matchable').each((idx, child) => {
+                    const text = $(child).text();
                     if (newResponse()) {
-                        checkFullMatch($(child).text(), this.term);
+                        checkFullMatch(text, this.term);
                     }
-                    $(child).html(
-                        String($(child).text()).replace(
-                            new RegExp(this.term, 'gi'),
-                        "<span class='autocomplete-match'>$&</span>")
-                    );
+                    // rebuild the span from escaped text segments so the highlight
+                    // markup is the only markup that ends up in it
+                    let html = '';
+                    let last = 0;
+                    let match;
+                    while ((match = matcher.exec(text)) !== null) {
+                        html += slm.escapeHtml(text.slice(last, match.index)) +
+                            `<span class='autocomplete-match'>${slm.escapeHtml(match[0])}</span>`;
+                        last = match.index + match[0].length;
+                        if (match[0].length === 0) { matcher.lastIndex++; }
+                    }
+                    html += slm.escapeHtml(text.slice(last));
+                    $(child).html(html);
                 });
             }
             newResponse(false);
@@ -299,14 +317,16 @@ class AutoCompleteMultiple extends AutoComplete {
     add(item, trigger=true) {
         this.textInput.html('');
         this.selected[item.value.toString()] = item.label;
+        // item.label is already escaped markup from makeSuggestion; value is raw data
+        const value = slm.escapeHtml(item.value);
         if (this.formField.find(`option[value="${item.value}"]`).length === 0) {
             this.formField.prepend($(
-                `<option value="${item.value}" selected>${item.label}</option>`
+                `<option value="${value}" selected>${item.label}</option>`
             ));
         }
         if (this.display.find(`div.autocomplete-selection[data-value="${item.value}"]`).length === 0) {
             this.display.prepend(
-                `<div class="autocomplete-selection" data-value="${item.value}">${item.label}<span></span></div>`
+                `<div class="autocomplete-selection" data-value="${value}">${item.label}<span></span></div>`
             );
         }
         this.display.find(`div.autocomplete-selection[data-value="${item.value}"] span:last-child`).click(function() {

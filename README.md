@@ -9,6 +9,8 @@
 [![Test Status](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/test.yml?branch=main)
 [![Lint Status](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/International-GNSS-Service/SLM/actions/workflows/lint.yml?branch=main)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Zizmor](https://github.com/International-GNSS-Service/SLM/actions/workflows/zizmor.yml/badge.svg?branch=main)](https://docs.zizmor.sh/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/International-GNSS-Service/SLM/badge)](https://securityscorecards.dev/viewer/?uri=github.com/International-GNSS-Service/SLM)
 
 # ![](https://github.com/International-GNSS-Service/SLM/blob/main/src/slm/static/slm/img/slm-logo.svg?raw=true) 
 Site Log Manager (SLM)

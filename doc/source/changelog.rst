@@ -31,6 +31,12 @@ v0.6.0b0 (2026-10-29)
 * The generated ``SECRET_KEY`` file is now created with mode 0640 from the start instead
   of being chmodded after a default-mode write, and concurrent workers starting against an
   empty secrets directory now share one generated key instead of racing to overwrite it.
+* The deploy ``Dockerfile`` now pins its base image by digest, copies Node.js and uv from
+  their official digest pinned images instead of piping the nodesource installer into
+  ``bash`` and ``pip install``-ing uv, and no longer installs an unused global esbuild.
+  The package is also installed non-editable and ``uv run`` no longer re-syncs the
+  environment at startup, which rebuilt the package from the removed source tree and
+  left the container unable to import ``slm``.
 * The site file collision check now asks the file field's storage backend whether the
   destination exists instead of probing ``MEDIA_ROOT`` directly, so it honors the configured
   storage and refuses any path that escapes the storage root.

@@ -793,9 +793,9 @@ djlint==1.47.1 \
 doc8==2.0.0 \
     --hash=sha256:1267ad32758971fbcf991442417a3935c7bc9e52550e73622e0e56ba55ea1d40 \
     --hash=sha256:9862710027f793c25f9b1899150660e4bf1d4c9a6738742e71f32011e2e3f590
-docutils==0.21.2 \
-    --hash=sha256:3a6b18732edf182daa3cd12775bbb338cf5691468f91eeeb109deff6ebfa986f \
-    --hash=sha256:dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2
+docutils==0.23 \
+    --hash=sha256:25d013af9bf23bc1c7b2b093dff4208166c53a94786c9e447808335ef1185fea \
+    --hash=sha256:746f5060322511280a1e50eb76846ed6bf2342984b2ac04dc42caa1a8d78799e
     # via
     #   doc8
     #   readme-renderer
@@ -1666,9 +1666,9 @@ pytest-env==1.8.3 \
 pytest-playwright==0.10.0 \
     --hash=sha256:47baf574dfb120bb53675d05c9784f8bf94e04c6dd7477dc56159ce732191952 \
     --hash=sha256:8314d1af726e2c15531635902ece3ee47ed83f5a75c937a7eda8686d3dae6c0d
-python-dateutil==2.9.0.post0 \
-    --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
-    --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
+python-dateutil==3.0.0 \
+    --hash=sha256:3c79630202e4152c6add678446984236efe4f57e84d8e892aab0637bab82e9fd \
+    --hash=sha256:7ebcb3c29a92f3ceafe79a7a48a5c45677e9e004bbeec5742ac0bbb00560b7a2
     # via igs-slm
 python-dotenv==1.2.4 \
     --hash=sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc \

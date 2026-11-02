@@ -19,6 +19,9 @@ if not SECRET_KEY:
         from django.core.management.utils import get_random_secret_key
 
         SECRET_KEY = get_random_secret_key()
+        # the default SLM_SECRETS_DIR is not run through the path resolver (environ
+        # returns defaults uncast), so it may not exist yet
+        os.makedirs(SLM_SECRETS_DIR, exist_ok=True)
         try:
             # create the file with restrictive permissions from the start so it is
             # never world readable, and exclusively so concurrent workers starting

@@ -147,8 +147,12 @@ linkcheck_ignore = [
     r"https://network\.example\.com/?",
 ]
 linkcheck_workers = 10
-linkcheck_retries = 2
+linkcheck_retries = 1
 linkcheck_timeout = 30
+# a host that answers 429 makes sphinx sleep and double the wait on each retry up
+# to this ceiling (default 300s); keep it short so one touchy host cannot stall the
+# whole check for minutes
+linkcheck_rate_limit_timeout = 30
 
 linkcheck_request_headers = {
     "*": {

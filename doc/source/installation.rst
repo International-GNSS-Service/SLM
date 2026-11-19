@@ -73,14 +73,14 @@ environment(s):
      - >=14
      - ✅
      - Relational Database (RDBMS)
-   * - PostGIS_
+   * - |PostGIS|
      - >=3.4
      - ✅
      - Geographic information system extension to PostgreSQL_.
-   * - Django_ & GeoDjango_
+   * - Django_ & |GeoDjango|
      - >=5.2,<6.2
      - ✅
-     - Django will be installed automatically, but GeoDjango_ has external dependencies that may
+     - Django will be installed automatically, but |GeoDjango| has external dependencies that may
        need to be installed manually.
    * - uv_
      - >=0.7
@@ -100,10 +100,10 @@ Platform specific Installation guidance.
 
     .. tab:: OSX
 
-       * By far and away the easiest way to install PostgreSQL_ and PostGIS_ in OSX is to use
-         Postgres.app_. This will also install all the necessary GeoDjango_ dependencies.
-       * The GeoDjango_ documentation has
-         `a few additional instructions <https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/#postgres-app>`_
+       * By far and away the easiest way to install PostgreSQL_ and |PostGIS| in OSX is to use
+         Postgres.app_. This will also install all the necessary |GeoDjango| dependencies.
+       * The |GeoDjango| documentation has
+         :ref:`a few additional instructions <django:postgresapp>`
        * OSX uses z-shell_ by default. If you would like to enable tab completions for slm
          management commands, you will want to use homebrew_ to
          `install z-shell completions <https://django-typer.readthedocs.io/en/latest/shell_completion.html>`_.
@@ -111,7 +111,7 @@ Platform specific Installation guidance.
 
     .. tab:: Windows
 
-       * Follow the `GeoDjango documentation to install all the necessary dependencies <https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/#windows>`_.
+       * Follow the :ref:`GeoDjango documentation to install all the necessary dependencies <django:windows>`.
        * Windows uses the `Enterprise DB (EDB) installer <https://www.postgresql.org/download/windows/>`_
          to install PostgreSQL_.
        * Here's a `helpful video <https://video.osgeo.org/w/57e27085-6352-43e6-b64a-c29c1dcda8ee>`_.
@@ -124,14 +124,14 @@ Platform specific Installation guidance.
 
        * All dependencies should be readily installable from your flavor's package manager. If
          needed, refer to the GeoDjango documentation for
-         `help building the geospatial library dependencies <https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/geolibs/>`_.
+         :doc:`help building the geospatial library dependencies <django:ref/contrib/gis/install/geolibs>`.
        * You will probably want to use the command line utility psql_ instead of pgAdmin_ for
          database management.
 
 .. tip::
 
-       If you are having trouble with your GeoDjango_ installation, please refer to the
-       `troubleshooting guide <https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/#troubleshooting>`_.
+       If you are having trouble with your |GeoDjango| installation, please refer to the
+       :ref:`troubleshooting guide <django:ref/contrib/gis/install/index:troubleshooting>`.
 
 
 .. _slm-startproject:
@@ -143,8 +143,8 @@ Start Project
 
 To get up and running quickly with your customized SLM deployment we bundle a command called
 slm-startproject_ that will scaffold out a directory structure and settings files for you to start
-working with. Before running slm-startproject_ you will need to have installed all of GeoDjango_'s
-dependencies as well as PostgreSQL_ and PostGIS_ and uv_. You do not need to install Django_
+working with. Before running slm-startproject_ you will need to have installed all of |GeoDjango|'s
+dependencies as well as PostgreSQL_ and |PostGIS| and uv_. You do not need to install Django_
 itself yet though.
 
 (1) Run ``slm-startproject``
@@ -400,8 +400,8 @@ You can manage it just like you would a normal python package. It can be built a
 uv_ or pip_ or any other python package management tooling that supports wheels. When you install it
 it will pull in all of its required python dependencies.
 
-First you need to make sure your host server has all the dependencies installed, PostGIS_, etc.
-Then you should use ``psql`` to create the database. It is usually sufficient to configure PostGIS_
+First you need to make sure your host server has all the dependencies installed, |PostGIS|, etc.
+Then you should use ``psql`` to create the database. It is usually sufficient to configure |PostGIS|
 for `peer authentication <https://www.postgresql.org/docs/current/auth-peer.html>`_ and give your
 web server user all the appropriate permissions to the database.
 

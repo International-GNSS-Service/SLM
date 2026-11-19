@@ -2,7 +2,7 @@
 .. _IGS: https://igs.org
 .. _GNSS: https://en.wikipedia.org/wiki/Satellite_navigation
 .. _Django: https://www.djangoproject.com
-.. _GeoDjango: https://docs.djangoproject.com/en/stable/ref/contrib/gis
+.. |GeoDjango| replace:: :doc:`GeoDjango <django:ref/contrib/gis/index>`
 .. _Python: https://python.org
 .. _uv: https://docs.astral.sh/uv/
 .. _uvx: https://docs.astral.sh/uv/concepts/tools/
@@ -11,7 +11,7 @@
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 .. _DRF: https://www.django-rest-framework.org
 .. _PostgreSQL: https://www.postgresql.org
-.. _PostGIS: https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/postgis
+.. |PostGIS| replace:: :doc:`PostGIS <django:ref/contrib/gis/install/postgis>`
 .. _Typer: https://typer.tiangolo.com/
 .. _pyenv: https://github.com/pyenv/pyenv
 .. _Postgres.app: https://postgresapp.com

@@ -355,7 +355,7 @@ Default: ``postgis:///slm``
 
 .. warning::
 
-  The SLM requires that the default database be PostgreSQL_ with the PostGIS_ extension
+  The SLM requires that the default database be PostgreSQL_ with the |PostGIS| extension
   enabled.
 
 This should be a :ref:`database url string <environ-env-db-url>`.

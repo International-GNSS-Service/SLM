@@ -48,15 +48,10 @@ jobs:
         # Django 5.2 supports PostgreSQL >= 14
         # postgis images are pinned to their digests (satisfies zizmor unpinned-images)
         include:
-          - python-version: "3.11"
+          - python-version: "3.12"
             dependencies: "lowest-direct"
             postgres-version: "14"
             postgres-image: "postgis/postgis:14-3.5@sha256:2543ae2bc9497ca62cd740268be228f7a6974020207634e2b189fe36be82b749"
-
-          - python-version: "3.12"
-            dependencies: "highest"
-            postgres-version: "17"
-            postgres-image: "postgis/postgis:17-3.5@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6"
 
           - python-version: "3.13"
             dependencies: "highest"
@@ -119,7 +114,7 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
         with:
-          just-version: "1.58.0"
+          just-version: "1.59.0"
       - name: Install GIS Libs
         run: |
           sudo apt-get update
@@ -168,7 +163,7 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
         with:
-          just-version: "1.58.0"
+          just-version: "1.59.0"
       - name: Get coverage files
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:

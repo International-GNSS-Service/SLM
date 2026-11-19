@@ -2,7 +2,7 @@
 name = "igs-slm"
 version = "0.6.0"
 description = "IGS Site Log Manager"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.12,<4.0"
 authors = [
   {name = "Brian Kohan", email = "bkohan@jpl.nasa.gov"},
   {name = "Ashley Santiago", email = "ashley.k.santiago@jpl.nasa.gov"},
@@ -36,7 +36,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -194,7 +193,7 @@ django_settings_module = "tests.settings"
 
 
 [tool.pyright]
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 typeCheckingMode = "basic"
 include = ["src/slm"]
 exclude = ["src/slm/bin/templates"]

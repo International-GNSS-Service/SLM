@@ -106,7 +106,7 @@ Platform specific Installation guidance.
          `a few additional instructions <https://docs.djangoproject.com/en/stable/ref/contrib/gis/install/#postgres-app>`_
        * OSX uses z-shell_ by default. If you would like to enable tab completions for slm
          management commands, you will want to use homebrew_ to
-         `install z-shell completions <https://django-typer.readthedocs.io/en/latest/shell_completion.html#osx>`_.
+         `install z-shell completions <https://django-typer.readthedocs.io/en/latest/shell_completion.html>`_.
 
 
     .. tab:: Windows

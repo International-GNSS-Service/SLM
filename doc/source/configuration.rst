@@ -423,8 +423,8 @@ the :pypi:`django-debug-toolbar` is installed and :setting:`DEBUG` is true.
 
 Default: ``True``
 
-Use the default IGS log :ref:`validation rules <validation>`. If ``False`` no validation
-will be performed on site log values other than basic database column type checks.
+Use the default IGS log :setting:`validation rules <SLM_DATA_VALIDATORS>`. If ``False`` no
+validation will be performed on site log values other than basic database column type checks.
 
 ``SLM_COORDINATE_MODE`` ⚙️
 --------------------------

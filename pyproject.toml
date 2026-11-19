@@ -119,45 +119,43 @@ slm = "slm.manage:main"
 
 [dependency-groups]
 docs = [
-    "doc8>=1.1.2",
-    "furo>=2024.8.6",
-    "readme-renderer[md]>=44.0",
-    "sphinx>=8.0.0",
-    "sphinx-autobuild>=2024.10.3",
-    "sphinx-tabs>=3.4.7",
+    "furo>=2025.12.19",
+    "sphinx>=9.0.0",
+    "sphinx-autobuild>=2025.8.25",
+    "sphinx-tabs>=3.5.0",
     "sphinxcontrib-django>=2.5",
     "sphinxcontrib-typer[html,pdf,png]>=0.10.0",
-    "sphinxcontrib-svg2pdfconverter[cairosvg]>=1.2.3",
-    "sphinxcontrib-spelling>=8.0.0",
-    "pyenchant>=3.2.2",
+    "sphinxcontrib-svg2pdfconverter[cairosvg]>=2.1.0",
+    "sphinxcontrib-spelling>=8.0.2",
+    "pyenchant>=3.3.0",
 ]
 typing = [
-    "pyright>=1.1.390",
-    "mypy>=1.19.1",
-    "django-stubs[compatible-mypy]>=5.1.3",
-    "django-stubs-ext>=5.1.3",
+    "pyright>=1.1.414",
+    "mypy>=2.4.1",
+    "django-stubs[compatible-mypy]>=5.2.9",
+    "django-stubs-ext>=5.2.9",
 ]
 lint = [
-    "ruff>=0.15.0",
-    "readme-renderer[md]>=43.0",
-    "doc8>=1.1.2",
-    "djlint>=1.36.4",
-    "bandit[toml,sarif]>=1.7.10",
+    "ruff>=0.17.6",
+    "readme-renderer[md]>=46.0",
+    "doc8>=2.0.0",
+    "djlint>=1.54.0",
+    "bandit[toml,sarif]>=1.9.4",
 ]
-coverage = ["coverage[toml]>=7.6.1"]
+coverage = ["coverage[toml]>=7.17.3"]
 # used by just remake-migrations to remake migrations at version waypoints
-remake = ["django-remake-migrations>=3.1.0"]
+remake = ["django-remake-migrations>=4.0.0"]
 test = [
     { include-group = "coverage" },
-    "pytest>=8.3.4",
-    "pytest-cov>=6.0.0",
-    "pytest-django>=4.10.0",
-    "pytest-env>=1.1.5",
-    "django-test-migrations>=1.4.0",
-    "django-extensions>=3.2.3",
-    "whitenoise>=6.8.0",
-    "playwright>=1.58.0",
-    "pytest-playwright>=0.7.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "pytest-env>=1.8.6",
+    "django-test-migrations>=1.7.0",
+    "django-extensions>=4.1.0",
+    "whitenoise>=6.12.0",
+    "playwright>=1.65.1",
+    "pytest-playwright>=0.10.0",
 ]
 dev = [
     { include-group = "typing" },
@@ -165,14 +163,14 @@ dev = [
     { include-group = "docs" },
     { include-group = "lint" },
     { include-group = "remake" },
-    "django-debug-toolbar>=5.0.0",
-    "packaging>=24.2",
-    "tomlkit>=0.13.3",
+    "django-debug-toolbar>=8.0.0",
+    "packaging>=26.3",
+    "tomlkit>=0.15.2",
     "ipdb>=0.13.13",
-    "ipython>=8.18.1",
-    "pydot>=3.0.0",
-    "pyparsing>=3.2.0",
-    "pygount>=1.8.0",
+    "ipython>=9.18.1",
+    "pydot>=4.0.1",
+    "pyparsing>=3.3.3",
+    "pygount>=3.2.0",
 ]
 
 # todo doc8 configuration here is not being picked up and doesnt seem to be working

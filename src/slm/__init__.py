@@ -15,10 +15,10 @@ r"""
 
 """
 
-VERSION = (0, 6, "0b0")
+VERSION = (0, 6, 0)
 
 __title__ = "IGS/Site Log Manager"
 __version__ = ".".join(str(i) for i in VERSION)
 __author__ = "Ashley Santiago, Brian Kohan, Rachel Pham, Robert Khachikyan"
 __license__ = "MIT"
-__copyright__ = "Copyright 2022-2025 International GNSS Service"
+__copyright__ = "Copyright 2022-2026 International GNSS Service"
